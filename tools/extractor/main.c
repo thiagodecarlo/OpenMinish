@@ -31,6 +31,10 @@ typedef struct {
     const char* region_name;
     const char* languages;
     u32         palette_offset; // Endereço da Paleta 0 na ROM
+    u32         link_gfx_offset;
+    u32         link_pal_offset;
+    u32         octo_gfx_offset;
+    u32         octo_pal_offset;
     u8          software_version;
     u8          checksum;
 } GbaHeader;
@@ -50,31 +54,47 @@ static bool inspect_gba_header(const u8* rom_data, size_t rom_size, GbaHeader* o
     out_hdr->software_version = rom_data[0xBC];
     out_hdr->checksum = rom_data[0xBD];
 
-    // Mapeamento preciso dos metadados e endereços de paleta por região
+    // Mapeamento preciso dos metadados e endereços de paleta e sprites por região
     if (strcmp(out_hdr->game_code, "BZME") == 0) {
         out_hdr->region = REGION_USA;
         out_hdr->region_tag = "usa";
         out_hdr->region_name = "America do Norte (USA)";
         out_hdr->languages = "Ingles (EN)";
-        out_hdr->palette_offset = 0x5A2E80;
+        out_hdr->palette_offset  = 0x5A2E80;
+        out_hdr->link_gfx_offset = 0x13AE14;
+        out_hdr->link_pal_offset = 0x5A3F60;
+        out_hdr->octo_gfx_offset = 0x667B00;
+        out_hdr->octo_pal_offset = 0x5A3160;
     } else if (strcmp(out_hdr->game_code, "BZMP") == 0) {
         out_hdr->region = REGION_EUR;
         out_hdr->region_tag = "eur";
         out_hdr->region_name = "Europa (EUR)";
         out_hdr->languages = "Ingles (EN), Frances (FR), Alemao (DE), Espanhol (ES), Italiano (IT)";
-        out_hdr->palette_offset = 0x5A23D0;
+        out_hdr->palette_offset  = 0x5A23D0;
+        out_hdr->link_gfx_offset = 0x13A500;
+        out_hdr->link_pal_offset = 0x5A34B0;
+        out_hdr->octo_gfx_offset = 0x6672D0;
+        out_hdr->octo_pal_offset = 0x5A26B0;
     } else if (strcmp(out_hdr->game_code, "BZMJ") == 0) {
         out_hdr->region = REGION_JPN;
         out_hdr->region_tag = "jpn";
         out_hdr->region_name = "Japao (JPN)";
         out_hdr->languages = "Japones (JA - Kanjis/Hiragana)";
-        out_hdr->palette_offset = 0x5A2B20;
+        out_hdr->palette_offset  = 0x5A2B20;
+        out_hdr->link_gfx_offset = 0x13AA40;
+        out_hdr->link_pal_offset = 0x5A3C00;
+        out_hdr->octo_gfx_offset = 0x6677A0;
+        out_hdr->octo_pal_offset = 0x5A2E00;
     } else {
         out_hdr->region = REGION_UNKNOWN;
         out_hdr->region_tag = "unknown";
         out_hdr->region_name = "Nao Oficial / Desconhecida";
         out_hdr->languages = "N/A";
         out_hdr->palette_offset = 0;
+        out_hdr->link_gfx_offset = 0;
+        out_hdr->link_pal_offset = 0;
+        out_hdr->octo_gfx_offset = 0;
+        out_hdr->octo_pal_offset = 0;
     }
 
     return true;
@@ -160,7 +180,43 @@ static bool process_rom(const char* rom_path) {
         }
     }
 
-    printf("  Total de folhas graficas extraidas para [%s]: %d\n\n", hdr.region_tag, extracted_count);
+    printf("  Total de folhas graficas extraidas para [%s]: %d\n", hdr.region_tag, extracted_count);
+
+    // 3. Extração dos Sprites Canônicos do Link (Metatiles 16x24)
+    if (hdr.link_gfx_offset > 0 && hdr.link_pal_offset > 0 &&
+        hdr.link_gfx_offset + 16384 <= (u32)rom_size &&
+        hdr.link_pal_offset + 32 <= (u32)rom_size) {
+
+        u32 link_palette[16];
+        const u16* gba_link_pal = (const u16*)&rom_buffer[hdr.link_pal_offset];
+        decode_palette(gba_link_pal, link_palette, 16);
+
+        char link_out[256];
+        snprintf(link_out, sizeof(link_out), "assets/regions/%s/link.bmp", hdr.region_tag);
+        if (export_link_sprites_bmp(link_out, &rom_buffer[hdr.link_gfx_offset], 16384, link_palette, 64, 8)) {
+            printf("  -> [%s] Sprites do Link salvos: %s (Offset: 0x%06X)\n",
+                   hdr.region_tag, link_out, hdr.link_gfx_offset);
+        }
+    }
+
+    // 4. Extração dos Sprites Canônicos do Octorok (Metatiles 16x16)
+    if (hdr.octo_gfx_offset > 0 && hdr.octo_pal_offset > 0 &&
+        hdr.octo_gfx_offset + 2048 <= (u32)rom_size &&
+        hdr.octo_pal_offset + 32 <= (u32)rom_size) {
+
+        u32 octo_palette[16];
+        const u16* gba_octo_pal = (const u16*)&rom_buffer[hdr.octo_pal_offset];
+        decode_palette(gba_octo_pal, octo_palette, 16);
+
+        char octo_out[256];
+        snprintf(octo_out, sizeof(octo_out), "assets/regions/%s/octorok.bmp", hdr.region_tag);
+        if (export_assembled_sprites_bmp(octo_out, &rom_buffer[hdr.octo_gfx_offset], 2048, octo_palette, 4)) {
+            printf("  -> [%s] Sprites do Octorok salvos: %s (Offset: 0x%06X)\n",
+                   hdr.region_tag, octo_out, hdr.octo_gfx_offset);
+        }
+    }
+    printf("\n");
+
     free(rom_buffer);
     return true;
 }

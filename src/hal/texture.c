@@ -179,10 +179,11 @@ Texture* texture_load_bmp(const char* filepath) {
     return tex;
 }
 
-void texture_draw(const Texture* tex,
-                  int src_x, int src_y,
-                  int src_w, int src_h,
-                  int dest_x, int dest_y) {
+void texture_draw_ex(const Texture* tex,
+                     int src_x, int src_y,
+                     int src_w, int src_h,
+                     int dest_x, int dest_y,
+                     bool flip_h) {
     if (!tex || !tex->pixels) return;
 
     for (int y = 0; y < src_h; y++) {
@@ -190,7 +191,7 @@ void texture_draw(const Texture* tex,
         if (cur_src_y < 0 || cur_src_y >= tex->height) continue;
 
         for (int x = 0; x < src_w; x++) {
-            int cur_src_x = src_x + x;
+            int cur_src_x = flip_h ? (src_x + src_w - 1 - x) : (src_x + x);
             if (cur_src_x < 0 || cur_src_x >= tex->width) continue;
 
             u32 pixel = tex->pixels[cur_src_y * tex->width + cur_src_x];
@@ -202,6 +203,13 @@ void texture_draw(const Texture* tex,
             }
         }
     }
+}
+
+void texture_draw(const Texture* tex,
+                  int src_x, int src_y,
+                  int src_w, int src_h,
+                  int dest_x, int dest_y) {
+    texture_draw_ex(tex, src_x, src_y, src_w, src_h, dest_x, dest_y, false);
 }
 
 void texture_draw_full(const Texture* tex, int dest_x, int dest_y) {

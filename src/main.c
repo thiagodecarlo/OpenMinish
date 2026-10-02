@@ -49,23 +49,38 @@ static const char* s_region_names[REGION_COUNT] = {
 
 static Texture* s_sheet0 = NULL;
 static Texture* s_sheet1 = NULL;
+static Texture* s_link_tex = NULL;
+static Texture* s_octo_tex = NULL;
 static SelectedRegion s_current_region = REGION_USA;
 
 static void load_region_sheets(SelectedRegion region) {
-    if (s_sheet0) texture_free(s_sheet0);
-    if (s_sheet1) texture_free(s_sheet1);
+    if (s_sheet0)   { texture_free(s_sheet0);   s_sheet0 = NULL; }
+    if (s_sheet1)   { texture_free(s_sheet1);   s_sheet1 = NULL; }
+    if (s_link_tex) { texture_free(s_link_tex); s_link_tex = NULL; }
+    if (s_octo_tex) { texture_free(s_octo_tex); s_octo_tex = NULL; }
 
     s_current_region = region;
 
     char path0[256];
     char path1[256];
+    char path_link[256];
+    char path_octo[256];
     snprintf(path0, sizeof(path0), "assets/regions/%s/sheet_00.bmp", s_region_tags[region]);
     snprintf(path1, sizeof(path1), "assets/regions/%s/sheet_01.bmp", s_region_tags[region]);
+    snprintf(path_link, sizeof(path_link), "assets/regions/%s/link.bmp", s_region_tags[region]);
+    snprintf(path_octo, sizeof(path_octo), "assets/regions/%s/octorok.bmp", s_region_tags[region]);
 
     s_sheet0 = texture_load_bmp(path0);
     s_sheet1 = texture_load_bmp(path1);
+    s_link_tex = texture_load_bmp(path_link);
+    s_octo_tex = texture_load_bmp(path_octo);
 
-    printf("[REGIAO ATUALIZADA] -> %s\n", s_region_names[region]);
+    entity_set_texture(s_octo_tex);
+
+    printf("[REGIAO ATUALIZADA] -> %s (Link: %s, Octorok: %s)\n",
+           s_region_names[region],
+           s_link_tex ? "Autentico GBA" : "Procedural",
+           s_octo_tex ? "Autentico GBA" : "Procedural");
 }
 
 static void draw_rect(int rx, int ry, int rw, int rh, u32 color) {
@@ -112,6 +127,66 @@ static void draw_link(const Player* p, const Camera* cam) {
     int px, py;
     map_world_to_screen(cam, p->x, p->y, &px, &py);
 
+    // ------------------------------------------------------------------------
+    // RENDERIZADOR AUTÊNTICO COM SPRITES EXTRAÍDOS DA ROM
+    // ------------------------------------------------------------------------
+    if (s_link_tex && s_link_tex->pixels) {
+        int f_idx = 0;
+        bool flip_h = false;
+
+        // Animação com alternância de passos (Down: 0/4, Right: 1/5, Up: 2/6)
+        if (p->dir == DIR_DOWN) {
+            f_idx = (p->is_moving && p->anim_frame == 1) ? 4 : 0;
+        } else if (p->dir == DIR_UP) {
+            f_idx = (p->is_moving && p->anim_frame == 1) ? 6 : 2;
+        } else if (p->dir == DIR_RIGHT) {
+            f_idx = (p->is_moving && p->anim_frame == 1) ? 5 : 1;
+        } else if (p->dir == DIR_LEFT) {
+            f_idx = (p->is_moving && p->anim_frame == 1) ? 5 : 1;
+            flip_h = true;
+        }
+
+        int src_x = (f_idx % 8) * 16;
+        int src_y = (f_idx / 8) * 24;
+
+        // O sprite canônico de 16x24 tem a ponta do gorro em y=0 e as botas em y=23.
+        // Como a caixa de colisão do Link fica na base, desenhamos com offset py - 6.
+        int draw_y = py - 6;
+        if (p->is_moving && p->anim_frame == 1) {
+            draw_y -= 1; // Sutil bobbing de caminhada clássica
+        }
+
+        texture_draw_ex(s_link_tex, src_x, src_y, 16, 24, px, draw_y, flip_h);
+
+        // Se atacando com a espada, desenha o corte de lâmina
+        if (p->is_attacking) {
+            u32 sword_steel = 0xCFE2F3FF;
+            u32 sword_gold  = 0xFFD700FF;
+            switch (p->dir) {
+                case DIR_DOWN:
+                    draw_rect(px + 6, py + 16, 4, 10, sword_steel);
+                    draw_rect(px + 4, py + 16, 8, 2, sword_gold);
+                    break;
+                case DIR_UP:
+                    draw_rect(px + 6, py - 8, 4, 10, sword_steel);
+                    draw_rect(px + 4, py + 0, 8, 2, sword_gold);
+                    break;
+                case DIR_LEFT:
+                    draw_rect(px - 10, py + 9, 10, 4, sword_steel);
+                    draw_rect(px + 0,  py + 7, 2, 8, sword_gold);
+                    break;
+                case DIR_RIGHT:
+                    draw_rect(px + 14, py + 9, 10, 4, sword_steel);
+                    draw_rect(px + 13, py + 7, 2, 8, sword_gold);
+                    break;
+            }
+        }
+        return;
+    }
+
+    // ------------------------------------------------------------------------
+    // FALLBACK PROCEDURAL (utilizado caso os assets não estejam extraídos)
+    // ------------------------------------------------------------------------
     u32 tunic_green = 0x228B22FF; // Verde Floresta
     u32 hat_bright   = 0x32CD32FF; // Verde Gorro
     u32 skin_tone    = 0xF5CBA7FF; // Tom de Pele
@@ -545,8 +620,10 @@ int main(int argc, char* argv[]) {
         hal_video_render_frame();
     }
 
-    if (s_sheet0) texture_free(s_sheet0);
-    if (s_sheet1) texture_free(s_sheet1);
+    if (s_sheet0)   texture_free(s_sheet0);
+    if (s_sheet1)   texture_free(s_sheet1);
+    if (s_link_tex) texture_free(s_link_tex);
+    if (s_octo_tex) texture_free(s_octo_tex);
 
     entity_manager_shutdown();
     map_destroy(world_map);

@@ -12,6 +12,7 @@
 
 #include "gba/types.h"
 #include "hal/map.h"
+#include "hal/texture.h"
 #include <stdbool.h>
 
 #define MAX_ENTITIES 32
@@ -86,6 +87,11 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
  * Renderiza todas as entidades ativas nas coordenadas relativas da câmera virtual.
  */
 void entity_manager_render(const Camera* cam);
+
+/*
+ * Define a folha de sprites das entidades (octorok.bmp).
+ */
+void entity_set_texture(const Texture* tex);
 
 /*
  * Finaliza o subsistema de entidades.

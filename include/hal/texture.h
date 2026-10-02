@@ -27,18 +27,29 @@ typedef struct {
 Texture* texture_load_bmp(const char* filepath);
 
 /*
+ * Desenha uma sub-região da textura (um sprite ou tile) no Framebuffer Virtual com
+ * suporte a espelhamento horizontal (flip_h).
+ */
+void texture_draw_ex(const Texture* tex,
+                     int src_x, int src_y,
+                     int src_w, int src_h,
+                     int dest_x, int dest_y,
+                     bool flip_h);
+
+/*
  * Desenha uma sub-região da textura (um sprite ou tile) no Framebuffer Virtual.
  *
  * Parâmetros:
  *  - tex: Ponteiro para a textura de origem.
  *  - src_x, src_y: Posição do sprite dentro da folha (Sprite Sheet).
- *  - src_w, src_h: Dimensões do sprite (ex: 8x8, 16x16 pixels).
+ *  - src_w, src_h: Dimensões do sprite (ex: 8x8, 16x16, 16x24 pixels).
  *  - dest_x, dest_y: Coordenadas na tela virtual do jogo onde o sprite será desenhado.
  */
 void texture_draw(const Texture* tex,
                   int src_x, int src_y,
                   int src_w, int src_h,
                   int dest_x, int dest_y);
+
 
 /*
  * Desenha a textura inteira na tela a partir de uma coordenada (dest_x, dest_y).

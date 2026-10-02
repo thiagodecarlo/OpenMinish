@@ -48,9 +48,32 @@ bool export_tilesheet_bmp(const char* filepath,
                           int width_in_tiles);
 
 /*
+ * Decodifica sprites de 16x16 pixels montados a partir de grupos de 4 tiles de 8x8
+ * (disposição 1D canônica do GBA: Top-Left, Top-Right, Bottom-Left, Bottom-Right)
+ * e salva em arquivo BMP (.bmp) com canal alfa nos pixels transparentes.
+ */
+bool export_assembled_sprites_bmp(const char* filepath,
+                                  const u8* sprite_data,
+                                  size_t data_size,
+                                  const u32* palette,
+                                  int sprites_per_row);
+
+/*
+ * Decodifica sprites do Link (formato canônico 16x24 composto por 3 fatias de 16x8)
+ * a partir do banco gráfico de animações do GBA e salva em BMP com canal alfa.
+ */
+bool export_link_sprites_bmp(const char* filepath,
+                             const u8* sprite_data,
+                             size_t data_size,
+                             const u32* palette,
+                             int num_frames,
+                             int frames_per_row);
+
+/*
  * Salva uma matriz de pixels RGBA em um arquivo de imagem Bitmap (.bmp) padrão.
  * Compatível nativamente com Windows, macOS, Linux e qualquer navegador.
  */
 bool save_bmp_image(const char* filepath, const u32* rgba_pixels, int width, int height);
 
 #endif // GFX_H
+

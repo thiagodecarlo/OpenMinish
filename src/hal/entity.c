@@ -13,6 +13,11 @@
  */
 
 static Entity s_entities[MAX_ENTITIES];
+static const Texture* s_octo_tex = NULL;
+
+void entity_set_texture(const Texture* tex) {
+    s_octo_tex = tex;
+}
 
 static inline void put_pixel_safe(int x, int y, u32 color) {
     hal_video_put_pixel(x, y, color);
@@ -371,66 +376,99 @@ void entity_manager_render(const Camera* cam) {
 
         // 1. OCTOROK VERMELHO
         if (e->type == ENTITY_ENEMY_OCTOROK) {
-            u32 red_body   = 0xDE3030FF;
-            u32 dark_red   = 0x991818FF;
-            u32 highlight  = 0xF07070FF;
-            u32 eye_white  = 0xFFFFFFFF;
-            u32 eye_pupil  = 0x111111FF;
-
-            // Piscar em branco/amarelo quando atingido por dano
+            // Piscar quando atingido por dano (flicker)
             if (e->invulnerableTimer > 0 && ((e->invulnerableTimer / 3) % 2 == 0)) {
-                red_body  = 0xFFFFAAFF;
-                dark_red  = 0xFFDD00FF;
-                highlight = 0xFFFFFFFF;
+                continue;
             }
 
-            int puff = (e->action == 2) ? 1 : 0; // Inchaço de disparo
+            if (s_octo_tex && s_octo_tex->pixels) {
+                int src_x = 0;
+                int src_y = 0;
+                bool flip_h = false;
 
-            // Corpo redondo
-            draw_filled_rect(sx + 3 - puff, sy + 3 - puff, 10 + puff * 2, 8 + puff * 2, red_body);
-            draw_filled_rect(sx + 4, sy + 2, 8, 2, highlight); // Brilho no topo
-            draw_filled_rect(sx + 3, sy + 11, 10, 2, dark_red);
+                if (e->action == 2) {
+                    // Antecipação de tiro (bochechas inchadas)
+                    if (e->dir == DIR_DOWN) {
+                        src_x = 0; src_y = 16;
+                    } else if (e->dir == DIR_UP) {
+                        src_x = 16; src_y = 0;
+                    } else if (e->dir == DIR_RIGHT) {
+                        src_x = 32; src_y = 16;
+                    } else if (e->dir == DIR_LEFT) {
+                        src_x = 32; src_y = 16;
+                        flip_h = true;
+                    }
+                } else {
+                    // Movimento / Patrulha (alterna passos)
+                    if (e->dir == DIR_DOWN) {
+                        src_x = 0; src_y = 0;
+                    } else if (e->dir == DIR_UP) {
+                        src_x = 16; src_y = 0;
+                    } else if (e->dir == DIR_RIGHT) {
+                        src_x = (e->animFrame == 0) ? 32 : 48;
+                        src_y = 0;
+                    } else if (e->dir == DIR_LEFT) {
+                        src_x = (e->animFrame == 0) ? 32 : 48;
+                        src_y = 0;
+                        flip_h = true;
+                    }
+                }
 
-            // Olhos
-            if (e->dir == DIR_DOWN) {
-                draw_filled_rect(sx + 4, sy + 5, 2, 3, eye_white);
-                draw_filled_rect(sx + 10, sy + 5, 2, 3, eye_white);
-                put_pixel_safe(sx + 5, sy + 6, eye_pupil);
-                put_pixel_safe(sx + 11, sy + 6, eye_pupil);
-                // Boca / Tromba para baixo
-                draw_filled_rect(sx + 6, sy + 8, 4, 3, dark_red);
-            } else if (e->dir == DIR_UP) {
-                // De costas
-                draw_filled_rect(sx + 4, sy + 4, 8, 3, dark_red);
-            } else if (e->dir == DIR_LEFT) {
-                draw_filled_rect(sx + 4, sy + 5, 3, 3, eye_white);
-                put_pixel_safe(sx + 4, sy + 6, eye_pupil);
-                // Tromba para a esquerda
-                draw_filled_rect(sx + 1 - puff, sy + 6, 3 + puff, 3, dark_red);
-            } else if (e->dir == DIR_RIGHT) {
-                draw_filled_rect(sx + 9, sy + 5, 3, 3, eye_white);
-                put_pixel_safe(sx + 11, sy + 6, eye_pupil);
-                // Tromba para a direita
-                draw_filled_rect(sx + 12, sy + 6, 3 + puff, 3, dark_red);
-            }
-
-            // Tentáculos (animados com wiggle)
-            if (e->animFrame == 0) {
-                draw_filled_rect(sx + 3, sy + 13, 3, 2, dark_red);
-                draw_filled_rect(sx + 10, sy + 13, 3, 2, dark_red);
+                texture_draw_ex(s_octo_tex, src_x, src_y, 16, 16, sx, sy, flip_h);
             } else {
-                draw_filled_rect(sx + 5, sy + 13, 3, 2, dark_red);
-                draw_filled_rect(sx + 8, sy + 13, 3, 2, dark_red);
+                // Fallback Procedural caso o arquivo octorok.bmp não esteja presente
+                u32 red_body   = 0xDE3030FF;
+                u32 dark_red   = 0x991818FF;
+                u32 highlight  = 0xF07070FF;
+                u32 eye_white  = 0xFFFFFFFF;
+                u32 eye_pupil  = 0x111111FF;
+
+                int puff = (e->action == 2) ? 1 : 0; // Inchaço de disparo
+
+                draw_filled_rect(sx + 3 - puff, sy + 3 - puff, 10 + puff * 2, 8 + puff * 2, red_body);
+                draw_filled_rect(sx + 4, sy + 2, 8, 2, highlight);
+                draw_filled_rect(sx + 3, sy + 11, 10, 2, dark_red);
+
+                if (e->dir == DIR_DOWN) {
+                    draw_filled_rect(sx + 4, sy + 5, 2, 3, eye_white);
+                    draw_filled_rect(sx + 10, sy + 5, 2, 3, eye_white);
+                    put_pixel_safe(sx + 5, sy + 6, eye_pupil);
+                    put_pixel_safe(sx + 11, sy + 6, eye_pupil);
+                    draw_filled_rect(sx + 6, sy + 8, 4, 3, dark_red);
+                } else if (e->dir == DIR_UP) {
+                    draw_filled_rect(sx + 4, sy + 4, 8, 3, dark_red);
+                } else if (e->dir == DIR_LEFT) {
+                    draw_filled_rect(sx + 4, sy + 5, 3, 3, eye_white);
+                    put_pixel_safe(sx + 4, sy + 6, eye_pupil);
+                    draw_filled_rect(sx + 1 - puff, sy + 6, 3 + puff, 3, dark_red);
+                } else if (e->dir == DIR_RIGHT) {
+                    draw_filled_rect(sx + 9, sy + 5, 3, 3, eye_white);
+                    put_pixel_safe(sx + 11, sy + 6, eye_pupil);
+                    draw_filled_rect(sx + 12, sy + 6, 3 + puff, 3, dark_red);
+                }
+
+                if (e->animFrame == 0) {
+                    draw_filled_rect(sx + 3, sy + 13, 3, 2, dark_red);
+                    draw_filled_rect(sx + 10, sy + 13, 3, 2, dark_red);
+                } else {
+                    draw_filled_rect(sx + 5, sy + 13, 3, 2, dark_red);
+                    draw_filled_rect(sx + 8, sy + 13, 3, 2, dark_red);
+                }
             }
         }
 
         // 2. PROJÉTIL: PEDRA
         else if (e->type == ENTITY_PROJECTILE_ROCK) {
-            u32 rock_color = 0x8A5528FF;
-            u32 rock_dark  = 0x4D2E14FF;
-            draw_filled_rect(sx + 1, sy + 1, 4, 4, rock_color);
-            put_pixel_safe(sx + 2, sy + 2, 0xC4864DFF); // Brilho
-            put_pixel_safe(sx + 4, sy + 4, rock_dark);
+            if (s_octo_tex && s_octo_tex->pixels) {
+                // Sprite canônico da pedra: 8x8 pixels em (48, 32)
+                texture_draw(s_octo_tex, 48, 32, 8, 8, sx + 4, sy + 4);
+            } else {
+                u32 rock_color = 0x8A5528FF;
+                u32 rock_dark  = 0x4D2E14FF;
+                draw_filled_rect(sx + 1, sy + 1, 4, 4, rock_color);
+                put_pixel_safe(sx + 2, sy + 2, 0xC4864DFF); // Brilho
+                put_pixel_safe(sx + 4, sy + 4, rock_dark);
+            }
         }
 
         // 3. ITEM: RUPEE VERDE
