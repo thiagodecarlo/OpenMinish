@@ -1,0 +1,79 @@
+# ==============================================================================
+# OpenMinish - The Legend of Zelda: The Minish Cap Native PC Port
+# Arquivo .gitignore (Higienização Legal e Limpeza de Repositório)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. ROMs ORIGINAIS PROPRIETÁRIAS (CONFORMIDADE LEGAL RESTRITA - ZERO-ROM REPO)
+# ------------------------------------------------------------------------------
+# NENHUM arquivo de ROM ou cópia de jogo protegida por direitos autorais
+# deve ser comitada neste repositório sob hipótese alguma.
+ROMS/
+roms/
+Roms/
+*.gba
+*.GBA
+*.sav
+*.SAV
+*.srm
+
+# ------------------------------------------------------------------------------
+# 2. DIRETÓRIOS E ARTEFATOS DE COMPILAÇÃO (BUILD SYSTEM)
+# ------------------------------------------------------------------------------
+build/
+Build/
+bin/
+out/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+*.cmake
+!CMakeLists.txt
+Makefile
+*.ninja
+*.ninja_log
+*.ninja_deps
+
+# Binários Executáveis e Bibliotecas Dinâmicas
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+*.o
+*.obj
+*.pdb
+*.ilk
+*.exp
+
+# ------------------------------------------------------------------------------
+# 3. ASSETS EXTRAÍDOS LOCALMENTE PELA FERRAMENTA AOT
+# ------------------------------------------------------------------------------
+# Os assets gerados pelo asset_extractor.exe a partir de uma ROM limpa do usuário
+# são criados localmente e não devem poluir o repositório base.
+assets/extracted/
+assets/regions/*/
+!assets/regions/.gitkeep
+assets/textures/*
+!assets/textures/.gitkeep
+
+# ------------------------------------------------------------------------------
+# 4. AMBIENTES DE DESENVOLVIMENTO (IDEs E EDITORES)
+# ------------------------------------------------------------------------------
+.vscode/
+.vs/
+.idea/
+*.user
+*.suo
+*.sln
+*.vcxproj*
+
+# ------------------------------------------------------------------------------
+# 5. ARQUIVOS DO SISTEMA OPERACIONAL E LOGS
+# ------------------------------------------------------------------------------
+Thumbs.db
+desktop.ini
+.DS_Store
+*.log
+*.tmp

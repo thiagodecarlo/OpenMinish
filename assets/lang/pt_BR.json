@@ -1,0 +1,15 @@
+{
+  "locale": "pt_BR",
+  "language_name": "Português (Brasil)",
+  "game_title": "The Legend of Zelda: The Minish Cap (Port Nativo)",
+  "dialogues": {
+    "INTRO_001": "Há muito tempo atrás, quando o mundo dos homens estava prestes a ser engolido pela escuridão...",
+    "INTRO_002": "Os pequenos Picori desceram dos céus e entregaram a um jovem herói a sagrada Espada Picori!",
+    "EZLO_GREET": "Ei, garoto! Quem você pensa que está olhando com essa cara de bobo?"
+  },
+  "ui": {
+    "press_start": "PRESSIONE START",
+    "widescreen_toggle": "Modo Widescreen (16:9)",
+    "texture_pack_enabled": "Pacote de Texturas HD Ativado"
+  }
+}
