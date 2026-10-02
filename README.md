@@ -67,11 +67,18 @@ O **OpenMinish** é um projeto de estudo universitário e pesquisa técnica foca
   - Deflexão em pleno voo com a espada do Link.
   - Knockback físico com inércia, danos e drops aleatórios de **Rupees Verdes** (+5) e **Corações de Cura** (+1 HP).
 
+### 🎨 Sprites Autênticos Extraídos da ROM (Clean-Room AOT)
+- **Metatiles 1D do GBA**: Montagem canônica de metatiles 16x24 (3 fatias de 16x8) para o Link e metatiles 16x16 (4 tiles 8x8) para os Octoroks e projétil de pedra.
+- **Canal Alfa & Espelhamento Horizontal (`flip_h`)**: Decodificação de transparência e espelhamento horizontal em tempo real para as direções simétricas (esquerda/direita).
+- **Animações Completas**: Ciclo de caminhada direcional do Link com leve *bobbing*, golpe de espada, patrulha do Octorok, inchaço de bochechas para disparo e recuo com flicker ao sofrer dano.
+- **Fallback Gracioso**: Se os assets não forem extraídos previamente, a engine entra automaticamente no modo geométrico procedural sem interromper a execução.
+
 ### 🌍 Suporte Multi-Região Dinâmico
 - Troca a quente entre os bancos gráficos e localizações das regiões:
   - **USA** (`BZME`) - Inglês
   - **EUR** (`BZMP`) - Multi-5
   - **JPN** (`BZMJ`) - Japonês
+
 
 ---
 
