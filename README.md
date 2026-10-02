@@ -10,11 +10,18 @@
 
 ---
 
-## 📖 1. Visão Geral e Propósito Acadêmico
+## 📖 1. Visão Geral, Propósito Acadêmico & Desenvolvimento com IA
 
-O **OpenMinish** é um projeto de estudo universitário de Engenharia de Software e Sistemas de Computação de Baixo Nível. Seu objetivo é reconstruir a arquitetura técnica de *The Legend of Zelda: The Minish Cap* (originalmente desenvolvido pela Capcom e lançado para Game Boy Advance em 2004) como um **aplicativo nativo cross-platform de alta performance**.
+O **OpenMinish** é um projeto de estudo universitário e pesquisa técnica focado em **Engenharia de Software, Arquitetura de Motores de Jogos e Sistemas de Baixo Nível**. Seu objetivo central é estudar como reconstruir a arquitetura técnica de um clássico do Game Boy Advance (*The Legend of Zelda: The Minish Cap*, Capcom/Nintendo, 2004) como um **aplicativo nativo cross-platform em C moderno**.
 
-Diferente de um emulador (que interpreta o bytecode da CPU ARM7TDMI e simula registradores de hardware a cada ciclo), o **OpenMinish** compila o código-fonte C diretamente para as instruções nativas do processador do computador (x86_64 / ARM64), usufruindo da aceleração da GPU moderna, baixa latência de entrada e áudio, e resolução expansível.
+> [!NOTE]
+> **🤖 Transparência sobre o Uso de Inteligência Artificial (AI Pair Programming)**:
+> Este projeto adota uma abordagem pioneira de **Programação em Par Humano-IA (Human-AI Pair Programming)**. O desenvolvimento é conduzido com o suporte de Inteligência Artificial avançada como assistente e mentor técnico para:
+> - Arquitetura e modelagem de camadas HAL (Hardware Abstraction Layer).
+> - Dedução de algoritmos de baixo nível (descompressão LZ77 do BIOS do GBA, conversão de espaços de cores BGR555 $\to$ RGBA8888).
+> - Cinemática vetorial (física de aceleração 360° e deadzones euclidianas).
+> - Síntese sonora procedural de ondas sonoras retro em C puro.
+> - O projeto serve também como estudo de caso prático sobre como IAs podem acelerar a engenharia reversa para interoperabilidade e a educação em ciências da computação.
 
 ---
 
@@ -202,7 +209,30 @@ Copie sua ROM limpa (ex: `zelda_usa.gba`) e execute a ferramenta AOT de extraç�
 
 ---
 
-## 📜 8. Declaração Legal e Isenção de Responsabilidade
+## 🤝 8. Contribuições da Comunidade (Open Source)
+
+O **OpenMinish** é um repositório aberto e colaborativo. Estudantes, desenvolvedores de jogos, entusiastas de emulação e a comunidade de preservação são encorajados a contribuir com melhorias, correções e novos recursos!
+
+### Como Contribuir:
+1. **Fork** o projeto.
+2. Crie uma branch para sua feature (`git checkout -b feature/minha-melhoria`).
+3. Faça o commit das suas mudanças com mensagens semânticas (`git commit -m 'feat: adiciona inimigo ChuChu verde'`).
+4. Envie para o seu fork (`git push origin feature/minha-melhoria`).
+5. Abra um **Pull Request**.
+
+### Áreas Abertas para Contribuição:
+- 👾 **Novas Entidades e Chefes**: Implementação de mais inimigos clássicos (Keese, Moblin, Spiny Beetle, Big Green ChuChu).
+- 🗺️ **Masmorras e Eventos**: Parser de scripts de diálogos, cutscenes e transição de salas subterrâneas.
+- 🎨 **Packs de Texturas HD**: Arte em alta resolução para ser carregada via `assets/textures/`.
+- 🎼 **Trilha Sonora e Áudio**: Suporte a faixas de música orquestradas e formatos de streaming modernos.
+- 📱 **Novos Alvos de Port**: Compilação para Raspberry Pi, Nintendo Switch Homebrew e WebAssembly (jogável no navegador).
+
+> [!CAUTION]
+> **Regra de Ouro**: Nenhum Pull Request contendo arquivos de ROM proprietários, assets extraídos protegidos por copyright ou binários compilados será aceito. Todo código deve ser C11 limpo, modular e aderente ao HAL.
+
+---
+
+## 📜 9. Declaração Legal e Isenção de Responsabilidade
 
 *The Legend of Zelda* e *The Legend of Zelda: The Minish Cap* são marcas registradas e propriedades intelectuais da **Nintendo Co., Ltd.** e da **Capcom Co., Ltd.**. 
 
