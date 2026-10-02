@@ -1,5 +1,6 @@
 #include "hal/texture.h"
 #include "hal/video.h"
+#include <SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,6 +35,57 @@ typedef struct {
 } BmpInfoHeader;
 #pragma pack(pop)
 
+/*
+ * Localizador Inteligente de Arquivos de Asset:
+ * Procura o arquivo relativo ao CWD atual (.), voltando um nível (../ caso o jogo
+ * seja executado de dentro da pasta build/), ou relativo ao diretório do executável.
+ */
+static FILE* open_asset_file(const char* rel_path, char* resolved_out, size_t out_size) {
+    if (!rel_path) return NULL;
+
+    // 1. Tenta relativo ao CWD direto
+    FILE* f = fopen(rel_path, "rb");
+    if (f) {
+        snprintf(resolved_out, out_size, "%s", rel_path);
+        return f;
+    }
+
+    // 2. Tenta voltar um diretório (caso executado a partir de build/)
+    char fallback[512];
+    snprintf(fallback, sizeof(fallback), "../%s", rel_path);
+    f = fopen(fallback, "rb");
+    if (f) {
+        snprintf(resolved_out, out_size, "%s", fallback);
+        return f;
+    }
+
+    // 3. Tenta resolver via diretório do executável (SDL_GetBasePath)
+    char* base = SDL_GetBasePath();
+    if (base) {
+        // Tenta base/rel_path
+        snprintf(fallback, sizeof(fallback), "%s%s", base, rel_path);
+        f = fopen(fallback, "rb");
+        if (f) {
+            snprintf(resolved_out, out_size, "%s", fallback);
+            SDL_free(base);
+            return f;
+        }
+
+        // Tenta base/../rel_path (se o executável estiver em build/)
+        snprintf(fallback, sizeof(fallback), "%s../%s", base, rel_path);
+        f = fopen(fallback, "rb");
+        if (f) {
+            snprintf(resolved_out, out_size, "%s", fallback);
+            SDL_free(base);
+            return f;
+        }
+
+        SDL_free(base);
+    }
+
+    return NULL;
+}
+
 Texture* texture_load_bmp(const char* filepath) {
     if (!filepath) return NULL;
 
@@ -45,17 +97,16 @@ Texture* texture_load_bmp(const char* filepath) {
 
     snprintf(mod_path, sizeof(mod_path), "assets/textures/%s", filename);
 
-    const char* target_path = filepath;
-    FILE* f = fopen(mod_path, "rb");
+    char target_path[512];
+    FILE* f = open_asset_file(mod_path, target_path, sizeof(target_path));
     if (f) {
-        printf("[MOD ATIVO] Carregando textura personalizada: %s\n", mod_path);
-        target_path = mod_path;
+        printf("[MOD ATIVO] Carregando textura personalizada: %s\n", target_path);
     } else {
-        f = fopen(filepath, "rb");
+        f = open_asset_file(filepath, target_path, sizeof(target_path));
     }
 
     if (!f) {
-        printf("[ERRO TEXTURA] Nao foi possivel abrir o arquivo: %s\n", target_path);
+        printf("[ERRO TEXTURA] Nao foi possivel abrir o arquivo: %s\n", filepath);
         return NULL;
     }
 
