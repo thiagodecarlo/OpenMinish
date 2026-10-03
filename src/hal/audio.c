@@ -645,6 +645,121 @@ static void synth_generate_all_sfx(void) {
         s_precalc_sfx[SOUND_BLOCK_PUSH].total_frames = num_frames;
         s_precalc_sfx[SOUND_BLOCK_PUSH].is_stereo = false;
     }
+
+    // 23. SOUND_BOSS_SLAM: Impacto colossal do chefe desabando no chão (400ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.400f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase_low = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float flow = 85.0f - 55.0f * (t / 0.400f);
+            phase_low += flow / (float)AUDIO_SAMPLE_RATE;
+            float thud = sinf(2.0f * PI_F * phase_low) * 0.70f;
+            float debris = synth_noise() * 0.50f;
+            float env = expf(-10.0f * t);
+            float total = (thud + debris) * env * 30000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_BOSS_SLAM].samples = buf;
+        s_precalc_sfx[SOUND_BOSS_SLAM].total_frames = num_frames;
+        s_precalc_sfx[SOUND_BOSS_SLAM].is_stereo = false;
+    }
+
+    // 24. SOUND_BOSS_HIT: Golpe certeiro na cabeça vulnerável do chefe (220ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.220f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase1 = 0.0f;
+        float phase2 = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float f1 = 380.0f - 240.0f * (t / 0.220f);
+            float f2 = 880.0f + 120.0f * sinf(2.0f * PI_F * 35.0f * t);
+            phase1 += f1 / (float)AUDIO_SAMPLE_RATE;
+            phase2 += f2 / (float)AUDIO_SAMPLE_RATE;
+            float squish = synth_triangle_wave(phase1) * 0.60f;
+            float ping   = synth_square_wave(phase2, 0.50f) * 0.40f;
+            float env = expf(-15.0f * t);
+            float total = (squish + ping) * env * 28000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_BOSS_HIT].samples = buf;
+        s_precalc_sfx[SOUND_BOSS_HIT].total_frames = num_frames;
+        s_precalc_sfx[SOUND_BOSS_HIT].is_stereo = false;
+    }
+
+    // 25. SOUND_BOSS_DEFEAT: Explosão climática de vitória e dissolução (1600ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 1.600f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase = 0.0f;
+        float phase_fanfare = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float total = 0.0f;
+            if (t < 0.600f) {
+                // Borbulhamento e estalo gelatinoso crescente
+                float f = 120.0f + 350.0f * (t / 0.600f) + 80.0f * sinf(2.0f * PI_F * 25.0f * t);
+                phase += f / (float)AUDIO_SAMPLE_RATE;
+                float wobble = synth_triangle_wave(phase);
+                float hiss = synth_noise() * 0.5f;
+                float env = (t / 0.600f);
+                total = (wobble + hiss) * env * 26000.0f;
+            } else if (t < 1.000f) {
+                // Explosão principal de gosma
+                float exp_t = t - 0.600f;
+                float env = expf(-8.0f * exp_t);
+                float rumble = synth_noise() * 0.85f;
+                total = rumble * env * 30000.0f;
+            } else {
+                // Fanfarra suave de alívio e triunfo
+                float win_t = t - 1.000f;
+                float f = (win_t < 0.300f) ? 523.25f : 659.25f; // Dó5 -> Mi5
+                phase_fanfare += f / (float)AUDIO_SAMPLE_RATE;
+                float bell = sinf(2.0f * PI_F * phase_fanfare);
+                float env = expf(-5.0f * (win_t < 0.300f ? win_t : (win_t - 0.300f)));
+                total = bell * env * 22000.0f;
+            }
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_BOSS_DEFEAT].samples = buf;
+        s_precalc_sfx[SOUND_BOSS_DEFEAT].total_frames = num_frames;
+        s_precalc_sfx[SOUND_BOSS_DEFEAT].is_stereo = false;
+    }
+
+    // 26. SOUND_HEART_CONTAINER: Fanfarra sagrada ao obter o Heart Container (1400ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 1.400f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float freqs[6] = { 523.25f, 659.25f, 783.99f, 1046.50f, 1318.51f, 1567.98f }; // C5, E5, G5, C6, E6, G6
+        float phase = 0.0f;
+        float phase2 = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            int note_idx = (int)(t / 0.180f);
+            if (note_idx > 5) note_idx = 5;
+            float note_t = t - (note_idx * 0.180f);
+            if (note_idx == 5) note_t = t - 0.900f; // Última nota sustenta
+            float env = expf(-7.0f * note_t);
+            phase += freqs[note_idx] / (float)AUDIO_SAMPLE_RATE;
+            phase2 += (freqs[note_idx] * 2.0f) / (float)AUDIO_SAMPLE_RATE;
+            float wave = sinf(2.0f * PI_F * phase) * 0.70f + sinf(2.0f * PI_F * phase2) * 0.30f;
+            float total = wave * env * 25000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_HEART_CONTAINER].samples = buf;
+        s_precalc_sfx[SOUND_HEART_CONTAINER].total_frames = num_frames;
+        s_precalc_sfx[SOUND_HEART_CONTAINER].is_stereo = false;
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -1233,6 +1348,175 @@ static s16* synth_generate_deepwood_shrine(u32* out_total_frames) {
     return out_buf;
 }
 
+static s16* synth_generate_boss_battle(u32* out_total_frames) {
+    float bpm = 144.0f;
+    float beat_sec = 60.0f / bpm;
+    float total_sec = beat_sec * 4.0f * 16.0f; // 16 compassos 4/4 = 26.66s
+    u32 total_frames = (u32)(AUDIO_SAMPLE_RATE * total_sec);
+
+    float* mix_l = (float*)calloc(total_frames, sizeof(float));
+    float* mix_r = (float*)calloc(total_frames, sizeof(float));
+    if (!mix_l || !mix_r) {
+        if (mix_l) free(mix_l);
+        if (mix_r) free(mix_r);
+        return NULL;
+    }
+
+    // 1. Canal 1: Linha de Baixo em Semicolcheias Driving (D menor)
+    float bass_phase = 0.0f;
+    for (u32 i = 0; i < total_frames; i++) {
+        float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+        float beat_pos = t / beat_sec;
+        int bar = (int)(beat_pos / 4.0f) % 16;
+        float bar_beat = fmodf(beat_pos, 4.0f);
+        int sixteenth = (int)(bar_beat * 4.0f) % 16;
+
+        float f = 73.42f; // Ré2 (D2)
+        if (bar < 4) {
+            // Padrão motor em D2 com acentos
+            if (sixteenth % 4 == 1) f = 87.31f;       // F2
+            else if (sixteenth % 4 == 2) f = 98.00f;  // G2
+            else if (sixteenth % 4 == 3) f = 65.41f;  // C2
+            else f = 73.42f;
+        } else if (bar < 8) {
+            // Sib1 e Dó2
+            if (bar % 2 == 0) f = (sixteenth % 2 == 0) ? 58.27f : 73.42f; // Bb1 / D2
+            else f = (sixteenth % 2 == 0) ? 65.41f : 82.41f;             // C2 / E2
+        } else if (bar < 12) {
+            // Sol2 e Lá2
+            if (bar % 2 == 0) f = (sixteenth % 2 == 0) ? 98.00f : 116.54f; // G2 / Bb2
+            else f = (sixteenth % 2 == 0) ? 110.00f : 138.59f;            // A2 / C#3
+        } else {
+            // Escalada cromática dramática
+            float climb[16] = {
+                58.27f, 58.27f, 61.74f, 61.74f, 65.41f, 65.41f, 69.30f, 69.30f,
+                73.42f, 73.42f, 87.31f, 98.00f, 110.00f, 123.47f, 138.59f, 146.83f
+            };
+            f = climb[sixteenth];
+        }
+
+        bass_phase += f / (float)AUDIO_SAMPLE_RATE;
+        float step_t = fmodf(bar_beat * 4.0f, 1.0f);
+        float env = expf(-6.0f * step_t);
+        float sample = synth_triangle_wave(bass_phase) * env * 0.28f;
+
+        mix_l[i] += sample * 0.85f;
+        mix_r[i] += sample * 0.85f;
+    }
+
+    // 2. Canal 2: Melodia Principal (Pulse 50% com vibrato agressivo e heroico)
+    float lead_notes[32] = {
+        293.66f, 349.23f, 440.00f, 587.33f, 523.25f, 466.16f, 440.00f, 392.00f,
+        349.23f, 392.00f, 440.00f, 523.25f, 440.00f, 349.23f, 293.66f, 329.63f,
+        466.16f, 587.33f, 698.46f, 659.25f, 587.33f, 523.25f, 466.16f, 523.25f,
+        440.00f, 523.25f, 659.25f, 587.33f, 554.37f, 587.33f, 659.25f, 880.00f
+    };
+    float lead_phase = 0.0f;
+    for (u32 i = 0; i < total_frames; i++) {
+        float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+        float beat_pos = t / beat_sec;
+        int note_idx = (int)(beat_pos / 2.0f) % 32;
+        float note_beat = fmodf(beat_pos, 2.0f);
+
+        float base_f = lead_notes[note_idx];
+        float vibrato = 1.0f + 0.018f * sinf(2.0f * PI_F * 6.5f * t);
+        float f = base_f * vibrato;
+        lead_phase += f / (float)AUDIO_SAMPLE_RATE;
+
+        float note_frac = note_beat / 2.0f;
+        float env = 1.0f;
+        if (note_frac < 0.06f) env = note_frac / 0.06f;
+        else if (note_frac > 0.85f) env = 1.0f - (note_frac - 0.85f) / 0.15f;
+
+        float sample = synth_square_wave(lead_phase, 0.50f) * env * 0.22f;
+        mix_l[i] += sample * 0.90f;
+        mix_r[i] += sample * 0.80f;
+    }
+
+    // 3. Canal 3: Arpejos Sincopados de Tensão (Pulse 25% com Ping-Pong estéreo)
+    float arp_phase = 0.0f;
+    for (u32 i = 0; i < total_frames; i++) {
+        float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+        float beat_pos = t / beat_sec;
+        int arp_step = (int)(beat_pos * 4.0f) % 8;
+        float arp_pattern[8] = { 587.33f, 698.46f, 880.00f, 698.46f, 1046.50f, 880.00f, 698.46f, 880.00f };
+        float f = arp_pattern[arp_step];
+        arp_phase += f / (float)AUDIO_SAMPLE_RATE;
+
+        float step_frac = fmodf(beat_pos * 4.0f, 1.0f);
+        float env = expf(-10.0f * step_frac);
+        float sample = synth_square_wave(arp_phase, 0.25f) * env * 0.12f;
+
+        float pan = 0.5f + 0.4f * sinf(2.0f * PI_F * 1.5f * beat_pos);
+        mix_l[i] += sample * pan;
+        mix_r[i] += sample * (1.0f - pan);
+    }
+
+    // 4. Canal 4: Bateria de Batalha (Bumbo, Caixa, Pratos de Ataque e Hi-Hats)
+    float kick_phase = 0.0f;
+    for (u32 i = 0; i < total_frames; i++) {
+        float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+        float beat_pos = t / beat_sec;
+        float beat_frac = fmodf(beat_pos, 1.0f);
+        int beat_num = (int)beat_pos % 4;
+
+        // Bumbo (Beats 0 e 2)
+        if (beat_num == 0 || beat_num == 2) {
+            float k_f = 130.0f - 85.0f * (beat_frac / 0.25f);
+            if (k_f < 30.0f) k_f = 30.0f;
+            kick_phase += k_f / (float)AUDIO_SAMPLE_RATE;
+            float kick = sinf(2.0f * PI_F * kick_phase) * expf(-18.0f * beat_frac) * 0.32f;
+            mix_l[i] += kick;
+            mix_r[i] += kick;
+        }
+
+        // Caixa Enérgica (Beats 1 e 3)
+        if (beat_num == 1 || beat_num == 3) {
+            float snare_noise = synth_noise() * expf(-16.0f * beat_frac) * 0.25f;
+            mix_l[i] += snare_noise;
+            mix_r[i] += snare_noise;
+        }
+
+        // Hi-Hat contínuo em semicolcheias
+        float hat_frac = fmodf(beat_pos * 4.0f, 1.0f);
+        float hat = synth_noise() * expf(-35.0f * hat_frac) * 0.07f;
+        mix_l[i] += hat * 0.6f;
+        mix_r[i] += hat * 0.6f;
+
+        // Prato de Ataque (Crash) no início de cada 4 compassos
+        float bar_frac = fmodf(beat_pos / 16.0f, 1.0f);
+        if (bar_frac < 0.15f) {
+            float crash = synth_noise() * expf(-4.0f * (bar_frac * 16.0f * beat_sec)) * 0.22f;
+            mix_l[i] += crash * 0.8f;
+            mix_r[i] += crash * 0.8f;
+        }
+    }
+
+    s16* out_buf = (s16*)malloc(total_frames * 2 * sizeof(s16));
+    if (!out_buf) {
+        free(mix_l);
+        free(mix_r);
+        return NULL;
+    }
+
+    for (u32 i = 0; i < total_frames; i++) {
+        float l = mix_l[i] * 29000.0f;
+        float r = mix_r[i] * 29000.0f;
+        if (l > 32767.0f)  l = 32767.0f;
+        if (l < -32768.0f) l = -32768.0f;
+        if (r > 32767.0f)  r = 32767.0f;
+        if (r < -32768.0f) r = -32768.0f;
+
+        out_buf[i * 2 + 0] = (s16)l;
+        out_buf[i * 2 + 1] = (s16)r;
+    }
+
+    free(mix_l);
+    free(mix_r);
+    *out_total_frames = total_frames;
+    return out_buf;
+}
+
 // ----------------------------------------------------------------------------
 // CALLBACK DO MIXER DE BAIXA LATÊNCIA DO SDL2
 // ----------------------------------------------------------------------------
@@ -1469,6 +1753,7 @@ const char* hal_audio_get_bgm_name(BgmTrack track) {
         case BGM_MINISH_WOODS:     return "Minish Woods (Deepwood)";
         case BGM_HYRULE_OVERWORLD: return "Hyrule Overworld (Theme)";
         case BGM_DEEPWOOD_SHRINE:  return "Deepwood Shrine (Dungeon)";
+        case BGM_BOSS_BATTLE:      return "Boss Battle (Big Green ChuChu)";
         case BGM_NONE:
         default:                   return "Mudo / Silencio";
     }
@@ -1490,7 +1775,7 @@ void hal_audio_play_bgm(BgmTrack track) {
 
     // 1. Suporte a mods de audio: verifica se existe arquivo WAV customizado em assets/audio/
     char mod_path[256];
-    const char* track_tags[] = { "none", "minish_woods", "hyrule_overworld", "deepwood_shrine" };
+    const char* track_tags[] = { "none", "minish_woods", "hyrule_overworld", "deepwood_shrine", "boss_battle" };
     snprintf(mod_path, sizeof(mod_path), "assets/audio/%s.wav", track_tags[track]);
 
     if (hal_audio_play_music(mod_path, 0.75f, true)) {
@@ -1509,6 +1794,8 @@ void hal_audio_play_bgm(BgmTrack track) {
         samples = synth_generate_hyrule_overworld(&total_frames);
     } else if (track == BGM_DEEPWOOD_SHRINE) {
         samples = synth_generate_deepwood_shrine(&total_frames);
+    } else if (track == BGM_BOSS_BATTLE) {
+        samples = synth_generate_boss_battle(&total_frames);
     }
 
     if (!samples || total_frames == 0) return;

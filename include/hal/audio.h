@@ -43,6 +43,10 @@ typedef enum {
     SOUND_DOOR_UNLOCK,     // Cadeado de ferro se abrindo com giro de chave
     SOUND_DOOR_SHUTTER,    // Grades de ferro da masmorra se erguendo ou baixando
     SOUND_BLOCK_PUSH,      // Bloco pesado de pedra deslizando pelo piso
+    SOUND_BOSS_SLAM,       // Impacto colossal do chefe desabando no chão
+    SOUND_BOSS_HIT,        // Golpe certeiro na cabeça gelatinosa vulnerável do chefe
+    SOUND_BOSS_DEFEAT,     // Explosão climática de vitória e dissolução do chefe
+    SOUND_HEART_CONTAINER, // Fanfarra sagrada ao obter o Heart Container permanente
     SOUND_COUNT
 } SoundEffect;
 
@@ -52,6 +56,7 @@ typedef enum {
     BGM_MINISH_WOODS,     // Trilha misteriosa e mágica de Minish Woods (Deepwood)
     BGM_HYRULE_OVERWORLD, // O lendário tema marcial de Hyrule Field
     BGM_DEEPWOOD_SHRINE,  // A atmosfera enigmática e gótica de Deepwood Shrine
+    BGM_BOSS_BATTLE,      // Batalha urgente e épica contra o Chefe (Boss Battle)
     BGM_COUNT
 } BgmTrack;
 

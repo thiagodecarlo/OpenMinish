@@ -27,7 +27,9 @@ typedef enum {
     ENTITY_NPC_FOREST_MINISH, // Habitante Minish amigável dos bosques
     ENTITY_ENEMY_KEESE,       // Morcego clássico Keese (Voo com sombra e oscilação)
     ENTITY_ENEMY_CHUCHU,      // Gosma gelatinosa Green ChuChu (Brota e salta)
-    ENTITY_CHEST_GOLD         // Baú do Tesouro Dourado (destravado por Fusão de Kinstone)
+    ENTITY_CHEST_GOLD,        // Baú do Tesouro Dourado (destravado por Fusão de Kinstone)
+    ENTITY_BOSS_BIG_CHUCHU,   // Chefe Gigante do Deepwood Shrine (Big Green ChuChu)
+    ENTITY_ITEM_HEART_CONTAINER // Recipiente de Coração permanente (+1 Coração Máximo e Cura Total)
 } EntityType;
 
 // Caixa delimitadora de colisão e dano (Hitbox / Hurtbox)
@@ -68,6 +70,13 @@ typedef struct Entity {
     u8         kinstoneType;       // 0=Verde, 1=Azul, 2=Vermelho
     bool       kinstoneFused;      // Fusão já foi completada
     float      bubbleBob;          // Oscilação do balão de Kinstone flutuante
+
+    // Campos dedicados para o Chefe Big Green ChuChu
+    float      bossBaseScale;      // Escala da base gelatinosa (1.0 -> 0.1 sugada pelo Pote Mágico)
+    int        bossSuctionTimer;   // Duração de sucção contínua recebida
+    int        bossToppleTimer;    // Temporizador do chefe desabado no chão vulnerável
+    bool       bossEnraged;        // Fase 2 (HP <= 5): olhos vermelhos e saltos furiosos
+    int        bossDeathTimer;     // Temporizador da animação dramática de derrota
 } Entity;
 
 /*
@@ -81,9 +90,29 @@ void entity_manager_init(void);
 Entity* entity_spawn(EntityType type, float world_x, float world_y);
 
 /*
- * Retorna a contagem de monstros vivos no mundo (Octorok, Keese, ChuChu).
+ * Retorna a contagem de monstros vivos no mundo (Octorok, Keese, ChuChu, Chefe).
  */
 int entity_count_active_enemies(void);
+
+/*
+ * Retorna true se o Big Green ChuChu estiver ativo e vivo na masmorra.
+ */
+bool entity_is_boss_alive(void);
+
+/*
+ * Retorna se o chefe Big Green ChuChu foi derrotado.
+ */
+bool entity_is_boss_defeated(void);
+
+/*
+ * Retorna os deslocamentos X e Y de tremor de tela (Screen Shake) ativos no momento.
+ */
+void entity_get_screen_shake(int* out_x, int* out_y);
+
+/*
+ * Dispara um efeito de tremor de tela com duração e magnitude especificadas.
+ */
+void entity_trigger_screen_shake(int duration_frames, int magnitude);
 
 /*
  * Remove todas as entidades ativas do pool de memória.
@@ -92,10 +121,10 @@ void entity_clear_all(void);
 
 /*
  * Atualiza o ciclo de vida, IA, físicas de colisão e projéteis de todas as entidades ativas.
- * Atualiza também a vida, rupees e recuo do Link caso seja atingido.
+ * Atualiza também a vida, vida máxima, rupees e recuo do Link caso seja atingido ou colete itens.
  */
 void entity_manager_update(const Tilemap* map, float link_x, float link_y,
-                           int* link_hearts, int* link_rupees,
+                           int* link_hearts, int* link_max_hearts, int* link_rupees,
                            int* link_invuln_timer, float* link_knock_x, float* link_knock_y);
 
 /*

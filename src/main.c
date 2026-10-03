@@ -39,6 +39,7 @@ typedef struct {
     int  anim_timer;
     int  anim_frame;
     int  hearts;
+    int  max_hearts;
     int  rupees;
     int  invuln_timer;
     float knock_x;
@@ -151,6 +152,28 @@ static void draw_heart(int hx, int hy) {
     for (int x = 1; x <= 5; x++) hal_video_put_pixel(hx + x, hy + 4, red);
     for (int x = 2; x <= 4; x++) hal_video_put_pixel(hx + x, hy + 5, red);
     hal_video_put_pixel(hx + 3, hy + 6, red);
+}
+
+// Renderiza a moldura de um coração vazio no HUD (quando com dano)
+static void draw_empty_heart(int hx, int hy) {
+    u32 dark = 0x660808FF;
+    u32 gray = 0x1E293BFF;
+
+    hal_video_put_pixel(hx + 1, hy, dark);
+    hal_video_put_pixel(hx + 2, hy, dark);
+    hal_video_put_pixel(hx + 4, hy, dark);
+    hal_video_put_pixel(hx + 5, hy, dark);
+
+    for (int y = 1; y <= 3; y++) {
+        for (int x = 0; x <= 6; x++) {
+            bool border = (x == 0 || x == 6 || (y == 1 && x == 3));
+            hal_video_put_pixel(hx + x, hy + y, border ? dark : gray);
+        }
+    }
+
+    for (int x = 1; x <= 5; x++) hal_video_put_pixel(hx + x, hy + 4, (x == 1 || x == 5) ? dark : gray);
+    for (int x = 2; x <= 4; x++) hal_video_put_pixel(hx + x, hy + 5, (x == 2 || x == 4) ? dark : gray);
+    hal_video_put_pixel(hx + 3, hy + 6, dark);
 }
 
 // Renderiza o Link no estilo clássico de Minish Cap na posição da Câmera
@@ -354,6 +377,7 @@ int main(int argc, char* argv[]) {
     link.anim_timer = 0;
     link.anim_frame = 0;
     link.hearts = 3;
+    link.max_hearts = 3;
     link.rupees = 50;
     link.invuln_timer = 0;
     link.knock_x = 0.0f;
@@ -754,7 +778,7 @@ int main(int argc, char* argv[]) {
         }
 
         entity_manager_update(world_map, link.x, link.y,
-                              &link.hearts, &link.rupees,
+                              &link.hearts, &link.max_hearts, &link.rupees,
                               &link.invuln_timer, &link.knock_x, &link.knock_y);
 
         // Atualizacao do Subsistema de Subarmas (Bumerangue, Vórtice do Pote Magico, Projeteis)
@@ -762,7 +786,7 @@ int main(int argc, char* argv[]) {
 
         // Respawn de teste caso o Link zere os corações
         if (link.hearts <= 0) {
-            link.hearts = 3;
+            link.hearts = link.max_hearts;
             if (dungeon_is_active()) {
                 link.x = 7.5f * TILE_SIZE;
                 link.y = 8.0f * TILE_SIZE;
@@ -801,6 +825,12 @@ int main(int argc, char* argv[]) {
             camera_update(&camera, link.x, link.y, ctx->render_width, ctx->render_height, world_map);
         }
 
+        // Aplicação do tremor de tela (Screen Shake) causado pelos passos gigantes e impacto do Chefe
+        int shake_x = 0, shake_y = 0;
+        entity_get_screen_shake(&shake_x, &shake_y);
+        camera.x += (float)shake_x;
+        camera.y += (float)shake_y;
+
         // --------------------------------------------------------------------
         // 3. RENDERIZAÇÃO NO FRAMEBUFFER VIRTUAL
         // --------------------------------------------------------------------
@@ -829,9 +859,13 @@ int main(int argc, char* argv[]) {
         // 3. Barra Superior de HUD (Status do Jogo fixo na tela)
         draw_rect(0, 0, ctx->render_width, 14, 0x0C1C0DFF);
 
-        // 3 Corações de Vida de Zelda no canto superior esquerdo
-        for (int h = 0; h < link.hearts; h++) {
-            draw_heart(4 + (h * 9), 3);
+        // Corações de Vida de Zelda no canto superior esquerdo (Cheios e Vazios)
+        for (int h = 0; h < link.max_hearts; h++) {
+            if (h < link.hearts) {
+                draw_heart(4 + (h * 9), 3);
+            } else {
+                draw_empty_heart(4 + (h * 9), 3);
+            }
         }
 
         // Indicador de Controle Conectado (Verde se gamepad 8BitDo ativo, cinza se teclado)
@@ -857,11 +891,12 @@ int main(int argc, char* argv[]) {
         hal_video_put_pixel(67, 3, 0x00FF88FF);
         hal_video_put_pixel(67, 10, 0x00FF88FF);
 
-        // Indicador de Trilha Sonora BGM no HUD (Minish Woods: Turquesa, Hyrule: Dourado, Deepwood: Roxo, Mudo: Cinza)
+        // Indicador de Trilha Sonora BGM no HUD (Minish Woods: Turquesa, Hyrule: Dourado, Deepwood: Roxo, Boss: Vermelho, Mudo: Cinza)
         BgmTrack current_bgm = hal_audio_get_current_bgm();
         u32 bgm_color = (current_bgm == BGM_MINISH_WOODS)     ? 0x00E5FFFF :
                         (current_bgm == BGM_HYRULE_OVERWORLD) ? 0xFFD700FF :
                         (current_bgm == BGM_DEEPWOOD_SHRINE)  ? 0xA855F7FF :
+                        (current_bgm == BGM_BOSS_BATTLE)      ? 0xEF4444FF :
                                                                 0x666666FF;
         draw_rect(76, 5, 3, 5, bgm_color);
         hal_video_put_pixel(79, 4, bgm_color);
