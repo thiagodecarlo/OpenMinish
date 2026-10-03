@@ -169,6 +169,23 @@ O **OpenMinish** é um projeto de estudo universitário e pesquisa técnica foca
 - **Transição Perfeita Overworld $\leftrightarrow$ Dungeon**:
   - Entrada física ao caminhar pelo archway do santuário ao norte da clareira de Minish Woods ou atalho de teste rápido via tecla `[D]`.
 
+### 🐯 Técnicas de Espada, Pergaminhos do Tigre & Mestre Swiftblade
+- **Ataque Giratório Canônico (Spin Attack - Tiger Scroll #1)**:
+  - **Mecânica FSM de Carga Contínua**:
+    - Ao segurar o botão de ataque `[A]` após o golpe inicial, Link concentra sua energia vital na lâmina com zunido progressivo em frequência modulada (`SOUND_SPIN_CHARGE`).
+    - Link pode se movimentar cautelosamente a $0.85\times$ de sua velocidade normal com a espada embainhada à frente durante a carga.
+    - Ao atingir 38 frames de carga ($\approx 0.63\text{s}$), a lâmina atinge a saturação de energia: um chime cristalino agudo ecoa (`SOUND_SPIN_READY`) e um anel de pulso celeste se expande ao redor do herói com faíscas elétricas.
+  - **Execução 360° com Cinemática e Física Radial**:
+    - Ao soltar o botão `[A]`, Link executa uma rotação veloz em 360 graus ao longo de 16 frames com som aerodinâmico cortante (`SOUND_SPIN_ATTACK`).
+    - Renderização em tempo real de um **rastro circular luminoso em arco crescente (*crescent arc*)** de $r = 26\text{px}$ com núcleo branco e aura ciano em degradê com faíscas centrífugas.
+    - **Dano Duplicado (2 HP) & Repulsão Radial**: Aplica impacto devastador em todos os inimigos ao redor (Octorok, Keese, ChuChu e cabeça do chefe desabado) propelindo-os para fora em vetores radiais normalizados ($\vec{v} = \frac{\Delta \vec{r}}{\|\Delta \vec{r}\|} \times 4.2$).
+    - **Ceifa e Desobstrução 360° do Cenário (`map_interact_spin`)**: Corta instantaneamente todos os arbustos e abre baús em círculo em torno de Link, revelando gemas de Rupees.
+- **Mestre Espadachim Swiftblade (Blade Brothers)**:
+  - NPC canino mestre das lâminas com postura marcial em seu dojo na clareira do overworld.
+  - **Retrato Animado 32x32 em Pixel Art Puro**: Focinho canino detalhado, olhos afiados com sobrancelhas resolutas, faixa vermelha marcial (*hachimaki*) com nós e pontas esvoaçantes e kimono dojo verde floresta com gola cruzada branca.
+  - **Treinamento e Solenidade de Entrega**: Ao conversar via prompt `[A] Treinar`, Swiftblade ensina os fundamentos da arte da espada e concede o **Pergaminho do Tigre nº 1 (Tiger Scroll)**.
+  - **Fanfarra Marcial & Banner Festivo**: Toque de fanfarra sagrada (`SOUND_TIGER_SCROLL`), banner comemorativo com moldura dourada e ícone do Pergaminho do Tigre adicionado ao HUD permanente ao lado do chaveiro da masmorra.
+
 ### 🎨 Sprites Autênticos Extraídos da ROM (Clean-Room AOT)
 - **Metatiles 1D do GBA**: Montagem canônica de metatiles 16x24 (3 fatias de 16x8) para o Link e metatiles 16x16 (4 tiles 8x8) para os Octoroks e projétil de pedra.
 - **Canal Alfa & Espelhamento Horizontal (`flip_h`)**: Decodificação de transparência e espelhamento horizontal em tempo real para as direções simétricas (esquerda/direita).
@@ -323,6 +340,7 @@ Copie sua ROM limpa (ex: `zelda_usa.gba`) e execute a ferramenta AOT de extraç�
 | :--- | :--- | :--- | :--- |
 | **Mover Link** | `W`, `A`, `S`, `D` ou Setas | Alavanca Analógica Esquerda | Alavanca Analógica Esquerda |
 | **Atacar / Falar / Abrir Baú** | `Z` ou Barra de Espaço | **Botão A** | **Botão Cruz (X)** |
+| **Ataque Giratório (Spin Attack)** | Segurar e Soltar `Z` ou Espaço | Segurar e Soltar **Botão A** | Segurar e Soltar **Botão Cruz (X)** |
 | **Item Secundário [B]** | `X` (Segurar/Soltar) | **Botão B** | **Botão Círculo (O)** |
 | **Fusão de Kinstone** | Tecla `K` (ou `L` no controle) | Gatilho `L` (próximo ao NPC) | Gatilho `L1` (próximo ao NPC) |
 | **Ciclar Subarmas** | `Q` | Gatilho `L` / `LB` | Gatilho `L1` |

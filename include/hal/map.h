@@ -103,4 +103,11 @@ bool map_is_solid(const Tilemap* map, float world_x, float world_y);
  */
 bool map_interact_slash(Tilemap* map, float world_x, float world_y);
 
+/*
+ * Interage com o cenário em um raio circular de 360 graus (Ataque Giratório / Spin Attack).
+ * Corta todos os arbustos e abre baús dentro do raio especificado em torno do centro.
+ * Retorna a quantidade de elementos afetados.
+ */
+int map_interact_spin(Tilemap* map, float center_x, float center_y, float radius);
+
 #endif // HAL_MAP_H

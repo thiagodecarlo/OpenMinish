@@ -47,6 +47,10 @@ typedef enum {
     SOUND_BOSS_HIT,        // Golpe certeiro na cabeça gelatinosa vulnerável do chefe
     SOUND_BOSS_DEFEAT,     // Explosão climática de vitória e dissolução do chefe
     SOUND_HEART_CONTAINER, // Fanfarra sagrada ao obter o Heart Container permanente
+    SOUND_SPIN_CHARGE,     // Zunido crescente de carga de energia da espada
+    SOUND_SPIN_READY,      // Chime metálico agudo quando a carga do Spin Attack atinge o máximo
+    SOUND_SPIN_ATTACK,     // Giro veloz cortante da lâmina em 360 graus
+    SOUND_TIGER_SCROLL,    // Fanfarra marcial sagrada ao receber o Pergaminho do Tigre (Tiger Scroll)
     SOUND_COUNT
 } SoundEffect;
 

@@ -44,6 +44,15 @@ typedef struct {
     int  invuln_timer;
     float knock_x;
     float knock_y;
+
+    // Habilidade Lendária: Ataque Giratório (Tiger Scroll #1)
+    bool has_spin_attack;
+    bool is_charging_spin;
+    int  spin_charge_timer;
+    bool spin_ready;
+    bool is_spinning;
+    int  spin_timer;
+    int  tiger_scroll_banner_timer;
 } Player;
 
 static const char* s_region_tags[REGION_COUNT] = { "usa", "eur", "jpn" };
@@ -110,6 +119,8 @@ static void spawn_overworld_entities(Tilemap* world_map) {
         entity_spawn(ENTITY_ENEMY_CHUCHU, 480.0f, 660.0f);
         // Habitante Minish amigável próximo ao caminho da clareira
         entity_spawn(ENTITY_NPC_FOREST_MINISH, 448.0f, 570.0f);
+        // Mestre Espadachim Swiftblade no dojo/clareira de treinamento
+        entity_spawn(ENTITY_NPC_SWIFTBLADE, 480.0f, 520.0f);
     } else {
         entity_spawn(ENTITY_ENEMY_OCTOROK, 160.0f, 220.0f);
         entity_spawn(ENTITY_ENEMY_OCTOROK, 420.0f, 150.0f);
@@ -117,6 +128,7 @@ static void spawn_overworld_entities(Tilemap* world_map) {
         entity_spawn(ENTITY_ENEMY_KEESE, 200.0f, 130.0f);
         entity_spawn(ENTITY_ENEMY_CHUCHU, 320.0f, 220.0f);
         entity_spawn(ENTITY_NPC_FOREST_MINISH, 250.0f, 176.0f);
+        entity_spawn(ENTITY_NPC_SWIFTBLADE, 260.0f, 220.0f);
     }
 }
 
@@ -176,6 +188,126 @@ static void draw_empty_heart(int hx, int hy) {
     hal_video_put_pixel(hx + 3, hy + 6, dark);
 }
 
+// Renderiza efeitos de lâmina do Link: Golpe normal, Carga de Spin e Ataque Giratório 360°
+static void draw_link_sword_effects(const Player* p, int px, int py) {
+    u32 sword_steel = 0xCFE2F3FF;
+    u32 sword_gold  = 0xFFD700FF;
+    u32 cyan_glow   = 0x38BDF8FF;
+    u32 cyan_white  = 0xBAE6FDFF;
+    u32 white       = 0xFFFFFFFF;
+
+    // 1. GOLPE DE ESPADA NORMAL (12 FRAMES)
+    if (p->is_attacking) {
+        switch (p->dir) {
+            case DIR_DOWN:
+                draw_rect(px + 6, py + 16, 4, 10, sword_steel);
+                draw_rect(px + 4, py + 16, 8, 2, sword_gold);
+                break;
+            case DIR_UP:
+                draw_rect(px + 6, py - 8, 4, 10, sword_steel);
+                draw_rect(px + 4, py + 0, 8, 2, sword_gold);
+                break;
+            case DIR_LEFT:
+                draw_rect(px - 10, py + 9, 10, 4, sword_steel);
+                draw_rect(px + 0,  py + 7, 2, 8, sword_gold);
+                break;
+            case DIR_RIGHT:
+                draw_rect(px + 14, py + 9, 10, 4, sword_steel);
+                draw_rect(px + 13, py + 7, 2, 8, sword_gold);
+                break;
+        }
+    }
+
+    // 2. CARREGANDO O ATAQUE GIRATÓRIO (SPIN CHARGE)
+    else if (p->is_charging_spin) {
+        u32 blade_col = p->spin_ready ? cyan_white : sword_steel;
+        u32 tip_spark = p->spin_ready ? 0x00FFFFFF : 0xFACC15FF;
+
+        int tip_x = px + 8;
+        int tip_y = py + 8;
+
+        switch (p->dir) {
+            case DIR_DOWN:
+                draw_rect(px + 6, py + 15, 4, 9, blade_col);
+                draw_rect(px + 4, py + 15, 8, 2, sword_gold);
+                tip_x = px + 8; tip_y = py + 24;
+                break;
+            case DIR_UP:
+                draw_rect(px + 6, py - 7, 4, 9, blade_col);
+                draw_rect(px + 4, py + 0, 8, 2, sword_gold);
+                tip_x = px + 8; tip_y = py - 7;
+                break;
+            case DIR_LEFT:
+                draw_rect(px - 9, py + 9, 9, 4, blade_col);
+                draw_rect(px + 0, py + 7, 2, 8, sword_gold);
+                tip_x = px - 9; tip_y = py + 11;
+                break;
+            case DIR_RIGHT:
+                draw_rect(px + 14, py + 9, 9, 4, blade_col);
+                draw_rect(px + 13, py + 7, 2, 8, sword_gold);
+                tip_x = px + 23; tip_y = py + 11;
+                break;
+        }
+
+        // Faíscas cintilantes na ponta da lâmina acumulando energia
+        int spark_ox = ((p->spin_charge_timer * 3) % 5) - 2;
+        int spark_oy = ((p->spin_charge_timer * 5) % 5) - 2;
+        hal_video_put_pixel(tip_x + spark_ox, tip_y + spark_oy, tip_spark);
+        hal_video_put_pixel(tip_x - spark_ox, tip_y + spark_oy, white);
+
+        // Anel de pulso celestial quando a carga máxima do Spin Attack está pronta!
+        if (p->spin_ready) {
+            int cx = px + 8;
+            int cy = py + 8;
+            int pulse_r = 13 + (p->anim_timer % 7);
+            for (int a = 0; a < 8; a++) {
+                float ang = (float)a * (3.14159265f / 4.0f) + (float)p->anim_timer * 0.12f;
+                int ax = cx + (int)(cosf(ang) * (float)pulse_r);
+                int ay = cy + (int)(sinf(ang) * (float)pulse_r);
+                hal_video_put_pixel(ax, ay, cyan_glow);
+            }
+        }
+    }
+
+    // 3. EXECUÇÃO DO ATAQUE GIRATÓRIO (360° SPIN ATTACK)
+    else if (p->is_spinning) {
+        int cx = px + 8;
+        int cy = py + 8;
+        float progress = (float)(16 - p->spin_timer) / 16.0f; // 0.0 a 1.0
+
+        // Lâmina giratória em alta velocidade
+        float sword_ang = progress * 2.0f * 3.14159265f;
+        int sw_x = cx + (int)(cosf(sword_ang) * 18.0f);
+        int sw_y = cy + (int)(sinf(sword_ang) * 18.0f);
+        draw_rect(sw_x - 1, sw_y - 1, 3, 3, cyan_white);
+
+        // Rastro circular sweeping crescent arc (r = 21..25px)
+        int num_trail_points = 36;
+        for (int i = 0; i < num_trail_points; i++) {
+            float ang = (float)i * (2.0f * 3.14159265f / (float)num_trail_points);
+            int r_outer = 25;
+            int r_inner = 21;
+
+            int ox = cx + (int)(cosf(ang) * (float)r_outer);
+            int oy = cy + (int)(sinf(ang) * (float)r_outer);
+            int ix = cx + (int)(cosf(ang) * (float)r_inner);
+            int iy = cy + (int)(sinf(ang) * (float)r_inner);
+
+            u32 trail_col = ((i % 3) == 0) ? white : (((i % 2) == 0) ? cyan_white : cyan_glow);
+            hal_video_put_pixel(ox, oy, trail_col);
+            hal_video_put_pixel(ix, iy, cyan_glow);
+        }
+
+        // 4 faíscas dinâmicas ao redor da circunferência
+        for (int s = 0; s < 4; s++) {
+            float s_ang = (float)s * (3.14159265f / 2.0f) + sword_ang;
+            int sx_spark = cx + (int)(cosf(s_ang) * 27.0f);
+            int sy_spark = cy + (int)(sinf(s_ang) * 27.0f);
+            draw_rect(sx_spark - 1, sy_spark - 1, 2, 2, white);
+        }
+    }
+}
+
 // Renderiza o Link no estilo clássico de Minish Cap na posição da Câmera
 static void draw_link(const Player* p, const Camera* cam) {
     // Efeito clássico de piscar ao receber dano (flicker)
@@ -208,38 +340,13 @@ static void draw_link(const Player* p, const Camera* cam) {
         int src_x = (f_idx % 8) * 16;
         int src_y = (f_idx / 8) * 24;
 
-        // O sprite canônico de 16x24 tem a ponta do gorro em y=0 e as botas em y=23.
-        // Como a caixa de colisão do Link fica na base, desenhamos com offset py - 6.
         int draw_y = py - 6;
         if (p->is_moving && p->anim_frame == 1) {
             draw_y -= 1; // Sutil bobbing de caminhada clássica
         }
 
         texture_draw_ex(s_link_tex, src_x, src_y, 16, 24, px, draw_y, flip_h);
-
-        // Se atacando com a espada, desenha o corte de lâmina
-        if (p->is_attacking) {
-            u32 sword_steel = 0xCFE2F3FF;
-            u32 sword_gold  = 0xFFD700FF;
-            switch (p->dir) {
-                case DIR_DOWN:
-                    draw_rect(px + 6, py + 16, 4, 10, sword_steel);
-                    draw_rect(px + 4, py + 16, 8, 2, sword_gold);
-                    break;
-                case DIR_UP:
-                    draw_rect(px + 6, py - 8, 4, 10, sword_steel);
-                    draw_rect(px + 4, py + 0, 8, 2, sword_gold);
-                    break;
-                case DIR_LEFT:
-                    draw_rect(px - 10, py + 9, 10, 4, sword_steel);
-                    draw_rect(px + 0,  py + 7, 2, 8, sword_gold);
-                    break;
-                case DIR_RIGHT:
-                    draw_rect(px + 14, py + 9, 10, 4, sword_steel);
-                    draw_rect(px + 13, py + 7, 2, 8, sword_gold);
-                    break;
-            }
-        }
+        draw_link_sword_effects(p, px, py);
         return;
     }
 
@@ -251,7 +358,6 @@ static void draw_link(const Player* p, const Camera* cam) {
     u32 skin_tone    = 0xF5CBA7FF; // Tom de Pele
     u32 belt_brown   = 0x8B4513FF; // Cinto Marrom
     u32 boot_color   = 0xD2691EFF; // Botas
-    u32 sword_steel  = 0xCFE2F3FF; // Aço da Espada
     u32 sword_gold   = 0xFFD700FF; // Empunhadura
 
     int step_offset = (p->is_moving && (p->anim_frame == 1)) ? 1 : 0;
@@ -292,27 +398,8 @@ static void draw_link(const Player* p, const Camera* cam) {
         draw_rect(px + 10, py + 15, 3, 3, boot_color);
     }
 
-    // 6. Animação de Golpe de Espada (quando o botão A é pressionado)
-    if (p->is_attacking) {
-        switch (p->dir) {
-            case DIR_DOWN:
-                draw_rect(px + 6, py + 16, 4, 10, sword_steel);
-                draw_rect(px + 4, py + 16, 8, 2, sword_gold);
-                break;
-            case DIR_UP:
-                draw_rect(px + 6, py - 8, 4, 10, sword_steel);
-                draw_rect(px + 4, py + 0, 8, 2, sword_gold);
-                break;
-            case DIR_LEFT:
-                draw_rect(px - 10, py + 9, 10, 4, sword_steel);
-                draw_rect(px + 0,  py + 7, 2, 8, sword_gold);
-                break;
-            case DIR_RIGHT:
-                draw_rect(px + 14, py + 9, 10, 4, sword_steel);
-                draw_rect(px + 13, py + 7, 2, 8, sword_gold);
-                break;
-        }
-    }
+    // 6. Efeitos de espada e Spin Attack
+    draw_link_sword_effects(p, px, py);
 }
 
 int main(int argc, char* argv[]) {
@@ -324,6 +411,7 @@ int main(int argc, char* argv[]) {
     printf("Controles Disponiveis:\n");
     printf("  - Mover Link:     [WASD] ou [Setas do Teclado] ou [D-Pad/Analogico]\n");
     printf("  - Atacar / Acao:  [Z] ou [Espaco] ou [Botao A do Gamepad] (Atacar espada / Falar / Abrir bau!)\n");
+    printf("  - Ataque Girat.:  Segurar [A] (Carregar espada -> Soltar para Spin Attack 360°!)\n");
     printf("  - Item Secundar.: [X] ou [Botao B do Gamepad] (Bumerangue / Pote Magico / Pegasus Boots!)\n");
     printf("  - Fusao Kinstone: [K] ou [Gatilho L no Gamepad] (Unir pedras da sorte com NPCs parceiros!)\n");
     printf("  - Ciclar Itens:   [Q] ou [Gatilho L no Gamepad] (Alternar item secundario equipado)\n");
@@ -382,6 +470,13 @@ int main(int argc, char* argv[]) {
     link.invuln_timer = 0;
     link.knock_x = 0.0f;
     link.knock_y = 0.0f;
+    link.has_spin_attack = false;
+    link.is_charging_spin = false;
+    link.spin_charge_timer = 0;
+    link.spin_ready = false;
+    link.is_spinning = false;
+    link.spin_timer = 0;
+    link.tiger_scroll_banner_timer = 0;
 
     // Inicialização do Subsistema de Entidades e Spawn de Inimigos e NPCs
     entity_manager_init();
@@ -506,8 +601,19 @@ int main(int argc, char* argv[]) {
             }
             link.is_moving = false;
         } else {
-            // Ação com Botão A: Primeiro interage com Masmorra / Baús Dourados, depois NPCs, depois golpe de espada!
-            if (hal_input_is_pressed(KEY_A) && !link.is_attacking) {
+            // Recompensa do Mestre Swiftblade: Concede o Pergaminho do Tigre nº 1
+            if (dialogue_is_swiftblade_reward_pending()) {
+                dialogue_clear_swiftblade_reward();
+                link.has_spin_attack = true;
+                link.tiger_scroll_banner_timer = 200;
+                hal_audio_play_sound(SOUND_TIGER_SCROLL, 1.0f, 1.0f);
+            }
+            if (link.tiger_scroll_banner_timer > 0) {
+                link.tiger_scroll_banner_timer--;
+            }
+
+            // Ação com Botão A: Primeiro interage com Masmorra / Baús Dourados / Swiftblade / NPCs, depois golpe de espada!
+            if (hal_input_is_pressed(KEY_A) && !link.is_attacking && !link.is_spinning && !link.is_charging_spin) {
                 if (dungeon_is_active()) {
                     if (dungeon_interact(link.x, link.y, &link.rupees, &link.hearts)) {
                         // Abriu o baú do altar da masmorra!
@@ -519,13 +625,18 @@ int main(int argc, char* argv[]) {
                 } else if (entity_interact_chest(link.x, link.y, &link.rupees, &link.hearts)) {
                     // Abriu o baú dourado!
                 } else {
-                    Entity* nearby_npc = entity_find_nearby_npc(link.x, link.y, 28.0f);
-                    if (nearby_npc) {
-                        dialogue_trigger_minish_talk();
+                    Entity* nearby_swiftblade = entity_find_nearby_swiftblade(link.x, link.y, 28.0f);
+                    if (nearby_swiftblade) {
+                        dialogue_trigger_swiftblade_talk(link.has_spin_attack);
                     } else {
-                        link.is_attacking = true;
-                        link.attack_timer = 12; // Dura 12 frames (0.2 segundos)
-                        hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                        Entity* nearby_npc = entity_find_nearby_npc(link.x, link.y, 28.0f);
+                        if (nearby_npc) {
+                            dialogue_trigger_minish_talk();
+                        } else {
+                            link.is_attacking = true;
+                            link.attack_timer = 12; // Dura 12 frames (0.2 segundos)
+                            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                        }
                     }
                 }
             }
@@ -554,6 +665,69 @@ int main(int argc, char* argv[]) {
                 link.attack_timer--;
                 if (link.attack_timer <= 0) {
                     link.is_attacking = false;
+                    // Se o herói possui o Pergaminho do Tigre e manteve o botão A segurado: inicia a carga!
+                    if (link.has_spin_attack && hal_input_is_held(KEY_A)) {
+                        link.is_charging_spin = true;
+                        link.spin_charge_timer = 0;
+                        link.spin_ready = false;
+                    }
+                }
+            }
+
+            // ----------------------------------------------------------------
+            // MÁQUINA DE ESTADOS DO ATAQUE GIRATÓRIO (SPIN ATTACK FSM)
+            // ----------------------------------------------------------------
+            if (link.is_charging_spin) {
+                if (hal_input_is_held(KEY_A)) {
+                    link.spin_charge_timer++;
+                    if (!link.spin_ready) {
+                        if (link.spin_charge_timer % 20 == 0) {
+                            hal_audio_play_sound(SOUND_SPIN_CHARGE, 0.70f, 1.0f);
+                        }
+                        if (link.spin_charge_timer >= 38) {
+                            link.spin_ready = true;
+                            hal_audio_play_sound(SOUND_SPIN_READY, 1.0f, 1.0f);
+                        }
+                    }
+                } else {
+                    // Botão A liberado pelo jogador!
+                    if (link.spin_ready) {
+                        // DISPARAR O ATAQUE GIRATÓRIO EM 360 GRAUS!
+                        link.is_spinning = true;
+                        link.spin_timer = 16;
+                        hal_audio_play_sound(SOUND_SPIN_ATTACK, 1.0f, 1.0f);
+                    }
+                    link.is_charging_spin = false;
+                    link.spin_ready = false;
+                    link.spin_charge_timer = 0;
+                }
+            }
+
+            // Execução da rotação e física de corte circular 360°
+            if (link.is_spinning) {
+                link.spin_timer--;
+                int rot_step = (16 - link.spin_timer) / 4;
+                Direction rot_dirs[4] = { DIR_DOWN, DIR_RIGHT, DIR_UP, DIR_LEFT };
+                link.dir = rot_dirs[rot_step % 4];
+
+                float spin_cx = link.x + 8.0f;
+                float spin_cy = link.y + 8.0f;
+                float spin_r = 26.0f;
+
+                // 2 HP de dano duplicado e knockback radial centrífugo
+                entity_check_spin_attack_hit(spin_cx, spin_cy, spin_r, 2);
+
+                // Corte simultâneo de todos os arbustos no raio de 360 graus
+                if (!dungeon_is_active()) {
+                    int bushes = map_interact_spin(world_map, spin_cx, spin_cy, spin_r);
+                    if (bushes > 0) {
+                        hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 1.30f);
+                        link.rupees += bushes * 5;
+                    }
+                }
+
+                if (link.spin_timer <= 0) {
+                    link.is_spinning = false;
                 }
             }
 
@@ -587,10 +761,12 @@ int main(int argc, char* argv[]) {
                 hal_audio_cycle_bgm();
             }
 
-        // Modificador de Velocidade: Dash / Pegasus Boots (Botao B segurado)
+        // Modificador de Velocidade: Dash / Pegasus Boots (Botao B segurado) ou Carga da Espada
         float dash_mult = 1.0f;
         if (hal_input_is_held(KEY_B) && subweapon_get_current() == ITEM_PEGASUS_BOOTS) {
             dash_mult = 1.85f; // Arrancada veloz das Botas de Pegasus!
+        } else if (link.is_charging_spin) {
+            dash_mult = 0.85f; // Movimentação prudente enquanto acumula energia na lâmina
         }
 
         link.is_moving = false;
@@ -615,7 +791,7 @@ int main(int argc, char* argv[]) {
             }
             subweapon_use_held(link.x, link.y, link.dir);
             link.is_moving = false;
-        } else if (!link.is_attacking) {
+        } else if (!link.is_attacking && !link.is_spinning) {
             AnalogStick stick = hal_input_get_left_stick();
 
             if (stick.magnitude > 0.08f) {
@@ -909,6 +1085,17 @@ int main(int argc, char* argv[]) {
         // Contador de Chaves Pequenas da Masmorra (Small Keys 🔑 xN)
         dungeon_render_hud_keys(106, 2);
 
+        // Ícone do Pergaminho do Tigre nº 1 no HUD (se Link dominou o Spin Attack)
+        if (link.has_spin_attack) {
+            int sx = 132;
+            int sy = 2;
+            draw_rect(sx, sy + 1, 9, 8, 0xFEF08AFF);
+            draw_rect(sx - 1, sy, 11, 2, 0xD97706FF);
+            draw_rect(sx - 1, sy + 8, 11, 2, 0xD97706FF);
+            draw_rect(sx + 3, sy + 2, 3, 6, 0xDC2626FF); // Fita vermelha marcial
+            hal_video_put_pixel(sx + 4, sy + 4, 0xFFFFFFFF);
+        }
+
         // Badge da Região Ativa no canto superior direito
         u32 reg_color = (s_current_region == REGION_USA) ? 0x4287F5FF :
                         (s_current_region == REGION_EUR) ? 0xF5A742FF : 0xF54242FF;
@@ -919,6 +1106,28 @@ int main(int argc, char* argv[]) {
 
         // 5. Interface de Fusão de Kinstones (Pedras da Sorte)
         kinstone_render();
+
+        // 6. Banner Festivo de Aquisição do Pergaminho do Tigre (Tiger Scroll #1)
+        if (link.tiger_scroll_banner_timer > 0) {
+            int ban_w = 216;
+            int ban_h = 32;
+            int ban_x = (ctx->render_width - ban_w) / 2;
+            int ban_y = 64;
+
+            draw_rect(ban_x - 2, ban_y - 2, ban_w + 4, ban_h + 4, 0x0A0806EE);
+            draw_rect(ban_x - 1, ban_y - 1, ban_w + 2, ban_h + 2, 0xD4AF37FF);
+            draw_rect(ban_x, ban_y, ban_w, ban_h, 0x1A120EFF);
+            draw_rect(ban_x + 2, ban_y + 2, ban_w - 4, ban_h - 4, 0x2A1A12EE);
+
+            // Ícone do Pergaminho dourado
+            draw_rect(ban_x + 8, ban_y + 8, 10, 16, 0xFEF08AFF);
+            draw_rect(ban_x + 7, ban_y + 6, 12, 3, 0xD97706FF);
+            draw_rect(ban_x + 7, ban_y + 23, 12, 3, 0xD97706FF);
+            draw_rect(ban_x + 8, ban_y + 14, 10, 4, 0xDC2626FF); // Fita escarlate
+
+            font_draw_text(ban_x + 24, ban_y + 6, "PERGAMINHO DO TIGRE Nº 1!", 0xFDE047FF, true);
+            font_draw_text(ban_x + 24, ban_y + 18, "ATAQUE GIRATORIO (SPIN ATTACK)!", 0x38BDF8FF, true);
+        }
 
         // --------------------------------------------------------------------
         // 6. APRESENTAÇÃO NA TELA (SDL2 GPU)

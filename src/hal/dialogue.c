@@ -25,6 +25,7 @@ static int  s_char_progress = 0;
 static int  s_type_timer = 0;
 static int  s_anim_counter = 0;
 static int  s_current_hint_idx = 0;
+static bool s_swiftblade_reward_pending = false;
 
 // Alpha Blending para o fundo esmeralda do balão
 static inline u32 blend_colors(u32 dst, u32 src) {
@@ -197,6 +198,128 @@ static void render_portrait_minish(int px, int py) {
     draw_rect_blend(px + 10, py + 25, 13, 6, c_tunic);
 }
 
+static void render_portrait_swiftblade(int px, int py, bool is_talking) {
+    // Fundo escuro do dojo
+    draw_rect_blend(px, py, 32, 32, 0x16120DFF);
+
+    u32 c_fur       = 0x7A6A5AFF; // Pelo canino marrom-acinzentado do mestre
+    u32 c_fur_dk    = 0x544638FF; // Sombra do pelo
+    u32 c_muzzle    = 0xC2B2A0FF; // Focinho canino claro
+    u32 c_muzzle_dk = 0x9E8F7EFF; // Sombra do focinho
+    u32 c_nose      = 0x1C140FFF; // Focinho/nariz preto
+    u32 c_band      = 0xDC2626FF; // Faixa vermelha marcial
+    u32 c_band_dk   = 0x991B1BFF; // Sombra da faixa
+    u32 c_white     = 0xFFFFFFFF; // Olhos / gola do kimono
+    u32 c_black     = 0x111111FF; // Pupilas / sobrancelhas
+    u32 c_gi        = 0x1E3324FF; // Kimono verde musgo escuro do mestre
+    u32 c_gi_trim   = 0xE5E7EBFF; // Detalhe branco da gola cruzada
+
+    int talk_offset = (is_talking && ((s_anim_counter / 5) % 2 == 1)) ? 1 : 0;
+
+    // 1. Orelhas caninas pontudas de guerreiro (topo da cabeça)
+    // Orelha esquerda
+    for (int y = 2; y <= 8; y++) {
+        for (int x = 6; x <= 11; x++) {
+            if (x >= 12 - (y - 1) && x <= 11) {
+                hal_video_put_pixel(px + x, py + y, (x == 11 || y == 8) ? c_fur_dk : c_fur);
+            }
+        }
+    }
+    // Interior orelha esq
+    hal_video_put_pixel(px + 9, py + 5, 0x9C7C6EFF);
+    hal_video_put_pixel(px + 10, py + 6, 0x9C7C6EFF);
+
+    // Orelha direita
+    for (int y = 2; y <= 8; y++) {
+        for (int x = 20; x <= 25; x++) {
+            if (x <= 19 + (y - 1) && x >= 20) {
+                hal_video_put_pixel(px + x, py + y, (x == 20 || y == 8) ? c_fur_dk : c_fur);
+            }
+        }
+    }
+    // Interior orelha dir
+    hal_video_put_pixel(px + 21, py + 6, 0x9C7C6EFF);
+    hal_video_put_pixel(px + 22, py + 5, 0x9C7C6EFF);
+
+    // 2. Cabeça canina (formato arredondado)
+    for (int y = 7; y <= 23; y++) {
+        for (int x = 7; x <= 24; x++) {
+            float dx = (float)(x - 16) / 8.5f;
+            float dy = (float)(y - 15) / 8.0f;
+            if (dx * dx + dy * dy <= 1.0f) {
+                u32 col = (x < 10 || x > 21 || y > 20) ? c_fur_dk : c_fur;
+                hal_video_put_pixel(px + x, py + y, col);
+            }
+        }
+    }
+
+    // 3. Faixa marcial vermelha (Hachimaki) amarrada na testa
+    for (int y = 9; y <= 12; y++) {
+        for (int x = 8; x <= 23; x++) {
+            u32 col = (y == 12) ? c_band_dk : c_band;
+            hal_video_put_pixel(px + x, py + y, col);
+        }
+    }
+    // Nó da faixa e fitas pendentes no lado direito
+    draw_rect_blend(px + 24, py + 10, 3, 3, c_band);
+    for (int y = 12; y <= 21; y++) {
+        int trail_x = 25 + (int)(sinf((float)(y + s_anim_counter * 0.1f)) * 1.2f);
+        hal_video_put_pixel(px + trail_x, py + y, c_band);
+        hal_video_put_pixel(px + trail_x + 1, py + y, c_band_dk);
+    }
+
+    // 4. Sobrancelhas resolutas e olhos de mestre espadachim
+    draw_rect_blend(px + 10, py + 13, 4, 1, c_black);
+    draw_rect_blend(px + 18, py + 13, 4, 1, c_black);
+
+    // Esclera branca e pupilas determinadas
+    draw_rect_blend(px + 10, py + 14, 4, 3, c_white);
+    draw_rect_blend(px + 18, py + 14, 4, 3, c_white);
+    draw_rect_blend(px + 12, py + 15, 2, 2, c_black);
+    draw_rect_blend(px + 18, py + 15, 2, 2, c_black);
+    hal_video_put_pixel(px + 11, py + 14, c_white); // Brilho nos olhos
+    hal_video_put_pixel(px + 19, py + 14, c_white);
+
+    // 5. Focinho canino e bigodes de mestre
+    int snout_y = 17;
+    for (int y = 0; y <= 5; y++) {
+        int w = 8 - y;
+        if (w < 4) w = 4;
+        for (int x = 16 - w / 2; x <= 16 + w / 2; x++) {
+            u32 col = (y >= 4) ? c_muzzle_dk : c_muzzle;
+            hal_video_put_pixel(px + x, py + snout_y + y, col);
+        }
+    }
+
+    // Nariz preto
+    draw_rect_blend(px + 14, py + 17, 4, 2, c_nose);
+    hal_video_put_pixel(px + 15, py + 17, 0x443328FF); // Brilho no nariz
+
+    // Boca que move ao falar
+    if (talk_offset > 0) {
+        draw_rect_blend(px + 14, py + 21, 4, 2, 0x331111FF);
+        hal_video_put_pixel(px + 15, py + 22, 0xFF4444FF); // Língua
+    } else {
+        hal_video_put_pixel(px + 14, py + 21, c_nose);
+        hal_video_put_pixel(px + 15, py + 21, c_nose);
+        hal_video_put_pixel(px + 16, py + 21, c_nose);
+        hal_video_put_pixel(px + 17, py + 21, c_nose);
+    }
+
+    // 6. Kimono/Gi do Mestre de Espadas com gola cruzada
+    for (int y = 24; y <= 31; y++) {
+        for (int x = 5; x <= 26; x++) {
+            hal_video_put_pixel(px + x, py + y, c_gi);
+        }
+    }
+    // Gola branca cruzada (estilo dojo tradicional)
+    for (int i = 0; i <= 6; i++) {
+        hal_video_put_pixel(px + 12 + i, py + 24 + i, c_gi_trim);
+        hal_video_put_pixel(px + 13 + i, py + 24 + i, c_gi_trim);
+        hal_video_put_pixel(px + 19 - i, py + 24 + i, c_gi_trim);
+    }
+}
+
 // ----------------------------------------------------------------------------
 // INTERFACE PÚBLICA DO SISTEMA DE DIÁLOGO
 // ----------------------------------------------------------------------------
@@ -289,6 +412,34 @@ void dialogue_trigger_minish_talk(void) {
         "Que a brisa da floresta guie seus\npassos com coragem e sabedoria!"
     };
     dialogue_show(SPEAKER_FOREST_MINISH, "Minish", minish_speech, 3);
+}
+
+void dialogue_trigger_swiftblade_talk(bool already_learned) {
+    if (!already_learned) {
+        s_swiftblade_reward_pending = true;
+        static const char* swiftblade_training[] = {
+            "Saudações, jovem espadachim!\nEu sou Swiftblade, o Mestre\ndas Lâminas de Hyrule!",
+            "Reconheço verdadeiro talento\nem seus olhos. Vou lhe ensinar\no Pergaminho do Tigre nº 1:",
+            "O ATAQUE GIRATÓRIO (Spin Attack)!\nSegure o golpe com [A] para\nacumular o poder de sua lâmina...",
+            "...e solte para desferir um corte\nfurioso em 360 graus que devasta\ntodos os monstros e arbustos!",
+            "Tome este Pergaminho do Tigre!\nDomine o corte circular e traga\na paz ao reino de Hyrule!"
+        };
+        dialogue_show(SPEAKER_SWIFTBLADE, "Swiftblade", swiftblade_training, 5);
+    } else {
+        static const char* swiftblade_reminder[] = {
+            "Continue treinando com afinco!\nSegure [A] para concentrar\nsua energia na lâmina...",
+            "Ao liberar com carga máxima,\nseu corte em 360 graus varrerá\ninimigos e arbustos com facilidade!"
+        };
+        dialogue_show(SPEAKER_SWIFTBLADE, "Swiftblade", swiftblade_reminder, 2);
+    }
+}
+
+bool dialogue_is_swiftblade_reward_pending(void) {
+    return s_swiftblade_reward_pending;
+}
+
+void dialogue_clear_swiftblade_reward(void) {
+    s_swiftblade_reward_pending = false;
 }
 
 void dialogue_update(void) {
@@ -413,7 +564,8 @@ void dialogue_render(void) {
         draw_rect_blend(badge_x + badge_w - 1, badge_y, 1, badge_h, gold_outer);
 
         // Texto do nome
-        u32 name_col = (s_speaker == SPEAKER_EZLO) ? 0xFFE27AFF : 0x77FF99FF;
+        u32 name_col = (s_speaker == SPEAKER_EZLO) ? 0xFFE27AFF :
+                       (s_speaker == SPEAKER_SWIFTBLADE) ? 0xFF6B6BFF : 0x77FF99FF;
         font_draw_text(badge_x + 6, badge_y + 1, s_speaker_name, name_col, true);
     }
 
@@ -430,6 +582,9 @@ void dialogue_render(void) {
         render_portrait_ezlo(port_x, port_y, is_talking);
     } else if (s_speaker == SPEAKER_FOREST_MINISH) {
         render_portrait_minish(port_x, port_y);
+    } else if (s_speaker == SPEAKER_SWIFTBLADE) {
+        bool is_talking = (s_state == DIALOGUE_STATE_TYPING);
+        render_portrait_swiftblade(port_x, port_y, is_talking);
     }
 
     // 6. Área de Texto com quebra de linhas (\n)
