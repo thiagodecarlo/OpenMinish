@@ -532,6 +532,119 @@ static void synth_generate_all_sfx(void) {
         s_precalc_sfx[SOUND_CHEST_OPEN].total_frames = num_frames;
         s_precalc_sfx[SOUND_CHEST_OPEN].is_stereo = false;
     }
+
+    // 19. SOUND_SWITCH_CLICK: Clique mecânico de interruptor de piso afundando na pedra (120ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.120f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float total = 0.0f;
+            if (t < 0.025f) {
+                // Estalo metálico de gatilho mecânico
+                float f = 1400.0f - 800.0f * (t / 0.025f);
+                phase += f / (float)AUDIO_SAMPLE_RATE;
+                total = (synth_square_wave(phase, 0.40f) * 0.6f + synth_noise() * 0.4f) * 26000.0f;
+            } else {
+                // Afundamento de laje de pedra
+                float thud_t = t - 0.025f;
+                float f = 160.0f - 100.0f * (thud_t / 0.095f);
+                phase += f / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-20.0f * thud_t);
+                total = synth_triangle_wave(phase) * env * 24000.0f;
+            }
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_SWITCH_CLICK].samples = buf;
+        s_precalc_sfx[SOUND_SWITCH_CLICK].total_frames = num_frames;
+        s_precalc_sfx[SOUND_SWITCH_CLICK].is_stereo = false;
+    }
+
+    // 20. SOUND_DOOR_UNLOCK: Destravamento de cadeado de ferro pesado (260ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.260f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase = 0.0f;
+        float phase_clank = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float total = 0.0f;
+            if (t < 0.080f) {
+                // Giro da chave nos tambores
+                float f = 1600.0f + 600.0f * sinf(2.0f * PI_F * 45.0f * t);
+                phase += f / (float)AUDIO_SAMPLE_RATE;
+                total = (synth_square_wave(phase, 0.25f) * 0.5f + synth_noise() * 0.3f) * expf(-15.0f * t) * 22000.0f;
+            } else {
+                // Desarme da mola e queda do arco de ferro
+                float rel_t = t - 0.080f;
+                phase += 1567.98f / (float)AUDIO_SAMPLE_RATE; // Sol6
+                phase_clank += 2190.0f / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-14.0f * rel_t);
+                float ring = sinf(2.0f * PI_F * phase) * 0.65f + sinf(2.0f * PI_F * phase_clank) * 0.35f;
+                total = ring * env * 25000.0f;
+            }
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_DOOR_UNLOCK].samples = buf;
+        s_precalc_sfx[SOUND_DOOR_UNLOCK].total_frames = num_frames;
+        s_precalc_sfx[SOUND_DOOR_UNLOCK].is_stereo = false;
+    }
+
+    // 21. SOUND_DOOR_SHUTTER: Grades de ferro e pedra se erguendo (340ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.340f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase_low = 0.0f;
+        float phase_high = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float flow = 75.0f + 25.0f * sinf(2.0f * PI_F * 18.0f * t);
+            float fhigh = 380.0f + 60.0f * sinf(2.0f * PI_F * 30.0f * t);
+            phase_low += flow / (float)AUDIO_SAMPLE_RATE;
+            phase_high += fhigh / (float)AUDIO_SAMPLE_RATE;
+
+            float rumble = synth_triangle_wave(phase_low) * 0.65f;
+            float iron = synth_square_wave(phase_high, 0.20f) * 0.25f;
+            float scrape = synth_noise() * 0.20f;
+            float env = 0.8f + 0.2f * sinf(2.0f * PI_F * 8.0f * t);
+            if (t > 0.280f) env *= expf(-18.0f * (t - 0.280f));
+
+            float total = (rumble + iron + scrape) * env * 24000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_DOOR_SHUTTER].samples = buf;
+        s_precalc_sfx[SOUND_DOOR_SHUTTER].total_frames = num_frames;
+        s_precalc_sfx[SOUND_DOOR_SHUTTER].is_stereo = false;
+    }
+
+    // 22. SOUND_BLOCK_PUSH: Bloco pesado de pedra raspando no piso (180ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.180f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float f = 90.0f + 20.0f * sinf(2.0f * PI_F * 12.0f * t);
+            phase += f / (float)AUDIO_SAMPLE_RATE;
+            float thud = synth_triangle_wave(phase) * 0.55f;
+            float grit = synth_noise() * 0.45f;
+            float env = 0.85f * sinf((t / 0.180f) * PI_F);
+            float total = (thud + grit) * env * 23000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_BLOCK_PUSH].samples = buf;
+        s_precalc_sfx[SOUND_BLOCK_PUSH].total_frames = num_frames;
+        s_precalc_sfx[SOUND_BLOCK_PUSH].is_stereo = false;
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -979,6 +1092,147 @@ static s16* synth_generate_hyrule_overworld(u32* out_total_frames) {
     return out_buf;
 }
 
+static s16* synth_generate_deepwood_shrine(u32* out_total_frames) {
+    float bpm = 84.0f;
+    float beat_sec = 60.0f / bpm;
+    float total_sec = beat_sec * 64.0f; // 16 compassos de 4 batidas = ~45.7s
+    u32 total_frames = (u32)(AUDIO_SAMPLE_RATE * total_sec);
+
+    float* mix_l = (float*)calloc(total_frames, sizeof(float));
+    float* mix_r = (float*)calloc(total_frames, sizeof(float));
+    if (!mix_l || !mix_r) {
+        if (mix_l) free(mix_l);
+        if (mix_r) free(mix_r);
+        return NULL;
+    }
+
+    // 1. MELODIA ENIGMÁTICA DE TEMPLO EM DÓ MENOR (Ocarina / Flauta Mística)
+    static const int melody_notes[16] = {
+        60, 63, 62, 60,  67, 65, 63, 62,
+        63, 67, 70, 68,  67, 65, 62, 60
+    };
+
+    for (int note_idx = 0; note_idx < 16; note_idx++) {
+        float note_start_time = (float)note_idx * (beat_sec * 4.0f);
+        float note_dur = beat_sec * 3.6f;
+        int midi = melody_notes[note_idx];
+        float base_f = note_to_freq(midi);
+
+        u32 start_frame = (u32)(note_start_time * AUDIO_SAMPLE_RATE);
+        u32 dur_frames  = (u32)(note_dur * AUDIO_SAMPLE_RATE);
+        float phase = 0.0f;
+
+        for (u32 i = 0; i < dur_frames; i++) {
+            u32 idx = (start_frame + i) % total_frames;
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = 1.0f;
+            if (t < 0.15f) env = t / 0.15f; // Ataque suave
+            else env = expf(-1.1f * (t - 0.15f));
+
+            float vibrato = 1.0f + 0.012f * sinf(2.0f * PI_F * 5.8f * t);
+            phase += (base_f * vibrato) / (float)AUDIO_SAMPLE_RATE;
+
+            float tri = synth_triangle_wave(phase);
+            float pulse = synth_square_wave(phase, 0.30f);
+            float voice = (tri * 0.70f + pulse * 0.30f) * env * 0.28f;
+
+            mix_l[idx] += voice * 0.52f;
+            mix_r[idx] += voice * 0.48f;
+
+            // Eco ping-pong estéreo
+            u32 echo_delay = (u32)(0.32f * AUDIO_SAMPLE_RATE);
+            u32 echo_idx = (idx + echo_delay) % total_frames;
+            mix_r[echo_idx] += voice * 0.22f;
+        }
+    }
+
+    // 2. BAIXO ACÚSTICO DE TEMPLO (Pizzicato em Dó Menor)
+    static const int bass_notes[16] = {
+        36, 43, 39, 43,  44, 43, 41, 38,
+        36, 43, 39, 48,  44, 41, 43, 36
+    };
+
+    for (int b = 0; b < 32; b++) {
+        float b_time = (float)b * (beat_sec * 2.0f);
+        int midi = bass_notes[b % 16];
+        float base_f = note_to_freq(midi);
+
+        u32 start_frame = (u32)(b_time * AUDIO_SAMPLE_RATE);
+        u32 dur_frames  = (u32)(beat_sec * 1.8f * AUDIO_SAMPLE_RATE);
+        float phase = 0.0f;
+
+        for (u32 i = 0; i < dur_frames; i++) {
+            u32 idx = (start_frame + i) % total_frames;
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-3.2f * t);
+            phase += base_f / (float)AUDIO_SAMPLE_RATE;
+
+            float bass = (synth_triangle_wave(phase) * 0.85f + sinf(2.0f * PI_F * phase) * 0.15f) * env * 0.38f;
+            mix_l[idx] += bass * 0.5f;
+            mix_r[idx] += bass * 0.5f;
+        }
+    }
+
+    // 3. PING DE GOTA D'ÁGUA E SINO DE CRISTAL COM SLAPBACK ECHO
+    static const float drop_freqs[4] = { 1046.50f, 1318.51f, 783.99f, 1174.66f };
+    for (int bar = 0; bar < 16; bar++) {
+        float drop_time = (float)bar * (beat_sec * 4.0f) + beat_sec * 1.5f;
+        float base_f = drop_freqs[bar % 4];
+
+        u32 start_frame = (u32)(drop_time * AUDIO_SAMPLE_RATE);
+        u32 dur_frames  = (u32)(0.35f * AUDIO_SAMPLE_RATE);
+        float phase = 0.0f;
+
+        for (u32 i = 0; i < dur_frames; i++) {
+            u32 idx = (start_frame + i) % total_frames;
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float f = base_f - 180.0f * (t / 0.35f); // Pitch bend sutil de gota d'água
+            phase += f / (float)AUDIO_SAMPLE_RATE;
+
+            float bell = sinf(2.0f * PI_F * phase) * expf(-14.0f * t) * 0.18f;
+            mix_l[idx] += bell * 0.65f;
+            mix_r[idx] += bell * 0.35f;
+
+            // Slapback echo na direita
+            u32 echo_frames = (u32)(0.18f * AUDIO_SAMPLE_RATE);
+            u32 e_idx = (idx + echo_frames) % total_frames;
+            mix_r[e_idx] += bell * 0.45f;
+        }
+    }
+
+    // 4. REVERBERAÇÃO E RUMBLE ATMOSFÉRICO DE CAVERNA
+    for (u32 i = 0; i < total_frames; i++) {
+        float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+        float rumble = sinf(2.0f * PI_F * 45.0f * t) * 0.035f;
+        mix_l[i] += rumble;
+        mix_r[i] += rumble;
+    }
+
+    s16* out_buf = (s16*)malloc(total_frames * 2 * sizeof(s16));
+    if (!out_buf) {
+        free(mix_l);
+        free(mix_r);
+        return NULL;
+    }
+
+    for (u32 i = 0; i < total_frames; i++) {
+        float l = mix_l[i] * 28000.0f;
+        float r = mix_r[i] * 28000.0f;
+        if (l > 32767.0f)  l = 32767.0f;
+        if (l < -32768.0f) l = -32768.0f;
+        if (r > 32767.0f)  r = 32767.0f;
+        if (r < -32768.0f) r = -32768.0f;
+
+        out_buf[i * 2 + 0] = (s16)l;
+        out_buf[i * 2 + 1] = (s16)r;
+    }
+
+    free(mix_l);
+    free(mix_r);
+    *out_total_frames = total_frames;
+    return out_buf;
+}
+
 // ----------------------------------------------------------------------------
 // CALLBACK DO MIXER DE BAIXA LATÊNCIA DO SDL2
 // ----------------------------------------------------------------------------
@@ -1214,6 +1468,7 @@ const char* hal_audio_get_bgm_name(BgmTrack track) {
     switch (track) {
         case BGM_MINISH_WOODS:     return "Minish Woods (Deepwood)";
         case BGM_HYRULE_OVERWORLD: return "Hyrule Overworld (Theme)";
+        case BGM_DEEPWOOD_SHRINE:  return "Deepwood Shrine (Dungeon)";
         case BGM_NONE:
         default:                   return "Mudo / Silencio";
     }
@@ -1235,7 +1490,7 @@ void hal_audio_play_bgm(BgmTrack track) {
 
     // 1. Suporte a mods de audio: verifica se existe arquivo WAV customizado em assets/audio/
     char mod_path[256];
-    const char* track_tags[] = { "none", "minish_woods", "hyrule_overworld" };
+    const char* track_tags[] = { "none", "minish_woods", "hyrule_overworld", "deepwood_shrine" };
     snprintf(mod_path, sizeof(mod_path), "assets/audio/%s.wav", track_tags[track]);
 
     if (hal_audio_play_music(mod_path, 0.75f, true)) {
@@ -1252,6 +1507,8 @@ void hal_audio_play_bgm(BgmTrack track) {
         samples = synth_generate_minish_woods(&total_frames);
     } else if (track == BGM_HYRULE_OVERWORLD) {
         samples = synth_generate_hyrule_overworld(&total_frames);
+    } else if (track == BGM_DEEPWOOD_SHRINE) {
+        samples = synth_generate_deepwood_shrine(&total_frames);
     }
 
     if (!samples || total_frames == 0) return;

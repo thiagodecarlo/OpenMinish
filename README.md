@@ -128,6 +128,32 @@ O **OpenMinish** é um projeto de estudo universitário e pesquisa técnica foca
   - Notificação de evento mundial: materialização de um **Baú do Tesouro Dourado** (`ENTITY_CHEST_GOLD`) na clareira do santuário em Minish Woods.
   - Abertura interativa com `[A]` e áudio de tampa de pedra pesada (`SOUND_CHEST_OPEN`), concedendo **+100 Rupees** e cura total de vida ao herói.
 
+### 🏛️ Primeira Masmorra Canônica: Deepwood Shrine (Templo do Bosque Profundo)
+- **4 Câmaras Subterrâneas Interconectadas ($16 \times 10$ tiles = $256 \times 160$ pixels)**:
+  - **Câmara 0 (Vestíbulo de Entrada & Escada)**:
+    - Escadaria de saída em pedra ao sul conectando com Minish Woods.
+    - Bloco de pedra maciça com física de atrito e empurrão direcional suave (`SOUND_BLOCK_PUSH`).
+    - Interruptor mecânico de pressão no piso com clique de trava (`SOUND_SWITCH_CLICK`) para sustentar as grades da porta norte abertas.
+    - Porta norte levadiça de ferro (Shutter Door) com levantamento sonoro de grades (`SOUND_DOOR_SHUTTER`).
+  - **Câmara 1 (Arena de Combate & Chave Pequena)**:
+    - Fechamento imediato das grades levadiças ao cruzar o limiar, aprisionando o herói na arena.
+    - Spawn dinâmico de monstros subterrâneos (Keese voadores e Green ChuChu).
+    - Desbloqueio automático das portas e **queda da Chave Pequena (Small Key)** no centro da câmara ao derrotar todos os inimigos (`SOUND_SECRET`).
+    - Coleta manual ou à distância utilizando o Bumerangue Mágico com registro no chaveiro do HUD (`🔑 x1`).
+  - **Câmara 2 (Canal de Águas Subterrâneas & Porta Trancada com Cadeado)**:
+    - Canal de água profunda com física de colisão e ondas animadas em tempo real.
+    - Passarela central com ponte de pranchas de madeira permitindo travessia segura.
+    - Porta norte trancada com pesado cadeado de ferro e miolo de ouro (`SOUND_DOOR_UNLOCK`), consumindo a Chave Pequena para avançar ao santuário.
+  - **Câmara 3 (Santuário Interno & Altar do Elemento Terra)**:
+    - Tochas cerimoniais com pedestais de ouro e labaredas de fogo azul místico.
+    - Altar sagrado com o **Grande Baú Dourado de Vitória da Masmorra**: abertura interativa com `[A]`, concedendo **+100 Rupees**, restauração plena de vida e a clássica fanfarra de triunfo.
+- **Transição Cinematográfica entre Câmaras (Screen Wipe)**:
+  - Efeito suave de cortina preta de fade/wipe com 20 frames entre as salas da masmorra, posicionando o herói na entrada correta de cada câmara.
+- **Trilha Sonora Chiptune Autêntica de Masmorra (`BGM_DEEPWOOD_SHRINE`)**:
+  - Trilha polifônica de 45.7s em Dó menor (C minor) a 82 BPM, sintetizada proceduralmente em C puro com gotejamento rítmico de água cavernosa (*ping* senoidal reverberado), melodia assombrada em ocarina com vibrato analógico, baixo acústico pizzicato e pulsação acústica cavernosa.
+- **Transição Perfeita Overworld $\leftrightarrow$ Dungeon**:
+  - Entrada física ao caminhar pelo archway do santuário ao norte da clareira de Minish Woods ou atalho de teste rápido via tecla `[D]`.
+
 ### 🎨 Sprites Autênticos Extraídos da ROM (Clean-Room AOT)
 - **Metatiles 1D do GBA**: Montagem canônica de metatiles 16x24 (3 fatias de 16x8) para o Link e metatiles 16x16 (4 tiles 8x8) para os Octoroks e projétil de pedra.
 - **Canal Alfa & Espelhamento Horizontal (`flip_h`)**: Decodificação de transparência e espelhamento horizontal em tempo real para as direções simétricas (esquerda/direita).

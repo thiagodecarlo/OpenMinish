@@ -81,6 +81,16 @@ void entity_manager_init(void);
 Entity* entity_spawn(EntityType type, float world_x, float world_y);
 
 /*
+ * Retorna a contagem de monstros vivos no mundo (Octorok, Keese, ChuChu).
+ */
+int entity_count_active_enemies(void);
+
+/*
+ * Remove todas as entidades ativas do pool de memória.
+ */
+void entity_clear_all(void);
+
+/*
  * Atualiza o ciclo de vida, IA, físicas de colisão e projéteis de todas as entidades ativas.
  * Atualiza também a vida, rupees e recuo do Link caso seja atingido.
  */

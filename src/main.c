@@ -11,6 +11,7 @@
 #include "hal/dialogue.h"
 #include "hal/subweapon.h"
 #include "hal/kinstone.h"
+#include "hal/dungeon.h"
 #include <math.h>
 
 /*
@@ -91,6 +92,31 @@ static void load_region_sheets(SelectedRegion region) {
            s_link_tex ? "Autentico GBA" : "Procedural",
            s_octo_tex ? "Autentico GBA" : "Procedural",
            (s_world_map && s_world_map->is_authentic) ? "Autentico Minish Woods" : "Procedural");
+}
+
+static void spawn_overworld_entities(Tilemap* world_map) {
+    entity_clear_all();
+    if (world_map && world_map->is_authentic) {
+        // Inimigos clássicos Octorok
+        entity_spawn(ENTITY_ENEMY_OCTOROK, 400.0f, 620.0f);
+        entity_spawn(ENTITY_ENEMY_OCTOROK, 500.0f, 620.0f);
+        entity_spawn(ENTITY_ENEMY_OCTOROK, 448.0f, 500.0f);
+        // Morcegos voadores Keese (com sombra e vôo senoidal)
+        entity_spawn(ENTITY_ENEMY_KEESE, 380.0f, 540.0f);
+        entity_spawn(ENTITY_ENEMY_KEESE, 520.0f, 550.0f);
+        // Gosmas Green ChuChu (camufladas no chão)
+        entity_spawn(ENTITY_ENEMY_CHUCHU, 420.0f, 660.0f);
+        entity_spawn(ENTITY_ENEMY_CHUCHU, 480.0f, 660.0f);
+        // Habitante Minish amigável próximo ao caminho da clareira
+        entity_spawn(ENTITY_NPC_FOREST_MINISH, 448.0f, 570.0f);
+    } else {
+        entity_spawn(ENTITY_ENEMY_OCTOROK, 160.0f, 220.0f);
+        entity_spawn(ENTITY_ENEMY_OCTOROK, 420.0f, 150.0f);
+        entity_spawn(ENTITY_ENEMY_OCTOROK, 340.0f, 310.0f);
+        entity_spawn(ENTITY_ENEMY_KEESE, 200.0f, 130.0f);
+        entity_spawn(ENTITY_ENEMY_CHUCHU, 320.0f, 220.0f);
+        entity_spawn(ENTITY_NPC_FOREST_MINISH, 250.0f, 176.0f);
+    }
 }
 
 static void draw_rect(int rx, int ry, int rw, int rh, u32 color) {
@@ -279,7 +305,8 @@ int main(int argc, char* argv[]) {
     printf("  - Fusao Kinstone: [K] ou [Gatilho L no Gamepad] (Unir pedras da sorte com NPCs parceiros!)\n");
     printf("  - Ciclar Itens:   [Q] ou [Gatilho L no Gamepad] (Alternar item secundario equipado)\n");
     printf("  - Falar com Ezlo: [E] ou [Select no Gamepad] (Dicas e orientacoes do gorro companheiro!)\n");
-    printf("  - Trilha Sonora:  [T] ou [Gatilho R no Gamepad] (Minish Woods / Hyrule / Mudo)\n");
+    printf("  - Trilha Sonora:  [T] ou [Gatilho R no Gamepad] (Minish Woods / Hyrule / Deepwood / Mudo)\n");
+    printf("  - Masmorra:       [D] Entrar/Sair de Deepwood Shrine (ou caminhar ao santuario ao norte!)\n");
     printf("  - Segredo Zelda:  [M] (Chime lendario de 8 notas!)\n");
     printf("  - Alarme de Vida: [H] (Chime classico de coracao)\n");
     printf("  - Trocar Regiao:  [1] USA | [2] EUR | [3] JPN\n");
@@ -299,6 +326,7 @@ int main(int argc, char* argv[]) {
     dialogue_init();
     subweapon_init();
     kinstone_init();
+    dungeon_init();
 
     // Inicia a trilha sonora autêntica de Minish Woods no mixer chiptune da HAL
     hal_audio_play_bgm(BGM_MINISH_WOODS);
@@ -333,27 +361,7 @@ int main(int argc, char* argv[]) {
 
     // Inicialização do Subsistema de Entidades e Spawn de Inimigos e NPCs
     entity_manager_init();
-    if (world_map && world_map->is_authentic) {
-        // Inimigos clássicos Octorok
-        entity_spawn(ENTITY_ENEMY_OCTOROK, 400.0f, 620.0f);
-        entity_spawn(ENTITY_ENEMY_OCTOROK, 500.0f, 620.0f);
-        entity_spawn(ENTITY_ENEMY_OCTOROK, 448.0f, 500.0f);
-        // Morcegos voadores Keese (com sombra e vôo senoidal)
-        entity_spawn(ENTITY_ENEMY_KEESE, 380.0f, 540.0f);
-        entity_spawn(ENTITY_ENEMY_KEESE, 520.0f, 550.0f);
-        // Gosmas Green ChuChu (camufladas no chão)
-        entity_spawn(ENTITY_ENEMY_CHUCHU, 420.0f, 660.0f);
-        entity_spawn(ENTITY_ENEMY_CHUCHU, 480.0f, 660.0f);
-        // Habitante Minish amigável próximo ao caminho da clareira
-        entity_spawn(ENTITY_NPC_FOREST_MINISH, 448.0f, 570.0f);
-    } else {
-        entity_spawn(ENTITY_ENEMY_OCTOROK, 160.0f, 220.0f);
-        entity_spawn(ENTITY_ENEMY_OCTOROK, 420.0f, 150.0f);
-        entity_spawn(ENTITY_ENEMY_OCTOROK, 340.0f, 310.0f);
-        entity_spawn(ENTITY_ENEMY_KEESE, 200.0f, 130.0f);
-        entity_spawn(ENTITY_ENEMY_CHUCHU, 320.0f, 220.0f);
-        entity_spawn(ENTITY_NPC_FOREST_MINISH, 250.0f, 176.0f);
-    }
+    spawn_overworld_entities(world_map);
 
     Camera camera;
     camera.viewport_w = widescreen ? 284 : 240;
@@ -421,6 +429,14 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
+                        case SDLK_d:
+                            if (dungeon_is_active()) {
+                                dungeon_exit(&link.x, &link.y, &link.dir);
+                            } else {
+                                entity_clear_all();
+                                dungeon_enter(&link.x, &link.y, &link.dir);
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -466,9 +482,17 @@ int main(int argc, char* argv[]) {
             }
             link.is_moving = false;
         } else {
-            // Ação com Botão A: Primeiro interage com Baús Dourados, depois NPCs, depois golpe de espada!
+            // Ação com Botão A: Primeiro interage com Masmorra / Baús Dourados, depois NPCs, depois golpe de espada!
             if (hal_input_is_pressed(KEY_A) && !link.is_attacking) {
-                if (entity_interact_chest(link.x, link.y, &link.rupees, &link.hearts)) {
+                if (dungeon_is_active()) {
+                    if (dungeon_interact(link.x, link.y, &link.rupees, &link.hearts)) {
+                        // Abriu o baú do altar da masmorra!
+                    } else {
+                        link.is_attacking = true;
+                        link.attack_timer = 12;
+                        hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                    }
+                } else if (entity_interact_chest(link.x, link.y, &link.rupees, &link.hearts)) {
                     // Abriu o baú dourado!
                 } else {
                     Entity* nearby_npc = entity_find_nearby_npc(link.x, link.y, 28.0f);
@@ -494,11 +518,11 @@ int main(int argc, char* argv[]) {
                 if (link.dir == DIR_LEFT)  { hit_x = link.x - 12.0f; hit_y = link.y + 2.0f;  hit_w = 12.0f; hit_h = 14.0f; }
                 if (link.dir == DIR_RIGHT) { hit_x = link.x + 14.0f; hit_y = link.y + 2.0f;  hit_w = 12.0f; hit_h = 14.0f; }
 
-                // Checa acerto contra inimigos (Octoroks) e projéteis (pedras cuspidas)
+                // Checa acerto contra inimigos (Octoroks, Keese, ChuChu) e projéteis
                 entity_check_sword_hit(hit_x, hit_y, hit_w, hit_h, 1, link.dir);
 
-                // Interação da espada com o cenário (cortar arbustos ou abrir baú)
-                if (map_interact_slash(world_map, hit_x + 6.0f, hit_y + 6.0f)) {
+                // Interação da espada com o cenário (cortar arbustos ou abrir baú no overworld)
+                if (!dungeon_is_active() && map_interact_slash(world_map, hit_x + 6.0f, hit_y + 6.0f)) {
                     hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 1.25f);
                     link.rupees += 5; // Recompensa clássica de Zelda!
                 }
@@ -612,34 +636,71 @@ int main(int argc, char* argv[]) {
         }
 
         // --------------------------------------------------------------------
-        // SISTEMA DE COLISÃO COM O MAPA (DESLIZAMENTO SUAVE EM X E Y)
+        // SISTEMA DE COLISÃO COM O MAPA OU MASMORRA (DESLIZAMENTO SUAVE EM X E Y)
         // --------------------------------------------------------------------
         if (link.is_moving) {
             float new_x = link.x + move_x;
             float new_y = link.y + move_y;
 
-            // Hitbox dos pés do Link (largura: x+4 a x+12, altura: y+12 a y+16)
-            bool blocked_x = map_is_solid(world_map, new_x + 4.0f, link.y + 12.0f) ||
-                             map_is_solid(world_map, new_x + 12.0f, link.y + 12.0f) ||
-                             map_is_solid(world_map, new_x + 4.0f, link.y + 16.0f) ||
-                             map_is_solid(world_map, new_x + 12.0f, link.y + 16.0f);
+            bool blocked_x = false;
+            bool blocked_y = false;
+
+            if (dungeon_is_active()) {
+                blocked_x = dungeon_is_solid(new_x + 4.0f, link.y + 12.0f) ||
+                            dungeon_is_solid(new_x + 12.0f, link.y + 12.0f) ||
+                            dungeon_is_solid(new_x + 4.0f, link.y + 16.0f) ||
+                            dungeon_is_solid(new_x + 12.0f, link.y + 16.0f);
+                blocked_y = dungeon_is_solid(link.x + 4.0f, new_y + 12.0f) ||
+                            dungeon_is_solid(link.x + 12.0f, new_y + 12.0f) ||
+                            dungeon_is_solid(link.x + 4.0f, new_y + 16.0f) ||
+                            dungeon_is_solid(link.x + 12.0f, new_y + 16.0f);
+            } else {
+                blocked_x = map_is_solid(world_map, new_x + 4.0f, link.y + 12.0f) ||
+                            map_is_solid(world_map, new_x + 12.0f, link.y + 12.0f) ||
+                            map_is_solid(world_map, new_x + 4.0f, link.y + 16.0f) ||
+                            map_is_solid(world_map, new_x + 12.0f, link.y + 16.0f);
+                blocked_y = map_is_solid(world_map, link.x + 4.0f, new_y + 12.0f) ||
+                            map_is_solid(world_map, link.x + 12.0f, new_y + 12.0f) ||
+                            map_is_solid(world_map, link.x + 4.0f, new_y + 16.0f) ||
+                            map_is_solid(world_map, link.x + 12.0f, new_y + 16.0f);
+            }
+
             if (!blocked_x) {
                 link.x = new_x;
             }
-
-            bool blocked_y = map_is_solid(world_map, link.x + 4.0f, new_y + 12.0f) ||
-                             map_is_solid(world_map, link.x + 12.0f, new_y + 12.0f) ||
-                             map_is_solid(world_map, link.x + 4.0f, new_y + 16.0f) ||
-                             map_is_solid(world_map, link.x + 12.0f, new_y + 16.0f);
             if (!blocked_y) {
                 link.y = new_y;
             }
 
-            // Confinamento dentro dos limites do mundo (640x480 pixels)
-            if (link.x < 16.0f) link.x = 16.0f;
-            if (link.x > (world_map->width * TILE_SIZE) - 32.0f) link.x = (world_map->width * TILE_SIZE) - 32.0f;
-            if (link.y < 16.0f) link.y = 16.0f;
-            if (link.y > (world_map->height * TILE_SIZE) - 32.0f) link.y = (world_map->height * TILE_SIZE) - 32.0f;
+            if (dungeon_is_active()) {
+                if (link.x < 0.0f) link.x = 0.0f;
+                if (link.x > 256.0f - 16.0f) link.x = 256.0f - 16.0f;
+                if (link.y < 0.0f) link.y = 0.0f;
+                if (link.y > 160.0f - 16.0f) link.y = 160.0f - 16.0f;
+            } else {
+                // Confinamento dentro dos limites do mundo (640x480 pixels)
+                if (link.x < 16.0f) link.x = 16.0f;
+                if (link.x > (world_map->width * TILE_SIZE) - 32.0f) link.x = (world_map->width * TILE_SIZE) - 32.0f;
+                if (link.y < 16.0f) link.y = 16.0f;
+                if (link.y > (world_map->height * TILE_SIZE) - 32.0f) link.y = (world_map->height * TILE_SIZE) - 32.0f;
+
+                // Checagem de Entrada no Deepwood Shrine pelo archway do santuário ao norte
+                bool enter_shrine = false;
+                if (world_map && world_map->is_authentic) {
+                    if (link.x >= 436.0f && link.x <= 468.0f && link.y <= 485.0f && link.dir == DIR_UP) {
+                        enter_shrine = true;
+                    }
+                } else {
+                    if (link.x >= 280.0f && link.x <= 312.0f && link.y <= 40.0f && link.dir == DIR_UP) {
+                        enter_shrine = true;
+                    }
+                }
+
+                if (enter_shrine) {
+                    entity_clear_all();
+                    dungeon_enter(&link.x, &link.y, &link.dir);
+                }
+            }
         }
 
         // --------------------------------------------------------------------
@@ -649,14 +710,23 @@ int main(int argc, char* argv[]) {
             float k_new_x = link.x + link.knock_x;
             float k_new_y = link.y + link.knock_y;
 
-            if (!map_is_solid(world_map, k_new_x + 4.0f, link.y + 12.0f) &&
-                !map_is_solid(world_map, k_new_x + 12.0f, link.y + 12.0f)) {
-                link.x = k_new_x;
+            bool k_blocked_x = false;
+            bool k_blocked_y = false;
+
+            if (dungeon_is_active()) {
+                k_blocked_x = dungeon_is_solid(k_new_x + 4.0f, link.y + 12.0f) ||
+                              dungeon_is_solid(k_new_x + 12.0f, link.y + 12.0f);
+                k_blocked_y = dungeon_is_solid(link.x + 4.0f, k_new_y + 12.0f) ||
+                              dungeon_is_solid(link.x + 12.0f, k_new_y + 16.0f);
+            } else {
+                k_blocked_x = map_is_solid(world_map, k_new_x + 4.0f, link.y + 12.0f) ||
+                              map_is_solid(world_map, k_new_x + 12.0f, link.y + 12.0f);
+                k_blocked_y = map_is_solid(world_map, link.x + 4.0f, k_new_y + 12.0f) ||
+                              map_is_solid(world_map, link.x + 12.0f, k_new_y + 16.0f);
             }
-            if (!map_is_solid(world_map, link.x + 4.0f, k_new_y + 12.0f) &&
-                !map_is_solid(world_map, link.x + 12.0f, k_new_y + 16.0f)) {
-                link.y = k_new_y;
-            }
+
+            if (!k_blocked_x) link.x = k_new_x;
+            if (!k_blocked_y) link.y = k_new_y;
 
             link.knock_x *= 0.82f; // Amortecimento de inércia do recuo
             link.knock_y *= 0.82f;
@@ -670,8 +740,19 @@ int main(int argc, char* argv[]) {
         }
 
         // --------------------------------------------------------------------
-        // ATUALIZAÇÃO DO SUBSISTEMA DE ENTIDADES (IA, COMBATE E PROJÉTEIS)
+        // ATUALIZAÇÃO DO SUBSISTEMA DE MASMORRA & ENTIDADES
         // --------------------------------------------------------------------
+        static bool s_was_dungeon_active = false;
+        if (s_was_dungeon_active && !dungeon_is_active()) {
+            spawn_overworld_entities(world_map);
+        }
+        s_was_dungeon_active = dungeon_is_active();
+
+        if (dungeon_is_active()) {
+            dungeon_update(&link.x, &link.y, &link.dir, link.is_moving,
+                           &link.hearts, &link.rupees);
+        }
+
         entity_manager_update(world_map, link.x, link.y,
                               &link.hearts, &link.rupees,
                               &link.invuln_timer, &link.knock_x, &link.knock_y);
@@ -682,8 +763,13 @@ int main(int argc, char* argv[]) {
         // Respawn de teste caso o Link zere os corações
         if (link.hearts <= 0) {
             link.hearts = 3;
-            link.x = (world_map && world_map->is_authentic) ? 448.0f : 296.0f;
-            link.y = (world_map && world_map->is_authentic) ? 624.0f : 176.0f;
+            if (dungeon_is_active()) {
+                link.x = 7.5f * TILE_SIZE;
+                link.y = 8.0f * TILE_SIZE;
+            } else {
+                link.x = (world_map && world_map->is_authentic) ? 448.0f : 296.0f;
+                link.y = (world_map && world_map->is_authentic) ? 624.0f : 176.0f;
+            }
             link.invuln_timer = 90;
             link.knock_x = 0.0f;
             link.knock_y = 0.0f;
@@ -705,23 +791,40 @@ int main(int argc, char* argv[]) {
         }
         } // Fim do bloco de gameplay (se não estiver em diálogo ativo)
 
-        // Atualização da Câmera Virtual Widescreen (Segue o Link com interpolação Lerp)
-        camera_update(&camera, link.x, link.y, ctx->render_width, ctx->render_height, world_map);
+        // Atualização da Câmera Virtual Widescreen (Segue o Link ou centraliza na Masmorra)
+        if (dungeon_is_active()) {
+            camera.viewport_w = widescreen ? 284 : 240;
+            camera.viewport_h = 160;
+            camera.x = (float)(256 - camera.viewport_w) / 2.0f;
+            camera.y = 0.0f;
+        } else {
+            camera_update(&camera, link.x, link.y, ctx->render_width, ctx->render_height, world_map);
+        }
 
         // --------------------------------------------------------------------
         // 3. RENDERIZAÇÃO NO FRAMEBUFFER VIRTUAL
         // --------------------------------------------------------------------
-        // 1. Renderiza o mapa com Frustum Culling inteligente
-        map_render(world_map, &camera);
-
-        // 2. Renderiza as entidades ativas (Octoroks, Projéteis e Itens no chão)
-        entity_manager_render(&camera);
-
-        // 3. Desenha a entidade do Link nas coordenadas relativas da câmera
-        draw_link(&link, &camera);
-
-        // 4. Renderiza as subarmas e efeitos em voo (Bumerangue, Vórtice de ar)
-        subweapon_render(&camera);
+        if (dungeon_is_active()) {
+            // Renderiza as câmaras subterrâneas, tochas, canais e portas da masmorra
+            dungeon_render(&camera);
+            // Renderiza inimigos ativos da câmara (Keese / ChuChu)
+            entity_manager_render(&camera);
+            // Desenha Link
+            draw_link(&link, &camera);
+            // Renderiza subarmas ativas (Bumerangue / Vórtice)
+            subweapon_render(&camera);
+            // Renderiza efeito suave de transição de salas (wipe)
+            dungeon_render_transition(&camera);
+        } else {
+            // 1. Renderiza o mapa com Frustum Culling inteligente
+            map_render(world_map, &camera);
+            // 2. Renderiza as entidades ativas (Octoroks, Projéteis e Itens no chão)
+            entity_manager_render(&camera);
+            // 3. Desenha a entidade do Link nas coordenadas relativas da câmera
+            draw_link(&link, &camera);
+            // 4. Renderiza as subarmas e efeitos em voo (Bumerangue, Vórtice de ar)
+            subweapon_render(&camera);
+        }
 
         // 3. Barra Superior de HUD (Status do Jogo fixo na tela)
         draw_rect(0, 0, ctx->render_width, 14, 0x0C1C0DFF);
@@ -754,10 +857,11 @@ int main(int argc, char* argv[]) {
         hal_video_put_pixel(67, 3, 0x00FF88FF);
         hal_video_put_pixel(67, 10, 0x00FF88FF);
 
-        // Indicador de Trilha Sonora BGM no HUD (Minish Woods: Turquesa, Hyrule: Dourado, Mudo: Cinza)
+        // Indicador de Trilha Sonora BGM no HUD (Minish Woods: Turquesa, Hyrule: Dourado, Deepwood: Roxo, Mudo: Cinza)
         BgmTrack current_bgm = hal_audio_get_current_bgm();
         u32 bgm_color = (current_bgm == BGM_MINISH_WOODS)     ? 0x00E5FFFF :
                         (current_bgm == BGM_HYRULE_OVERWORLD) ? 0xFFD700FF :
+                        (current_bgm == BGM_DEEPWOOD_SHRINE)  ? 0xA855F7FF :
                                                                 0x666666FF;
         draw_rect(76, 5, 3, 5, bgm_color);
         hal_video_put_pixel(79, 4, bgm_color);
@@ -766,6 +870,9 @@ int main(int argc, char* argv[]) {
 
         // Slot e Ícone da Subarma / Item Secundário Equipado [B]
         subweapon_render_hud_icon(88, 1);
+
+        // Contador de Chaves Pequenas da Masmorra (Small Keys 🔑 xN)
+        dungeon_render_hud_keys(106, 2);
 
         // Badge da Região Ativa no canto superior direito
         u32 reg_color = (s_current_region == REGION_USA) ? 0x4287F5FF :

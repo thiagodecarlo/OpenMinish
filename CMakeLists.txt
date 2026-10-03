@@ -44,6 +44,7 @@ add_executable(zelda_port
     src/hal/dialogue.c
     src/hal/subweapon.c
     src/hal/kinstone.c
+    src/hal/dungeon.c
 )
 
 # Adiciona nossas pastas de cabeçalhos (.h) para que o C encontre #include "gba/types.h"
