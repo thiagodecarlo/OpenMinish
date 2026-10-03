@@ -7,6 +7,8 @@
 #include "hal/audio.h"
 #include "hal/map.h"
 #include "hal/entity.h"
+#include "hal/font.h"
+#include "hal/dialogue.h"
 #include <math.h>
 
 /*
@@ -270,11 +272,12 @@ int main(int argc, char* argv[]) {
     printf("====================================================================\n");
     printf("Controles Disponiveis:\n");
     printf("  - Mover Link:     [WASD] ou [Setas do Teclado] ou [D-Pad/Analogico]\n");
-    printf("  - Atacar Espada:  [Z] ou [Espaco] ou [Botao A do Gamepad] (SFX Espada!)\n");
-    printf("  - Rolar / Dash:   [X] ou [Botao B do Gamepad] (SFX Esquiva!)\n");
+    printf("  - Atacar / Acao:  [Z] ou [Espaco] ou [Botao A do Gamepad] (Atacar espada / Falar com NPCs!)\n");
+    printf("  - Falar com Ezlo: [E] ou [Select no Gamepad] (Dicas e orientacoes do gorro companheiro!)\n");
+    printf("  - Rolar / Dash:   [X] ou [Botao B do Gamepad] (Acelera texto / Corrida rapida!)\n");
     printf("  - Trilha Sonora:  [T] ou [Gatilho R no Gamepad] (Minish Woods / Hyrule / Mudo)\n");
-    printf("  - Segredo Zelda:  [M] ou [Select no Gamepad] (Chime lendario de 8 notas!)\n");
-    printf("  - Alarme de Vida: [H] ou [Gatilho L no Gamepad] (Chime classico de coracao)\n");
+    printf("  - Segredo Zelda:  [M] ou [Gatilho L no Gamepad] (Chime lendario de 8 notas!)\n");
+    printf("  - Alarme de Vida: [H] (Chime classico de coracao)\n");
     printf("  - Trocar Regiao:  [1] USA | [2] EUR | [3] JPN\n");
     printf("  - Widescreen:     [W] Alternar proporcao 16:9\n");
     printf("  - Sair do Jogo:   [ESC]\n\n");
@@ -288,6 +291,8 @@ int main(int argc, char* argv[]) {
 
     hal_input_init();
     hal_audio_init();
+    font_init();
+    dialogue_init();
 
     // Inicia a trilha sonora autêntica de Minish Woods no mixer chiptune da HAL
     hal_audio_play_bgm(BGM_MINISH_WOODS);
@@ -320,16 +325,19 @@ int main(int argc, char* argv[]) {
     link.knock_x = 0.0f;
     link.knock_y = 0.0f;
 
-    // Inicialização do Subsistema de Entidades e Spawn de Inimigos (Octoroks)
+    // Inicialização do Subsistema de Entidades e Spawn de Inimigos (Octoroks) e NPCs
     entity_manager_init();
     if (world_map && world_map->is_authentic) {
         entity_spawn(ENTITY_ENEMY_OCTOROK, 400.0f, 620.0f);
         entity_spawn(ENTITY_ENEMY_OCTOROK, 500.0f, 620.0f);
         entity_spawn(ENTITY_ENEMY_OCTOROK, 448.0f, 500.0f);
+        // Habitante Minish amigável próximo ao caminho da clareira
+        entity_spawn(ENTITY_NPC_FOREST_MINISH, 448.0f, 570.0f);
     } else {
         entity_spawn(ENTITY_ENEMY_OCTOROK, 160.0f, 220.0f);
         entity_spawn(ENTITY_ENEMY_OCTOROK, 420.0f, 150.0f);
         entity_spawn(ENTITY_ENEMY_OCTOROK, 340.0f, 310.0f);
+        entity_spawn(ENTITY_NPC_FOREST_MINISH, 250.0f, 176.0f);
     }
 
     Camera camera;
@@ -382,6 +390,11 @@ int main(int argc, char* argv[]) {
                         case SDLK_t:
                             hal_audio_cycle_bgm();
                             break;
+                        case SDLK_e:
+                            if (!dialogue_is_active()) {
+                                dialogue_trigger_ezlo_hint();
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -397,55 +410,70 @@ int main(int argc, char* argv[]) {
         // --------------------------------------------------------------------
         const HalVideoContext* ctx = hal_video_get_context();
 
-        // Ação de Ataque (Botão A pressionado no frame exato)
-        if (hal_input_is_pressed(KEY_A) && !link.is_attacking) {
-            link.is_attacking = true;
-            link.attack_timer = 12; // Dura 12 frames (0.2 segundos)
-            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
-        }
-
-        if (link.is_attacking) {
-            // Hitbox do golpe de espada dependendo da orientação do Link
-            float hit_x = link.x + 4.0f;
-            float hit_y = link.y + 4.0f;
-            float hit_w = 12.0f;
-            float hit_h = 12.0f;
-
-            if (link.dir == DIR_DOWN)  { hit_x = link.x + 1.0f;  hit_y = link.y + 14.0f; hit_w = 14.0f; hit_h = 12.0f; }
-            if (link.dir == DIR_UP)    { hit_x = link.x + 1.0f;  hit_y = link.y - 10.0f; hit_w = 14.0f; hit_h = 12.0f; }
-            if (link.dir == DIR_LEFT)  { hit_x = link.x - 12.0f; hit_y = link.y + 2.0f;  hit_w = 12.0f; hit_h = 14.0f; }
-            if (link.dir == DIR_RIGHT) { hit_x = link.x + 14.0f; hit_y = link.y + 2.0f;  hit_w = 12.0f; hit_h = 14.0f; }
-
-            // Checa acerto contra inimigos (Octoroks) e projéteis (pedras cuspidas)
-            entity_check_sword_hit(hit_x, hit_y, hit_w, hit_h, 1, link.dir);
-
-            // Interação da espada com o cenário (cortar arbustos ou abrir baú)
-            if (map_interact_slash(world_map, hit_x + 6.0f, hit_y + 6.0f)) {
-                hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 1.25f);
-                link.rupees += 5; // Recompensa clássica de Zelda!
+        if (dialogue_is_active()) {
+            dialogue_update();
+            if (hal_input_is_pressed(KEY_A) || hal_input_is_pressed(KEY_START)) {
+                dialogue_advance();
+            }
+            if (hal_input_is_held(KEY_B)) {
+                dialogue_fast_forward();
+            }
+            link.is_moving = false;
+        } else {
+            // Ação de Ataque ou Conversa com NPC (Botão A pressionado no frame exato)
+            if (hal_input_is_pressed(KEY_A) && !link.is_attacking) {
+                Entity* nearby_npc = entity_find_nearby_npc(link.x, link.y, 28.0f);
+                if (nearby_npc) {
+                    dialogue_trigger_minish_talk();
+                } else {
+                    link.is_attacking = true;
+                    link.attack_timer = 12; // Dura 12 frames (0.2 segundos)
+                    hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                }
             }
 
-            link.attack_timer--;
-            if (link.attack_timer <= 0) {
-                link.is_attacking = false;
+            if (link.is_attacking) {
+                // Hitbox do golpe de espada dependendo da orientação do Link
+                float hit_x = link.x + 4.0f;
+                float hit_y = link.y + 4.0f;
+                float hit_w = 12.0f;
+                float hit_h = 12.0f;
+
+                if (link.dir == DIR_DOWN)  { hit_x = link.x + 1.0f;  hit_y = link.y + 14.0f; hit_w = 14.0f; hit_h = 12.0f; }
+                if (link.dir == DIR_UP)    { hit_x = link.x + 1.0f;  hit_y = link.y - 10.0f; hit_w = 14.0f; hit_h = 12.0f; }
+                if (link.dir == DIR_LEFT)  { hit_x = link.x - 12.0f; hit_y = link.y + 2.0f;  hit_w = 12.0f; hit_h = 14.0f; }
+                if (link.dir == DIR_RIGHT) { hit_x = link.x + 14.0f; hit_y = link.y + 2.0f;  hit_w = 12.0f; hit_h = 14.0f; }
+
+                // Checa acerto contra inimigos (Octoroks) e projéteis (pedras cuspidas)
+                entity_check_sword_hit(hit_x, hit_y, hit_w, hit_h, 1, link.dir);
+
+                // Interação da espada com o cenário (cortar arbustos ou abrir baú)
+                if (map_interact_slash(world_map, hit_x + 6.0f, hit_y + 6.0f)) {
+                    hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 1.25f);
+                    link.rupees += 5; // Recompensa clássica de Zelda!
+                }
+
+                link.attack_timer--;
+                if (link.attack_timer <= 0) {
+                    link.is_attacking = false;
+                }
             }
-        }
 
-        // Ação de Esquiva / Dash (SFX ao apertar Botão B)
-        if (hal_input_is_pressed(KEY_B)) {
-            hal_audio_play_sound(SOUND_ROLL, 0.70f, 1.0f);
-        }
+            // Ação de Esquiva / Dash (SFX ao apertar Botão B)
+            if (hal_input_is_pressed(KEY_B)) {
+                hal_audio_play_sound(SOUND_ROLL, 0.70f, 1.0f);
+            }
 
-        // Testes de Áudio disparáveis pelo Gamepad
-        if (hal_input_is_pressed(KEY_SELECT)) {
-            hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
-        }
-        if (hal_input_is_pressed(KEY_L)) {
-            hal_audio_play_sound(SOUND_HEART_BEEP, 0.85f, 1.0f);
-        }
-        if (hal_input_is_pressed(KEY_R)) {
-            hal_audio_cycle_bgm();
-        }
+            // Chamado de Orientação do Companheiro Ezlo
+            if (hal_input_is_pressed(KEY_SELECT)) {
+                dialogue_trigger_ezlo_hint();
+            }
+            if (hal_input_is_pressed(KEY_L)) {
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
+            }
+            if (hal_input_is_pressed(KEY_R)) {
+                hal_audio_cycle_bgm();
+            }
 
         // Modificador de Velocidade: Dash / Corrida (Botão B segurado)
         float dash_mult = 1.0f;
@@ -591,6 +619,7 @@ int main(int argc, char* argv[]) {
             link.anim_frame = 0;
             link.anim_timer = 0;
         }
+        } // Fim do bloco de gameplay (se não estiver em diálogo ativo)
 
         // Atualização da Câmera Virtual Widescreen (Segue o Link com interpolação Lerp)
         camera_update(&camera, link.x, link.y, ctx->render_width, ctx->render_height, world_map);
@@ -653,8 +682,11 @@ int main(int argc, char* argv[]) {
                         (s_current_region == REGION_EUR) ? 0xF5A742FF : 0xF54242FF;
         draw_rect(ctx->render_width - 32, 2, 28, 10, reg_color);
 
+        // 4. Balão de Diálogos e Retratos de Personagens (Ezlo / NPCs)
+        dialogue_render();
+
         // --------------------------------------------------------------------
-        // 4. APRESENTAÇÃO NA TELA (SDL2 GPU)
+        // 5. APRESENTAÇÃO NA TELA (SDL2 GPU)
         // --------------------------------------------------------------------
         hal_video_render_frame();
     }

@@ -64,6 +64,22 @@ O **OpenMinish** é um projeto de estudo universitário e pesquisa técnica foca
   - **Zero-Glitch Phase Alignment**: Loops pré-renderizados garantem continuidade exata da fase de onda e zero estalos na transição.
   - **Indicador Visual no HUD**: Ícone de nota musical/alto-falante com cores dinâmicas (Turquesa para Minish Woods, Dourado para Hyrule Overworld e Cinza para Mudo).
 
+### 🗣️ NPCs, Sistema de Diálogos & Ezlo (Companheiro Gorro Falante)
+- **Motor de Tipografia Bitmap Retrô 8x8**:
+  - Renderização em software de fonte pixel art autônoma com espaçamento proporcional e sombra projetada em tempo real para alta legibilidade.
+  - Suporte transparente a caracteres acentuados da língua portuguesa (`á`, `é`, `í`, `ó`, `ú`, `ç`, `ã`, `õ`, etc.) e glifos especiais Zelda (Coração, Rupee, Seta de Diálogo).
+- **Balão de Diálogo Clássico do Minish Cap**:
+  - Fundo esmeralda translúcido com *alpha blending*, moldura com detalhes em ouro/bronze, cantos ornamentais e badge com o nome do orador.
+  - **Retratos Animados 32x32 (Portraits)**:
+    - **Ezlo**: O pássaro-gorro icônico com crista vermelha, olhos expressivos (que piscam em repouso) e animação de bico falando.
+    - **Forest Minish**: Habitante Picori fofo com gorro vermelho de semente com pom-pom, orelhas pontudas e túnica azul.
+  - **Efeito Typewriter com Chirp Sintetizado**: Avanço progressivo de caracteres a 30 cps acompanhado de chirp retrô com micro-variação de pitch; aceleração com botão [B] e avanço/fechamento instantâneo com [A].
+  - **Indicador de Próxima Página**: Seta animada saltitante (`▼`) informando espera por confirmação do jogador.
+- **Interação com NPCs e Dicas do Ezlo**:
+  - Habitante Minish interativo na clareira com prompt flutuante contextual `[A] Falar`.
+  - Sistema de orientação ao pressionar `[E]` ou `[SELECT]`, onde Ezlo sai do gorro e oferece dicas dinâmicas sobre controles, combate e segredos da floresta.
+  - **Pausa de Cena Canônica**: O tempo, a movimentação do herói e as IAs dos monstros congelam durante o diálogo para leitura tranquila.
+
 ### ⚔️ Pool de Atores Estático & Sistema de Combate
 - **Zero alocações dinâmicas no loop principal**: Todas as entidades operam sob um pool estático (`MAX_ENTITIES 32`), prevenindo quedas de frame e fragmentação de RAM.
 - **IA do Red Octorok (Máquina de Estados Finitos)**:
@@ -218,11 +234,12 @@ Copie sua ROM limpa (ex: `zelda_usa.gba`) e execute a ferramenta AOT de extraç�
 | Ação | Teclado | Controle (8BitDo / Xbox) | Controle (PlayStation) |
 | :--- | :--- | :--- | :--- |
 | **Mover Link** | `W`, `A`, `S`, `D` ou Setas | Alavanca Analógica Esquerda | Alavanca Analógica Esquerda |
-| **Atacar com Espada** | `Z` ou Barra de Espaço | **Botão A** | **Botão Cruz (X)** |
-| **Rolar / Dash** | `X` | **Botão B** | **Botão Círculo (O)** |
-| **Chime de Segredo** | `M` | Botão `Select` / `Back` | Botão `Share` |
-| **Alarme de Vida** | `H` | Gatilho `L` | Gatilho `L1` |
+| **Atacar / Falar (NPCs)** | `Z` ou Barra de Espaço | **Botão A** | **Botão Cruz (X)** |
+| **Falar com Ezlo (Dicas)** | Tecla `E` | Botão `Select` / `Back` | Botão `Share` |
+| **Rolar / Acelerar Texto** | `X` | **Botão B** | **Botão Círculo (O)** |
 | **Trilha Sonora (BGM)** | `T` | Gatilho `R` | Gatilho `R1` |
+| **Segredo Zelda** | `M` | Gatilho `L` | Gatilho `L1` |
+| **Alarme de Vida** | `H` | — | — |
 | **Alternar 16:9 Widescreen** | Tecla `W` | — | — |
 | **Alternar Região** | `1` (USA) \| `2` (EUR) \| `3` (JPN) | — | — |
 | **Sair do Jogo** | `ESC` | — | — |

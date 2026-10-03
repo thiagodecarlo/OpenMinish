@@ -1,6 +1,7 @@
 #include "hal/entity.h"
 #include "hal/video.h"
 #include "hal/audio.h"
+#include "hal/font.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,12 +9,14 @@
 
 /*
  * ============================================================================
- * src/hal/entity.c - Gerenciador de Entidades, IA do Octorok e Sistema de Dano
+ * src/hal/entity.c - Gerenciador de Entidades, IA do Octorok e NPCs
  * ============================================================================
  */
 
 static Entity s_entities[MAX_ENTITIES];
 static const Texture* s_octo_tex = NULL;
+static float s_last_link_x = 0.0f;
+static float s_last_link_y = 0.0f;
 
 void entity_set_texture(const Texture* tex) {
     s_octo_tex = tex;
@@ -71,6 +74,15 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     e->hitbox    = (Hitbox){ 1.0f, 1.0f, 8.0f, 8.0f };
                     break;
 
+                case ENTITY_NPC_FOREST_MINISH:
+                    e->health    = 999;
+                    e->maxHealth = 999;
+                    e->damage    = 0;
+                    e->dir       = DIR_DOWN;
+                    e->action    = 1; // Idle/respirando
+                    e->hitbox    = (Hitbox){ 2.0f, 2.0f, 12.0f, 12.0f };
+                    break;
+
                 default:
                     break;
             }
@@ -83,6 +95,9 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
 void entity_manager_update(const Tilemap* map, float link_x, float link_y,
                            int* link_hearts, int* link_rupees,
                            int* link_invuln_timer, float* link_knock_x, float* link_knock_y) {
+    s_last_link_x = link_x;
+    s_last_link_y = link_y;
+
     for (int i = 0; i < MAX_ENTITIES; i++) {
         Entity* e = &s_entities[i];
         if (!e->is_active) continue;
@@ -299,6 +314,26 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
                 e->is_active = false;
             }
         }
+
+        // --------------------------------------------------------------------
+        // 4. NPC AMIGÁVEL: MINISH DA FLORESTA
+        // --------------------------------------------------------------------
+        else if (e->type == ENTITY_NPC_FOREST_MINISH) {
+            e->animTimer++;
+
+            // Se o Link estiver por perto (raio de 36px), o Minish vira o rosto na direção dele
+            float dx = link_x - e->x;
+            float dy = link_y - e->y;
+            float dist_sq = dx * dx + dy * dy;
+
+            if (dist_sq <= 36.0f * 36.0f) {
+                if (fabsf(dx) > fabsf(dy)) {
+                    e->dir = (dx > 0.0f) ? DIR_RIGHT : DIR_LEFT;
+                } else {
+                    e->dir = (dy > 0.0f) ? DIR_DOWN : DIR_UP;
+                }
+            }
+        }
     }
 }
 
@@ -505,7 +540,78 @@ void entity_manager_render(const Camera* cam) {
             for (int x = 2; x <= 4; x++) put_pixel_safe(sx + x, hy + 5, red);
             put_pixel_safe(sx + 3, hy + 6, red);
         }
+
+        // 5. NPC AMIGÁVEL: MINISH DA FLORESTA
+        else if (e->type == ENTITY_NPC_FOREST_MINISH) {
+            int breathe = ((e->animTimer / 16) % 2 == 1) ? 1 : 0;
+            int my = sy - breathe;
+
+            // Paleta Minish
+            u32 c_hat   = 0xC93B2BFF; // Gorro vermelho bolota
+            u32 c_skin  = 0xFDE8CDFF; // Pele clara
+            u32 c_tunic = 0x2A6F97FF; // Túnica azul
+            u32 c_pom   = 0xFFFFFFFF; // Pom-pom branco
+            u32 c_eye   = 0x111111FF; // Olhos pretos
+
+            // Gorro pontudo (topo)
+            draw_filled_rect(sx + 6, my + 1, 4, 3, c_hat);
+            draw_filled_rect(sx + 5, my + 4, 6, 3, c_hat);
+            put_pixel_safe(sx + 7, my, c_pom);
+            put_pixel_safe(sx + 8, my, c_pom);
+
+            // Rosto e orelhas pontudas
+            draw_filled_rect(sx + 5, my + 7, 6, 4, c_skin);
+            put_pixel_safe(sx + 4, my + 8, c_skin); // Orelha esq
+            put_pixel_safe(sx + 11, my + 8, c_skin); // Orelha dir
+
+            // Olhos
+            if (e->dir == DIR_DOWN) {
+                put_pixel_safe(sx + 6, my + 8, c_eye);
+                put_pixel_safe(sx + 9, my + 8, c_eye);
+            } else if (e->dir == DIR_UP) {
+                // De costas: gorro cobre o rosto
+                draw_filled_rect(sx + 5, my + 7, 6, 4, c_hat);
+            } else if (e->dir == DIR_LEFT) {
+                put_pixel_safe(sx + 5, my + 8, c_eye);
+            } else if (e->dir == DIR_RIGHT) {
+                put_pixel_safe(sx + 10, my + 8, c_eye);
+            }
+
+            // Túnica e corpo
+            draw_filled_rect(sx + 5, my + 11, 6, 4, c_tunic);
+
+            // Se o Link estiver ao alcance da interação (<= 28px), exibe o prompt animado "[A] Falar"
+            float dx = s_last_link_x - e->x;
+            float dy = s_last_link_y - e->y;
+            if (dx * dx + dy * dy <= 28.0f * 28.0f) {
+                int bounce = ((e->animTimer / 10) % 2 == 1) ? 1 : 0;
+                int prompt_x = sx - 16;
+                int prompt_y = sy - 14 + bounce;
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 48, 10, 0x0A2010EE);
+                font_draw_text(prompt_x + 1, prompt_y, "[A] Falar", 0xFFE27AFF, true);
+            }
+        }
     }
+}
+
+Entity* entity_find_nearby_npc(float world_x, float world_y, float max_dist) {
+    float best_dist_sq = max_dist * max_dist;
+    Entity* best = NULL;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active || e->type != ENTITY_NPC_FOREST_MINISH) continue;
+
+        float dx = e->x - world_x;
+        float dy = e->y - world_y;
+        float dist_sq = dx * dx + dy * dy;
+
+        if (dist_sq <= best_dist_sq) {
+            best_dist_sq = dist_sq;
+            best = e;
+        }
+    }
+    return best;
 }
 
 void entity_manager_shutdown(void) {

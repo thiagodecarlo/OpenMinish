@@ -40,6 +40,8 @@ add_executable(zelda_port
     src/hal/audio.c
     src/hal/map.c
     src/hal/entity.c
+    src/hal/font.c
+    src/hal/dialogue.c
 )
 
 # Adiciona nossas pastas de cabeçalhos (.h) para que o C encontre #include "gba/types.h"
