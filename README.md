@@ -80,14 +80,24 @@ O **OpenMinish** é um projeto de estudo universitário e pesquisa técnica foca
   - Sistema de orientação ao pressionar `[E]` ou `[SELECT]`, onde Ezlo sai do gorro e oferece dicas dinâmicas sobre controles, combate e segredos da floresta.
   - **Pausa de Cena Canônica**: O tempo, a movimentação do herói e as IAs dos monstros congelam durante o diálogo para leitura tranquila.
 
-### ⚔️ Pool de Atores Estático & Sistema de Combate
+### ⚔️ Pool de Atores Estático, IA de Inimigos & Sistema de Combate
 - **Zero alocações dinâmicas no loop principal**: Todas as entidades operam sob um pool estático (`MAX_ENTITIES 32`), prevenindo quedas de frame e fragmentação de RAM.
-- **IA do Red Octorok (Máquina de Estados Finitos)**:
-  - Patrulha e navegação autônoma pelo terreno.
+- **Red Octorok (Máquina de Estados Finitos)**:
+  - Patrulha e navegação autônoma pelo terreno florestal.
   - Detecção visual e antecipação com inchaço de bochechas por 22 frames.
-  - Disparo de projéteis de pedras em velocidade balística.
-  - Deflexão em pleno voo com a espada do Link.
+  - Disparo de projéteis de pedras em velocidade balística com deflexão em pleno voo pela espada do herói.
   - Knockback físico com inércia, danos e drops aleatórios de **Rupees Verdes** (+5) e **Corações de Cura** (+1 HP).
+- **Keese (Morcego Voador com Projeção de Sombra 3D)**:
+  - Voo autêntico em altitude vertical $z$ com oscilação senoidal contínua de sustentação ($z = 10.0 + 3.5 \times \sin(t)$).
+  - Projeção em tempo real de sombra oval no chão do terreno florestal, conferindo profundidade espacial isométrica.
+  - IA preditiva com voo de cruzeiro, guincho de alerta, mergulho rasante em direção ao herói e recuo defensivo em arco.
+  - Áudio procedural de rufal de asas e guincho de ecolocalização (`SOUND_KEESE_CHIRP`).
+  - Abate aéreo sincronizado com a altitude da lâmina da espada.
+- **Green ChuChu (Gosma Gelatinosa com Física de Squash & Stretch)**:
+  - Camuflagem furtiva como poça de gosma verde no solo enquanto o herói está distante (imune a ataques na poça).
+  - Efeito dinâmico de emergência vertical e deformação elástica (*squash & stretch*) ao detectar a aproximação de Link ($\le 65\text{px}$).
+  - Salto parabólico no ar impulsionado com gravidade balística em direção ao alvo e som retrô de borracha (`SOUND_CHUCHU_SQUISH`).
+  - Olhos esbugalhados cômicos, 2 pontos de vida com recuo elástico e explosão de gotas ao ser derrotado.
 
 ### 🎨 Sprites Autênticos Extraídos da ROM (Clean-Room AOT)
 - **Metatiles 1D do GBA**: Montagem canônica de metatiles 16x24 (3 fatias de 16x8) para o Link e metatiles 16x16 (4 tiles 8x8) para os Octoroks e projétil de pedra.

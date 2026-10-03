@@ -30,6 +30,8 @@ typedef enum {
     SOUND_TEXT_BLIP,       // Som curto retro de caractere do diálogo (typewriter)
     SOUND_TEXT_ADVANCE,    // Som de avanço de página ou encerramento do diálogo
     SOUND_EZLO_ALERT,      // Piado característico do pássaro Ezlo ao ser chamado
+    SOUND_KEESE_CHIRP,     // Rufal de asas e guincho do morcego Keese ao alçar voo
+    SOUND_CHUCHU_SQUISH,   // Som elástico/gelatinoso de salto e brotar do ChuChu
     SOUND_COUNT
 } SoundEffect;
 
