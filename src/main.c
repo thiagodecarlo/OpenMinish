@@ -272,6 +272,7 @@ int main(int argc, char* argv[]) {
     printf("  - Mover Link:     [WASD] ou [Setas do Teclado] ou [D-Pad/Analogico]\n");
     printf("  - Atacar Espada:  [Z] ou [Espaco] ou [Botao A do Gamepad] (SFX Espada!)\n");
     printf("  - Rolar / Dash:   [X] ou [Botao B do Gamepad] (SFX Esquiva!)\n");
+    printf("  - Trilha Sonora:  [T] ou [Gatilho R no Gamepad] (Minish Woods / Hyrule / Mudo)\n");
     printf("  - Segredo Zelda:  [M] ou [Select no Gamepad] (Chime lendario de 8 notas!)\n");
     printf("  - Alarme de Vida: [H] ou [Gatilho L no Gamepad] (Chime classico de coracao)\n");
     printf("  - Trocar Regiao:  [1] USA | [2] EUR | [3] JPN\n");
@@ -287,6 +288,9 @@ int main(int argc, char* argv[]) {
 
     hal_input_init();
     hal_audio_init();
+
+    // Inicia a trilha sonora autêntica de Minish Woods no mixer chiptune da HAL
+    hal_audio_play_bgm(BGM_MINISH_WOODS);
 
     // Inicialização da Engine de Mapas e Câmera Widescreen (Autêntico Minish Woods ou Fallback)
     Tilemap* world_map = map_create_woods(s_region_tags[REGION_USA]);
@@ -375,6 +379,9 @@ int main(int argc, char* argv[]) {
                         case SDLK_h:
                             hal_audio_play_sound(SOUND_HEART_BEEP, 0.85f, 1.0f);
                             break;
+                        case SDLK_t:
+                            hal_audio_cycle_bgm();
+                            break;
                         default:
                             break;
                     }
@@ -435,6 +442,9 @@ int main(int argc, char* argv[]) {
         }
         if (hal_input_is_pressed(KEY_L)) {
             hal_audio_play_sound(SOUND_HEART_BEEP, 0.85f, 1.0f);
+        }
+        if (hal_input_is_pressed(KEY_R)) {
+            hal_audio_cycle_bgm();
         }
 
         // Modificador de Velocidade: Dash / Corrida (Botão B segurado)
@@ -627,6 +637,16 @@ int main(int argc, char* argv[]) {
         draw_rect(65, 4, 5, 6, 0x00FF88FF); // Gema verde
         hal_video_put_pixel(67, 3, 0x00FF88FF);
         hal_video_put_pixel(67, 10, 0x00FF88FF);
+
+        // Indicador de Trilha Sonora BGM no HUD (Minish Woods: Turquesa, Hyrule: Dourado, Mudo: Cinza)
+        BgmTrack current_bgm = hal_audio_get_current_bgm();
+        u32 bgm_color = (current_bgm == BGM_MINISH_WOODS)     ? 0x00E5FFFF :
+                        (current_bgm == BGM_HYRULE_OVERWORLD) ? 0xFFD700FF :
+                                                                0x666666FF;
+        draw_rect(76, 5, 3, 5, bgm_color);
+        hal_video_put_pixel(79, 4, bgm_color);
+        hal_video_put_pixel(80, 5, bgm_color);
+        hal_video_put_pixel(80, 6, bgm_color);
 
         // Badge da Região Ativa no canto superior direito
         u32 reg_color = (s_current_region == REGION_USA) ? 0x4287F5FF :

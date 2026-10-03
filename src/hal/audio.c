@@ -49,6 +49,7 @@ static float s_vol_master = 0.85f;
 static float s_vol_sfx    = 0.90f;
 static float s_vol_bgm    = 0.70f;
 static bool  s_audio_ready = false;
+static BgmTrack s_current_bgm_track = BGM_NONE;
 
 // ----------------------------------------------------------------------------
 // SINTETIZADOR PROCEDURAL RETRO (EMULAÇÃO DE PSG E DIRECTSOUND)
@@ -60,9 +61,25 @@ static float synth_square_wave(float phase, float duty) {
     return (p < duty) ? 1.0f : -1.0f;
 }
 
+static float synth_triangle_wave(float phase) {
+    float p = fmodf(phase, 1.0f);
+    if (p < 0.0f) p += 1.0f;
+    return 4.0f * fabsf(p - 0.5f) - 1.0f;
+}
+
 static float synth_noise(void) {
     return ((float)rand() / (float)RAND_MAX) * 2.0f - 1.0f;
 }
+
+static float note_to_freq(int midi_note) {
+    if (midi_note <= 0) return 0.0f;
+    return 440.0f * powf(2.0f, (float)(midi_note - 69) / 12.0f);
+}
+
+typedef struct {
+    u8    note;
+    float duration;
+} NoteEvent;
 
 static void synth_generate_all_sfx(void) {
     // 1. SOUND_SWORD_SLASH: Golpe de espada (Ruído branco com sweep de pitch e decaimento exponencial)
@@ -207,6 +224,451 @@ static void synth_generate_all_sfx(void) {
         s_precalc_sfx[SOUND_SECRET].total_frames = num_frames;
         s_precalc_sfx[SOUND_SECRET].is_stereo = false;
     }
+}
+
+// ----------------------------------------------------------------------------
+// SINTETIZADORES DE TRILHAS SONORAS (BGM CHIPTUNE POLIFÔNICO)
+// ----------------------------------------------------------------------------
+
+static s16* synth_generate_minish_woods(u32* out_total_frames) {
+    float bpm = 100.0f;
+    float beat_sec = 60.0f / bpm;
+    float total_sec = beat_sec * 3.0f * 16.0f; // 16 compassos de 3 batidas = 28.8s
+    u32 total_frames = (u32)(AUDIO_SAMPLE_RATE * total_sec);
+
+    float* mix_l = (float*)calloc(total_frames, sizeof(float));
+    float* mix_r = (float*)calloc(total_frames, sizeof(float));
+    if (!mix_l || !mix_r) {
+        if (mix_l) free(mix_l);
+        if (mix_r) free(mix_r);
+        return NULL;
+    }
+
+    // Canal 1: Melodia Principal (Flauta / Ocarina Minish com vibrato expressivo)
+    static const NoteEvent s_woods_lead[] = {
+        // Compassos 1 e 2 (Dm)
+        { 74, 1.0f }, { 77, 1.0f }, { 81, 1.0f }, { 86, 1.5f }, { 84, 0.5f }, { 81, 1.0f },
+        // Compassos 3 e 4 (Bb)
+        { 82, 2.0f }, { 81, 1.0f }, { 79, 3.0f },
+        // Compassos 5 e 6 (C)
+        { 76, 1.0f }, { 79, 1.0f }, { 82, 1.0f }, { 84, 1.5f }, { 82, 0.5f }, { 79, 1.0f },
+        // Compassos 7 e 8 (Am)
+        { 81, 2.0f }, { 77, 1.0f }, { 74, 3.0f },
+        // Compassos 9 e 10 (Bb)
+        { 77, 1.0f }, { 81, 1.0f }, { 86, 1.0f }, { 88, 2.0f }, { 86, 1.0f },
+        // Compassos 11 e 12 (Gm)
+        { 82, 1.5f }, { 84, 0.5f }, { 86, 1.0f }, { 81, 3.0f },
+        // Compassos 13 e 14 (C)
+        { 79, 1.0f }, { 82, 1.0f }, { 86, 1.0f }, { 84, 1.5f }, { 82, 0.5f }, { 81, 1.0f },
+        // Compassos 15 e 16 (A7 -> Dm)
+        { 79, 2.0f }, { 76, 1.0f }, { 74, 3.0f }
+    };
+    int lead_count = (int)(sizeof(s_woods_lead) / sizeof(s_woods_lead[0]));
+
+    float cur_time = 0.0f;
+    for (int n = 0; n < lead_count; n++) {
+        float dur_sec = s_woods_lead[n].duration * beat_sec;
+        u32 start_frame = (u32)(cur_time * AUDIO_SAMPLE_RATE);
+        u32 num_frames = (u32)(dur_sec * AUDIO_SAMPLE_RATE);
+        float base_freq = note_to_freq(s_woods_lead[n].note);
+        float phase = 0.0f;
+
+        for (u32 i = 0; i < num_frames; i++) {
+            u32 idx = (start_frame + i) % total_frames;
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float t_note = t / dur_sec;
+
+            float att = (t < 0.04f) ? (t / 0.04f) : 1.0f;
+            float dec = 1.0f - (t_note * 0.25f);
+            if (t_note > 0.82f) {
+                dec *= (1.0f - t_note) / 0.18f;
+                if (dec < 0.0f) dec = 0.0f;
+            }
+
+            float cur_freq = base_freq;
+            if (t > 0.16f && base_freq > 0.0f) {
+                cur_freq += sinf(2.0f * PI_F * 5.4f * (t - 0.16f)) * (base_freq * 0.016f);
+            }
+
+            phase += cur_freq / (float)AUDIO_SAMPLE_RATE;
+            float flutewave = (synth_triangle_wave(phase) * 0.65f + synth_square_wave(phase, 0.25f) * 0.35f);
+            float sample = flutewave * att * dec * 0.40f;
+
+            mix_l[idx] += sample * 0.52f;
+            mix_r[idx] += sample * 0.48f;
+        }
+        cur_time += dur_sec;
+    }
+
+    // Canal 2: Harpa das Fadas e Arpeggios Magicos (com eco estereo)
+    static const u8 s_woods_harp[8][6] = {
+        { 62, 65, 69, 74, 69, 65 }, // Dm (D4, F4, A4, D5, A4, F4)
+        { 62, 65, 70, 74, 70, 65 }, // Bb (D4, F4, Bb4, D5, Bb4, F4)
+        { 60, 64, 67, 72, 67, 64 }, // C  (C4, E4, G4, C5, G4, E4)
+        { 57, 60, 64, 69, 64, 60 }, // Am (A3, C4, E4, A4, E4, C4)
+        { 62, 65, 70, 74, 70, 65 }, // Bb (D4, F4, Bb4, D5, Bb4, F4)
+        { 58, 62, 67, 70, 67, 62 }, // Gm (Bb3, D4, G4, Bb4, G4, D4)
+        { 60, 64, 67, 72, 67, 64 }, // C  (C4, E4, G4, C5, G4, E4)
+        { 57, 61, 64, 69, 64, 61 }  // A7 (A3, C#4, E4, A4, E4, C#4)
+    };
+
+    float note_step_sec = beat_sec * 0.5f;
+    for (int bar = 0; bar < 16; bar++) {
+        int pattern_idx = bar / 2;
+        for (int step = 0; step < 6; step++) {
+            u8 harp_note = s_woods_harp[pattern_idx][step];
+            float harp_time = (bar * 3.0f * beat_sec) + (step * note_step_sec);
+            u32 start_frame = (u32)(harp_time * AUDIO_SAMPLE_RATE);
+            u32 num_frames = (u32)(0.40f * AUDIO_SAMPLE_RATE);
+            float freq = note_to_freq(harp_note);
+            float phase = 0.0f;
+
+            float pan_l = (step % 2 == 0) ? 0.70f : 0.30f;
+            float pan_r = 1.0f - pan_l;
+
+            for (u32 i = 0; i < num_frames; i++) {
+                u32 idx = (start_frame + i) % total_frames;
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-11.0f * t);
+
+                phase += freq / (float)AUDIO_SAMPLE_RATE;
+                float chime = sinf(2.0f * PI_F * phase) * 0.65f + synth_square_wave(phase, 0.125f) * 0.35f;
+                float sample = chime * env * 0.18f;
+
+                mix_l[idx] += sample * pan_l;
+                mix_r[idx] += sample * pan_r;
+            }
+        }
+    }
+
+    // Canal 3: Baixo Acustico de Floresta (Onda Triangular PSG suave)
+    static const NoteEvent s_woods_bass[] = {
+        { 50, 2.0f }, { 45, 1.0f }, { 50, 3.0f }, // Dm (D3, A2, D3)
+        { 46, 2.0f }, { 41, 1.0f }, { 46, 3.0f }, // Bb (Bb2, F2, Bb2)
+        { 48, 2.0f }, { 43, 1.0f }, { 48, 3.0f }, // C  (C3, G2, C3)
+        { 45, 2.0f }, { 40, 1.0f }, { 45, 3.0f }, // Am (A2, E2, A2)
+        { 46, 2.0f }, { 41, 1.0f }, { 46, 3.0f }, // Bb (Bb2, F2, Bb2)
+        { 43, 2.0f }, { 38, 1.0f }, { 43, 3.0f }, // Gm (G2, D2, G2)
+        { 48, 2.0f }, { 43, 1.0f }, { 48, 3.0f }, // C  (C3, G2, C3)
+        { 45, 2.0f }, { 40, 1.0f }, { 45, 3.0f }  // A7 (A2, E2, A2)
+    };
+    int bass_count = (int)(sizeof(s_woods_bass) / sizeof(s_woods_bass[0]));
+
+    cur_time = 0.0f;
+    for (int b = 0; b < bass_count; b++) {
+        float dur_sec = s_woods_bass[b].duration * beat_sec;
+        u32 start_frame = (u32)(cur_time * AUDIO_SAMPLE_RATE);
+        u32 num_frames = (u32)(dur_sec * AUDIO_SAMPLE_RATE);
+        float freq = note_to_freq(s_woods_bass[b].note);
+        float phase = 0.0f;
+
+        for (u32 i = 0; i < num_frames; i++) {
+            u32 idx = (start_frame + i) % total_frames;
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-2.5f * t);
+
+            phase += freq / (float)AUDIO_SAMPLE_RATE;
+            float sample = synth_triangle_wave(phase) * env * 0.35f;
+
+            mix_l[idx] += sample * 0.5f;
+            mix_r[idx] += sample * 0.5f;
+        }
+        cur_time += dur_sec;
+    }
+
+    // Canal 4: Shaker de Folhagem e Percussao Organica
+    for (int bar = 0; bar < 16; bar++) {
+        for (int beat = 1; beat <= 2; beat++) {
+            float shaker_time = (bar * 3.0f * beat_sec) + (beat * beat_sec);
+            u32 start_frame = (u32)(shaker_time * AUDIO_SAMPLE_RATE);
+            u32 num_frames = (u32)(0.06f * AUDIO_SAMPLE_RATE);
+
+            for (u32 i = 0; i < num_frames; i++) {
+                u32 idx = (start_frame + i) % total_frames;
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-55.0f * t);
+                float sample = synth_noise() * env * 0.07f;
+                mix_l[idx] += sample * 0.45f;
+                mix_r[idx] += sample * 0.55f;
+            }
+        }
+    }
+
+    s16* out_buf = (s16*)malloc(total_frames * 2 * sizeof(s16));
+    if (!out_buf) {
+        free(mix_l);
+        free(mix_r);
+        return NULL;
+    }
+
+    for (u32 i = 0; i < total_frames; i++) {
+        float l = mix_l[i] * 30000.0f;
+        float r = mix_r[i] * 30000.0f;
+        if (l > 32767.0f)  l = 32767.0f;
+        if (l < -32768.0f) l = -32768.0f;
+        if (r > 32767.0f)  r = 32767.0f;
+        if (r < -32768.0f) r = -32768.0f;
+
+        out_buf[i * 2 + 0] = (s16)l;
+        out_buf[i * 2 + 1] = (s16)r;
+    }
+
+    free(mix_l);
+    free(mix_r);
+    *out_total_frames = total_frames;
+    return out_buf;
+}
+
+static s16* synth_generate_hyrule_overworld(u32* out_total_frames) {
+    float bpm = 144.0f;
+    float beat_sec = 60.0f / bpm;
+    float total_sec = beat_sec * 4.0f * 12.0f; // 12 compassos em 4/4 = 48 batidas = 20.0s
+    u32 total_frames = (u32)(AUDIO_SAMPLE_RATE * total_sec);
+
+    float* mix_l = (float*)calloc(total_frames, sizeof(float));
+    float* mix_r = (float*)calloc(total_frames, sizeof(float));
+    if (!mix_l || !mix_r) {
+        if (mix_l) free(mix_l);
+        if (mix_r) free(mix_r);
+        return NULL;
+    }
+
+    // Canal 1: Fanfarra de Metais / Trompete do Heroi (Onda de Pulso 50% GBA)
+    static const NoteEvent s_hyrule_lead[] = {
+        // Compasso 1 (Bb)
+        { 70, 1.0f }, { 65, 0.75f }, { 70, 0.25f }, { 72, 0.5f }, { 74, 0.5f }, { 75, 0.5f }, { 0, 0.5f },
+        // Compasso 2 (F -> Fanfarra)
+        { 77, 2.0f }, { 77, 1.0f }, { 77, 0.333f }, { 78, 0.333f }, { 80, 0.334f },
+        // Compasso 3 (Bb -> Climax)
+        { 82, 2.0f }, { 82, 1.0f }, { 80, 0.5f }, { 78, 0.5f },
+        // Compasso 4 (Ab -> F)
+        { 80, 1.0f }, { 77, 3.0f },
+        // Compasso 5 (Eb -> Gb)
+        { 75, 1.0f }, { 75, 0.5f }, { 77, 0.5f }, { 78, 2.0f },
+        // Compasso 6 (Passagem heroica)
+        { 77, 0.5f }, { 75, 0.5f }, { 73, 0.5f }, { 75, 0.5f }, { 77, 1.0f }, { 73, 1.0f },
+        // Compasso 7 (Bb)
+        { 70, 3.0f }, { 70, 0.5f }, { 72, 0.5f },
+        // Compasso 8 (Marcha ascendente)
+        { 74, 1.0f }, { 74, 1.0f }, { 74, 0.5f }, { 75, 0.5f }, { 77, 2.0f },
+        // Compasso 9 (Descida triunfal)
+        { 75, 0.5f }, { 74, 0.5f }, { 72, 1.0f }, { 75, 1.0f }, { 74, 0.5f }, { 72, 0.5f },
+        // Compasso 10 (Cadencia para o tema)
+        { 70, 1.0f }, { 72, 1.0f }, { 74, 1.0f }, { 72, 1.0f },
+        // Compassos 11 e 12 (Sustentacao triunfal e transicao de loop)
+        { 70, 4.0f }, { 0, 4.0f }
+    };
+    int lead_count = (int)(sizeof(s_hyrule_lead) / sizeof(s_hyrule_lead[0]));
+
+    float cur_time = 0.0f;
+    for (int n = 0; n < lead_count; n++) {
+        float dur_sec = s_hyrule_lead[n].duration * beat_sec;
+        u32 start_frame = (u32)(cur_time * AUDIO_SAMPLE_RATE);
+        u32 num_frames = (u32)(dur_sec * AUDIO_SAMPLE_RATE);
+        float base_freq = note_to_freq(s_hyrule_lead[n].note);
+        float phase = 0.0f;
+
+        if (base_freq > 0.0f) {
+            for (u32 i = 0; i < num_frames; i++) {
+                u32 idx = (start_frame + i) % total_frames;
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                float t_note = t / dur_sec;
+
+                float att = (t < 0.02f) ? (t / 0.02f) : 1.0f;
+                float dec = 1.0f - (t_note * 0.18f);
+                if (t_note > 0.86f) {
+                    dec *= (1.0f - t_note) / 0.14f;
+                    if (dec < 0.0f) dec = 0.0f;
+                }
+
+                float cur_freq = base_freq;
+                if (dur_sec > 0.40f && t > 0.22f) {
+                    cur_freq += sinf(2.0f * PI_F * 6.0f * (t - 0.22f)) * (base_freq * 0.018f);
+                }
+
+                phase += cur_freq / (float)AUDIO_SAMPLE_RATE;
+                float sample = synth_square_wave(phase, 0.50f) * att * dec * 0.38f;
+
+                mix_l[idx] += sample * 0.50f;
+                mix_r[idx] += sample * 0.50f;
+            }
+        }
+        cur_time += dur_sec;
+    }
+
+    // Canal 2: Acordes de Acompanhamento e Metais Staccato (Onda de 25% Duty)
+    static const NoteEvent s_hyrule_chords[] = {
+        // Bar 1 (Bb)
+        { 62, 0.5f }, { 0, 0.5f }, { 62, 0.5f }, { 0, 0.5f }, { 65, 0.5f }, { 0, 0.5f }, { 65, 0.5f }, { 0, 0.5f },
+        // Bar 2 (F -> Bb)
+        { 65, 0.5f }, { 0, 0.5f }, { 65, 0.5f }, { 0, 0.5f }, { 66, 0.5f }, { 0, 0.5f }, { 68, 0.5f }, { 0, 0.5f },
+        // Bar 3 (Gb -> Ab)
+        { 70, 0.5f }, { 0, 0.5f }, { 70, 0.5f }, { 0, 0.5f }, { 68, 0.5f }, { 0, 0.5f }, { 66, 0.5f }, { 0, 0.5f },
+        // Bar 4 (Ab -> F)
+        { 68, 0.5f }, { 0, 0.5f }, { 65, 0.5f }, { 0, 0.5f }, { 65, 1.0f }, { 0, 1.0f },
+        // Bar 5 (Ebm -> Gb)
+        { 63, 0.5f }, { 0, 0.5f }, { 63, 0.5f }, { 0, 0.5f }, { 66, 0.5f }, { 0, 0.5f }, { 66, 0.5f }, { 0, 0.5f },
+        // Bar 6 (Db)
+        { 65, 0.5f }, { 0, 0.5f }, { 63, 0.5f }, { 0, 0.5f }, { 65, 0.5f }, { 0, 0.5f }, { 61, 0.5f }, { 0, 0.5f },
+        // Bar 7 (Bb)
+        { 58, 0.5f }, { 0, 0.5f }, { 58, 0.5f }, { 0, 0.5f }, { 62, 0.5f }, { 0, 0.5f }, { 65, 0.5f }, { 0, 0.5f },
+        // Bar 8 (Dm -> F)
+        { 62, 0.5f }, { 0, 0.5f }, { 62, 0.5f }, { 0, 0.5f }, { 65, 0.5f }, { 0, 0.5f }, { 65, 0.5f }, { 0, 0.5f },
+        // Bar 9 (Eb -> F)
+        { 63, 0.5f }, { 0, 0.5f }, { 60, 0.5f }, { 0, 0.5f }, { 63, 0.5f }, { 0, 0.5f }, { 65, 0.5f }, { 0, 0.5f },
+        // Bar 10 (Bb -> F)
+        { 58, 0.5f }, { 0, 0.5f }, { 60, 0.5f }, { 0, 0.5f }, { 62, 0.5f }, { 0, 0.5f }, { 60, 0.5f }, { 0, 0.5f },
+        // Bars 11 e 12 (Bb sustentado)
+        { 58, 2.0f }, { 62, 2.0f }, { 65, 2.0f }, { 0, 2.0f }
+    };
+    int chord_count = (int)(sizeof(s_hyrule_chords) / sizeof(s_hyrule_chords[0]));
+
+    cur_time = 0.0f;
+    for (int c = 0; c < chord_count; c++) {
+        float dur_sec = s_hyrule_chords[c].duration * beat_sec;
+        u32 start_frame = (u32)(cur_time * AUDIO_SAMPLE_RATE);
+        u32 num_frames = (u32)(dur_sec * AUDIO_SAMPLE_RATE);
+        float freq = note_to_freq(s_hyrule_chords[c].note);
+        float phase = 0.0f;
+
+        if (freq > 0.0f) {
+            for (u32 i = 0; i < num_frames; i++) {
+                u32 idx = (start_frame + i) % total_frames;
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-14.0f * t);
+
+                phase += freq / (float)AUDIO_SAMPLE_RATE;
+                float sample = synth_square_wave(phase, 0.25f) * env * 0.18f;
+
+                mix_l[idx] += sample * 0.65f;
+                mix_r[idx] += sample * 0.35f;
+            }
+        }
+        cur_time += dur_sec;
+    }
+
+    // Canal 3: Baixo de Marcha Marcial (Onda Triangular PSG)
+    static const NoteEvent s_hyrule_bass[] = {
+        // Bar 1: Bb2, Bb2, D3, F3
+        { 46, 1.0f }, { 46, 1.0f }, { 50, 1.0f }, { 53, 1.0f },
+        // Bar 2: F2, F2, A2, C3
+        { 41, 1.0f }, { 41, 1.0f }, { 45, 1.0f }, { 48, 1.0f },
+        // Bar 3: Gb2, Gb2, Bb2, Db3
+        { 42, 1.0f }, { 42, 1.0f }, { 46, 1.0f }, { 49, 1.0f },
+        // Bar 4: Ab2, Ab2, C3, Eb3
+        { 44, 1.0f }, { 44, 1.0f }, { 48, 1.0f }, { 51, 1.0f },
+        // Bar 5: Eb2, Eb2, G2, Bb2
+        { 39, 1.0f }, { 39, 1.0f }, { 43, 1.0f }, { 46, 1.0f },
+        // Bar 6: Db2, Db2, F2, Ab2
+        { 37, 1.0f }, { 37, 1.0f }, { 41, 1.0f }, { 44, 1.0f },
+        // Bar 7: Bb2, Bb2, D3, F3
+        { 46, 1.0f }, { 46, 1.0f }, { 50, 1.0f }, { 53, 1.0f },
+        // Bar 8: D2, D2, F#2, A2
+        { 38, 1.0f }, { 38, 1.0f }, { 42, 1.0f }, { 45, 1.0f },
+        // Bar 9: Eb2, Eb2, F2, F2
+        { 39, 1.0f }, { 39, 1.0f }, { 41, 1.0f }, { 41, 1.0f },
+        // Bar 10: Bb2, D3, F3, F2
+        { 46, 1.0f }, { 50, 1.0f }, { 53, 1.0f }, { 41, 1.0f },
+        // Bars 11 e 12: Bb2 gran finale
+        { 46, 4.0f }, { 46, 4.0f }
+    };
+    int bass_count = (int)(sizeof(s_hyrule_bass) / sizeof(s_hyrule_bass[0]));
+
+    cur_time = 0.0f;
+    for (int b = 0; b < bass_count; b++) {
+        float dur_sec = s_hyrule_bass[b].duration * beat_sec;
+        u32 start_frame = (u32)(cur_time * AUDIO_SAMPLE_RATE);
+        u32 num_frames = (u32)(dur_sec * AUDIO_SAMPLE_RATE);
+        float freq = note_to_freq(s_hyrule_bass[b].note);
+        float phase = 0.0f;
+
+        for (u32 i = 0; i < num_frames; i++) {
+            u32 idx = (start_frame + i) % total_frames;
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-3.2f * t);
+
+            phase += freq / (float)AUDIO_SAMPLE_RATE;
+            float sample = synth_triangle_wave(phase) * env * 0.32f;
+
+            mix_l[idx] += sample * 0.5f;
+            mix_r[idx] += sample * 0.5f;
+        }
+        cur_time += dur_sec;
+    }
+
+    // Canal 4: Caixa Marcial e Prato de Conducao (Ruido Ritmico de Marcha)
+    for (int bar = 0; bar < 12; bar++) {
+        float bar_time = bar * 4.0f * beat_sec;
+
+        if (bar == 0 || bar == 6) {
+            u32 start_frame = (u32)(bar_time * AUDIO_SAMPLE_RATE);
+            u32 num_frames = (u32)(0.35f * AUDIO_SAMPLE_RATE);
+            for (u32 i = 0; i < num_frames; i++) {
+                u32 idx = (start_frame + i) % total_frames;
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-12.0f * t);
+                float sample = synth_noise() * env * 0.15f;
+                mix_l[idx] += sample * 0.55f;
+                mix_r[idx] += sample * 0.45f;
+            }
+        }
+
+        for (int beat = 0; beat < 4; beat++) {
+            float beat_time = bar_time + beat * beat_sec;
+
+            if (beat == 2) {
+                for (int r = 0; r < 4; r++) {
+                    u32 start_frame = (u32)((beat_time + r * (beat_sec * 0.25f)) * AUDIO_SAMPLE_RATE);
+                    u32 num_frames = (u32)(0.04f * AUDIO_SAMPLE_RATE);
+                    for (u32 i = 0; i < num_frames; i++) {
+                        u32 idx = (start_frame + i) % total_frames;
+                        float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                        float env = expf(-45.0f * t);
+                        float sample = synth_noise() * env * 0.10f;
+                        mix_l[idx] += sample * 0.48f;
+                        mix_r[idx] += sample * 0.52f;
+                    }
+                }
+            } else {
+                u32 start_frame = (u32)(beat_time * AUDIO_SAMPLE_RATE);
+                u32 num_frames = (u32)(0.09f * AUDIO_SAMPLE_RATE);
+                float amp = (beat == 1 || beat == 3) ? 0.16f : 0.11f;
+
+                for (u32 i = 0; i < num_frames; i++) {
+                    u32 idx = (start_frame + i) % total_frames;
+                    float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                    float env = expf(-38.0f * t);
+                    float sample = synth_noise() * env * amp;
+                    mix_l[idx] += sample * 0.5f;
+                    mix_r[idx] += sample * 0.5f;
+                }
+            }
+        }
+    }
+
+    s16* out_buf = (s16*)malloc(total_frames * 2 * sizeof(s16));
+    if (!out_buf) {
+        free(mix_l);
+        free(mix_r);
+        return NULL;
+    }
+
+    for (u32 i = 0; i < total_frames; i++) {
+        float l = mix_l[i] * 29000.0f;
+        float r = mix_r[i] * 29000.0f;
+        if (l > 32767.0f)  l = 32767.0f;
+        if (l < -32768.0f) l = -32768.0f;
+        if (r > 32767.0f)  r = 32767.0f;
+        if (r < -32768.0f) r = -32768.0f;
+
+        out_buf[i * 2 + 0] = (s16)l;
+        out_buf[i * 2 + 1] = (s16)r;
+    }
+
+    free(mix_l);
+    free(mix_r);
+    *out_total_frames = total_frames;
+    return out_buf;
 }
 
 // ----------------------------------------------------------------------------
@@ -440,6 +902,81 @@ bool hal_audio_play_music(const char* wav_path, float volume, bool loop) {
     return true;
 }
 
+const char* hal_audio_get_bgm_name(BgmTrack track) {
+    switch (track) {
+        case BGM_MINISH_WOODS:     return "Minish Woods (Deepwood)";
+        case BGM_HYRULE_OVERWORLD: return "Hyrule Overworld (Theme)";
+        case BGM_NONE:
+        default:                   return "Mudo / Silencio";
+    }
+}
+
+BgmTrack hal_audio_get_current_bgm(void) {
+    return s_current_bgm_track;
+}
+
+void hal_audio_play_bgm(BgmTrack track) {
+    if (!s_audio_ready) return;
+    if (track == s_current_bgm_track && s_bgm_voice.is_active) return;
+
+    if (track == BGM_NONE) {
+        hal_audio_stop_music();
+        printf("[HAL Audio] BGM parada (Silencio).\n");
+        return;
+    }
+
+    // 1. Suporte a mods de audio: verifica se existe arquivo WAV customizado em assets/audio/
+    char mod_path[256];
+    const char* track_tags[] = { "none", "minish_woods", "hyrule_overworld" };
+    snprintf(mod_path, sizeof(mod_path), "assets/audio/%s.wav", track_tags[track]);
+
+    if (hal_audio_play_music(mod_path, 0.75f, true)) {
+        s_current_bgm_track = track;
+        printf("[HAL Audio] Reproduzindo BGM personalizada: %s\n", mod_path);
+        return;
+    }
+
+    // 2. Sintese Procedural Chiptune Autentica do GBA (4 canais emulados)
+    u32 total_frames = 0;
+    s16* samples = NULL;
+
+    if (track == BGM_MINISH_WOODS) {
+        samples = synth_generate_minish_woods(&total_frames);
+    } else if (track == BGM_HYRULE_OVERWORLD) {
+        samples = synth_generate_hyrule_overworld(&total_frames);
+    }
+
+    if (!samples || total_frames == 0) return;
+
+    SDL_LockAudioDevice(s_audio_device);
+
+    if (s_bgm_voice.free_on_finish && s_bgm_voice.samples) {
+        free(s_bgm_voice.samples);
+    }
+
+    s_bgm_voice.samples        = samples;
+    s_bgm_voice.total_frames   = total_frames;
+    s_bgm_voice.current_frame  = 0.0f;
+    s_bgm_voice.volume         = 0.85f;
+    s_bgm_voice.pitch          = 1.0f;
+    s_bgm_voice.is_active      = true;
+    s_bgm_voice.is_looping     = true;
+    s_bgm_voice.is_stereo      = true;
+    s_bgm_voice.free_on_finish = true;
+
+    s_current_bgm_track = track;
+
+    SDL_UnlockAudioDevice(s_audio_device);
+    printf("[HAL Audio] Trilha sonora chiptune iniciada: %s (%.1fs em loop continuo)\n",
+           hal_audio_get_bgm_name(track),
+           (float)total_frames / (float)AUDIO_SAMPLE_RATE);
+}
+
+void hal_audio_cycle_bgm(void) {
+    BgmTrack next = (s_current_bgm_track + 1) % BGM_COUNT;
+    hal_audio_play_bgm(next);
+}
+
 void hal_audio_stop_music(void) {
     if (!s_audio_ready) return;
 
@@ -449,6 +986,7 @@ void hal_audio_stop_music(void) {
         free(s_bgm_voice.samples);
         s_bgm_voice.samples = NULL;
     }
+    s_current_bgm_track = BGM_NONE;
     SDL_UnlockAudioDevice(s_audio_device);
 }
 

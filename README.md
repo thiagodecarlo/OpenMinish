@@ -52,11 +52,17 @@ O **OpenMinish** é um projeto de estudo universitário e pesquisa técnica foca
 - **Câmera Virtual com Suavização Exponencial (Lerp)** a 12% por frame com *clamping* nos limites do mundo.
 - **Frustum Culling Inteligente**: Reduz o custo de renderização do mapa em mais de 80%, desenhando apenas os blocos que cruzam o retângulo do visor da câmera.
 
-### 🎵 Mixer de Áudio de Baixa Latência & Síntese Procedural Retro
+### 🎵 Mixer de Áudio de Baixa Latência, Síntese Procedural & Motor BGM Chiptune
 - Pipeline estéreo 44.1kHz 16-bit com buffer diminuto de 512 amostras ($\approx 11.6\text{ ms}$ de latência).
 - Mixer multicanal *thread-safe* com até 16 vozes simultâneas e saturação anti-clipping.
 - Sintetizador procedural emulando os chips sonoros clássicos (PSG e DirectSound):
   - Lâmina de espada, impacto metálico, passos alternados L/R com pitch orgânico, rolamento e o lendário **Chime de Segredo Zelda de 8 notas** ($\text{G5} \to \text{F\#5} \to \text{D\#5} \to \text{A4} \to \text{G\#4} \to \text{E5} \to \text{G\#5} \to \text{C6}$).
+- **Motor de Trilha Sonora Chiptune Polifônico (GBA 4-Canais Emulados)**:
+  - **Minish Woods ("Deepwood")**: 16 compassos em tempo 3/4 a 100 BPM com melodia etérea em flauta/ocarina com vibrato, harpa feérica arpejada em semicolcheias com eco estéreo ping-pong, baixo triangular suave e percussão de folhagens.
+  - **Hyrule Overworld ("Hyrule Field Theme")**: 12 compassos em marcha marcial 4/4 a 144 BPM com fanfarra de trompetes heroicos em onda pulso 50%, harmonias staccato em onda pulso 25%, baixo acústico caminhante e caixa marcial com pratos de condução.
+  - **Suporte Transparente a Mods de Áudio**: O motor checa primeiro se há arquivos `.wav` customizados em `assets/audio/` (ex: `minish_woods.wav`, `hyrule_overworld.wav`), permitindo que a comunidade adicione trilhas orquestradas completas sem alterar uma única linha de código C!
+  - **Zero-Glitch Phase Alignment**: Loops pré-renderizados garantem continuidade exata da fase de onda e zero estalos na transição.
+  - **Indicador Visual no HUD**: Ícone de nota musical/alto-falante com cores dinâmicas (Turquesa para Minish Woods, Dourado para Hyrule Overworld e Cinza para Mudo).
 
 ### ⚔️ Pool de Atores Estático & Sistema de Combate
 - **Zero alocações dinâmicas no loop principal**: Todas as entidades operam sob um pool estático (`MAX_ENTITIES 32`), prevenindo quedas de frame e fragmentação de RAM.
@@ -216,6 +222,7 @@ Copie sua ROM limpa (ex: `zelda_usa.gba`) e execute a ferramenta AOT de extraç�
 | **Rolar / Dash** | `X` | **Botão B** | **Botão Círculo (O)** |
 | **Chime de Segredo** | `M` | Botão `Select` / `Back` | Botão `Share` |
 | **Alarme de Vida** | `H` | Gatilho `L` | Gatilho `L1` |
+| **Trilha Sonora (BGM)** | `T` | Gatilho `R` | Gatilho `R1` |
 | **Alternar 16:9 Widescreen** | Tecla `W` | — | — |
 | **Alternar Região** | `1` (USA) \| `2` (EUR) \| `3` (JPN) | — | — |
 | **Sair do Jogo** | `ESC` | — | — |
