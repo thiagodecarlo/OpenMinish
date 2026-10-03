@@ -9,6 +9,7 @@
 #include "hal/entity.h"
 #include "hal/font.h"
 #include "hal/dialogue.h"
+#include "hal/subweapon.h"
 #include <math.h>
 
 /*
@@ -273,10 +274,11 @@ int main(int argc, char* argv[]) {
     printf("Controles Disponiveis:\n");
     printf("  - Mover Link:     [WASD] ou [Setas do Teclado] ou [D-Pad/Analogico]\n");
     printf("  - Atacar / Acao:  [Z] ou [Espaco] ou [Botao A do Gamepad] (Atacar espada / Falar com NPCs!)\n");
+    printf("  - Item Secundar.: [X] ou [Botao B do Gamepad] (Bumerangue / Pote Magico / Pegasus Boots!)\n");
+    printf("  - Ciclar Itens:   [Q] ou [Gatilho L no Gamepad] (Alternar item secundario equipado)\n");
     printf("  - Falar com Ezlo: [E] ou [Select no Gamepad] (Dicas e orientacoes do gorro companheiro!)\n");
-    printf("  - Rolar / Dash:   [X] ou [Botao B do Gamepad] (Acelera texto / Corrida rapida!)\n");
     printf("  - Trilha Sonora:  [T] ou [Gatilho R no Gamepad] (Minish Woods / Hyrule / Mudo)\n");
-    printf("  - Segredo Zelda:  [M] ou [Gatilho L no Gamepad] (Chime lendario de 8 notas!)\n");
+    printf("  - Segredo Zelda:  [M] (Chime lendario de 8 notas!)\n");
     printf("  - Alarme de Vida: [H] (Chime classico de coracao)\n");
     printf("  - Trocar Regiao:  [1] USA | [2] EUR | [3] JPN\n");
     printf("  - Widescreen:     [W] Alternar proporcao 16:9\n");
@@ -293,6 +295,7 @@ int main(int argc, char* argv[]) {
     hal_audio_init();
     font_init();
     dialogue_init();
+    subweapon_init();
 
     // Inicia a trilha sonora autêntica de Minish Woods no mixer chiptune da HAL
     hal_audio_play_bgm(BGM_MINISH_WOODS);
@@ -404,6 +407,9 @@ int main(int argc, char* argv[]) {
                                 dialogue_trigger_ezlo_hint();
                             }
                             break;
+                        case SDLK_q:
+                            subweapon_cycle();
+                            break;
                         default:
                             break;
                     }
@@ -468,9 +474,18 @@ int main(int argc, char* argv[]) {
                 }
             }
 
-            // Ação de Esquiva / Dash (SFX ao apertar Botão B)
+            // Subsistema de Armas Secundarias e Itens Equipaveis (Botao B)
             if (hal_input_is_pressed(KEY_B)) {
-                hal_audio_play_sound(SOUND_ROLL, 0.70f, 1.0f);
+                if (subweapon_get_current() == ITEM_PEGASUS_BOOTS) {
+                    hal_audio_play_sound(SOUND_ROLL, 0.70f, 1.0f);
+                }
+                subweapon_use_pressed(link.x, link.y, link.dir);
+            }
+            if (hal_input_is_held(KEY_B)) {
+                subweapon_use_held(link.x, link.y, link.dir);
+            }
+            if (hal_input_is_released(KEY_B)) {
+                subweapon_use_released(link.x, link.y, link.dir);
             }
 
             // Chamado de Orientação do Companheiro Ezlo
@@ -478,16 +493,16 @@ int main(int argc, char* argv[]) {
                 dialogue_trigger_ezlo_hint();
             }
             if (hal_input_is_pressed(KEY_L)) {
-                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
+                subweapon_cycle();
             }
             if (hal_input_is_pressed(KEY_R)) {
                 hal_audio_cycle_bgm();
             }
 
-        // Modificador de Velocidade: Dash / Corrida (Botão B segurado)
+        // Modificador de Velocidade: Dash / Pegasus Boots (Botao B segurado)
         float dash_mult = 1.0f;
-        if (hal_input_is_held(KEY_B)) {
-            dash_mult = 1.6f; // Dash calibrado (1.68 pixels/frame)
+        if (hal_input_is_held(KEY_B) && subweapon_get_current() == ITEM_PEGASUS_BOOTS) {
+            dash_mult = 1.85f; // Arrancada veloz das Botas de Pegasus!
         }
 
         link.is_moving = false;
@@ -495,7 +510,24 @@ int main(int argc, char* argv[]) {
         float move_x = 0.0f;
         float move_y = 0.0f;
 
-        if (!link.is_attacking) {
+        if (subweapon_is_gust_active()) {
+            // Durante a succao do Pote Magico, o heroi ancora no chao mas pode mirar o cone de vento
+            AnalogStick stick = hal_input_get_left_stick();
+            if (stick.magnitude > 0.15f) {
+                if (fabsf(stick.x) > fabsf(stick.y)) {
+                    link.dir = (stick.x > 0.0f) ? DIR_RIGHT : DIR_LEFT;
+                } else {
+                    link.dir = (stick.y > 0.0f) ? DIR_DOWN : DIR_UP;
+                }
+            } else {
+                if (hal_input_is_held(KEY_LEFT))  link.dir = DIR_LEFT;
+                if (hal_input_is_held(KEY_RIGHT)) link.dir = DIR_RIGHT;
+                if (hal_input_is_held(KEY_UP))    link.dir = DIR_UP;
+                if (hal_input_is_held(KEY_DOWN))  link.dir = DIR_DOWN;
+            }
+            subweapon_use_held(link.x, link.y, link.dir);
+            link.is_moving = false;
+        } else if (!link.is_attacking) {
             AnalogStick stick = hal_input_get_left_stick();
 
             if (stick.magnitude > 0.08f) {
@@ -604,6 +636,9 @@ int main(int argc, char* argv[]) {
                               &link.hearts, &link.rupees,
                               &link.invuln_timer, &link.knock_x, &link.knock_y);
 
+        // Atualizacao do Subsistema de Subarmas (Bumerangue, Vórtice do Pote Magico, Projeteis)
+        subweapon_update(world_map, link.x, link.y, &link.rupees, &link.hearts);
+
         // Respawn de teste caso o Link zere os corações
         if (link.hearts <= 0) {
             link.hearts = 3;
@@ -645,6 +680,9 @@ int main(int argc, char* argv[]) {
         // 3. Desenha a entidade do Link nas coordenadas relativas da câmera
         draw_link(&link, &camera);
 
+        // 4. Renderiza as subarmas e efeitos em voo (Bumerangue, Vórtice de ar)
+        subweapon_render(&camera);
+
         // 3. Barra Superior de HUD (Status do Jogo fixo na tela)
         draw_rect(0, 0, ctx->render_width, 14, 0x0C1C0DFF);
 
@@ -685,6 +723,9 @@ int main(int argc, char* argv[]) {
         hal_video_put_pixel(79, 4, bgm_color);
         hal_video_put_pixel(80, 5, bgm_color);
         hal_video_put_pixel(80, 6, bgm_color);
+
+        // Slot e Ícone da Subarma / Item Secundário Equipado [B]
+        subweapon_render_hud_icon(88, 1);
 
         // Badge da Região Ativa no canto superior direito
         u32 reg_color = (s_current_region == REGION_USA) ? 0x4287F5FF :

@@ -95,6 +95,19 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
 Entity* entity_find_nearby_npc(float world_x, float world_y, float max_dist);
 
 /*
+ * Verifica se um projétil disparado pelo jogador (Bumerangue ou rajada de ar) atingiu uma entidade.
+ * Retorna true se conectou. Se atingir um item coletável (Rupee/Coração), captura-o no parâmetro out_carried_item.
+ */
+bool entity_check_subweapon_hit(float px, float py, float pw, float ph, int damage, int* out_carried_item);
+
+/*
+ * Aplica força de sucção gravitacional do Pote Mágico nas entidades próximas dentro do cone.
+ * Desenterra ChuChus camuflados, puxa monstros, atrai itens e absorve projéteis de pedras.
+ * Retorna true se um projétil ou inimigo foi engolido/absorvido pelo jarro (carregando o tiro de ar).
+ */
+bool entity_apply_gust_suction(float jar_x, float jar_y, Direction dir, float range, float pull_force);
+
+/*
  * Renderiza todas as entidades ativas nas coordenadas relativas da câmera virtual.
  */
 void entity_manager_render(const Camera* cam);
