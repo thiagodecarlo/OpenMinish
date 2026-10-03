@@ -26,7 +26,8 @@ typedef enum {
     ENTITY_ITEM_HEART,        // Coração de cura (+1 HP) dropado
     ENTITY_NPC_FOREST_MINISH, // Habitante Minish amigável dos bosques
     ENTITY_ENEMY_KEESE,       // Morcego clássico Keese (Voo com sombra e oscilação)
-    ENTITY_ENEMY_CHUCHU       // Gosma gelatinosa Green ChuChu (Brota e salta)
+    ENTITY_ENEMY_CHUCHU,      // Gosma gelatinosa Green ChuChu (Brota e salta)
+    ENTITY_CHEST_GOLD         // Baú do Tesouro Dourado (destravado por Fusão de Kinstone)
 } EntityType;
 
 // Caixa delimitadora de colisão e dano (Hitbox / Hurtbox)
@@ -61,6 +62,12 @@ typedef struct Entity {
     int        animFrame;          // Frame do sprite atual
     Hitbox     hitbox;             // Caixa de colisão no corpo
     bool       is_active;          // Slot ocupado no pool
+
+    // Campos dedicados para NPCs e Fusão de Kinstones
+    bool       hasKinstone;        // NPC possui metade de Kinstone para fundir
+    u8         kinstoneType;       // 0=Verde, 1=Azul, 2=Vermelho
+    bool       kinstoneFused;      // Fusão já foi completada
+    float      bubbleBob;          // Oscilação do balão de Kinstone flutuante
 } Entity;
 
 /*
@@ -93,6 +100,17 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
  * Retorna o ponteiro para a entidade do NPC ou NULL se nenhum estiver por perto.
  */
 Entity* entity_find_nearby_npc(float world_x, float world_y, float max_dist);
+
+/*
+ * Procura um NPC amigável com fusão de Kinstone pendente próximo ao herói.
+ */
+Entity* entity_find_kinstone_npc(float world_x, float world_y, float max_dist);
+
+/*
+ * Tenta interagir e abrir um baú de tesouro dourado destravado por fusão de Kinstone.
+ * Retorna true se abriu um baú com sucesso (concedendo recompensa).
+ */
+bool entity_interact_chest(float world_x, float world_y, int* link_rupees, int* link_hearts);
 
 /*
  * Verifica se um projétil disparado pelo jogador (Bumerangue ou rajada de ar) atingiu uma entidade.

@@ -424,6 +424,114 @@ static void synth_generate_all_sfx(void) {
         s_precalc_sfx[SOUND_ITEM_CATCH].total_frames = num_frames;
         s_precalc_sfx[SOUND_ITEM_CATCH].is_stereo = false;
     }
+
+    // 16. SOUND_KINSTONE_FUSION: Fanfarra mágica de fusão bem-sucedida de Kinstones (1200ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 1.200f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float arp_freqs[7] = { 523.25f, 659.25f, 783.99f, 1046.50f, 1318.51f, 1567.98f, 2093.00f }; // Dó5..Dó7
+        float note_dur = 0.075f;
+        float phase_lead = 0.0f;
+        float phase_harm = 0.0f;
+
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float total = 0.0f;
+
+            if (t < note_dur * 6) {
+                // Arpejo veloz ascendente com efeito de harpa de cristal
+                int note_idx = (int)(t / note_dur);
+                if (note_idx > 5) note_idx = 5;
+                float note_t = t - (note_idx * note_dur);
+                float f = arp_freqs[note_idx];
+                float env = expf(-18.0f * note_t);
+                phase_lead += f / (float)AUDIO_SAMPLE_RATE;
+
+                float bell = sinf(2.0f * PI_F * phase_lead) * 0.70f +
+                             synth_triangle_wave(phase_lead * 2.0f) * 0.30f;
+                total = bell * env * 24000.0f;
+            } else {
+                // Acorde de sustentação cintilante celestial (Dó6 + Sol6 + Dó7 com vibrato)
+                float sus_t = t - (note_dur * 6);
+                float env = expf(-3.2f * sus_t);
+                float vibrato = 1.0f + 0.015f * sinf(2.0f * PI_F * 6.5f * sus_t);
+
+                phase_lead += (arp_freqs[6] * vibrato) / (float)AUDIO_SAMPLE_RATE;
+                phase_harm += (arp_freqs[4] * vibrato) / (float)AUDIO_SAMPLE_RATE;
+
+                float wave1 = sinf(2.0f * PI_F * phase_lead);
+                float wave2 = synth_triangle_wave(phase_harm) * 0.5f;
+                float wave3 = synth_square_wave(phase_lead * 0.5f, 0.50f) * 0.25f;
+
+                total = (wave1 + wave2 + wave3) * env * 22000.0f;
+            }
+
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_KINSTONE_FUSION].samples = buf;
+        s_precalc_sfx[SOUND_KINSTONE_FUSION].total_frames = num_frames;
+        s_precalc_sfx[SOUND_KINSTONE_FUSION].is_stereo = false;
+    }
+
+    // 17. SOUND_KINSTONE_PROMPT: Chime sonoro de balão de Kinstone sobre o NPC (120ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.120f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float f = (t < 0.060f) ? 1318.51f : 1760.00f; // Mi6 -> Lá6
+            float note_t = (t < 0.060f) ? t : (t - 0.060f);
+            float env = expf(-28.0f * note_t);
+            phase += f / (float)AUDIO_SAMPLE_RATE;
+            float bell = sinf(2.0f * PI_F * phase);
+            float total = bell * env * 22000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_KINSTONE_PROMPT].samples = buf;
+        s_precalc_sfx[SOUND_KINSTONE_PROMPT].total_frames = num_frames;
+        s_precalc_sfx[SOUND_KINSTONE_PROMPT].is_stereo = false;
+    }
+
+    // 18. SOUND_CHEST_OPEN: Abertura do baú do tesouro destravado (360ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.360f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase1 = 0.0f;
+        float phase2 = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float total = 0.0f;
+
+            if (t < 0.180f) {
+                // Rangido de tampa de pedra/madeira pesada se erguendo
+                float f = 110.0f + 140.0f * (t / 0.180f);
+                phase1 += f / (float)AUDIO_SAMPLE_RATE;
+                float thud = synth_triangle_wave(phase1);
+                float crack = synth_noise() * 0.45f;
+                float env = 0.8f + 0.2f * sinf(2.0f * PI_F * 20.0f * t);
+                total = (thud * 0.6f + crack) * env * 23000.0f;
+            } else {
+                // Chime brilhante de revelação do tesouro dourado
+                float sus_t = t - 0.180f;
+                float env = expf(-14.0f * sus_t);
+                phase2 += 1174.66f / (float)AUDIO_SAMPLE_RATE; // Ré6
+                float bell = sinf(2.0f * PI_F * phase2);
+                total = bell * env * 24000.0f;
+            }
+
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_CHEST_OPEN].samples = buf;
+        s_precalc_sfx[SOUND_CHEST_OPEN].total_frames = num_frames;
+        s_precalc_sfx[SOUND_CHEST_OPEN].is_stereo = false;
+    }
 }
 
 // ----------------------------------------------------------------------------

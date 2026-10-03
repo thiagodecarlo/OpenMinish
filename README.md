@@ -113,6 +113,21 @@ O **OpenMinish** é um projeto de estudo universitário e pesquisa técnica foca
 - **HUD Integrado de Subarmas**:
   - Slot ornamental do botão `[B]` no topo da tela com miniaturas pixel art dedicadas (Bumerangue dourado com gema rubi, Pote terracota e Bota alada de Pegasus).
 
+### 🧩 Sistema de Fusão de Kinstones (Pedras da Sorte) & Eventos Mundiais
+- **Bolsa de Kinstones do Herói**:
+  - Armazenamento de fragmentos de amuleto: **Verdes** (Comuns / recorte curvo), **Azuis** (Incomuns / canto em L) e **Vermelhos** (Raros / triplo encaixe).
+- **Balão de Pensamento Flutuante nos NPCs**:
+  - NPCs elegíveis para fusão exibem uma nuvem de pensamento flutuante com a metade de Kinstone girando suavemente com chime de alerta (`SOUND_KINSTONE_PROMPT`).
+  - Ao aproximar-se ($\le 32\text{px}$), o prompt dinâmico `[K/L] Fusão` é ativado.
+- **Interface Cinematográfica de Fusão de Kinstones**:
+  - Visualização em close-up das metades complementares (Link à esquerda, parceiro à direita) sobre um pedestal decorado.
+  - Seletor de fragmentos da bolsa com checagem de encaixe em tempo real e feedback visual.
+  - **Cinemática de Encaixe com Flash Mágico**: As duas metades deslizam para o centro, convergem com feixes de luz mística e se unem com um clarão dourado.
+  - **Fanfarra Autêntica de Cristal**: Síntese procedural da lendária fanfarra de 7 notas de harpa de cristal ($\text{C5} \to \text{C7}$) com cauda harmônica celestial (`SOUND_KINSTONE_FUSION`) e explosão de 24 partículas estelares cintilantes.
+- **Eventos Mundiais Destravados (Causa & Efeito)**:
+  - Notificação de evento mundial: materialização de um **Baú do Tesouro Dourado** (`ENTITY_CHEST_GOLD`) na clareira do santuário em Minish Woods.
+  - Abertura interativa com `[A]` e áudio de tampa de pedra pesada (`SOUND_CHEST_OPEN`), concedendo **+100 Rupees** e cura total de vida ao herói.
+
 ### 🎨 Sprites Autênticos Extraídos da ROM (Clean-Room AOT)
 - **Metatiles 1D do GBA**: Montagem canônica de metatiles 16x24 (3 fatias de 16x8) para o Link e metatiles 16x16 (4 tiles 8x8) para os Octoroks e projétil de pedra.
 - **Canal Alfa & Espelhamento Horizontal (`flip_h`)**: Decodificação de transparência e espelhamento horizontal em tempo real para as direções simétricas (esquerda/direita).
@@ -194,6 +209,7 @@ OpenMinish/
 │       ├── entity.h    # API do pool de atores, IA do Octorok e combate
 │       ├── font.h      # API do motor de tipografia bitmap retrô 8x8
 │       ├── input.h     # API do sistema de entrada e vetor analógico 360°
+│       ├── kinstone.h  # API de fusão de Kinstones, bolsa de fragmentos e eventos
 │       ├── map.h       # API de tilemaps, câmera e frustum culling
 │       ├── subweapon.h # API de armas secundárias (Bumerangue, Pote Mágico, Botas)
 │       ├── texture.h   # API do blitter e proxy de texturas
@@ -202,9 +218,10 @@ OpenMinish/
 │   ├── hal/
 │   │   ├── audio.c     # Implementação do mixer PCM, síntese e BGM chiptune
 │   │   ├── dialogue.c  # Sistema de diálogos, efeito typewriter e portraits
-│   │   ├── entity.c    # Implementação da IA, projéteis e loot drops
+│   │   ├── entity.c    # Implementação da IA, projéteis, baú dourado e loot drops
 │   │   ├── font.c      # Renderizador de glifos 8x8 e caracteres acentuados
 │   │   ├── input.c     # Processamento de gamepad analógico e teclado
+│   │   ├── kinstone.c  # Interface cinematográfica de fusão, encaixe e partículas
 │   │   ├── map.c       # Renderização de metatiles e câmera Lerp
 │   │   ├── subweapon.c # Físicas balísticas, retorno teleguiado e vórtices
 │   │   ├── texture.c   # Carregador de BMPs e substituição de texturas HD
@@ -264,8 +281,9 @@ Copie sua ROM limpa (ex: `zelda_usa.gba`) e execute a ferramenta AOT de extraç�
 | Ação | Teclado | Controle (8BitDo / Xbox) | Controle (PlayStation) |
 | :--- | :--- | :--- | :--- |
 | **Mover Link** | `W`, `A`, `S`, `D` ou Setas | Alavanca Analógica Esquerda | Alavanca Analógica Esquerda |
-| **Atacar / Falar (NPCs)** | `Z` ou Barra de Espaço | **Botão A** | **Botão Cruz (X)** |
+| **Atacar / Falar / Abrir Baú** | `Z` ou Barra de Espaço | **Botão A** | **Botão Cruz (X)** |
 | **Item Secundário [B]** | `X` (Segurar/Soltar) | **Botão B** | **Botão Círculo (O)** |
+| **Fusão de Kinstone** | Tecla `K` (ou `L` no controle) | Gatilho `L` (próximo ao NPC) | Gatilho `L1` (próximo ao NPC) |
 | **Ciclar Subarmas** | `Q` | Gatilho `L` / `LB` | Gatilho `L1` |
 | **Falar com Ezlo (Dicas)** | Tecla `E` | Botão `Select` / `Back` | Botão `Share` |
 | **Trilha Sonora (BGM)** | `T` | Gatilho `R` / `RB` | Gatilho `R1` |

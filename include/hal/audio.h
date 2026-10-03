@@ -36,6 +36,9 @@ typedef enum {
     SOUND_GUST_SUCTION,    // Vórtice contínuo de sucção de vento do Pote Mágico (Gust Jar)
     SOUND_GUST_BLAST,      // Disparo de projétil de ar pressurizado do Pote Mágico
     SOUND_ITEM_CATCH,      // Captura do bumerangue de volta nas mãos do herói
+    SOUND_KINSTONE_FUSION, // Fanfarra mágica de fusão bem-sucedida de Kinstones (arpejo ascendente de harpa)
+    SOUND_KINSTONE_PROMPT, // Chime sonoro de balão de Kinstone sobre o NPC
+    SOUND_CHEST_OPEN,      // Abertura do baú dourado destravado pela fusão
     SOUND_COUNT
 } SoundEffect;
 
