@@ -73,12 +73,18 @@ O **OpenMinish** é um projeto de estudo universitário e pesquisa técnica foca
 - **Animações Completas**: Ciclo de caminhada direcional do Link com leve *bobbing*, golpe de espada, patrulha do Octorok, inchaço de bochechas para disparo e recuo com flicker ao sofrer dano.
 - **Fallback Gracioso**: Se os assets não forem extraídos previamente, a engine entra automaticamente no modo geométrico procedural sem interromper a execução.
 
+### 🌲 Cenário Autêntico: Minish Woods (Overworld 1008x1008)
+- **Engenharia Reversa dos Mapas Canônicos**:
+  - Descompressão LZ77 e montagem da estrutura `gMapData` do GBA (VRAM tiles, metatiles 16x16, paletas de área e índices de sala).
+  - Renderização pixel-perfect do mapa completo de **Minish Woods** ($1008 \times 1008$ pixels, $63 \times 63$ blocos de cenário) com caminhos de terra, pontes de pedra, bordas florestais densas e o pátio do santuário.
+  - **Matriz de Colisão Binária (`map_woods_collision.bin`)**: 3.969 células de colisão derivadas dos atributos de ladrilho canônicos (`types_bot`), bloqueando árvores, água profunda e limites do mundo enquanto permite navegação fluida em trilhas.
+  - **Desempenho Zero-Overhead**: Blit ultra-otimizado de passagem única via hardware abstraction layer mantendo 60 FPS contínuos.
+
 ### 🌍 Suporte Multi-Região Dinâmico
-- Troca a quente entre os bancos gráficos e localizações das regiões:
+- Troca a quente entre os bancos gráficos, mapas e localizações das regiões:
   - **USA** (`BZME`) - Inglês
   - **EUR** (`BZMP`) - Multi-5
   - **JPN** (`BZMJ`) - Japonês
-
 
 ---
 

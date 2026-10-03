@@ -75,5 +75,18 @@ bool export_link_sprites_bmp(const char* filepath,
  */
 bool save_bmp_image(const char* filepath, const u32* rgba_pixels, int width, int height);
 
+/*
+ * Extrai e renderiza o mapa autêntico de Minish Woods (63x63 metatiles = 1008x1008 pixels)
+ * a partir das estruturas canônicas da ROM (gMapData e paletas de área).
+ * Gera os arquivos:
+ *  - assets/regions/<region>/map_woods.bmp (1008x1008 pixels, 32bpp)
+ *  - assets/regions/<region>/map_woods_collision.bin (63x63 = 3969 bytes de colisão: 0 livre, 1 sólido)
+ */
+bool export_authentic_map_woods(const char* region_tag,
+                                const u8* rom_buffer,
+                                size_t rom_size,
+                                u32 map_data_base,
+                                u32 woods_pal_offset);
+
 #endif // GFX_H
 
