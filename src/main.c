@@ -51,6 +51,7 @@ static Texture* s_sheet0 = NULL;
 static Texture* s_sheet1 = NULL;
 static Texture* s_link_tex = NULL;
 static Texture* s_octo_tex = NULL;
+static Tilemap* s_world_map = NULL;
 static SelectedRegion s_current_region = REGION_USA;
 
 static void load_region_sheets(SelectedRegion region) {
@@ -77,10 +78,15 @@ static void load_region_sheets(SelectedRegion region) {
 
     entity_set_texture(s_octo_tex);
 
-    printf("[REGIAO ATUALIZADA] -> %s (Link: %s, Octorok: %s)\n",
+    if (s_world_map) {
+        map_set_region(s_world_map, s_region_tags[region]);
+    }
+
+    printf("[REGIAO ATUALIZADA] -> %s (Link: %s, Octorok: %s, Mapa: %s)\n",
            s_region_names[region],
            s_link_tex ? "Autentico GBA" : "Procedural",
-           s_octo_tex ? "Autentico GBA" : "Procedural");
+           s_octo_tex ? "Autentico GBA" : "Procedural",
+           (s_world_map && s_world_map->is_authentic) ? "Autentico Minish Woods" : "Procedural");
 }
 
 static void draw_rect(int rx, int ry, int rw, int rh, u32 color) {
@@ -281,15 +287,22 @@ int main(int argc, char* argv[]) {
 
     hal_input_init();
     hal_audio_init();
+
+    // Inicialização da Engine de Mapas e Câmera Widescreen (Autêntico Minish Woods ou Fallback)
+    Tilemap* world_map = map_create_woods(s_region_tags[REGION_USA]);
+    s_world_map = world_map;
     load_region_sheets(REGION_USA);
 
-    // Inicialização da Engine de Mapas e Câmera Widescreen
-    Tilemap* world_map = map_create_demo_world();
-
-    // Inicialização da entidade do Link (inicia no centro do caminho do mapa)
+    // Inicialização da entidade do Link
     Player link;
-    link.x = 296.0f;
-    link.y = 176.0f;
+    if (world_map && world_map->is_authentic) {
+        // Clareira ensolarada do santuário em Minish Woods (tx = 28, ty = 39)
+        link.x = 448.0f;
+        link.y = 624.0f;
+    } else {
+        link.x = 296.0f;
+        link.y = 176.0f;
+    }
     link.speed = 1.05f; // Calibrado com a velocidade autêntica do GBA (1.0 pixel/frame)
     link.dir = DIR_DOWN;
     link.is_moving = false;
@@ -305,9 +318,15 @@ int main(int argc, char* argv[]) {
 
     // Inicialização do Subsistema de Entidades e Spawn de Inimigos (Octoroks)
     entity_manager_init();
-    entity_spawn(ENTITY_ENEMY_OCTOROK, 160.0f, 220.0f);
-    entity_spawn(ENTITY_ENEMY_OCTOROK, 420.0f, 150.0f);
-    entity_spawn(ENTITY_ENEMY_OCTOROK, 340.0f, 310.0f);
+    if (world_map && world_map->is_authentic) {
+        entity_spawn(ENTITY_ENEMY_OCTOROK, 400.0f, 620.0f);
+        entity_spawn(ENTITY_ENEMY_OCTOROK, 500.0f, 620.0f);
+        entity_spawn(ENTITY_ENEMY_OCTOROK, 448.0f, 500.0f);
+    } else {
+        entity_spawn(ENTITY_ENEMY_OCTOROK, 160.0f, 220.0f);
+        entity_spawn(ENTITY_ENEMY_OCTOROK, 420.0f, 150.0f);
+        entity_spawn(ENTITY_ENEMY_OCTOROK, 340.0f, 310.0f);
+    }
 
     Camera camera;
     camera.viewport_w = widescreen ? 284 : 240;
@@ -541,8 +560,8 @@ int main(int argc, char* argv[]) {
         // Respawn de teste caso o Link zere os corações
         if (link.hearts <= 0) {
             link.hearts = 3;
-            link.x = 296.0f;
-            link.y = 176.0f;
+            link.x = (world_map && world_map->is_authentic) ? 448.0f : 296.0f;
+            link.y = (world_map && world_map->is_authentic) ? 624.0f : 176.0f;
             link.invuln_timer = 90;
             link.knock_x = 0.0f;
             link.knock_y = 0.0f;

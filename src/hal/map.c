@@ -1,9 +1,42 @@
 #include "hal/map.h"
 #include "hal/video.h"
+#include <SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+
+/*
+ * Localizador de arquivos de assets binarios (compativel com execucao de root ou build/)
+ */
+static FILE* open_binary_asset(const char* rel_path) {
+    if (!rel_path) return NULL;
+    FILE* f = fopen(rel_path, "rb");
+    if (f) return f;
+
+    char fallback[512];
+    snprintf(fallback, sizeof(fallback), "../%s", rel_path);
+    f = fopen(fallback, "rb");
+    if (f) return f;
+
+    char* base = SDL_GetBasePath();
+    if (base) {
+        snprintf(fallback, sizeof(fallback), "%s%s", base, rel_path);
+        f = fopen(fallback, "rb");
+        if (f) {
+            SDL_free(base);
+            return f;
+        }
+        snprintf(fallback, sizeof(fallback), "%s../%s", base, rel_path);
+        f = fopen(fallback, "rb");
+        if (f) {
+            SDL_free(base);
+            return f;
+        }
+        SDL_free(base);
+    }
+    return NULL;
+}
 
 /*
  * ============================================================================
@@ -214,6 +247,8 @@ Tilemap* map_create_demo_world(void) {
 
     m->width  = w;
     m->height = h;
+    m->is_authentic = false;
+    m->authentic_tex = NULL;
     m->ground_layer  = (u8*)malloc(w * h * sizeof(u8));
     m->overlay_layer = (u8*)malloc(w * h * sizeof(u8));
     m->collision_map = (u8*)malloc(w * h * sizeof(u8));
@@ -299,8 +334,73 @@ Tilemap* map_create_demo_world(void) {
     return m;
 }
 
+Tilemap* map_create_woods(const char* region_tag) {
+    const char* tag = region_tag ? region_tag : "usa";
+    char bmp_path[256];
+    snprintf(bmp_path, sizeof(bmp_path), "assets/regions/%s/map_woods.bmp", tag);
+
+    Texture* tex = texture_load_bmp(bmp_path);
+    if (!tex) {
+        printf("[MAPA] Mapa autentico nao encontrado (%s). Ativando mapa procedural de demonstracao.\n", bmp_path);
+        return map_create_demo_world();
+    }
+
+    Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
+    if (!m) {
+        texture_free(tex);
+        return map_create_demo_world();
+    }
+
+    m->width = tex->width / TILE_SIZE;   // 1008 / 16 = 63
+    m->height = tex->height / TILE_SIZE; // 1008 / 16 = 63
+    m->ground_layer = NULL;
+    m->overlay_layer = NULL;
+    m->is_authentic = true;
+    m->authentic_tex = tex;
+    m->collision_map = (u8*)calloc((size_t)m->width * m->height, sizeof(u8));
+
+    // Tenta carregar a matriz binaria de colisao
+    char bin_path[256];
+    snprintf(bin_path, sizeof(bin_path), "assets/regions/%s/map_woods_collision.bin", tag);
+    FILE* fc = open_binary_asset(bin_path);
+    if (fc) {
+        size_t read_bytes = fread(m->collision_map, 1, (size_t)m->width * m->height, fc);
+        fclose(fc);
+        printf("[MAPA] Mapa autentico de Minish Woods [%s] carregado: %dx%d pixels (%dx%d tiles, %zu bytes colisao).\n",
+               tag, tex->width, tex->height, m->width, m->height, read_bytes);
+    } else {
+        printf("[MAPA] Aviso: Arquivo de colisao nao encontrado (%s). Aplicando colisoes de borda.\n", bin_path);
+        for (int y = 0; y < m->height; y++) {
+            for (int x = 0; x < m->width; x++) {
+                if (x <= 1 || x >= m->width - 2 || y <= 1 || y >= m->height - 2) {
+                    m->collision_map[y * m->width + x] = 1;
+                }
+            }
+        }
+    }
+
+    return m;
+}
+
+void map_set_region(Tilemap* map, const char* region_tag) {
+    if (!map || !map->is_authentic) return;
+    const char* tag = region_tag ? region_tag : "usa";
+    char bmp_path[256];
+    snprintf(bmp_path, sizeof(bmp_path), "assets/regions/%s/map_woods.bmp", tag);
+
+    Texture* new_tex = texture_load_bmp(bmp_path);
+    if (new_tex) {
+        if (map->authentic_tex) {
+            texture_free(map->authentic_tex);
+        }
+        map->authentic_tex = new_tex;
+        printf("[MAPA] Textura do mapa atualizada para regiao [%s] (%dx%d)\n", tag, new_tex->width, new_tex->height);
+    }
+}
+
 void map_destroy(Tilemap* map) {
     if (!map) return;
+    if (map->authentic_tex) texture_free(map->authentic_tex);
     if (map->ground_layer)  free(map->ground_layer);
     if (map->overlay_layer) free(map->overlay_layer);
     if (map->collision_map) free(map->collision_map);
@@ -336,6 +436,14 @@ void camera_update(Camera* cam, float target_x, float target_y, int viewport_w, 
 
 void map_render(const Tilemap* map, const Camera* cam) {
     if (!map || !cam) return;
+
+    // ------------------------------------------------------------------------
+    // RENDERIZADOR DO MAPA AUTÊNTICO (Zero Overhead - 1 Blit Direto a 60 FPS)
+    // ------------------------------------------------------------------------
+    if (map->is_authentic && map->authentic_tex) {
+        texture_draw(map->authentic_tex, (int)cam->x, (int)cam->y, cam->viewport_w, cam->viewport_h, 0, 0);
+        return;
+    }
 
     // Anima a água suavemente
     s_water_timer++;
@@ -396,7 +504,7 @@ bool map_is_solid(const Tilemap* map, float world_x, float world_y) {
 }
 
 bool map_interact_slash(Tilemap* map, float world_x, float world_y) {
-    if (!map) return false;
+    if (!map || !map->overlay_layer) return false;
 
     int tx = (int)(world_x / TILE_SIZE);
     int ty = (int)(world_y / TILE_SIZE);

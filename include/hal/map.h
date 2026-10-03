@@ -10,6 +10,7 @@
  */
 
 #include "gba/types.h"
+#include "hal/texture.h"
 #include <stdbool.h>
 
 #define TILE_SIZE 16 // Dimensão padrão dos metatiles de Minish Cap (16x16 pixels)
@@ -39,13 +40,15 @@ typedef struct {
     int   viewport_h;    // Altura do visor (160 fixos)
 } Camera;
 
-// Estrutura do Mapa de Cenário (Tilemap bidimensional)
+// Estrutura do Mapa de Cenário (Tilemap bidimensional ou Mapa Autêntico do GBA)
 typedef struct {
-    int  width;          // Largura em tiles (ex: 40 tiles = 640 pixels)
-    int  height;         // Altura em tiles  (ex: 30 tiles = 480 pixels)
-    u8*  ground_layer;   // Camada de chão (BG2 - Grama, Caminhos, Água)
-    u8*  overlay_layer;  // Camada de obstáculos e decorações (BG1 - Arbustos, Baús, Troncos)
-    u8*  collision_map;  // 0 = livre, 1 = barreira intransponível
+    int      width;          // Largura em tiles (ex: 40 tiles = 640 pixels, ou 63 tiles = 1008 pixels)
+    int      height;         // Altura em tiles  (ex: 30 tiles = 480 pixels, ou 63 tiles = 1008 pixels)
+    u8*      ground_layer;   // Camada de chão (BG2 - Grama, Caminhos, Água)
+    u8*      overlay_layer;  // Camada de obstáculos e decorações (BG1 - Arbustos, Baús, Troncos)
+    u8*      collision_map;  // 0 = livre, 1 = barreira intransponível
+    bool     is_authentic;   // true se renderiza a partir da textura autêntica da ROM
+    Texture* authentic_tex;  // Textura do mapa autêntico (ex: 1008x1008 pixels)
 } Tilemap;
 
 /*
@@ -53,6 +56,19 @@ typedef struct {
  * contendo caminhos, árvores, lago, arbustos cortáveis e baú secreto.
  */
 Tilemap* map_create_demo_world(void);
+
+/*
+ * Carrega o mapa de Minish Woods para a região ativa (ex: "usa", "eur", "jpn").
+ * Se os assets autênticos (map_woods.bmp e map_woods_collision.bin) existirem,
+ * ativa o modo de renderização autêntica com colisão precisa.
+ * Se não existirem, faz fallback gracioso para o mapa de demonstração procedural.
+ */
+Tilemap* map_create_woods(const char* region_tag);
+
+/*
+ * Atualiza a textura da região ativa no mapa autêntico (sem resetar posição ou estado).
+ */
+void map_set_region(Tilemap* map, const char* region_tag);
 
 /*
  * Libera a memória do mapa.
