@@ -336,6 +336,94 @@ static void synth_generate_all_sfx(void) {
         s_precalc_sfx[SOUND_CHUCHU_SQUISH].total_frames = num_frames;
         s_precalc_sfx[SOUND_CHUCHU_SQUISH].is_stereo = false;
     }
+
+    // 12. SOUND_BOOMERANG_FLY: Zunido aerodinâmico rotativo do bumerangue (150ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.150f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float freq = 480.0f + 160.0f * sinf(2.0f * PI_F * 16.0f * t); // Rotação de 16 giros/s
+            float env = 0.8f + 0.2f * sinf(2.0f * PI_F * 32.0f * t);
+            phase += freq / (float)AUDIO_SAMPLE_RATE;
+            float tri = synth_triangle_wave(phase);
+            float noise = synth_noise() * 0.25f;
+            float total = (tri * 0.75f + noise) * env * 22000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_BOOMERANG_FLY].samples = buf;
+        s_precalc_sfx[SOUND_BOOMERANG_FLY].total_frames = num_frames;
+        s_precalc_sfx[SOUND_BOOMERANG_FLY].is_stereo = false;
+    }
+
+    // 13. SOUND_GUST_SUCTION: Vórtice de ar contínuo do Pote Mágico (180ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.180f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float f = 240.0f + 180.0f * sinf(2.0f * PI_F * 9.0f * t);
+            phase += f / (float)AUDIO_SAMPLE_RATE;
+            float tone = synth_triangle_wave(phase) * 0.35f;
+            float noise = synth_noise() * 0.65f;
+            float env = 0.6f + 0.4f * sinf(2.0f * PI_F * 18.0f * t);
+            float total = (tone + noise) * env * 20000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_GUST_SUCTION].samples = buf;
+        s_precalc_sfx[SOUND_GUST_SUCTION].total_frames = num_frames;
+        s_precalc_sfx[SOUND_GUST_SUCTION].is_stereo = false;
+    }
+
+    // 14. SOUND_GUST_BLAST: Disparo pressurizado de ar do Pote Mágico (160ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.160f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-18.0f * t);
+            float f = 160.0f - 110.0f * (t / 0.160f);
+            phase += f / (float)AUDIO_SAMPLE_RATE;
+            float thud = sinf(2.0f * PI_F * phase);
+            float blast = synth_noise() * 0.65f;
+            float total = (thud * 0.55f + blast) * env * 26000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_GUST_BLAST].samples = buf;
+        s_precalc_sfx[SOUND_GUST_BLAST].total_frames = num_frames;
+        s_precalc_sfx[SOUND_GUST_BLAST].is_stereo = false;
+    }
+
+    // 15. SOUND_ITEM_CATCH: Chime agradável de recepção do bumerangue no ar (100ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.100f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float freq = (t < 0.050f) ? 783.99f : 1046.50f; // Sol5 -> Dó6
+            float note_t = (t < 0.050f) ? t : (t - 0.050f);
+            float env = expf(-25.0f * note_t);
+            phase += freq / (float)AUDIO_SAMPLE_RATE;
+            float wave = synth_square_wave(phase, 0.50f);
+            float total = wave * env * 23000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_ITEM_CATCH].samples = buf;
+        s_precalc_sfx[SOUND_ITEM_CATCH].total_frames = num_frames;
+        s_precalc_sfx[SOUND_ITEM_CATCH].is_stereo = false;
+    }
 }
 
 // ----------------------------------------------------------------------------

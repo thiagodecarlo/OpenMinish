@@ -625,6 +625,149 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
     return hit_something;
 }
 
+bool entity_check_subweapon_hit(float px, float py, float pw, float ph, int damage, int* out_carried_item) {
+    if (out_carried_item) *out_carried_item = 0;
+
+    float px1 = px;
+    float py1 = py;
+    float px2 = px + pw;
+    float py2 = py + ph;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active) continue;
+
+        // 1. Coleta de Itens à distância pelo Bumerangue
+        if (e->type == ENTITY_ITEM_RUPEE || e->type == ENTITY_ITEM_HEART) {
+            float ix1 = e->x;
+            float iy1 = e->y;
+            float ix2 = ix1 + 10.0f;
+            float iy2 = iy1 + 10.0f;
+
+            if (px1 < ix2 && px2 > ix1 && py1 < iy2 && py2 > iy1) {
+                if (out_carried_item) {
+                    *out_carried_item = (e->type == ENTITY_ITEM_RUPEE) ? 1 : 2;
+                }
+                e->is_active = false;
+                hal_audio_play_sound(SOUND_SECRET, 0.75f, 1.35f);
+                return true;
+            }
+        }
+
+        // 2. Destruição de Projéteis de Pedra
+        else if (e->type == ENTITY_PROJECTILE_ROCK) {
+            float rx1 = e->x;
+            float ry1 = e->y;
+            float rx2 = rx1 + 6.0f;
+            float ry2 = ry1 + 6.0f;
+
+            if (px1 < rx2 && px2 > rx1 && py1 < ry2 && py2 > ry1) {
+                e->is_active = false;
+                hal_audio_play_sound(SOUND_SWORD_HIT, 0.85f, 1.4f);
+                return true;
+            }
+        }
+
+        // 3. Impacto e atordoamento contra Inimigos
+        else if ((e->type == ENTITY_ENEMY_OCTOROK ||
+                  e->type == ENTITY_ENEMY_KEESE ||
+                  (e->type == ENTITY_ENEMY_CHUCHU && e->action > 0)) &&
+                 e->invulnerableTimer <= 0) {
+
+            // Keese voando alto demais desvia do projétil
+            if (e->type == ENTITY_ENEMY_KEESE && e->z > 16.0f) continue;
+
+            float ex1 = e->x + e->hitbox.offset_x;
+            float ey1 = e->y + e->hitbox.offset_y;
+            float ex2 = ex1 + e->hitbox.width;
+            float ey2 = ey1 + e->hitbox.height;
+
+            if (px1 < ex2 && px2 > ex1 && py1 < ey2 && py2 > ey1) {
+                e->health -= damage;
+                e->invulnerableTimer = 20;
+                e->action = 4; // Knockback / Stun
+                e->knockbackTimer = 14;
+
+                float dx = e->x - px;
+                float dy = e->y - py;
+                float dist = sqrtf(dx * dx + dy * dy);
+                float force = (e->type == ENTITY_ENEMY_KEESE) ? 3.8f : 2.6f;
+
+                if (dist > 0.1f) {
+                    e->knockbackVx = (dx / dist) * force;
+                    e->knockbackVy = (dy / dist) * force;
+                } else {
+                    e->knockbackVx = force;
+                    e->knockbackVy = 0.0f;
+                }
+
+                hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 1.25f);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool entity_apply_gust_suction(float jar_x, float jar_y, Direction dir, float range, float pull_force) {
+    bool absorbed_something = false;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active || e->type == ENTITY_NPC_FOREST_MINISH) continue;
+
+        float dx = e->x - jar_x;
+        float dy = e->y - jar_y;
+        float dist = sqrtf(dx * dx + dy * dy);
+
+        if (dist > range || dist < 1.0f) continue;
+
+        // Verificação do cone cônico de sucção direcionado
+        bool in_cone = false;
+        if (dir == DIR_DOWN  && dy > 0.0f  && fabsf(dx) <= (dy * 0.75f + 8.0f)) in_cone = true;
+        if (dir == DIR_UP    && dy < 0.0f  && fabsf(dx) <= (-dy * 0.75f + 8.0f)) in_cone = true;
+        if (dir == DIR_RIGHT && dx > 0.0f  && fabsf(dy) <= (dx * 0.75f + 8.0f)) in_cone = true;
+        if (dir == DIR_LEFT  && dx < 0.0f  && fabsf(dy) <= (-dx * 0.75f + 8.0f)) in_cone = true;
+
+        if (!in_cone) continue;
+
+        float pull_x = -(dx / dist) * pull_force;
+        float pull_y = -(dy / dist) * pull_force;
+
+        // Atração de itens no chão
+        if (e->type == ENTITY_ITEM_RUPEE || e->type == ENTITY_ITEM_HEART) {
+            e->x += pull_x * 1.6f;
+            e->y += pull_y * 1.6f;
+        }
+        // Absorção de projéteis de pedras cuspidas
+        else if (e->type == ENTITY_PROJECTILE_ROCK) {
+            e->x += pull_x * 2.2f;
+            e->y += pull_y * 2.2f;
+            if (dist < 12.0f) {
+                e->is_active = false; // Engolido pelo jarro!
+                absorbed_something = true;
+            }
+        }
+        // Desenterrar ChuChu da poça e puxar inimigos
+        else if (e->type == ENTITY_ENEMY_CHUCHU) {
+            if (e->action == 0) {
+                e->action = 1; // Forçado a brotar!
+                e->aiTimer = 16;
+                hal_audio_play_sound(SOUND_CHUCHU_SQUISH, 0.8f, 1.2f);
+            }
+            e->x += pull_x * 0.75f;
+            e->y += pull_y * 0.75f;
+        }
+        // Puxar Octorok e Keese
+        else if (e->type == ENTITY_ENEMY_OCTOROK || e->type == ENTITY_ENEMY_KEESE) {
+            e->x += pull_x * 0.85f;
+            e->y += pull_y * 0.85f;
+        }
+    }
+
+    return absorbed_something;
+}
+
 // ----------------------------------------------------------------------------
 // RENDERIZADOR DE SPRITES DAS ENTIDADES
 // ----------------------------------------------------------------------------

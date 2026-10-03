@@ -99,6 +99,20 @@ O **OpenMinish** é um projeto de estudo universitário e pesquisa técnica foca
   - Salto parabólico no ar impulsionado com gravidade balística em direção ao alvo e som retrô de borracha (`SOUND_CHUCHU_SQUISH`).
   - Olhos esbugalhados cômicos, 2 pontos de vida com recuo elástico e explosão de gotas ao ser derrotado.
 
+### 🪃 Armas Secundárias e Itens Clássicos (Bumerangue, Pote Mágico & Botas de Pegasus)
+- **Bumerangue Mágico (Magic Boomerang)**:
+  - Arremesso balístico com desaceleração gradual e **trajetória de retorno teleguiado** em curva contínua em direção a Link.
+  - Rotação dinâmica em 4 ângulos com áudio de zunido aerodinâmico (`SOUND_BOOMERANG_FLY`).
+  - Atordoa e fere monstros (Octoroks, Keese, ChuChus), corta arbustos e **captura itens distantes** (Rupees e Corações) trazendo-os até as mãos do herói ao som de chime de captura (`SOUND_ITEM_CATCH`).
+- **Pote Mágico / Jarro de Vento (Gust Jar)**:
+  - **Vórtice direcional contínuo de sucção** com linhas espirais de partículas de vento (`SOUND_GUST_SUCTION`).
+  - Física de atração gravitacional: puxa monstros em direção ao bocal, desmascara ChuChus forçando-os para fora de suas poças, atrai itens caídos e **absorve projéteis de pedras** no ar.
+  - **Rajada de Ar Pressurizada**: Ao soltar o botão de sucção, Link dispara um projétil de vento compacto em alta velocidade (`SOUND_GUST_BLAST`), rompendo arbustos e arremessando inimigos.
+- **Botas de Pegasus (Pegasus Boots)**:
+  - Arrancada veloz e veloz em linha reta com multiplicador de velocidade de corrida ($1.85\times$), permitindo cruzar grandes distâncias e atropelar obstáculos.
+- **HUD Integrado de Subarmas**:
+  - Slot ornamental do botão `[B]` no topo da tela com miniaturas pixel art dedicadas (Bumerangue dourado com gema rubi, Pote terracota e Bota alada de Pegasus).
+
 ### 🎨 Sprites Autênticos Extraídos da ROM (Clean-Room AOT)
 - **Metatiles 1D do GBA**: Montagem canônica de metatiles 16x24 (3 fatias de 16x8) para o Link e metatiles 16x16 (4 tiles 8x8) para os Octoroks e projétil de pedra.
 - **Canal Alfa & Espelhamento Horizontal (`flip_h`)**: Decodificação de transparência e espelhamento horizontal em tempo real para as direções simétricas (esquerda/direita).
@@ -176,17 +190,23 @@ OpenMinish/
 │   │   └── types.h     # Tipos canônicos de largura fixa (u8, u16, u32, s8...)
 │   └── hal/
 │       ├── audio.h     # API do mixer estéreo e síntese procedural
+│       ├── dialogue.h  # API de caixas de diálogo, portraits e dicas do Ezlo
 │       ├── entity.h    # API do pool de atores, IA do Octorok e combate
+│       ├── font.h      # API do motor de tipografia bitmap retrô 8x8
 │       ├── input.h     # API do sistema de entrada e vetor analógico 360°
 │       ├── map.h       # API de tilemaps, câmera e frustum culling
+│       ├── subweapon.h # API de armas secundárias (Bumerangue, Pote Mágico, Botas)
 │       ├── texture.h   # API do blitter e proxy de texturas
 │       └── video.h     # API do framebuffer virtual e widescreen
 ├── src/
 │   ├── hal/
-│   │   ├── audio.c     # Implementação do mixer PCM e efeitos sonoros
+│   │   ├── audio.c     # Implementação do mixer PCM, síntese e BGM chiptune
+│   │   ├── dialogue.c  # Sistema de diálogos, efeito typewriter e portraits
 │   │   ├── entity.c    # Implementação da IA, projéteis e loot drops
+│   │   ├── font.c      # Renderizador de glifos 8x8 e caracteres acentuados
 │   │   ├── input.c     # Processamento de gamepad analógico e teclado
 │   │   ├── map.c       # Renderização de metatiles e câmera Lerp
+│   │   ├── subweapon.c # Físicas balísticas, retorno teleguiado e vórtices
 │   │   ├── texture.c   # Carregador de BMPs e substituição de texturas HD
 │   │   └── video.c     # Janela e textura de streaming SDL2
 │   └── main.c          # Ponto de entrada, lógica de jogo e renderização
@@ -245,10 +265,11 @@ Copie sua ROM limpa (ex: `zelda_usa.gba`) e execute a ferramenta AOT de extraç�
 | :--- | :--- | :--- | :--- |
 | **Mover Link** | `W`, `A`, `S`, `D` ou Setas | Alavanca Analógica Esquerda | Alavanca Analógica Esquerda |
 | **Atacar / Falar (NPCs)** | `Z` ou Barra de Espaço | **Botão A** | **Botão Cruz (X)** |
+| **Item Secundário [B]** | `X` (Segurar/Soltar) | **Botão B** | **Botão Círculo (O)** |
+| **Ciclar Subarmas** | `Q` | Gatilho `L` / `LB` | Gatilho `L1` |
 | **Falar com Ezlo (Dicas)** | Tecla `E` | Botão `Select` / `Back` | Botão `Share` |
-| **Rolar / Acelerar Texto** | `X` | **Botão B** | **Botão Círculo (O)** |
-| **Trilha Sonora (BGM)** | `T` | Gatilho `R` | Gatilho `R1` |
-| **Segredo Zelda** | `M` | Gatilho `L` | Gatilho `L1` |
+| **Trilha Sonora (BGM)** | `T` | Gatilho `R` / `RB` | Gatilho `R1` |
+| **Segredo Zelda** | `M` | — | — |
 | **Alarme de Vida** | `H` | — | — |
 | **Alternar 16:9 Widescreen** | Tecla `W` | — | — |
 | **Alternar Região** | `1` (USA) \| `2` (EUR) \| `3` (JPN) | — | — |
