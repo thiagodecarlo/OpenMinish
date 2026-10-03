@@ -79,14 +79,27 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     break;
 
                 case ENTITY_NPC_FOREST_MINISH:
-                    e->health    = 999;
-                    e->maxHealth = 999;
-                    e->damage    = 0;
-                    e->dir       = DIR_DOWN;
-                    e->action    = 1; // Idle/respirando
-                    e->z         = 0.0f;
-                    e->vz        = 0.0f;
-                    e->hitbox    = (Hitbox){ 2.0f, 2.0f, 12.0f, 12.0f };
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1; // Idle/respirando
+                    e->z             = 0.0f;
+                    e->vz            = 0.0f;
+                    e->hitbox        = (Hitbox){ 2.0f, 2.0f, 12.0f, 12.0f };
+                    e->hasKinstone   = true;
+                    e->kinstoneType  = 0; // KINSTONE_GREEN (Fragmento verde comum)
+                    e->kinstoneFused = false;
+                    e->bubbleBob     = 0.0f;
+                    break;
+
+                case ENTITY_CHEST_GOLD:
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->dir           = DIR_DOWN;
+                    e->action        = 0; // 0 = Fechado, 1 = Aberto
+                    e->hitbox        = (Hitbox){ 1.0f, 1.0f, 14.0f, 14.0f };
                     break;
 
                 case ENTITY_ENEMY_KEESE:
@@ -350,6 +363,7 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
         // --------------------------------------------------------------------
         else if (e->type == ENTITY_NPC_FOREST_MINISH) {
             e->animTimer++;
+            e->bubbleBob += 0.08f;
 
             // Se o Link estiver por perto (raio de 36px), o Minish vira o rosto na direção dele
             float dx = link_x - e->x;
@@ -363,6 +377,9 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
                     e->dir = (dy > 0.0f) ? DIR_DOWN : DIR_UP;
                 }
             }
+        }
+        else if (e->type == ENTITY_CHEST_GOLD) {
+            e->animTimer++;
         }
 
         // --------------------------------------------------------------------
@@ -955,15 +972,51 @@ void entity_manager_render(const Camera* cam) {
             // Túnica e corpo
             draw_filled_rect(sx + 5, my + 11, 6, 4, c_tunic);
 
-            // Se o Link estiver ao alcance da interação (<= 28px), exibe o prompt animado "[A] Falar"
+            // Balão de Fusão de Kinstone sobre a cabeça do Minish (se ainda não fundiu)
+            if (e->hasKinstone && !e->kinstoneFused) {
+                int bubble_y = my - 16 + (int)(sinf(e->bubbleBob) * 2.0f);
+                int bubble_x = sx + 8;
+
+                // Nuvem do balão de pensamento branca
+                draw_filled_rect(bubble_x - 7, bubble_y - 6, 14, 12, 0xFFFFFFFF);
+                draw_filled_rect(bubble_x - 8, bubble_y - 4, 16, 8, 0xFFFFFFFF);
+                draw_filled_rect(bubble_x - 6, bubble_y - 7, 12, 14, 0xFFFFFFFF);
+                put_pixel_safe(bubble_x - 8, bubble_y - 4, 0xD4AF37FF);
+                put_pixel_safe(bubble_x + 7, bubble_y - 4, 0xD4AF37FF);
+                put_pixel_safe(bubble_x - 2, my - 2, 0xFFFFFFFF);
+                put_pixel_safe(bubble_x - 1, my - 3, 0xFFFFFFFF);
+
+                // Fragmento de Kinstone dentro do balão
+                u32 c_kinstone = (e->kinstoneType == 0) ? 0x22C55EFF :
+                                 (e->kinstoneType == 1) ? 0x3B82F6FF : 0xEF4444FF;
+                u32 c_kgold = 0xD4AF37FF;
+
+                for (int ky = -3; ky <= 3; ky++) {
+                    for (int kx = -3; kx <= 3; kx++) {
+                        if (kx * kx + ky * ky <= 9) {
+                            u32 col = (kx == 3 || kx == -3 || ky == 3 || ky == -3) ? c_kgold : c_kinstone;
+                            put_pixel_safe(bubble_x + kx, bubble_y + ky, col);
+                        }
+                    }
+                }
+                put_pixel_safe(bubble_x - 1, bubble_y - 1, 0xFFFFFFFF);
+            }
+
+            // Se o Link estiver ao alcance da interação (<= 28px)
             float dx = s_last_link_x - e->x;
             float dy = s_last_link_y - e->y;
             if (dx * dx + dy * dy <= 28.0f * 28.0f) {
                 int bounce = ((e->animTimer / 10) % 2 == 1) ? 1 : 0;
-                int prompt_x = sx - 16;
-                int prompt_y = sy - 14 + bounce;
-                draw_filled_rect(prompt_x - 1, prompt_y - 1, 48, 10, 0x0A2010EE);
-                font_draw_text(prompt_x + 1, prompt_y, "[A] Falar", 0xFFE27AFF, true);
+                int prompt_x = sx - 26;
+                int prompt_y = (e->hasKinstone && !e->kinstoneFused) ? (my - 28 + bounce) : (sy - 14 + bounce);
+
+                if (e->hasKinstone && !e->kinstoneFused) {
+                    draw_filled_rect(prompt_x - 1, prompt_y - 1, 68, 10, 0x071520F0);
+                    font_draw_text(prompt_x + 1, prompt_y, "[K/L] Fusao", 0x00FFCCFF, true);
+                } else {
+                    draw_filled_rect(prompt_x + 10 - 1, prompt_y - 1, 48, 10, 0x0A2010EE);
+                    font_draw_text(prompt_x + 10 + 1, prompt_y, "[A] Falar", 0xFFE27AFF, true);
+                }
             }
         }
 
@@ -1076,6 +1129,72 @@ void entity_manager_render(const Camera* cam) {
                 put_pixel_safe(sx + 10, cy + 7, c_pupil);
             }
         }
+
+        // 7. BAÚ DO TESOURO DOURADO (DESTRAVADO POR FUSÃO DE KINSTONE)
+        else if (e->type == ENTITY_CHEST_GOLD) {
+            u32 c_gold_base = 0xD4AF37FF; // Ouro principal
+            u32 c_gold_hi   = 0xFFE27AFF; // Brilho dourado
+            u32 c_gold_dk   = 0x9A7B1CFF; // Sombra dourada
+            u32 c_wood      = 0x4A2810FF; // Detalhes de mogno escuro
+            u32 c_lock      = 0x111111FF; // Fechadura
+            u32 c_sparkle   = 0xFFFFFFFF; // Brilho de diamante
+
+            if (e->action == 0) {
+                // BAÚ FECHADO (14x12 pixels)
+                // Sombra no chão
+                draw_filled_rect(sx + 1, sy + 12, 14, 3, 0x05100766);
+
+                // Tampa arredondada dourada
+                draw_filled_rect(sx + 2, sy + 2, 12, 4, c_gold_base);
+                draw_filled_rect(sx + 3, sy + 1, 10, 2, c_gold_hi);
+
+                // Corpo do baú
+                draw_filled_rect(sx + 1, sy + 5, 14, 7, c_gold_base);
+                draw_filled_rect(sx + 1, sy + 11, 14, 2, c_gold_dk);
+
+                // Cintas de ferro/madeira escura
+                draw_filled_rect(sx + 3, sy + 2, 2, 10, c_wood);
+                draw_filled_rect(sx + 11, sy + 2, 2, 10, c_wood);
+
+                // Placa da fechadura central
+                draw_filled_rect(sx + 7, sy + 6, 2, 3, c_lock);
+                put_pixel_safe(sx + 7, sy + 7, c_gold_hi);
+
+                // Brilho cintilante animado no topo
+                if ((e->animTimer / 12) % 4 == 0) {
+                    put_pixel_safe(sx + 4, sy + 1, c_sparkle);
+                    put_pixel_safe(sx + 5, sy + 1, c_sparkle);
+                }
+
+                // Prompt interativo se Link estiver próximo (<= 24px)
+                float cdx = s_last_link_x - e->x;
+                float cdy = s_last_link_y - e->y;
+                if (cdx * cdx + cdy * cdy <= 24.0f * 24.0f) {
+                    int p_x = sx - 16;
+                    int p_y = sy - 14;
+                    draw_filled_rect(p_x - 1, p_y - 1, 48, 10, 0x0A2010EE);
+                    font_draw_text(p_x + 1, p_y, "[A] Abrir", 0xFFE27AFF, true);
+                }
+            } else {
+                // BAÚ ABERTO (Interior de veludo escarlate e tampa erguida)
+                // Sombra no chão
+                draw_filled_rect(sx + 1, sy + 12, 14, 3, 0x05100766);
+
+                // Tampa erguida para trás
+                draw_filled_rect(sx + 2, sy - 3, 12, 4, c_gold_base);
+                draw_filled_rect(sx + 3, sy - 4, 10, 2, c_gold_hi);
+
+                // Interior reluzente de veludo vermelho
+                draw_filled_rect(sx + 2, sy + 1, 12, 5, 0x881111FF);
+                draw_filled_rect(sx + 4, sy + 2, 8, 3, 0xCC2222FF);
+
+                // Base dourada
+                draw_filled_rect(sx + 1, sy + 6, 14, 6, c_gold_base);
+                draw_filled_rect(sx + 1, sy + 11, 14, 2, c_gold_dk);
+                draw_filled_rect(sx + 3, sy + 6, 2, 6, c_wood);
+                draw_filled_rect(sx + 11, sy + 6, 2, 6, c_wood);
+            }
+        }
     }
 }
 
@@ -1097,6 +1216,50 @@ Entity* entity_find_nearby_npc(float world_x, float world_y, float max_dist) {
         }
     }
     return best;
+}
+
+Entity* entity_find_kinstone_npc(float world_x, float world_y, float max_dist) {
+    float best_dist_sq = max_dist * max_dist;
+    Entity* best = NULL;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active || e->type != ENTITY_NPC_FOREST_MINISH) continue;
+        if (!e->hasKinstone || e->kinstoneFused) continue;
+
+        float dx = e->x - world_x;
+        float dy = e->y - world_y;
+        float dist_sq = dx * dx + dy * dy;
+
+        if (dist_sq <= best_dist_sq) {
+            best_dist_sq = dist_sq;
+            best = e;
+        }
+    }
+    return best;
+}
+
+bool entity_interact_chest(float world_x, float world_y, int* link_rupees, int* link_hearts) {
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active || e->type != ENTITY_CHEST_GOLD || e->action != 0) continue;
+
+        float dx = e->x - world_x;
+        float dy = e->y - world_y;
+        if (dx * dx + dy * dy <= 24.0f * 24.0f) {
+            e->action = 1; // Baú aberto!
+            hal_audio_play_sound(SOUND_CHEST_OPEN, 1.0f, 1.0f);
+            hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
+
+            // Recompensa lendária do baú de fusão: +100 Rupees e restaura a vida!
+            if (link_rupees) *link_rupees += 100;
+            if (link_hearts) *link_hearts = 3;
+
+            printf("[BAU DOURADO] Aberto com sucesso! Recompensa: +100 Rupees e Vida Cheia!\n");
+            return true;
+        }
+    }
+    return false;
 }
 
 void entity_manager_shutdown(void) {

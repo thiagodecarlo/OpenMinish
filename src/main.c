@@ -10,6 +10,7 @@
 #include "hal/font.h"
 #include "hal/dialogue.h"
 #include "hal/subweapon.h"
+#include "hal/kinstone.h"
 #include <math.h>
 
 /*
@@ -273,8 +274,9 @@ int main(int argc, char* argv[]) {
     printf("====================================================================\n");
     printf("Controles Disponiveis:\n");
     printf("  - Mover Link:     [WASD] ou [Setas do Teclado] ou [D-Pad/Analogico]\n");
-    printf("  - Atacar / Acao:  [Z] ou [Espaco] ou [Botao A do Gamepad] (Atacar espada / Falar com NPCs!)\n");
+    printf("  - Atacar / Acao:  [Z] ou [Espaco] ou [Botao A do Gamepad] (Atacar espada / Falar / Abrir bau!)\n");
     printf("  - Item Secundar.: [X] ou [Botao B do Gamepad] (Bumerangue / Pote Magico / Pegasus Boots!)\n");
+    printf("  - Fusao Kinstone: [K] ou [Gatilho L no Gamepad] (Unir pedras da sorte com NPCs parceiros!)\n");
     printf("  - Ciclar Itens:   [Q] ou [Gatilho L no Gamepad] (Alternar item secundario equipado)\n");
     printf("  - Falar com Ezlo: [E] ou [Select no Gamepad] (Dicas e orientacoes do gorro companheiro!)\n");
     printf("  - Trilha Sonora:  [T] ou [Gatilho R no Gamepad] (Minish Woods / Hyrule / Mudo)\n");
@@ -296,6 +298,7 @@ int main(int argc, char* argv[]) {
     font_init();
     dialogue_init();
     subweapon_init();
+    kinstone_init();
 
     // Inicia a trilha sonora autêntica de Minish Woods no mixer chiptune da HAL
     hal_audio_play_bgm(BGM_MINISH_WOODS);
@@ -410,6 +413,14 @@ int main(int argc, char* argv[]) {
                         case SDLK_q:
                             subweapon_cycle();
                             break;
+                        case SDLK_k:
+                            if (!kinstone_is_active() && !dialogue_is_active()) {
+                                Entity* knpc = entity_find_kinstone_npc(link.x, link.y, 32.0f);
+                                if (knpc) {
+                                    kinstone_start_fusion(knpc);
+                                }
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -425,7 +436,27 @@ int main(int argc, char* argv[]) {
         // --------------------------------------------------------------------
         const HalVideoContext* ctx = hal_video_get_context();
 
-        if (dialogue_is_active()) {
+        if (kinstone_is_active()) {
+            kinstone_update();
+
+            bool confirm = hal_input_is_pressed(KEY_A) || hal_input_is_pressed(KEY_START);
+            bool cancel  = hal_input_is_pressed(KEY_B);
+            int  nav_dir = 0;
+
+            if (hal_input_is_pressed(KEY_LEFT))  nav_dir = -1;
+            if (hal_input_is_pressed(KEY_RIGHT)) nav_dir = 1;
+
+            AnalogStick stick = hal_input_get_left_stick();
+            static bool s_stick_was_left = false;
+            static bool s_stick_was_right = false;
+            if (stick.x < -0.5f && !s_stick_was_left) { nav_dir = -1; s_stick_was_left = true; }
+            if (stick.x > -0.2f) s_stick_was_left = false;
+            if (stick.x > 0.5f && !s_stick_was_right) { nav_dir = 1; s_stick_was_right = true; }
+            if (stick.x < 0.2f) s_stick_was_right = false;
+
+            kinstone_handle_input(confirm, cancel, nav_dir);
+            link.is_moving = false;
+        } else if (dialogue_is_active()) {
             dialogue_update();
             if (hal_input_is_pressed(KEY_A) || hal_input_is_pressed(KEY_START)) {
                 dialogue_advance();
@@ -435,15 +466,19 @@ int main(int argc, char* argv[]) {
             }
             link.is_moving = false;
         } else {
-            // Ação de Ataque ou Conversa com NPC (Botão A pressionado no frame exato)
+            // Ação com Botão A: Primeiro interage com Baús Dourados, depois NPCs, depois golpe de espada!
             if (hal_input_is_pressed(KEY_A) && !link.is_attacking) {
-                Entity* nearby_npc = entity_find_nearby_npc(link.x, link.y, 28.0f);
-                if (nearby_npc) {
-                    dialogue_trigger_minish_talk();
+                if (entity_interact_chest(link.x, link.y, &link.rupees, &link.hearts)) {
+                    // Abriu o baú dourado!
                 } else {
-                    link.is_attacking = true;
-                    link.attack_timer = 12; // Dura 12 frames (0.2 segundos)
-                    hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                    Entity* nearby_npc = entity_find_nearby_npc(link.x, link.y, 28.0f);
+                    if (nearby_npc) {
+                        dialogue_trigger_minish_talk();
+                    } else {
+                        link.is_attacking = true;
+                        link.attack_timer = 12; // Dura 12 frames (0.2 segundos)
+                        hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                    }
                 }
             }
 
@@ -493,7 +528,12 @@ int main(int argc, char* argv[]) {
                 dialogue_trigger_ezlo_hint();
             }
             if (hal_input_is_pressed(KEY_L)) {
-                subweapon_cycle();
+                Entity* knpc = entity_find_kinstone_npc(link.x, link.y, 32.0f);
+                if (knpc) {
+                    kinstone_start_fusion(knpc);
+                } else {
+                    subweapon_cycle();
+                }
             }
             if (hal_input_is_pressed(KEY_R)) {
                 hal_audio_cycle_bgm();
@@ -735,8 +775,11 @@ int main(int argc, char* argv[]) {
         // 4. Balão de Diálogos e Retratos de Personagens (Ezlo / NPCs)
         dialogue_render();
 
+        // 5. Interface de Fusão de Kinstones (Pedras da Sorte)
+        kinstone_render();
+
         // --------------------------------------------------------------------
-        // 5. APRESENTAÇÃO NA TELA (SDL2 GPU)
+        // 6. APRESENTAÇÃO NA TELA (SDL2 GPU)
         // --------------------------------------------------------------------
         hal_video_render_frame();
     }
