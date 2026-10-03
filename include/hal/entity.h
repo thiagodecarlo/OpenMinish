@@ -23,7 +23,8 @@ typedef enum {
     ENTITY_ENEMY_OCTOROK,     // Inimigo clássico Octorok Vermelho
     ENTITY_PROJECTILE_ROCK,   // Pedra disparada pelo Octorok
     ENTITY_ITEM_RUPEE,        // Rupee Verde (+5) dropado no chão
-    ENTITY_ITEM_HEART         // Coração de cura (+1 HP) dropado
+    ENTITY_ITEM_HEART,        // Coração de cura (+1 HP) dropado
+    ENTITY_NPC_FOREST_MINISH  // Habitante Minish amigável dos bosques
 } EntityType;
 
 // Caixa delimitadora de colisão e dano (Hitbox / Hurtbox)
@@ -82,6 +83,12 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
  */
 bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float slash_h,
                             int damage, Direction slash_dir);
+
+/*
+ * Procura um NPC amigável próximo às coordenadas fornecidas dentro do raio max_dist.
+ * Retorna o ponteiro para a entidade do NPC ou NULL se nenhum estiver por perto.
+ */
+Entity* entity_find_nearby_npc(float world_x, float world_y, float max_dist);
 
 /*
  * Renderiza todas as entidades ativas nas coordenadas relativas da câmera virtual.

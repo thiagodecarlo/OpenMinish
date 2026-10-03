@@ -27,6 +27,9 @@ typedef enum {
     SOUND_ROLL,            // Rolar / Esquiva ágil
     SOUND_HEART_BEEP,      // Chime de vida baixa
     SOUND_SECRET,          // O lendário acorde de segredo revelado (8 notas de Zelda)
+    SOUND_TEXT_BLIP,       // Som curto retro de caractere do diálogo (typewriter)
+    SOUND_TEXT_ADVANCE,    // Som de avanço de página ou encerramento do diálogo
+    SOUND_EZLO_ALERT,      // Piado característico do pássaro Ezlo ao ser chamado
     SOUND_COUNT
 } SoundEffect;
 

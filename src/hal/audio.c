@@ -224,6 +224,72 @@ static void synth_generate_all_sfx(void) {
         s_precalc_sfx[SOUND_SECRET].total_frames = num_frames;
         s_precalc_sfx[SOUND_SECRET].is_stereo = false;
     }
+
+    // 7. SOUND_TEXT_BLIP: Chapeuzinho/Typewriter chirp retro de texto falado (24ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.024f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float freq = 560.0f + 200.0f * (t / 0.024f); // Leve sweep ascendente
+            float env = expf(-85.0f * t);
+            phase += freq / (float)AUDIO_SAMPLE_RATE;
+            float wave = synth_square_wave(phase, 0.25f);
+            float total = wave * env * 19000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_TEXT_BLIP].samples = buf;
+        s_precalc_sfx[SOUND_TEXT_BLIP].total_frames = num_frames;
+        s_precalc_sfx[SOUND_TEXT_BLIP].is_stereo = false;
+    }
+
+    // 8. SOUND_TEXT_ADVANCE: Confirmação sonora ao virar página de diálogo (90ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.090f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float freq = (t < 0.040f) ? 987.77f : 1318.51f; // Si5 -> Mi6
+            float note_t = (t < 0.040f) ? t : (t - 0.040f);
+            float env = expf(-28.0f * note_t);
+            phase += freq / (float)AUDIO_SAMPLE_RATE;
+            float wave = synth_square_wave(phase, 0.50f);
+            float total = wave * env * 22000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_TEXT_ADVANCE].samples = buf;
+        s_precalc_sfx[SOUND_TEXT_ADVANCE].total_frames = num_frames;
+        s_precalc_sfx[SOUND_TEXT_ADVANCE].is_stereo = false;
+    }
+
+    // 9. SOUND_EZLO_ALERT: Pia/pipilo animado de chamado do pássaro Ezlo (200ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.200f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float freq = 784.0f + 650.0f * sinf(2.0f * PI_F * 14.0f * t); // Vibrato rápido de pássaro
+            if (t > 0.10f) freq += 350.0f; // Arpejo ascendente
+            float env = sinf((t / 0.200f) * PI_F) * expf(-4.0f * t);
+            phase += freq / (float)AUDIO_SAMPLE_RATE;
+            float tri = synth_triangle_wave(phase);
+            float pulse = synth_square_wave(phase, 0.35f);
+            float total = (tri * 0.7f + pulse * 0.3f) * env * 24000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_EZLO_ALERT].samples = buf;
+        s_precalc_sfx[SOUND_EZLO_ALERT].total_frames = num_frames;
+        s_precalc_sfx[SOUND_EZLO_ALERT].is_stereo = false;
+    }
 }
 
 // ----------------------------------------------------------------------------
