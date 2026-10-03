@@ -760,6 +760,137 @@ static void synth_generate_all_sfx(void) {
         s_precalc_sfx[SOUND_HEART_CONTAINER].total_frames = num_frames;
         s_precalc_sfx[SOUND_HEART_CONTAINER].is_stereo = false;
     }
+
+    // 27. SOUND_SPIN_CHARGE: Zunido de energia acumulando na lâmina (180ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.180f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float progress = t / 0.180f;
+            float freq = 220.0f + 200.0f * progress;
+            phase += freq / (float)AUDIO_SAMPLE_RATE;
+
+            float pulse = 0.75f + 0.25f * sinf(2.0f * PI_F * 24.0f * t);
+            float tri = synth_triangle_wave(phase) * 0.65f;
+            float sqr = synth_square_wave(phase, 0.25f) * 0.25f;
+            float hum = (tri + sqr) * pulse * 23000.0f;
+
+            if (hum > 32767.0f) hum = 32767.0f;
+            if (hum < -32768.0f) hum = -32768.0f;
+            buf[i] = (s16)hum;
+        }
+        s_precalc_sfx[SOUND_SPIN_CHARGE].samples = buf;
+        s_precalc_sfx[SOUND_SPIN_CHARGE].total_frames = num_frames;
+        s_precalc_sfx[SOUND_SPIN_CHARGE].is_stereo = false;
+    }
+
+    // 28. SOUND_SPIN_READY: Chime cristalino agudo de carga máxima completa (260ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.260f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase1 = 0.0f;
+        float phase2 = 0.0f;
+        float phase3 = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-15.0f * t);
+
+            phase1 += 1046.50f / (float)AUDIO_SAMPLE_RATE; // Dó6
+            phase2 += 2093.00f / (float)AUDIO_SAMPLE_RATE; // Dó7
+            phase3 += 3135.96f / (float)AUDIO_SAMPLE_RATE; // Sol7 harmônico
+
+            float bell1 = sinf(2.0f * PI_F * phase1) * 0.55f;
+            float bell2 = sinf(2.0f * PI_F * phase2) * 0.30f;
+            float bell3 = sinf(2.0f * PI_F * phase3) * 0.15f;
+            float chime = (bell1 + bell2 + bell3) * env * 27000.0f;
+
+            if (chime > 32767.0f) chime = 32767.0f;
+            if (chime < -32768.0f) chime = -32768.0f;
+            buf[i] = (s16)chime;
+        }
+        s_precalc_sfx[SOUND_SPIN_READY].samples = buf;
+        s_precalc_sfx[SOUND_SPIN_READY].total_frames = num_frames;
+        s_precalc_sfx[SOUND_SPIN_READY].is_stereo = false;
+    }
+
+    // 29. SOUND_SPIN_ATTACK: Giro veloz cortante da lâmina em 360 graus (260ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.260f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float progress = t / 0.260f;
+            float env = sinf(progress * PI_F);
+
+            // Mergulho sônico de frequência (blade pitch slice)
+            float freq = 880.0f - 680.0f * progress;
+            phase += freq / (float)AUDIO_SAMPLE_RATE;
+
+            float slice = sinf(2.0f * PI_F * phase) * 0.40f;
+            float swoosh = synth_noise() * 0.60f;
+            float total = (slice + swoosh) * env * 29000.0f;
+
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_SPIN_ATTACK].samples = buf;
+        s_precalc_sfx[SOUND_SPIN_ATTACK].total_frames = num_frames;
+        s_precalc_sfx[SOUND_SPIN_ATTACK].is_stereo = false;
+    }
+
+    // 30. SOUND_TIGER_SCROLL: Fanfarra marcial sagrada ao receber o Pergaminho do Tigre (1300ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 1.300f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float intro_notes[4] = { 392.00f, 523.25f, 659.25f, 783.99f }; // Sol4, Dó5, Mi5, Sol5
+        float note_dur = 0.120f;
+        float phase_lead = 0.0f;
+        float phase_c6 = 0.0f;
+        float phase_e6 = 0.0f;
+        float phase_g6 = 0.0f;
+
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float total = 0.0f;
+
+            if (t < note_dur * 4) {
+                // 4 notas de introdução marcial firme
+                int idx = (int)(t / note_dur);
+                if (idx > 3) idx = 3;
+                float note_t = t - (idx * note_dur);
+                float env = expf(-12.0f * note_t);
+                phase_lead += intro_notes[idx] / (float)AUDIO_SAMPLE_RATE;
+                float wave = synth_square_wave(phase_lead, 0.40f) * 0.60f +
+                             synth_triangle_wave(phase_lead) * 0.40f;
+                total = wave * env * 25000.0f;
+            } else {
+                // Acorde lendário sustentado com brilho real (Dó6 + Mi6 + Sol6)
+                float sus_t = t - (note_dur * 4);
+                float env = expf(-3.5f * sus_t);
+                float vibrato = 1.0f + 0.012f * sinf(2.0f * PI_F * 6.0f * sus_t);
+
+                phase_c6 += (1046.50f * vibrato) / (float)AUDIO_SAMPLE_RATE;
+                phase_e6 += (1318.51f * vibrato) / (float)AUDIO_SAMPLE_RATE;
+                phase_g6 += (1567.98f * vibrato) / (float)AUDIO_SAMPLE_RATE;
+
+                float bell1 = sinf(2.0f * PI_F * phase_c6) * 0.50f;
+                float bell2 = synth_triangle_wave(phase_e6) * 0.30f;
+                float bell3 = sinf(2.0f * PI_F * phase_g6) * 0.20f;
+                total = (bell1 + bell2 + bell3) * env * 26000.0f;
+            }
+
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_TIGER_SCROLL].samples = buf;
+        s_precalc_sfx[SOUND_TIGER_SCROLL].total_frames = num_frames;
+        s_precalc_sfx[SOUND_TIGER_SCROLL].is_stereo = false;
+    }
 }
 
 // ----------------------------------------------------------------------------

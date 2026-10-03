@@ -528,3 +528,43 @@ bool map_interact_slash(Tilemap* map, float world_x, float world_y) {
 
     return false;
 }
+
+int map_interact_spin(Tilemap* map, float center_x, float center_y, float radius) {
+    if (!map || !map->overlay_layer) return 0;
+
+    int cut_count = 0;
+    int min_tx = (int)((center_x - radius) / TILE_SIZE);
+    int max_tx = (int)((center_x + radius) / TILE_SIZE);
+    int min_ty = (int)((center_y - radius) / TILE_SIZE);
+    int max_ty = (int)((center_y + radius) / TILE_SIZE);
+
+    if (min_tx < 0) min_tx = 0;
+    if (max_tx >= map->width) max_tx = map->width - 1;
+    if (min_ty < 0) min_ty = 0;
+    if (max_ty >= map->height) max_ty = map->height - 1;
+
+    float r_check = radius + (TILE_SIZE * 0.45f);
+    float r2 = r_check * r_check;
+
+    for (int ty = min_ty; ty <= max_ty; ty++) {
+        for (int tx = min_tx; tx <= max_tx; tx++) {
+            float tile_cx = tx * TILE_SIZE + (TILE_SIZE * 0.5f);
+            float tile_cy = ty * TILE_SIZE + (TILE_SIZE * 0.5f);
+            float dx = tile_cx - center_x;
+            float dy = tile_cy - center_y;
+
+            if ((dx * dx + dy * dy) <= r2) {
+                int idx = ty * map->width + tx;
+                if (map->overlay_layer[idx] == TILE_BUSH) {
+                    map->overlay_layer[idx] = 0xFF; // Arbusto cortado!
+                    map->collision_map[idx] = 0;    // Desbloqueia colisão
+                    cut_count++;
+                } else if (map->overlay_layer[idx] == TILE_CHEST_CLOSED) {
+                    map->overlay_layer[idx] = TILE_CHEST_OPEN;
+                    cut_count++;
+                }
+            }
+        }
+    }
+    return cut_count;
+}

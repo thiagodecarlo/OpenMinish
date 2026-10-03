@@ -216,6 +216,16 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
                     break;
 
+                case ENTITY_NPC_SWIFTBLADE:
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1;
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
+                    break;
+
                 default:
                     break;
             }
@@ -826,6 +836,22 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
                 }
             }
         }
+
+        // 6. NPC: MESTRE ESPADACHIM SWIFTBLADE
+        else if (e->type == ENTITY_NPC_SWIFTBLADE) {
+            e->animTimer++;
+            float dx = link_x - e->x;
+            float dy = link_y - e->y;
+            if (dx * dx + dy * dy <= 48.0f * 48.0f) {
+                if (fabsf(dx) > fabsf(dy)) {
+                    e->dir = (dx > 0.0f) ? DIR_RIGHT : DIR_LEFT;
+                } else {
+                    e->dir = (dy > 0.0f) ? DIR_DOWN : DIR_UP;
+                }
+            } else {
+                e->dir = DIR_DOWN;
+            }
+        }
     }
 }
 
@@ -930,6 +956,101 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
     }
 
     return hit_something;
+}
+
+int entity_check_spin_attack_hit(float center_x, float center_y, float radius, int damage) {
+    int hit_count = 0;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active) continue;
+
+        // Inimigos: Octorok, Keese, ChuChu
+        if ((e->type == ENTITY_ENEMY_OCTOROK ||
+             e->type == ENTITY_ENEMY_KEESE ||
+             (e->type == ENTITY_ENEMY_CHUCHU && e->action > 0)) &&
+            e->invulnerableTimer <= 0) {
+
+            // Keese voando alto demais desvia do golpe circular
+            if (e->type == ENTITY_ENEMY_KEESE && e->z > 16.0f) continue;
+
+            float ex = e->x + e->hitbox.offset_x + (e->hitbox.width * 0.5f);
+            float ey = e->y + e->hitbox.offset_y + (e->hitbox.height * 0.5f);
+            float dx = ex - center_x;
+            float dy = ey - center_y;
+            float dist = sqrtf(dx * dx + dy * dy);
+            float max_reach = radius + (e->hitbox.width * 0.5f);
+
+            if (dist <= max_reach) {
+                e->health -= damage;
+                e->invulnerableTimer = 22; // Pisca de dano
+                e->action = 4; // Knockback
+                e->knockbackTimer = (e->type == ENTITY_ENEMY_KEESE) ? 18 : 14;
+
+                // Força de repulsão radial centrífuga para longe do herói
+                float force = (e->type == ENTITY_ENEMY_KEESE) ? 5.0f : 4.0f;
+                if (dist > 0.1f) {
+                    e->knockbackVx = (dx / dist) * force;
+                    e->knockbackVy = (dy / dist) * force;
+                } else {
+                    e->knockbackVx = force;
+                    e->knockbackVy = 0.0f;
+                }
+
+                float hit_pitch = (e->type == ENTITY_ENEMY_CHUCHU) ? 1.55f : 1.30f;
+                hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, hit_pitch);
+                hit_count++;
+            }
+        }
+        // Destruição e reflexão de projéteis de pedra no ar
+        else if (e->type == ENTITY_PROJECTILE_ROCK) {
+            float rx = e->x + 3.0f;
+            float ry = e->y + 3.0f;
+            float dx = rx - center_x;
+            float dy = ry - center_y;
+            float dist = sqrtf(dx * dx + dy * dy);
+
+            if (dist <= radius + 5.0f) {
+                e->is_active = false; // Destrói a pedra
+                hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 1.6f);
+                hit_count++;
+            }
+        }
+        // Golpe no Chefe Big Green ChuChu
+        else if (e->type == ENTITY_BOSS_BIG_CHUCHU) {
+            float bx = e->x;
+            float by = e->y;
+            float dx = bx - center_x;
+            float dy = by - center_y;
+            float dist = sqrtf(dx * dx + dy * dy);
+
+            if (e->action == 3 && e->invulnerableTimer <= 0) { // Toppled vulnerável!
+                if (dist <= radius + 22.0f) {
+                    e->health -= damage;
+                    e->invulnerableTimer = 24;
+                    hal_audio_play_sound(SOUND_BOSS_HIT, 1.0f, 1.25f);
+                    entity_trigger_screen_shake(10, 4);
+                    printf("[BOSS HIT] SPIN ATTACK devastador na cabeca vulneravel! HP restante: %d / %d\n",
+                           e->health, e->maxHealth);
+
+                    if (e->health <= 0) {
+                        e->health = 0;
+                        e->action = 5;
+                        e->bossDeathTimer = 0;
+                        hal_audio_play_sound(SOUND_BOSS_DEFEAT, 1.0f, 1.0f);
+                    }
+                    hit_count++;
+                }
+            } else if (e->action == 1) { // Em pé
+                if (dist <= radius + 26.0f) {
+                    hal_audio_play_sound(SOUND_SWORD_HIT, 0.75f, 0.70f);
+                    hit_count++;
+                }
+            }
+        }
+    }
+
+    return hit_count;
 }
 
 bool entity_check_subweapon_hit(float px, float py, float pw, float ph, int damage, int* out_carried_item) {
@@ -1766,6 +1887,84 @@ void entity_manager_render(const Camera* cam) {
                 font_draw_text(bar_x + 6, bar_y - 8, boss_title, e->bossEnraged ? 0xF87171FF : 0x4ADE80FF, true);
             }
         }
+
+        // 10. NPC: MESTRE ESPADACHIM SWIFTBLADE (BLADE BROTHER)
+        else if (e->type == ENTITY_NPC_SWIFTBLADE) {
+            int breathe = ((e->animTimer / 18) % 2 == 1) ? 1 : 0;
+            int sy_b = sy - breathe;
+
+            u32 c_fur       = 0x7A6A5AFF; // Pelo canino marrom-acinzentado do mestre
+            u32 c_fur_dk    = 0x544638FF;
+            u32 c_muzzle    = 0xC2B2A0FF;
+            u32 c_nose      = 0x1C140FFF;
+            u32 c_band      = 0xDC2626FF; // Faixa vermelha marcial
+            u32 c_band_dk   = 0x991B1BFF;
+            u32 c_gi        = 0x1E3324FF; // Gi verde floresta dojo
+            u32 c_belt      = 0xE5E7EBFF; // Faixa branca
+            u32 c_wood      = 0x92400EFF; // Espada de madeira de treino (Bokken)
+            u32 c_wood_hi   = 0xD97706FF;
+
+            // Orelhas caninas
+            put_pixel_safe(sx + 4, sy_b + 0, c_fur);
+            put_pixel_safe(sx + 5, sy_b + 1, c_fur);
+            put_pixel_safe(sx + 10, sy_b + 1, c_fur);
+            put_pixel_safe(sx + 11, sy_b + 0, c_fur);
+
+            // Cabeça
+            draw_filled_rect(sx + 4, sy_b + 2, 8, 5, c_fur);
+
+            // Faixa vermelha marcial na testa
+            draw_filled_rect(sx + 3, sy_b + 3, 10, 2, c_band);
+            put_pixel_safe(sx + 2, sy_b + 4, c_band_dk); // Nó
+            put_pixel_safe(sx + 1, sy_b + 5, c_band);    // Fita pendente
+
+            // Olhos e focinho
+            if (e->dir == DIR_DOWN) {
+                put_pixel_safe(sx + 5, sy_b + 5, 0x111111FF);
+                put_pixel_safe(sx + 10, sy_b + 5, 0x111111FF);
+                draw_filled_rect(sx + 6, sy_b + 6, 4, 2, c_muzzle);
+                put_pixel_safe(sx + 7, sy_b + 6, c_nose);
+                put_pixel_safe(sx + 8, sy_b + 6, c_nose);
+            } else if (e->dir == DIR_LEFT) {
+                put_pixel_safe(sx + 4, sy_b + 5, 0x111111FF);
+                draw_filled_rect(sx + 3, sy_b + 6, 3, 2, c_muzzle);
+                put_pixel_safe(sx + 3, sy_b + 6, c_nose);
+            } else if (e->dir == DIR_RIGHT) {
+                put_pixel_safe(sx + 11, sy_b + 5, 0x111111FF);
+                draw_filled_rect(sx + 10, sy_b + 6, 3, 2, c_muzzle);
+                put_pixel_safe(sx + 12, sy_b + 6, c_nose);
+            } else { // DIR_UP
+                put_pixel_safe(sx + 8, sy_b + 4, c_band);
+                put_pixel_safe(sx + 9, sy_b + 5, c_band_dk);
+            }
+
+            // Corpo / Kimono do Mestre
+            draw_filled_rect(sx + 4, sy_b + 8, 8, 5, c_gi);
+            draw_filled_rect(sx + 4, sy_b + 11, 8, 2, c_belt);
+
+            // Pernas / Calças
+            draw_filled_rect(sx + 4, sy_b + 13, 3, 3, c_gi);
+            draw_filled_rect(sx + 9, sy_b + 13, 3, 3, c_gi);
+
+            // Espada de madeira de treino (Bokken)
+            draw_filled_rect(sx + 12, sy_b + 7, 2, 7, c_wood);
+            put_pixel_safe(sx + 12, sy_b + 6, c_wood_hi);
+            put_pixel_safe(sx + 13, sy_b + 6, c_wood_hi);
+
+            // Balão de interação [A] Treinar quando Link se aproxima
+            float dx = s_last_link_x - e->x;
+            float dy = s_last_link_y - e->y;
+            if (dx * dx + dy * dy <= 30.0f * 30.0f) {
+                int bounce = ((e->animTimer / 10) % 2 == 1) ? 1 : 0;
+                int prompt_x = sx - 22;
+                int prompt_y = sy_b - 15 + bounce;
+
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 62, 10, 0x180D0AEF);
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 62, 1, 0xDC2626FF);
+                draw_filled_rect(prompt_x - 1, prompt_y + 8, 62, 1, 0x991B1BFF);
+                font_draw_text(prompt_x + 2, prompt_y, "[A] Treinar", 0xFCA5A5FF, true);
+            }
+        }
     }
 }
 
@@ -1776,6 +1975,26 @@ Entity* entity_find_nearby_npc(float world_x, float world_y, float max_dist) {
     for (int i = 0; i < MAX_ENTITIES; i++) {
         Entity* e = &s_entities[i];
         if (!e->is_active || e->type != ENTITY_NPC_FOREST_MINISH) continue;
+
+        float dx = e->x - world_x;
+        float dy = e->y - world_y;
+        float dist_sq = dx * dx + dy * dy;
+
+        if (dist_sq <= best_dist_sq) {
+            best_dist_sq = dist_sq;
+            best = e;
+        }
+    }
+    return best;
+}
+
+Entity* entity_find_nearby_swiftblade(float world_x, float world_y, float max_dist) {
+    float best_dist_sq = max_dist * max_dist;
+    Entity* best = NULL;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active || e->type != ENTITY_NPC_SWIFTBLADE) continue;
 
         float dx = e->x - world_x;
         float dy = e->y - world_y;

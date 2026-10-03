@@ -29,7 +29,8 @@ typedef enum {
     ENTITY_ENEMY_CHUCHU,      // Gosma gelatinosa Green ChuChu (Brota e salta)
     ENTITY_CHEST_GOLD,        // Baú do Tesouro Dourado (destravado por Fusão de Kinstone)
     ENTITY_BOSS_BIG_CHUCHU,   // Chefe Gigante do Deepwood Shrine (Big Green ChuChu)
-    ENTITY_ITEM_HEART_CONTAINER // Recipiente de Coração permanente (+1 Coração Máximo e Cura Total)
+    ENTITY_ITEM_HEART_CONTAINER, // Recipiente de Coração permanente (+1 Coração Máximo e Cura Total)
+    ENTITY_NPC_SWIFTBLADE     // Mestre Espadachim Swiftblade (Treinador do Spin Attack e Tiger Scrolls)
 } EntityType;
 
 // Caixa delimitadora de colisão e dano (Hitbox / Hurtbox)
@@ -135,10 +136,22 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
                             int damage, Direction slash_dir);
 
 /*
+ * Verifica se o Ataque Giratório (Spin Attack 360°) atingiu inimigos ou projéteis no raio circular.
+ * Aplica dano multiplicado (2 HP) e knockback radial vetorial para fora do círculo de giro.
+ * Retorna a quantidade de alvos atingidos.
+ */
+int entity_check_spin_attack_hit(float center_x, float center_y, float radius, int damage);
+
+/*
  * Procura um NPC amigável próximo às coordenadas fornecidas dentro do raio max_dist.
  * Retorna o ponteiro para a entidade do NPC ou NULL se nenhum estiver por perto.
  */
 Entity* entity_find_nearby_npc(float world_x, float world_y, float max_dist);
+
+/*
+ * Procura pelo Mestre Espadachim Swiftblade próximo às coordenadas fornecidas.
+ */
+Entity* entity_find_nearby_swiftblade(float world_x, float world_y, float max_dist);
 
 /*
  * Procura um NPC amigável com fusão de Kinstone pendente próximo ao herói.

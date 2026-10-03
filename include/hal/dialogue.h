@@ -23,6 +23,7 @@
 typedef enum {
     SPEAKER_EZLO = 0,        // Ezlo, o gorro pássaro falante
     SPEAKER_FOREST_MINISH,   // Ancião / Habitante Minish de Minish Woods
+    SPEAKER_SWIFTBLADE,      // Mestre Espadachim Swiftblade (Dojo de Hyrule)
     SPEAKER_SIGNPOST         // Placa de madeira / Altar sagrado
 } DialogueSpeaker;
 
@@ -53,6 +54,21 @@ void dialogue_trigger_ezlo_hint(void);
  * Inicia uma conversa amigável com um NPC Minish da floresta.
  */
 void dialogue_trigger_minish_talk(void);
+
+/*
+ * Inicia o treinamento do Ataque Giratório com o Mestre Espadachim Swiftblade.
+ */
+void dialogue_trigger_swiftblade_talk(bool already_learned);
+
+/*
+ * Retorna true se a conclusão do diálogo concede o Pergaminho do Tigre nº 1 (Spin Attack).
+ */
+bool dialogue_is_swiftblade_reward_pending(void);
+
+/*
+ * Consome/limpa a recompensa pendente concedida pelo diálogo.
+ */
+void dialogue_clear_swiftblade_reward(void);
 
 /*
  * Atualiza o cronômetro do typewriter, animações faciais e transições.
