@@ -1,4 +1,5 @@
 #include "hal/entity.h"
+#include "hal/dungeon.h"
 #include "hal/video.h"
 #include "hal/audio.h"
 #include "hal/font.h"
@@ -22,6 +23,13 @@ static const Texture* s_octo_tex = NULL;
 static float s_last_link_x = 0.0f;
 static float s_last_link_y = 0.0f;
 
+static inline bool entity_is_solid(const Tilemap* map, float wx, float wy) {
+    if (dungeon_is_active()) {
+        return dungeon_is_solid(wx, wy);
+    }
+    return map_is_solid(map, wx, wy);
+}
+
 void entity_set_texture(const Texture* tex) {
     s_octo_tex = tex;
 }
@@ -41,6 +49,23 @@ static void draw_filled_rect(int rx, int ry, int rw, int rh, u32 color) {
 void entity_manager_init(void) {
     memset(s_entities, 0, sizeof(s_entities));
     printf("[HAL Entity] Gerenciador de entidades inicializado (Pool: %d slots).\n", MAX_ENTITIES);
+}
+
+int entity_count_active_enemies(void) {
+    int count = 0;
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        if (!s_entities[i].is_active) continue;
+        if (s_entities[i].type == ENTITY_ENEMY_OCTOROK ||
+            s_entities[i].type == ENTITY_ENEMY_KEESE ||
+            s_entities[i].type == ENTITY_ENEMY_CHUCHU) {
+            count++;
+        }
+    }
+    return count;
+}
+
+void entity_clear_all(void) {
+    memset(s_entities, 0, sizeof(s_entities));
 }
 
 Entity* entity_spawn(EntityType type, float world_x, float world_y) {
@@ -156,7 +181,7 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
                 float next_x = e->x + e->knockbackVx;
                 float next_y = e->y + e->knockbackVy;
 
-                if (!map_is_solid(map, next_x + 8.0f, next_y + 8.0f)) {
+                if (!entity_is_solid(map, next_x + 8.0f, next_y + 8.0f)) {
                     e->x = next_x;
                     e->y = next_y;
                 }
@@ -194,7 +219,7 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
                 float check_y = e->y + move_y + 8.0f;
 
                 // Se bater em parede ou água, inverte a direção
-                if (map_is_solid(map, check_x, check_y)) {
+                if (entity_is_solid(map, check_x, check_y)) {
                     e->dir = (Direction)(rand() % 4);
                     e->aiTimer = 60;
                 } else {
@@ -300,7 +325,7 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
             e->y += e->vy;
 
             // Se colidir com terreno sólido, a pedra se estilhaça
-            if (map_is_solid(map, e->x + 3.0f, e->y + 3.0f)) {
+            if (entity_is_solid(map, e->x + 3.0f, e->y + 3.0f)) {
                 e->is_active = false;
                 continue;
             }

@@ -39,6 +39,10 @@ typedef enum {
     SOUND_KINSTONE_FUSION, // Fanfarra mágica de fusão bem-sucedida de Kinstones (arpejo ascendente de harpa)
     SOUND_KINSTONE_PROMPT, // Chime sonoro de balão de Kinstone sobre o NPC
     SOUND_CHEST_OPEN,      // Abertura do baú dourado destravado pela fusão
+    SOUND_SWITCH_CLICK,    // Clique mecânico de interruptor de piso afundando na pedra
+    SOUND_DOOR_UNLOCK,     // Cadeado de ferro se abrindo com giro de chave
+    SOUND_DOOR_SHUTTER,    // Grades de ferro da masmorra se erguendo ou baixando
+    SOUND_BLOCK_PUSH,      // Bloco pesado de pedra deslizando pelo piso
     SOUND_COUNT
 } SoundEffect;
 
@@ -47,6 +51,7 @@ typedef enum {
     BGM_NONE = 0,
     BGM_MINISH_WOODS,     // Trilha misteriosa e mágica de Minish Woods (Deepwood)
     BGM_HYRULE_OVERWORLD, // O lendário tema marcial de Hyrule Field
+    BGM_DEEPWOOD_SHRINE,  // A atmosfera enigmática e gótica de Deepwood Shrine
     BGM_COUNT
 } BgmTrack;
 
