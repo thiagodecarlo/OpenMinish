@@ -30,6 +30,14 @@ typedef enum {
     SOUND_COUNT
 } SoundEffect;
 
+// Identificadores de Trilhas Sonoras (BGM)
+typedef enum {
+    BGM_NONE = 0,
+    BGM_MINISH_WOODS,     // Trilha misteriosa e mágica de Minish Woods (Deepwood)
+    BGM_HYRULE_OVERWORLD, // O lendário tema marcial de Hyrule Field
+    BGM_COUNT
+} BgmTrack;
+
 /*
  * Inicializa o subsistema de áudio, configura o dispositivo de saída (44100Hz 16-bit Stereo)
  * e pré-gera as tabelas do sintetizador procedual.
@@ -42,6 +50,28 @@ bool hal_audio_init(void);
  * pitch_shift: multiplicador de tom (1.0f = padrão, 1.2f = agudo, 0.8f = grave).
  */
 void hal_audio_play_sound(SoundEffect effect, float volume, float pitch_shift);
+
+/*
+ * Inicia a reprodução contínua da trilha sonora (BGM) especificada.
+ * Sintetiza o arranjo orquestrado no estilo chiptune autêntico do GBA (4 canais:
+ * Lead, Arpeggios/Chords, Bass e Percussão) ou reproduz arquivo customizado se presente em assets/audio/.
+ */
+void hal_audio_play_bgm(BgmTrack track);
+
+/*
+ * Retorna qual trilha sonora está em execução no momento.
+ */
+BgmTrack hal_audio_get_current_bgm(void);
+
+/*
+ * Retorna o nome amigável da trilha sonora.
+ */
+const char* hal_audio_get_bgm_name(BgmTrack track);
+
+/*
+ * Alterna para a próxima trilha sonora disponível (Minish Woods -> Hyrule -> Mudo).
+ */
+void hal_audio_cycle_bgm(void);
 
 /*
  * Carrega e reproduz uma música ou amostra sonora a partir de um arquivo WAV.
