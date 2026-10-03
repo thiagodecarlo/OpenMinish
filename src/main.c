@@ -112,7 +112,7 @@ static void spawn_overworld_entities(Tilemap* world_map) {
         // Inimigos clássicos Octorok
         entity_spawn(ENTITY_ENEMY_OCTOROK, 400.0f, 620.0f);
         entity_spawn(ENTITY_ENEMY_OCTOROK, 500.0f, 620.0f);
-        entity_spawn(ENTITY_ENEMY_OCTOROK, 448.0f, 500.0f);
+        entity_spawn(ENTITY_ENEMY_OCTOROK, 380.0f, 480.0f);
         // Morcegos voadores Keese (com sombra e vôo senoidal)
         entity_spawn(ENTITY_ENEMY_KEESE, 380.0f, 540.0f);
         entity_spawn(ENTITY_ENEMY_KEESE, 520.0f, 550.0f);
@@ -173,7 +173,7 @@ static void transition_to_overworld(Player* link, Tilemap* world_map) {
     s_in_town = false;
     if (world_map && world_map->is_authentic) {
         link->x = 448.0f;
-        link->y = 624.0f;
+        link->y = 540.0f;
     } else {
         link->x = 296.0f;
         link->y = 240.0f;
@@ -505,9 +505,9 @@ int main(int argc, char* argv[]) {
     // Inicialização da entidade do Link
     Player link;
     if (world_map && world_map->is_authentic) {
-        // Clareira ensolarada do santuário em Minish Woods (tx = 28, ty = 39)
+        // Clareira ensolarada do santuário em Minish Woods (tx = 28, ty = 34)
         link.x = 448.0f;
-        link.y = 624.0f;
+        link.y = 540.0f;
     } else {
         link.x = 296.0f;
         link.y = 176.0f;
@@ -1073,7 +1073,7 @@ int main(int argc, char* argv[]) {
                 link.y = 392.0f;
             } else {
                 link.x = (world_map && world_map->is_authentic) ? 448.0f : 296.0f;
-                link.y = (world_map && world_map->is_authentic) ? 624.0f : 176.0f;
+                link.y = (world_map && world_map->is_authentic) ? 540.0f : 176.0f;
             }
             link.invuln_timer = 90;
             link.knock_x = 0.0f;
@@ -1206,6 +1206,9 @@ int main(int argc, char* argv[]) {
         u32 reg_color = (s_current_region == REGION_USA) ? 0x4287F5FF :
                         (s_current_region == REGION_EUR) ? 0xF5A742FF : 0xF54242FF;
         draw_rect(ctx->render_width - 32, 2, 28, 10, reg_color);
+        const char* reg_label = (s_current_region == REGION_USA) ? "USA" :
+                                (s_current_region == REGION_EUR) ? "EUR" : "JPN";
+        font_draw_text(ctx->render_width - 28, 3, reg_label, 0xFFFFFFFF, true);
 
         // 4. Balão de Diálogos e Retratos de Personagens (Ezlo / NPCs)
         dialogue_render();

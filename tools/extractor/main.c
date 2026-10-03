@@ -64,7 +64,7 @@ static bool inspect_gba_header(const u8* rom_data, size_t rom_size, GbaHeader* o
         out_hdr->languages = "Ingles (EN)";
         out_hdr->palette_offset   = 0x5A2E80;
         out_hdr->link_gfx_offset  = 0x13AE14;
-        out_hdr->link_pal_offset  = 0x5A3F60;
+        out_hdr->link_pal_offset  = 0x5A4980;
         out_hdr->octo_gfx_offset  = 0x667B00;
         out_hdr->octo_pal_offset  = 0x5A3160;
         out_hdr->map_data_base    = 0x324AE4;
@@ -76,7 +76,7 @@ static bool inspect_gba_header(const u8* rom_data, size_t rom_size, GbaHeader* o
         out_hdr->languages = "Ingles (EN), Frances (FR), Alemao (DE), Espanhol (ES), Italiano (IT)";
         out_hdr->palette_offset   = 0x5A23D0;
         out_hdr->link_gfx_offset  = 0x13A500;
-        out_hdr->link_pal_offset  = 0x5A34B0;
+        out_hdr->link_pal_offset  = 0x5A3ED0;
         out_hdr->octo_gfx_offset  = 0x6672D0;
         out_hdr->octo_pal_offset  = 0x5A26B0;
         out_hdr->map_data_base    = 0x323FEC;
@@ -88,7 +88,7 @@ static bool inspect_gba_header(const u8* rom_data, size_t rom_size, GbaHeader* o
         out_hdr->languages = "Japones (JA - Kanjis/Hiragana)";
         out_hdr->palette_offset   = 0x5A2B20;
         out_hdr->link_gfx_offset  = 0x13AA40;
-        out_hdr->link_pal_offset  = 0x5A3C00;
+        out_hdr->link_pal_offset  = 0x5A4620;
         out_hdr->octo_gfx_offset  = 0x6677A0;
         out_hdr->octo_pal_offset  = 0x5A2E00;
         out_hdr->map_data_base    = 0x324710;

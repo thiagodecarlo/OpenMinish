@@ -290,28 +290,40 @@ bool export_authentic_map_woods(const char* region_tag,
         return false;
     }
 
-    size_t vram_size = sz0 + sz1 + sz2;
-    u8* vram_tiles = (u8*)malloc(vram_size);
-    if (!vram_tiles) {
+    size_t bot_vram_sz = sz0 + sz1;
+    u8* bot_vram = (u8*)malloc(bot_vram_sz);
+    size_t top_vram_sz = sz0 + sz2;
+    u8* top_vram = (u8*)malloc(top_vram_sz);
+
+    if (!bot_vram || !top_vram) {
+        if (bot_vram) free(bot_vram);
+        if (top_vram) free(top_vram);
         free(t0); free(t1); free(t2);
         return false;
     }
-    memcpy(vram_tiles, t0, sz0);
-    memcpy(vram_tiles + sz0, t1, sz1);
-    memcpy(vram_tiles + sz0 + sz1, t2, sz2);
+    memcpy(bot_vram, t0, sz0);
+    memcpy(bot_vram + sz0, t1, sz1);
+
+    memcpy(top_vram, t0, sz0);
+    memcpy(top_vram + sz0, t2, sz2);
     free(t0); free(t1); free(t2);
 
-    // 3. Descomprime metatiles, room map e tipos de tile
-    size_t meta_sz = 0, room_sz = 0, types_sz = 0;
-    u8* meta_bot = lz77_decompress(&rom_buffer[map_data_base + 0x7704], rom_size - (map_data_base + 0x7704), &meta_sz);
-    u8* room_bot = lz77_decompress(&rom_buffer[map_data_base + 0xA700], rom_size - (map_data_base + 0xA700), &room_sz);
+    // 3. Descomprime metatiles (bot e top), room maps (bot e top) e tipos de tile
+    size_t meta_sz = 0, meta_top_sz = 0, room_sz = 0, room_top_sz = 0, types_sz = 0;
+    u8* meta_bot  = lz77_decompress(&rom_buffer[map_data_base + 0x7704], rom_size - (map_data_base + 0x7704), &meta_sz);
+    u8* meta_top  = lz77_decompress(&rom_buffer[map_data_base + 0x9280], rom_size - (map_data_base + 0x9280), &meta_top_sz);
+    u8* room_bot  = lz77_decompress(&rom_buffer[map_data_base + 0xA700], rom_size - (map_data_base + 0xA700), &room_sz);
+    u8* room_top  = lz77_decompress(&rom_buffer[map_data_base + 0xB7AC], rom_size - (map_data_base + 0xB7AC), &room_top_sz);
     u8* types_bot = lz77_decompress(&rom_buffer[map_data_base + 0xA00C], rom_size - (map_data_base + 0xA00C), &types_sz);
 
     if (!meta_bot || !room_bot || !types_bot) {
         printf("[ERRO EXTRACTOR] Falha ao descomprimir metatiles ou room map!\n");
-        free(vram_tiles);
+        free(bot_vram);
+        free(top_vram);
         if (meta_bot) free(meta_bot);
+        if (meta_top) free(meta_top);
         if (room_bot) free(room_bot);
+        if (room_top) free(room_top);
         if (types_bot) free(types_bot);
         return false;
     }
@@ -319,20 +331,26 @@ bool export_authentic_map_woods(const char* region_tag,
     // 4. Renderiza a imagem completa de Minish Woods (63x63 metatiles = 1008x1008 pixels)
     int map_w = 63 * 16;
     int map_h = 63 * 16;
-    u32* img_pixels = (u32*)calloc((size_t)map_w * map_h, sizeof(u32));
+    u32* img_pixels = (u32*)malloc((size_t)map_w * map_h * sizeof(u32));
     if (!img_pixels) {
-        free(vram_tiles); free(meta_bot); free(room_bot); free(types_bot);
+        free(bot_vram); free(top_vram); free(meta_bot); if (meta_top) free(meta_top);
+        free(room_bot); if (room_top) free(room_top); free(types_bot);
         return false;
     }
 
-    int tile_offsets[4][2] = { {0, 0}, {8, 0}, {0, 8}, {8, 8} };
-    const u16* bot_ids = (const u16*)room_bot;
+    // Inicializa todo o mapa com a cor canônica de grama de Minish Woods (RGB 65, 180, 139)
+    u32 c_grass_base = 0x41B48BFF;
+    for (int i = 0; i < map_w * map_h; i++) {
+        img_pixels[i] = c_grass_base;
+    }
 
+    int tile_offsets[4][2] = { {0, 0}, {8, 0}, {0, 8}, {8, 8} };
+
+    // 4.1 Renderiza Camada Inferior (Ground / Floor: room_bot)
+    const u16* bot_ids = (const u16*)room_bot;
     for (int my = 0; my < 63; my++) {
         for (int mx = 0; mx < 63; mx++) {
-            int idx = my * 63 + mx;
-            u16 b_id = bot_ids[idx];
-
+            u16 b_id = bot_ids[my * 63 + mx];
             if ((size_t)(b_id * 8 + 8) <= meta_sz) {
                 const u16* sub_tiles = (const u16*)&meta_bot[b_id * 8];
                 for (int s = 0; s < 4; s++) {
@@ -341,11 +359,17 @@ bool export_authentic_map_woods(const char* region_tag,
                     bool hflip = (sub >> 10) & 1;
                     bool vflip = (sub >> 11) & 1;
                     int pal_idx = (sub >> 12) & 0xF;
+
+                    // Filtra marcadores de evento e depuração do editor Capcom (ex: metatiles 47, 300, 301)
+                    if (pal_idx == 13 && (tile_num == 62 || tile_num == 535 || tile_num >= 960)) {
+                        continue;
+                    }
+
                     const u32* cur_pal = palettes[pal_idx];
 
                     size_t t_off = (size_t)tile_num * 32;
-                    if (t_off + 32 <= vram_size) {
-                        const u8* t_data = &vram_tiles[t_off];
+                    if (t_off + 32 <= bot_vram_sz) {
+                        const u8* t_data = &bot_vram[t_off];
                         int tox = tile_offsets[s][0];
                         int toy = tile_offsets[s][1];
 
@@ -355,8 +379,15 @@ bool export_authentic_map_woods(const char* region_tag,
                                 int sx = hflip ? (7 - x) : x;
                                 u8 bv = t_data[sy * 4 + sx / 2];
                                 u8 c = (sx % 2 == 0) ? (bv & 0x0F) : ((bv >> 4) & 0x0F);
+                                u32 col = cur_pal[c];
+
+                                // Ignora chave de transparência magenta (0xFF00FFFF e 0xF800F8FF)
+                                if ((col & 0xFFFFFF00) == 0xFF00FF00 || (col & 0xFFFFFF00) == 0xF800F800) continue;
+                                // Ignora índice 0 se for azul céu/backdrop
+                                if (c == 0 && (col & 0xFFFFFF00) == 0x7BACFF00) continue;
+
                                 int dest_pixel = ((my * 16 + toy + y) * map_w) + (mx * 16 + tox + x);
-                                img_pixels[dest_pixel] = cur_pal[c];
+                                img_pixels[dest_pixel] = col;
                             }
                         }
                     }
@@ -364,6 +395,61 @@ bool export_authentic_map_woods(const char* region_tag,
             }
         }
     }
+
+    // 4.2 Renderiza e Sobrepõe a Camada Superior (Tree Canopy / Foliage: room_top)
+    if (room_top && meta_top) {
+        const u16* top_ids = (const u16*)room_top;
+        for (int my = 0; my < 63; my++) {
+            for (int mx = 0; mx < 63; mx++) {
+                u16 t_id = top_ids[my * 63 + mx];
+                if (t_id == 0) continue; // Metatile vazio/transparente
+
+                if ((size_t)(t_id * 8 + 8) <= meta_top_sz) {
+                    const u16* sub_tiles = (const u16*)&meta_top[t_id * 8];
+                    for (int s = 0; s < 4; s++) {
+                        u16 sub = sub_tiles[s];
+                        int tile_num = sub & 0x3FF;
+                        bool hflip = (sub >> 10) & 1;
+                        bool vflip = (sub >> 11) & 1;
+                        int pal_idx = (sub >> 12) & 0xF;
+
+                        // Paleta 14 na camada superior mapeia para a paleta canônica verde 0
+                        if (pal_idx == 14) pal_idx = 0;
+
+                        const u32* cur_pal = palettes[pal_idx];
+
+                        size_t t_off = (size_t)tile_num * 32;
+                        if (t_off + 32 <= top_vram_sz) {
+                            const u8* t_data = &top_vram[t_off];
+                            int tox = tile_offsets[s][0];
+                            int toy = tile_offsets[s][1];
+
+                            for (int y = 0; y < 8; y++) {
+                                int sy = vflip ? (7 - y) : y;
+                                for (int x = 0; x < 8; x++) {
+                                    int sx = hflip ? (7 - x) : x;
+                                    u8 bv = t_data[sy * 4 + sx / 2];
+                                    u8 c = (sx % 2 == 0) ? (bv & 0x0F) : ((bv >> 4) & 0x0F);
+                                    
+                                    // Índice 0 na camada superior é sempre 100% transparente
+                                    if (c == 0) continue;
+
+                                    u32 col = cur_pal[c];
+                                    if ((col & 0xFFFFFF00) == 0xFF00FF00 || (col & 0xFFFFFF00) == 0xF800F800) continue;
+
+                                    int dest_pixel = ((my * 16 + toy + y) * map_w) + (mx * 16 + tox + x);
+                                    img_pixels[dest_pixel] = col;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (meta_top) free(meta_top);
+    if (room_top) free(room_top);
 
     char out_bmp[256];
     snprintf(out_bmp, sizeof(out_bmp), "assets/regions/%s/map_woods.bmp", region_tag);
@@ -406,7 +492,8 @@ bool export_authentic_map_woods(const char* region_tag,
         printf("  -> [%s] Matriz de colisao salva: %s (63x63 = 3969 tiles)\n", region_tag, out_col);
     }
 
-    free(vram_tiles);
+    free(bot_vram);
+    free(top_vram);
     free(meta_bot);
     free(room_bot);
     free(types_bot);
