@@ -186,6 +186,37 @@ O **OpenMinish** é um projeto de estudo universitário e pesquisa técnica foca
   - **Treinamento e Solenidade de Entrega**: Ao conversar via prompt `[A] Treinar`, Swiftblade ensina os fundamentos da arte da espada e concede o **Pergaminho do Tigre nº 1 (Tiger Scroll)**.
   - **Fanfarra Marcial & Banner Festivo**: Toque de fanfarra sagrada (`SOUND_TIGER_SCROLL`), banner comemorativo com moldura dourada e ícone do Pergaminho do Tigre adicionado ao HUD permanente ao lado do chaveiro da masmorra.
 
+### 🏰 Cidade de Hyrule (Hyrule Town Hub) & Economia do Reino
+- **Hub Urbano Completo ($36 \times 28$ tiles = $576 \times 448$ pixels)**:
+  - O coração comercial e social do reino de Hyrule, com navegação fluida, ruelas de paralelepípedos, muralhas de cantaria, praça central com chafariz e residências coloniais.
+  - **9 Novos Metatiles Procedurais em C11**:
+    - Calçamento de pedras irregulares de cantaria (`TILE_COBBLESTONE`).
+    - Paredes de edifícios e muralhas da cidade (`TILE_TOWN_WALL`).
+    - Telhados coloniais em terracota vermelha (`TILE_ROOF_RED`) e ardósia nobre azul (`TILE_ROOF_BLUE`).
+    - Portas de carvalho entalhadas (`TILE_TOWN_DOOR`) e janelas envidraçadas com reflexos dourados (`TILE_TOWN_WINDOW`).
+    - Borda ornamental de pedra da fonte (`TILE_FOUNTAIN_EDGE`).
+    - Barracas do mercado de rua com toldos listrados (`TILE_MARKET_STALL`).
+    - Caixotes de madeira e barris de provisões (`TILE_BARREL_CRATE`).
+- **Pontos de Interesse & Arquitetura**:
+  - **Praça da Fonte Central**: Chafariz monumental de cantaria com jatos d'água borbulhantes e ondas concêntricas animadas (`ENTITY_TOWN_FOUNTAIN`).
+  - **Loja e Bazar do Stockwell**: Estabelecimento comercial a nordeste com vitrines, balcão de atendimento e mostruário de artigos para aventureiros.
+  - **Portão Norte do Castelo de Hyrule**: Portão monumental guardado pela guarda real com acesso ao palácio.
+  - **Vila do Prefeito Hagen & Mercado de Rua**: Feira livre ao sudoeste com barracas coloridas e caixotes de maçãs e especiarias.
+- **NPCs Interativos, Diálogos & Retratos 32x32 em Pixel Art Puro**:
+  - **Stockwell (Lojista)**: Comerciante com óculos redondos de aros dourados, bigode respeitável, gravata borboleta vermelha e avental verde esmeralda. Sistema de compras com Rupees:
+    - *Poção Vermelha* (30 Rupees): Cura completa de corações.
+    - *Pedaço de Coração (Piece of Heart)* (80 Rupees): Aumento permanente de +1 Coração Máximo (até 6 corações) e cura plena.
+    - *Bolsa de Bombas / Provisões* (50 Rupees): Suprimentos essenciais.
+  - **Cidadã da Praça (Town Citizen)**: Jovem com touca rosa bordada (*bonnet*), cabelos castanho-dourados, vestido azul celeste e diálogo acolhedor sobre a vida na capital; parceira elegível para fusão de Kinstone.
+  - **Guarda Real (Town Guard)**: Cavaleiro em armadura de placas de aço brilhante, elmo com fenda luminosa e pluma carmesim majestosa vigiando as portas do palácio.
+- **Áudio Procedural & Trilha Sonora Festiva**:
+  - **`BGM_HYRULE_TOWN`**: Trilha festiva, alegre e acolhedora em Fá Maior / Dó Maior a 124 BPM (compasso 4/4) com flauta doce saltitante em onda pulso 50% com vibrato gracioso, alaúde/cravo estéreo ping-pong em semicolcheias, baixo acústico saltitante (*pizzicato*) e percussão de pandeiro com triângulo.
+  - **`SOUND_SHOP_BUY`**: Duplo chime cintilante de moedas de prata e ouro ao concluir compra no balcão do bazar.
+  - **`SOUND_TOWN_BELL`**: Sino ressonante de bronze da torre do relógio de Hyrule ecoando solenemente na cidade.
+- **Transição Natural e Viagem Rápida**:
+  - Caminhe pelo Portão Sul da cidade ($x \in [256, 304]$, $y \ge 412$, descendo) para retornar sem cortes ao Overworld de Minish Woods.
+  - Atalho de viagem rápida a qualquer momento via tecla `[H]`.
+
 ### 🎨 Sprites Autênticos Extraídos da ROM (Clean-Room AOT)
 - **Metatiles 1D do GBA**: Montagem canônica de metatiles 16x24 (3 fatias de 16x8) para o Link e metatiles 16x16 (4 tiles 8x8) para os Octoroks e projétil de pedra.
 - **Canal Alfa & Espelhamento Horizontal (`flip_h`)**: Decodificação de transparência e espelhamento horizontal em tempo real para as direções simétricas (esquerda/direita).
@@ -346,8 +377,9 @@ Copie sua ROM limpa (ex: `zelda_usa.gba`) e execute a ferramenta AOT de extraç�
 | **Ciclar Subarmas** | `Q` | Gatilho `L` / `LB` | Gatilho `L1` |
 | **Falar com Ezlo (Dicas)** | Tecla `E` | Botão `Select` / `Back` | Botão `Share` |
 | **Trilha Sonora (BGM)** | `T` | Gatilho `R` / `RB` | Gatilho `R1` |
+| **Cidade de Hyrule (Hub)** | `H` | — | — |
+| **Masmorra (Deepwood)** | `D` | — | — |
 | **Segredo Zelda** | `M` | — | — |
-| **Alarme de Vida** | `H` | — | — |
 | **Alternar 16:9 Widescreen** | Tecla `W` | — | — |
 | **Alternar Região** | `1` (USA) \| `2` (EUR) \| `3` (JPN) | — | — |
 | **Sair do Jogo** | `ESC` | — | — |

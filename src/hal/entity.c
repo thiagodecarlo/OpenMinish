@@ -226,6 +226,49 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
                     break;
 
+                case ENTITY_NPC_SHOPKEEPER:
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1;
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
+                    break;
+
+                case ENTITY_NPC_TOWN_CITIZEN:
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1;
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
+                    e->hasKinstone   = true;
+                    e->kinstoneType  = 1; // KINSTONE_BLUE (Fragmento azul de Hyrule Town)
+                    e->kinstoneFused = false;
+                    e->bubbleBob     = 0.0f;
+                    break;
+
+                case ENTITY_NPC_TOWN_GUARD:
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1;
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
+                    break;
+
+                case ENTITY_TOWN_FOUNTAIN:
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->action        = 1;
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -16.0f, -16.0f, 32.0f, 32.0f };
+                    break;
+
                 default:
                     break;
             }
@@ -851,6 +894,63 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
             } else {
                 e->dir = DIR_DOWN;
             }
+        }
+
+        // 7. NPC: COMERCIANTE STOCKWELL
+        else if (e->type == ENTITY_NPC_SHOPKEEPER) {
+            e->animTimer++;
+            float dx = link_x - e->x;
+            float dy = link_y - e->y;
+            if (dx * dx + dy * dy <= 54.0f * 54.0f) {
+                if (fabsf(dx) > fabsf(dy)) {
+                    e->dir = (dx > 0.0f) ? DIR_RIGHT : DIR_LEFT;
+                } else {
+                    e->dir = (dy > 0.0f) ? DIR_DOWN : DIR_UP;
+                }
+            } else {
+                e->dir = DIR_DOWN;
+            }
+        }
+
+        // 8. NPC: CIDADÃ DE HYRULE (COM FUSÃO DE KINSTONE)
+        else if (e->type == ENTITY_NPC_TOWN_CITIZEN) {
+            e->animTimer++;
+            e->bubbleBob += 0.08f;
+            float dx = link_x - e->x;
+            float dy = link_y - e->y;
+            if (dx * dx + dy * dy <= 42.0f * 42.0f) {
+                if (fabsf(dx) > fabsf(dy)) {
+                    e->dir = (dx > 0.0f) ? DIR_RIGHT : DIR_LEFT;
+                } else {
+                    e->dir = (dy > 0.0f) ? DIR_DOWN : DIR_UP;
+                }
+            } else {
+                if (e->animTimer % 180 == 0) {
+                    Direction dirs[4] = { DIR_DOWN, DIR_RIGHT, DIR_DOWN, DIR_LEFT };
+                    e->dir = dirs[(e->animTimer / 180) % 4];
+                }
+            }
+        }
+
+        // 9. NPC: GUARDA REAL DO CASTELO
+        else if (e->type == ENTITY_NPC_TOWN_GUARD) {
+            e->animTimer++;
+            float dx = link_x - e->x;
+            float dy = link_y - e->y;
+            if (dx * dx + dy * dy <= 36.0f * 36.0f) {
+                if (fabsf(dx) > fabsf(dy)) {
+                    e->dir = (dx > 0.0f) ? DIR_RIGHT : DIR_LEFT;
+                } else {
+                    e->dir = (dy > 0.0f) ? DIR_DOWN : DIR_UP;
+                }
+            } else {
+                e->dir = DIR_DOWN;
+            }
+        }
+
+        // 10. ELEMENTO DINÂMICO: CHAFARIZ CENTRAL
+        else if (e->type == ENTITY_TOWN_FOUNTAIN) {
+            e->animTimer++;
         }
     }
 }
@@ -1965,6 +2065,217 @@ void entity_manager_render(const Camera* cam) {
                 font_draw_text(prompt_x + 2, prompt_y, "[A] Treinar", 0xFCA5A5FF, true);
             }
         }
+
+        // 9. NPC: COMERCIANTE STOCKWELL (LOJA DE HYRULE)
+        else if (e->type == ENTITY_NPC_SHOPKEEPER) {
+            int breathe = ((e->animTimer / 16) % 2 == 1) ? 1 : 0;
+            int sy_b = sy - breathe;
+
+            u32 c_cap       = 0x4A148CFF; // Boina roxa do comerciante
+            u32 c_cap_trim  = 0xF1C40FFF; // Fita dourada na boina
+            u32 c_skin      = 0xFDE8CDFF; // Pele clara
+            u32 c_hair      = 0x5D4037FF; // Cabelo castanho
+            u32 c_glasses   = 0xF59E0BFF; // Óculos redondos dourados
+            u32 c_lens      = 0xE0F2FEFF; // Vidro dos óculos
+            u32 c_apron     = 0x059669FF; // Avental verde esmeralda
+            u32 c_shirt     = 0xFFFFFFFF; // Camisa branca
+            u32 c_tie       = 0xDC2626FF; // Gravata borboleta vermelha
+
+            draw_filled_rect(sx + 3, sy + 13, 10, 3, 0x05100766);
+
+            // Boina mercantil
+            draw_filled_rect(sx + 4, sy_b + 0, 8, 3, c_cap);
+            draw_filled_rect(sx + 3, sy_b + 2, 10, 2, c_cap);
+            draw_filled_rect(sx + 4, sy_b + 3, 8, 1, c_cap_trim);
+
+            // Rosto
+            draw_filled_rect(sx + 4, sy_b + 4, 8, 5, c_skin);
+            put_pixel_safe(sx + 3, sy_b + 4, c_hair);
+            put_pixel_safe(sx + 12, sy_b + 4, c_hair);
+
+            // Óculos redondos de Stockwell
+            if (e->dir != DIR_UP) {
+                put_pixel_safe(sx + 5, sy_b + 5, c_glasses);
+                put_pixel_safe(sx + 6, sy_b + 5, c_lens);
+                put_pixel_safe(sx + 7, sy_b + 5, c_glasses);
+                put_pixel_safe(sx + 9, sy_b + 5, c_glasses);
+                put_pixel_safe(sx + 10, sy_b + 5, c_lens);
+                put_pixel_safe(sx + 11, sy_b + 5, c_glasses);
+                put_pixel_safe(sx + 8, sy_b + 5, c_glasses);
+                put_pixel_safe(sx + 7, sy_b + 7, c_hair);
+                put_pixel_safe(sx + 8, sy_b + 7, c_hair);
+            }
+
+            // Camisa branca e gravata
+            draw_filled_rect(sx + 5, sy_b + 9, 6, 2, c_shirt);
+            put_pixel_safe(sx + 7, sy_b + 9, c_tie);
+            put_pixel_safe(sx + 8, sy_b + 9, c_tie);
+
+            // Avental verde
+            draw_filled_rect(sx + 4, sy_b + 11, 8, 4, c_apron);
+
+            // Prompt de compras da loja quando Link se aproxima
+            float dx = s_last_link_x - e->x;
+            float dy = s_last_link_y - e->y;
+            if (dx * dx + dy * dy <= 38.0f * 38.0f) {
+                int bounce = ((e->animTimer / 10) % 2 == 1) ? 1 : 0;
+                int prompt_x = sx - 32;
+                int prompt_y = sy_b - 20 + bounce;
+
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 80, 14, 0x062816F0);
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 80, 1, 0xD4AF37FF);
+                draw_filled_rect(prompt_x - 1, prompt_y + 12, 80, 1, 0xD4AF37FF);
+                font_draw_text(prompt_x + 2, prompt_y + 2, "[A] Comprar (Loja)", 0xFDE047FF, true);
+            }
+        }
+
+        // 10. NPC: CIDADÃ DE HYRULE (COM FUSÃO DE KINSTONE)
+        else if (e->type == ENTITY_NPC_TOWN_CITIZEN) {
+            int breathe = ((e->animTimer / 18) % 2 == 1) ? 1 : 0;
+            int cy = sy - breathe;
+
+            u32 c_bonnet   = 0xF472B6FF; // Touca rosa
+            u32 c_bonnet_lt= 0xFBCFE8FF;
+            u32 c_skin     = 0xFDE8CDFF; // Pele clara
+            u32 c_hair     = 0xD97706FF; // Cabelos ruivos
+            u32 c_blush    = 0xFCA5A5FF; // Bochechas
+            u32 c_dress    = 0x38BDF8FF; // Vestido azul
+            u32 c_apron    = 0xFFFFFFFF; // Avental branco
+
+            draw_filled_rect(sx + 3, sy + 13, 10, 3, 0x05100766);
+
+            // Touca / Chapéu com laço
+            draw_filled_rect(sx + 4, cy + 1, 8, 3, c_bonnet);
+            draw_filled_rect(sx + 3, cy + 3, 10, 2, c_bonnet_lt);
+
+            // Cabelos
+            draw_filled_rect(sx + 4, cy + 4, 8, 2, c_hair);
+            put_pixel_safe(sx + 3, cy + 5, c_hair);
+            put_pixel_safe(sx + 12, cy + 5, c_hair);
+
+            // Rosto e olhos
+            draw_filled_rect(sx + 4, cy + 6, 8, 4, c_skin);
+            if (e->dir != DIR_UP) {
+                put_pixel_safe(sx + 5, cy + 7, 0x111111FF);
+                put_pixel_safe(sx + 10, cy + 7, 0x111111FF);
+                put_pixel_safe(sx + 4, cy + 8, c_blush);
+                put_pixel_safe(sx + 11, cy + 8, c_blush);
+                put_pixel_safe(sx + 7, cy + 8, 0xE11D48FF);
+                put_pixel_safe(sx + 8, cy + 8, 0xE11D48FF);
+            }
+
+            // Vestido azul e avental branco
+            draw_filled_rect(sx + 4, cy + 10, 8, 5, c_dress);
+            draw_filled_rect(sx + 6, cy + 10, 4, 4, c_apron);
+
+            // Balão flutuante de Kinstone se pendente
+            if (e->hasKinstone && !e->kinstoneFused) {
+                int bubble_y = cy - 16 + (int)(sinf(e->bubbleBob) * 2.0f);
+                int bubble_x = sx + 8;
+
+                draw_filled_rect(bubble_x - 7, bubble_y - 6, 14, 12, 0xFFFFFFFF);
+                draw_filled_rect(bubble_x - 8, bubble_y - 4, 16, 8, 0xFFFFFFFF);
+                draw_filled_rect(bubble_x - 6, bubble_y - 7, 12, 14, 0xFFFFFFFF);
+
+                u32 c_kinstone = 0x3B82F6FF;
+                u32 c_kgold = 0xD4AF37FF;
+
+                for (int ky = -3; ky <= 3; ky++) {
+                    for (int kx = -3; kx <= 3; kx++) {
+                        if (kx * kx + ky * ky <= 9) {
+                            u32 col = (kx == 3 || kx == -3 || ky == 3 || ky == -3) ? c_kgold : c_kinstone;
+                            put_pixel_safe(bubble_x + kx, bubble_y + ky, col);
+                        }
+                    }
+                }
+                put_pixel_safe(bubble_x - 1, bubble_y - 1, 0xFFFFFFFF);
+            }
+
+            // Prompt se próximo
+            float dx = s_last_link_x - e->x;
+            float dy = s_last_link_y - e->y;
+            if (dx * dx + dy * dy <= 28.0f * 28.0f) {
+                int bounce = ((e->animTimer / 10) % 2 == 1) ? 1 : 0;
+                int prompt_x = sx - 16;
+                int prompt_y = cy - 15 + bounce;
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 48, 10, 0x1A1424F0);
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 48, 1, 0xF472B6FF);
+                font_draw_text(prompt_x + 2, prompt_y, "[A] Conversar", 0xFBCFE8FF, true);
+            }
+        }
+
+        // 11. NPC: GUARDA REAL DO CASTELO DE HYRULE
+        else if (e->type == ENTITY_NPC_TOWN_GUARD) {
+            u32 c_steel     = 0xD1D5DBFF; // Aço brilhante
+            u32 c_steel_dk  = 0x6B7280FF; // Sombra do metal
+            u32 c_plume     = 0xDC2626FF; // Pluma vermelha no elmo
+            u32 c_tunic     = 0x1E3A8AFF; // Azul real
+            u32 c_visor     = 0x111827FF; // Viseira
+            u32 c_spear     = 0x78350FFF; // Lança
+            u32 c_blade     = 0xF3F4F6FF; // Ponta de aço
+
+            draw_filled_rect(sx + 3, sy + 14, 10, 3, 0x05100766);
+
+            // Pluma vermelha
+            draw_filled_rect(sx + 7, sy - 2, 3, 4, c_plume);
+            put_pixel_safe(sx + 6, sy - 1, c_plume);
+
+            // Elmo de ferro
+            draw_filled_rect(sx + 4, sy + 2, 8, 6, c_steel);
+            draw_filled_rect(sx + 5, sy + 1, 6, 2, c_steel);
+            put_pixel_safe(sx + 4, sy + 7, c_steel_dk);
+            put_pixel_safe(sx + 11, sy + 7, c_steel_dk);
+
+            if (e->dir != DIR_UP) {
+                draw_filled_rect(sx + 5, sy + 4, 6, 2, c_visor);
+                put_pixel_safe(sx + 7, sy + 4, 0x60A5FAFF);
+            }
+
+            // Armadura e manto
+            draw_filled_rect(sx + 4, sy + 8, 8, 5, c_steel);
+            draw_filled_rect(sx + 5, sy + 9, 6, 3, c_steel_dk);
+            draw_filled_rect(sx + 4, sy + 13, 8, 2, c_tunic);
+
+            // Alabarda em prontidão
+            draw_filled_rect(sx + 13, sy - 4, 1, 19, c_spear);
+            draw_filled_rect(sx + 12, sy - 7, 3, 4, c_blade);
+            put_pixel_safe(sx + 13, sy - 8, 0xFFFFFFFF);
+
+            // Prompt se próximo
+            float dx = s_last_link_x - e->x;
+            float dy = s_last_link_y - e->y;
+            if (dx * dx + dy * dy <= 28.0f * 28.0f) {
+                int bounce = ((e->animTimer / 10) % 2 == 1) ? 1 : 0;
+                int prompt_x = sx - 16;
+                int prompt_y = sy - 16 + bounce;
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 48, 10, 0x0F172AF0);
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 48, 1, 0x60A5FAFF);
+                font_draw_text(prompt_x + 2, prompt_y, "[A] Guarda", 0x93C5FDFF, true);
+            }
+        }
+
+        // 12. ELEMENTO DINÂMICO: JATOS D'ÁGUA DO CHAFARIZ CENTRAL
+        else if (e->type == ENTITY_TOWN_FOUNTAIN) {
+            u32 c_spray1 = 0xBAE6FDFF;
+            u32 c_spray2 = 0x38BDF8FF;
+            u32 c_white  = 0xFFFFFFFF;
+
+            int f_cx = sx + 8;
+            int f_cy = sy + 8;
+
+            for (int p = 0; p < 8; p++) {
+                float phase = (float)(e->animTimer * 4 + p * 45) * (PI_F / 180.0f);
+                int ox = (int)(cosf(phase) * (4.0f + 2.0f * sinf((float)e->animTimer * 0.1f)));
+                int oy = (int)(sinf(phase * 1.5f) * 5.0f);
+
+                put_pixel_safe(f_cx + ox, f_cy + oy - 4, (p % 2 == 0) ? c_spray1 : c_spray2);
+                if (p % 3 == 0) {
+                    put_pixel_safe(f_cx + ox, f_cy + oy - 5, c_white);
+                }
+            }
+            draw_filled_rect(f_cx - 1, f_cy - 7, 3, 6, c_spray1);
+            put_pixel_safe(f_cx, f_cy - 8, c_white);
+        }
     }
 }
 
@@ -2008,13 +2319,118 @@ Entity* entity_find_nearby_swiftblade(float world_x, float world_y, float max_di
     return best;
 }
 
+Entity* entity_find_nearby_shopkeeper(float world_x, float world_y, float max_dist) {
+    float best_dist_sq = max_dist * max_dist;
+    Entity* best = NULL;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active || e->type != ENTITY_NPC_SHOPKEEPER) continue;
+
+        float dx = e->x - world_x;
+        float dy = e->y - world_y;
+        float dist_sq = dx * dx + dy * dy;
+
+        if (dist_sq <= best_dist_sq) {
+            best_dist_sq = dist_sq;
+            best = e;
+        }
+    }
+    return best;
+}
+
+Entity* entity_find_nearby_town_citizen(float world_x, float world_y, float max_dist) {
+    float best_dist_sq = max_dist * max_dist;
+    Entity* best = NULL;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active || e->type != ENTITY_NPC_TOWN_CITIZEN) continue;
+
+        float dx = e->x - world_x;
+        float dy = e->y - world_y;
+        float dist_sq = dx * dx + dy * dy;
+
+        if (dist_sq <= best_dist_sq) {
+            best_dist_sq = dist_sq;
+            best = e;
+        }
+    }
+    return best;
+}
+
+Entity* entity_find_nearby_town_guard(float world_x, float world_y, float max_dist) {
+    float best_dist_sq = max_dist * max_dist;
+    Entity* best = NULL;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active || e->type != ENTITY_NPC_TOWN_GUARD) continue;
+
+        float dx = e->x - world_x;
+        float dy = e->y - world_y;
+        float dist_sq = dx * dx + dy * dy;
+
+        if (dist_sq <= best_dist_sq) {
+            best_dist_sq = dist_sq;
+            best = e;
+        }
+    }
+    return best;
+}
+
+bool entity_buy_shop_item(int item_idx, int* link_rupees, int* link_hearts, int* link_max_hearts) {
+    if (!link_rupees) return false;
+
+    if (item_idx == 0) {
+        // Poção Vermelha (30 Rupees): Restaura todos os corações de vida
+        int cost = 30;
+        if (*link_rupees >= cost) {
+            *link_rupees -= cost;
+            if (link_hearts && link_max_hearts) {
+                *link_hearts = *link_max_hearts;
+            }
+            hal_audio_play_sound(SOUND_SHOP_BUY, 1.0f, 1.0f);
+            printf("[LOJA STOCKWELL] Comprou Pocao Vermelha por %d Rupees! Vida restaurada com exito!\n", cost);
+            return true;
+        }
+    } else if (item_idx == 1) {
+        // Pedaço de Coração (80 Rupees): Concede +1 Coração Máximo permanente e cura total
+        int cost = 80;
+        if (*link_rupees >= cost) {
+            *link_rupees -= cost;
+            if (link_max_hearts && link_hearts) {
+                (*link_max_hearts)++;
+                *link_hearts = *link_max_hearts;
+            }
+            hal_audio_play_sound(SOUND_HEART_CONTAINER, 1.0f, 1.0f);
+            printf("[LOJA STOCKWELL] Comprou Recipiente de Coracao por %d Rupees! Vida Maxima aumentada para %d!\n", cost, link_max_hearts ? *link_max_hearts : 0);
+            return true;
+        }
+    } else if (item_idx == 2) {
+        // Bolsa de Bombas / Provisões (50 Rupees)
+        int cost = 50;
+        if (*link_rupees >= cost) {
+            *link_rupees -= cost;
+            hal_audio_play_sound(SOUND_SHOP_BUY, 1.0f, 1.0f);
+            printf("[LOJA STOCKWELL] Comprou Bolsa de Bombas / Provisoes por %d Rupees!\n", cost);
+            return true;
+        }
+    }
+
+    hal_audio_play_sound(SOUND_SWORD_HIT, 0.7f, 0.8f);
+    printf("[LOJA STOCKWELL] Rupees insuficientes para a compra (Item %d)!\n", item_idx);
+    return false;
+}
+
 Entity* entity_find_kinstone_npc(float world_x, float world_y, float max_dist) {
     float best_dist_sq = max_dist * max_dist;
     Entity* best = NULL;
 
     for (int i = 0; i < MAX_ENTITIES; i++) {
         Entity* e = &s_entities[i];
-        if (!e->is_active || e->type != ENTITY_NPC_FOREST_MINISH) continue;
+        if (!e->is_active) continue;
+        if (e->type != ENTITY_NPC_FOREST_MINISH && e->type != ENTITY_NPC_TOWN_CITIZEN) continue;
         if (!e->hasKinstone || e->kinstoneFused) continue;
 
         float dx = e->x - world_x;

@@ -66,6 +66,30 @@ static FILE* open_binary_asset(const char* rel_path) {
 #define C_FLOWER_RED    0xE62A2AFF // Pétala vermelha
 #define C_FLOWER_YEL    0xFADC32FF // Pétala amarela
 
+// Paleta de Cores da Cidade de Hyrule (Hyrule Town Hub)
+#define C_COBBLE_LIGHT  0xD4C5A9FF // Calçamento claro de pedras polidas
+#define C_COBBLE_DARK   0x8A7B66FF // Argamassa e sombra do rejunte
+#define C_COBBLE_MID    0xB4A58DFF // Tom médio da pedra de calçamento
+#define C_TOWN_WALL     0xF3ECE0FF // Alvenaria e reboco claro
+#define C_TOWN_BEAM     0x6E401CFF // Vigas de madeira enxaimel
+#define C_ROOF_RED      0xC0392BFF // Telhas vermelhas de terracota
+#define C_ROOF_RED_DK   0x8A1A12FF // Sombra da telha vermelha
+#define C_ROOF_RED_LT   0xE74C3CFF // Brilho da telha vermelha
+#define C_ROOF_BLUE     0x2471A3FF // Telhas azuis da loja do Stockwell
+#define C_ROOF_BLUE_DK  0x1A5276FF // Sombra da telha azul
+#define C_ROOF_BLUE_LT  0x5499C7FF // Brilho da telha azul
+#define C_DOOR_WOOD     0x87491CFF // Madeira da porta
+#define C_DOOR_DK       0x4A240BFF // Arco da porta
+#define C_DOOR_GOLD     0xF1C40FFF // Maçaneta dourada
+#define C_WINDOW_GLASS  0x7FB3D5FF // Vidro reflexivo da janela
+#define C_WINDOW_FRAME  0x4A240BFF // Moldura da janela
+#define C_FOUNTAIN_MARB 0xEAEDEDFF // Mármore polido da fonte
+#define C_FOUNTAIN_DK   0xA6ACAFFF // Chanfro e sombra do mármore
+#define C_STALL_RED     0xCB4335FF // Toldo listrado vermelho
+#define C_STALL_WHITE   0xFDFEFEFF // Toldo listrado branco
+#define C_BARREL_WOOD   0x935116FF // Madeira do barril
+#define C_BARREL_BAND   0x424949FF // Cinta de ferro do barril
+
 static int s_water_anim_frame = 0;
 static int s_water_timer = 0;
 
@@ -230,6 +254,148 @@ static void render_metatile(int sx, int sy, TileType type) {
             }
             break;
 
+        case TILE_COBBLESTONE:
+            for (int y = 0; y < TILE_SIZE; y++) {
+                for (int x = 0; x < TILE_SIZE; x++) {
+                    u32 c = C_COBBLE_MID;
+                    // Argamassa nos cruzamentos e divisórias
+                    if (y == 0 || y == 8 || ((y < 8) && (x == 0 || x == 8)) || ((y >= 8) && (x == 4 || x == 12))) {
+                        c = C_COBBLE_DARK;
+                    } else if (y == 1 || y == 9 || ((y < 8) && (x == 1 || x == 9)) || ((y >= 8) && (x == 5 || x == 13))) {
+                        c = C_COBBLE_LIGHT;
+                    } else if ((x + y * 3) % 11 == 0) {
+                        c = C_COBBLE_LIGHT;
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_TOWN_WALL:
+            for (int y = 0; y < TILE_SIZE; y++) {
+                for (int x = 0; x < TILE_SIZE; x++) {
+                    u32 c = C_TOWN_WALL;
+                    // Vigas de madeira enxaimel (bordas e trave central)
+                    if (x == 0 || x == 15 || y == 0 || y == 15) {
+                        c = C_TOWN_BEAM;
+                    } else if (x == 7 || x == 8) {
+                        c = C_TOWN_BEAM;
+                    } else if ((x == y || x == (15 - y)) && (y >= 4 && y <= 11)) {
+                        c = C_TOWN_BEAM;
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_ROOF_RED:
+            for (int y = 0; y < TILE_SIZE; y++) {
+                for (int x = 0; x < TILE_SIZE; x++) {
+                    u32 c = C_ROOF_RED;
+                    int row = y % 4;
+                    if (row == 0) c = C_ROOF_RED_DK;
+                    else if (row == 1) c = C_ROOF_RED_LT;
+                    int stagger = ((y / 4) % 2) * 4;
+                    if ((x + stagger) % 8 == 0) c = C_ROOF_RED_DK;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_ROOF_BLUE:
+            for (int y = 0; y < TILE_SIZE; y++) {
+                for (int x = 0; x < TILE_SIZE; x++) {
+                    u32 c = C_ROOF_BLUE;
+                    int row = y % 4;
+                    if (row == 0) c = C_ROOF_BLUE_DK;
+                    else if (row == 1) c = C_ROOF_BLUE_LT;
+                    int stagger = ((y / 4) % 2) * 4;
+                    if ((x + stagger) % 8 == 0) c = C_ROOF_BLUE_DK;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_TOWN_DOOR:
+            render_metatile(sx, sy, TILE_TOWN_WALL);
+            // Arco e madeira da porta com maçaneta dourada
+            for (int y = 2; y <= 15; y++) {
+                for (int x = 3; x <= 12; x++) {
+                    if (y == 2 && (x == 3 || x == 12)) continue;
+                    u32 c = C_DOOR_WOOD;
+                    if (x == 3 || x == 12 || y == 2) c = C_DOOR_DK;
+                    else if (x == 7 || x == 8) c = C_DOOR_DK;
+                    if (y >= 8 && y <= 9 && x == 10) c = C_DOOR_GOLD;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_TOWN_WINDOW:
+            render_metatile(sx, sy, TILE_TOWN_WALL);
+            for (int y = 3; y <= 12; y++) {
+                for (int x = 3; x <= 12; x++) {
+                    u32 c = C_WINDOW_GLASS;
+                    if (x == 3 || x == 12 || y == 3 || y == 12 || x == 7 || x == 8 || y == 7 || y == 8) {
+                        c = C_WINDOW_FRAME;
+                    } else if ((x == 5 && y == 5) || (x == 10 && y == 5)) {
+                        c = 0xFFFFFFFF;
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_FOUNTAIN_EDGE:
+            render_metatile(sx, sy, TILE_COBBLESTONE);
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    if (x >= 2 && x <= 13 && y >= 2 && y <= 13) {
+                        u32 c = C_FOUNTAIN_MARB;
+                        if (x == 2 || y == 2) c = 0xFFFFFFFF;
+                        else if (x == 13 || y == 13) c = C_FOUNTAIN_DK;
+                        else if (x >= 5 && x <= 10 && y >= 5 && y <= 10) c = C_WATER_SHALLOW;
+                        draw_tile_pixel(sx + x, sy + y, c);
+                    }
+                }
+            }
+            break;
+
+        case TILE_MARKET_STALL:
+            render_metatile(sx, sy, TILE_COBBLESTONE);
+            // Toldo listrado vermelho e branco no topo
+            for (int y = 0; y <= 7; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = ((x / 3) % 2 == 0) ? C_STALL_RED : C_STALL_WHITE;
+                    if (y == 7 && (x % 4 == 0 || x % 4 == 3)) c = C_COBBLE_DARK;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            // Balcão de madeira do comerciante
+            for (int y = 8; y <= 14; y++) {
+                for (int x = 1; x <= 14; x++) {
+                    u32 c = (y == 8) ? C_CHEST_GOLD : C_CHEST_WOOD;
+                    if (x == 1 || x == 14 || y == 14) c = C_WOOD_DARK;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_BARREL_CRATE:
+            render_metatile(sx, sy, TILE_COBBLESTONE);
+            for (int y = 2; y <= 14; y++) {
+                int w = (y == 2 || y == 14) ? 8 : (y <= 4 || y >= 12) ? 10 : 12;
+                int start = 8 - w / 2;
+                for (int x = start; x < start + w; x++) {
+                    u32 c = C_BARREL_WOOD;
+                    if (y == 4 || y == 12 || y == 2 || y == 14) c = C_BARREL_BAND;
+                    else if (x == start || x == start + w - 1) c = C_WOOD_DARK;
+                    else if (x == start + 2) c = C_CHEST_GOLD;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
         default:
             render_metatile(sx, sy, TILE_GRASS);
             break;
@@ -331,6 +497,230 @@ Tilemap* map_create_demo_world(void) {
     m->overlay_layer[18 * w + 14] = TILE_BUSH;
     m->collision_map[18 * w + 14] = 1;
 
+    return m;
+}
+
+// ----------------------------------------------------------------------------
+// CONSTRUÇÃO DA CIDADE DE HYRULE (HYRULE TOWN HUB - 576x448 PIXELS)
+// ----------------------------------------------------------------------------
+Tilemap* map_create_hyrule_town(void) {
+    int w = 36;
+    int h = 28;
+    Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
+    if (!m) return NULL;
+
+    m->width  = w;
+    m->height = h;
+    m->is_authentic = false;
+    m->authentic_tex = NULL;
+    m->ground_layer  = (u8*)malloc(w * h * sizeof(u8));
+    m->overlay_layer = (u8*)malloc(w * h * sizeof(u8));
+    m->collision_map = (u8*)malloc(w * h * sizeof(u8));
+
+    // 1. Pavimenta toda a praça da cidade com calçamento de pedras (Cobblestone)
+    for (int i = 0; i < w * h; i++) {
+        m->ground_layer[i]  = TILE_COBBLESTONE;
+        m->overlay_layer[i] = 0xFF; // Livre
+        m->collision_map[i] = 0;    // Andável
+    }
+
+    // 2. Muralhas de Defesa Externas e Portões do Reino
+    // Muralha Norte (Castelo de Hyrule)
+    for (int y = 0; y <= 1; y++) {
+        for (int x = 0; x < w; x++) {
+            // Portão do Castelo de Hyrule aberto no centro (x=16..19)
+            if (x >= 16 && x <= 19) {
+                m->ground_layer[y * w + x] = TILE_COBBLESTONE;
+            } else {
+                m->overlay_layer[y * w + x] = TILE_STONE_WALL;
+                m->collision_map[y * w + x] = 1;
+            }
+        }
+    }
+
+    // Muralhas Laterais (Oeste e Leste)
+    for (int y = 0; y < h; y++) {
+        m->overlay_layer[y * w + 0] = TILE_STONE_WALL;
+        m->collision_map[y * w + 0] = 1;
+        m->overlay_layer[y * w + (w - 1)] = TILE_STONE_WALL;
+        m->collision_map[y * w + (w - 1)] = 1;
+    }
+
+    // Muralha Sul (Portão de saída para Hyrule Field / Minish Woods)
+    for (int y = h - 2; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+            if (x >= 16 && x <= 19) {
+                m->ground_layer[y * w + x] = TILE_DIRT_PATH;
+            } else {
+                m->overlay_layer[y * w + x] = TILE_STONE_WALL;
+                m->collision_map[y * w + x] = 1;
+            }
+        }
+    }
+
+    // 3. Chafariz Central de Hyrule (Fountain Plaza: x=16..19, y=12..15)
+    for (int y = 12; y <= 15; y++) {
+        for (int x = 16; x <= 19; x++) {
+            if (x == 16 || x == 19 || y == 12 || y == 15) {
+                m->overlay_layer[y * w + x] = TILE_FOUNTAIN_EDGE;
+                m->collision_map[y * w + x] = 1; // Borda de mármore sólida
+            } else {
+                m->ground_layer[y * w + x] = TILE_WATER;
+                m->collision_map[y * w + x] = 1; // Água profunda da fonte
+            }
+        }
+    }
+
+    // 4. Loja e Bazar do Stockwell (Distrito Comercial no Nordeste: x=23..32, y=3..7)
+    // Telhado de telhas azuis da loja
+    for (int y = 3; y <= 4; y++) {
+        for (int x = 24; x <= 32; x++) {
+            m->overlay_layer[y * w + x] = TILE_ROOF_BLUE;
+            m->collision_map[y * w + x] = 1;
+        }
+    }
+    // Fachada da loja com janelas e porta
+    for (int x = 24; x <= 32; x++) {
+        m->overlay_layer[5 * w + x] = TILE_TOWN_WALL;
+        m->collision_map[5 * w + x] = 1;
+    }
+    m->overlay_layer[5 * w + 25] = TILE_TOWN_WINDOW;
+    m->overlay_layer[5 * w + 28] = TILE_TOWN_DOOR;
+    m->overlay_layer[5 * w + 31] = TILE_TOWN_WINDOW;
+
+    // Balcões do Mercado e Toldo do Stockwell (y=6)
+    for (int x = 24; x <= 26; x++) {
+        m->overlay_layer[6 * w + x] = TILE_MARKET_STALL;
+        m->collision_map[6 * w + x] = 1;
+    }
+    for (int x = 30; x <= 32; x++) {
+        m->overlay_layer[6 * w + x] = TILE_MARKET_STALL;
+        m->collision_map[6 * w + x] = 1;
+    }
+    // Barris e caixotes do armazém da loja
+    m->overlay_layer[5 * w + 23] = TILE_BARREL_CRATE;
+    m->collision_map[5 * w + 23] = 1;
+    m->overlay_layer[6 * w + 23] = TILE_BARREL_CRATE;
+    m->collision_map[6 * w + 23] = 1;
+    m->overlay_layer[5 * w + 33] = TILE_BARREL_CRATE;
+    m->collision_map[5 * w + 33] = 1;
+    m->overlay_layer[6 * w + 33] = TILE_BARREL_CRATE;
+    m->collision_map[6 * w + 33] = 1;
+
+    // 5. Mansão do Prefeito Hagen e Residências (Noroeste: x=3..12, y=3..7)
+    // Telhado de terracota vermelha
+    for (int y = 3; y <= 4; y++) {
+        for (int x = 3; x <= 12; x++) {
+            m->overlay_layer[y * w + x] = TILE_ROOF_RED;
+            m->collision_map[y * w + x] = 1;
+        }
+    }
+    // Fachada residencial
+    for (int x = 3; x <= 12; x++) {
+        m->overlay_layer[5 * w + x] = TILE_TOWN_WALL;
+        m->collision_map[5 * w + x] = 1;
+    }
+    m->overlay_layer[5 * w + 4]  = TILE_TOWN_WINDOW;
+    m->overlay_layer[5 * w + 7]  = TILE_TOWN_DOOR;
+    m->overlay_layer[5 * w + 11] = TILE_TOWN_WINDOW;
+
+    // Cerca de madeira e jardim de flores do Prefeito
+    m->overlay_layer[6 * w + 3]  = TILE_WOOD_FENCE;
+    m->collision_map[6 * w + 3]  = 1;
+    m->overlay_layer[6 * w + 4]  = TILE_WOOD_FENCE;
+    m->collision_map[6 * w + 4]  = 1;
+    m->overlay_layer[6 * w + 6]  = TILE_FLOWER_RED;
+    m->overlay_layer[6 * w + 8]  = TILE_FLOWER_YELLOW;
+    m->overlay_layer[6 * w + 10] = TILE_WOOD_FENCE;
+    m->collision_map[6 * w + 10] = 1;
+    m->overlay_layer[6 * w + 11] = TILE_WOOD_FENCE;
+    m->collision_map[6 * w + 11] = 1;
+
+    // 6. Residência dos Cidadãos no Sudoeste (x=3..11, y=17..20)
+    for (int y = 17; y <= 18; y++) {
+        for (int x = 3; x <= 11; x++) {
+            m->overlay_layer[y * w + x] = TILE_ROOF_RED;
+            m->collision_map[y * w + x] = 1;
+        }
+    }
+    for (int x = 3; x <= 11; x++) {
+        m->overlay_layer[19 * w + x] = TILE_TOWN_WALL;
+        m->collision_map[19 * w + x] = 1;
+    }
+    m->overlay_layer[19 * w + 4]  = TILE_TOWN_WINDOW;
+    m->overlay_layer[19 * w + 7]  = TILE_TOWN_DOOR;
+    m->overlay_layer[19 * w + 10] = TILE_TOWN_WINDOW;
+    m->overlay_layer[20 * w + 3]  = TILE_FLOWER_RED;
+    m->overlay_layer[20 * w + 5]  = TILE_FLOWER_YELLOW;
+    m->overlay_layer[20 * w + 9]  = TILE_FLOWER_RED;
+    m->overlay_layer[20 * w + 11] = TILE_FLOWER_YELLOW;
+
+    // 7. Armazém & Estalagem no Sudeste (x=24..32, y=17..20)
+    for (int y = 17; y <= 18; y++) {
+        for (int x = 24; x <= 32; x++) {
+            m->overlay_layer[y * w + x] = TILE_ROOF_BLUE;
+            m->collision_map[y * w + x] = 1;
+        }
+    }
+    for (int x = 24; x <= 32; x++) {
+        m->overlay_layer[19 * w + x] = TILE_TOWN_WALL;
+        m->collision_map[19 * w + x] = 1;
+    }
+    m->overlay_layer[19 * w + 25] = TILE_TOWN_WINDOW;
+    m->overlay_layer[19 * w + 28] = TILE_TOWN_DOOR;
+    m->overlay_layer[19 * w + 31] = TILE_TOWN_WINDOW;
+    m->overlay_layer[20 * w + 24] = TILE_BARREL_CRATE;
+    m->collision_map[20 * w + 24] = 1;
+    m->overlay_layer[20 * w + 25] = TILE_BARREL_CRATE;
+    m->collision_map[20 * w + 25] = 1;
+    m->overlay_layer[20 * w + 31] = TILE_BARREL_CRATE;
+    m->collision_map[20 * w + 31] = 1;
+
+    // 8. Canteiros de Grama e Jardins Ornamentais da Praça
+    // Canteiro Noroeste com árvore
+    for (int y = 9; y <= 11; y++) {
+        for (int x = 8; x <= 11; x++) {
+            m->ground_layer[y * w + x] = TILE_GRASS;
+        }
+    }
+    m->overlay_layer[9 * w + 9]   = TILE_TREE_TOP;
+    m->overlay_layer[10 * w + 9]  = TILE_TREE_TRUNK;
+    m->collision_map[10 * w + 9]  = 1;
+    m->overlay_layer[11 * w + 8]  = TILE_FLOWER_RED;
+    m->overlay_layer[11 * w + 11] = TILE_FLOWER_YELLOW;
+
+    // Canteiro Nordeste com árvore
+    for (int y = 9; y <= 11; y++) {
+        for (int x = 24; x <= 27; x++) {
+            m->ground_layer[y * w + x] = TILE_GRASS;
+        }
+    }
+    m->overlay_layer[9 * w + 25]   = TILE_TREE_TOP;
+    m->overlay_layer[10 * w + 25]  = TILE_TREE_TRUNK;
+    m->collision_map[10 * w + 25]  = 1;
+    m->overlay_layer[11 * w + 24]  = TILE_FLOWER_RED;
+    m->overlay_layer[11 * w + 27]  = TILE_FLOWER_YELLOW;
+
+    // Canteiro Sudoeste
+    for (int y = 16; y <= 18; y++) {
+        for (int x = 8; x <= 11; x++) {
+            m->ground_layer[y * w + x] = TILE_GRASS;
+        }
+    }
+    m->overlay_layer[16 * w + 8]  = TILE_FLOWER_YELLOW;
+    m->overlay_layer[18 * w + 11] = TILE_FLOWER_RED;
+
+    // Canteiro Sudeste
+    for (int y = 16; y <= 18; y++) {
+        for (int x = 24; x <= 27; x++) {
+            m->ground_layer[y * w + x] = TILE_GRASS;
+        }
+    }
+    m->overlay_layer[16 * w + 27] = TILE_FLOWER_RED;
+    m->overlay_layer[18 * w + 24] = TILE_FLOWER_YELLOW;
+
+    printf("[MAPA] Cidade de Hyrule (Hyrule Town Hub) criada: %dx%d tiles (%dx%d pixels).\n",
+           w, h, w * TILE_SIZE, h * TILE_SIZE);
     return m;
 }
 

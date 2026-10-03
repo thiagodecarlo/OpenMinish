@@ -24,7 +24,10 @@ typedef enum {
     SPEAKER_EZLO = 0,        // Ezlo, o gorro pássaro falante
     SPEAKER_FOREST_MINISH,   // Ancião / Habitante Minish de Minish Woods
     SPEAKER_SWIFTBLADE,      // Mestre Espadachim Swiftblade (Dojo de Hyrule)
-    SPEAKER_SIGNPOST         // Placa de madeira / Altar sagrado
+    SPEAKER_SIGNPOST,        // Placa de madeira / Altar sagrado
+    SPEAKER_SHOPKEEPER,      // Comerciante Stockwell (Dono da Loja Geral de Hyrule)
+    SPEAKER_TOWN_CITIZEN,    // Cidadã da Cidade de Hyrule
+    SPEAKER_TOWN_GUARD       // Guarda Real do Castelo de Hyrule
 } DialogueSpeaker;
 
 typedef enum {
@@ -59,6 +62,21 @@ void dialogue_trigger_minish_talk(void);
  * Inicia o treinamento do Ataque Giratório com o Mestre Espadachim Swiftblade.
  */
 void dialogue_trigger_swiftblade_talk(bool already_learned);
+
+/*
+ * Inicia o diálogo de boas-vindas e catálogo de mercadorias da Loja do Stockwell.
+ */
+void dialogue_trigger_shopkeeper_talk(int link_rupees);
+
+/*
+ * Inicia uma conversa com a moradora da Cidade de Hyrule.
+ */
+void dialogue_trigger_town_citizen_talk(void);
+
+/*
+ * Inicia um diálogo com o Guarda Real que vigia o Portão do Castelo.
+ */
+void dialogue_trigger_town_guard_talk(void);
 
 /*
  * Retorna true se a conclusão do diálogo concede o Pergaminho do Tigre nº 1 (Spin Attack).
