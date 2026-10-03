@@ -22,6 +22,9 @@ static Entity s_entities[MAX_ENTITIES];
 static const Texture* s_octo_tex = NULL;
 static float s_last_link_x = 0.0f;
 static float s_last_link_y = 0.0f;
+static int   s_screen_shake_timer = 0;
+static int   s_screen_shake_magnitude = 0;
+static bool  s_boss_defeated = false;
 
 static inline bool entity_is_solid(const Tilemap* map, float wx, float wy) {
     if (dungeon_is_active()) {
@@ -46,8 +49,44 @@ static void draw_filled_rect(int rx, int ry, int rw, int rh, u32 color) {
     }
 }
 
+void entity_trigger_screen_shake(int duration_frames, int magnitude) {
+    s_screen_shake_timer = duration_frames;
+    s_screen_shake_magnitude = magnitude;
+}
+
+void entity_get_screen_shake(int* out_x, int* out_y) {
+    if (s_screen_shake_timer > 0) {
+        s_screen_shake_timer--;
+        int mag = s_screen_shake_magnitude;
+        if (mag < 1) mag = 1;
+        if (out_x) *out_x = (rand() % (mag * 2 + 1)) - mag;
+        if (out_y) *out_y = (rand() % (mag * 2 + 1)) - mag;
+    } else {
+        if (out_x) *out_x = 0;
+        if (out_y) *out_y = 0;
+    }
+}
+
+bool entity_is_boss_defeated(void) {
+    return s_boss_defeated;
+}
+
+bool entity_is_boss_alive(void) {
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        if (s_entities[i].is_active &&
+            s_entities[i].type == ENTITY_BOSS_BIG_CHUCHU &&
+            s_entities[i].health > 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void entity_manager_init(void) {
     memset(s_entities, 0, sizeof(s_entities));
+    s_screen_shake_timer = 0;
+    s_screen_shake_magnitude = 0;
+    s_boss_defeated = false;
     printf("[HAL Entity] Gerenciador de entidades inicializado (Pool: %d slots).\n", MAX_ENTITIES);
 }
 
@@ -57,7 +96,8 @@ int entity_count_active_enemies(void) {
         if (!s_entities[i].is_active) continue;
         if (s_entities[i].type == ENTITY_ENEMY_OCTOROK ||
             s_entities[i].type == ENTITY_ENEMY_KEESE ||
-            s_entities[i].type == ENTITY_ENEMY_CHUCHU) {
+            s_entities[i].type == ENTITY_ENEMY_CHUCHU ||
+            (s_entities[i].type == ENTITY_BOSS_BIG_CHUCHU && s_entities[i].health > 0)) {
             count++;
         }
     }
@@ -151,6 +191,31 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     e->hitbox    = (Hitbox){ 2.0f, 2.0f, 12.0f, 12.0f };
                     break;
 
+                case ENTITY_BOSS_BIG_CHUCHU:
+                    e->health        = 10;
+                    e->maxHealth     = 10;
+                    e->damage        = 1;
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1; // 1 = Saltos / Patrulha ereta
+                    e->subAction     = 0; // 0 = Agachando no solo, 1 = No ar
+                    e->bossBaseScale = 1.0f;
+                    e->bossSuctionTimer = 0;
+                    e->bossToppleTimer  = 0;
+                    e->bossEnraged      = false;
+                    e->bossDeathTimer   = 0;
+                    e->aiTimer       = 35;
+                    e->hitbox        = (Hitbox){ -20.0f, -40.0f, 40.0f, 48.0f };
+                    break;
+
+                case ENTITY_ITEM_HEART_CONTAINER:
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->action        = 0;
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
+                    break;
+
                 default:
                     break;
             }
@@ -161,7 +226,7 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
 }
 
 void entity_manager_update(const Tilemap* map, float link_x, float link_y,
-                           int* link_hearts, int* link_rupees,
+                           int* link_hearts, int* link_max_hearts, int* link_rupees,
                            int* link_invuln_timer, float* link_knock_x, float* link_knock_y) {
     s_last_link_x = link_x;
     s_last_link_y = link_y;
@@ -598,6 +663,169 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
                 *link_knock_y = (dy > 0.0f) ? -3.0f : 3.0f;
             }
         }
+
+        // --------------------------------------------------------------------
+        // 7. ITEM: HEART CONTAINER (RECIPIENTE DE CORAÇÃO PERMANENTE)
+        // --------------------------------------------------------------------
+        else if (e->type == ENTITY_ITEM_HEART_CONTAINER) {
+            e->animTimer++;
+            float dx = link_x - e->x;
+            float dy = link_y - e->y;
+            float dist = sqrtf(dx * dx + dy * dy);
+
+            // Coleta pelo Link
+            if (dist < 18.0f) {
+                e->is_active = false;
+                if (link_max_hearts) (*link_max_hearts)++;
+                if (link_hearts && link_max_hearts) *link_hearts = *link_max_hearts;
+                hal_audio_play_sound(SOUND_HEART_CONTAINER, 1.0f, 1.0f);
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.2f);
+                printf("[RECOMPENSA] Heart Container obtido! Max Hearts: %d, Vida totalmente restaurada!\n",
+                       link_max_hearts ? *link_max_hearts : 4);
+                continue;
+            }
+        }
+
+        // --------------------------------------------------------------------
+        // 8. CHEFE: BIG GREEN CHUCHU (COLOSSO GELATINOSO DE DEEPWOOD SHRINE)
+        // --------------------------------------------------------------------
+        else if (e->type == ENTITY_BOSS_BIG_CHUCHU) {
+            e->animTimer++;
+            if (e->invulnerableTimer > 0) e->invulnerableTimer--;
+
+            // Transição para Fase 2 (Enrage se HP <= 5)
+            if (e->health <= 5 && !e->bossEnraged) {
+                e->bossEnraged = true;
+                hal_audio_play_sound(SOUND_BOSS_SLAM, 1.0f, 1.25f);
+                entity_trigger_screen_shake(12, 4);
+                printf("[BOSS ENRAGE] Big Green ChuChu enfurecido! Movimentos e saltos acelerados!\n");
+            }
+
+            float dx = link_x - e->x;
+            float dy = link_y - e->y;
+            float dist = sqrtf(dx * dx + dy * dy);
+
+            // AÇÃO 1: Saltos Gigantescos (Hopping)
+            if (e->action == 1) {
+                // Recuperação natural da base se o Pote Mágico parou de sugar
+                if (e->bossSuctionTimer > 0) {
+                    e->bossSuctionTimer--;
+                    e->bossBaseScale = 1.0f - (float)e->bossSuctionTimer / 60.0f;
+                    if (e->bossBaseScale > 1.0f) e->bossBaseScale = 1.0f;
+                }
+
+                if (e->subAction == 0) {
+                    // Agachando no chão preparando o salto
+                    e->aiTimer--;
+                    if (e->aiTimer <= 0) {
+                        e->subAction = 1; // Salta no ar
+                        float hop_force = e->bossEnraged ? 4.4f : 3.5f;
+                        e->vz = hop_force;
+                        float spd = e->bossEnraged ? 1.55f : 0.95f;
+                        if (dist > 2.0f) {
+                            e->vx = (dx / dist) * spd;
+                            e->vy = (dy / dist) * spd;
+                        }
+                        hal_audio_play_sound(SOUND_CHUCHU_SQUISH, 0.90f, e->bossEnraged ? 1.15f : 0.75f);
+                    }
+                } else if (e->subAction == 1) {
+                    // No ar
+                    e->x += e->vx;
+                    e->y += e->vy;
+                    e->z += e->vz;
+                    e->vz -= 0.22f; // Gravidade
+
+                    // Impacto no solo
+                    if (e->z <= 0.0f) {
+                        e->z = 0.0f;
+                        e->vx = 0.0f;
+                        e->vy = 0.0f;
+                        e->subAction = 0;
+                        e->aiTimer = e->bossEnraged ? 20 : 35;
+
+                        // Tremor de solo com impacto pesado
+                        entity_trigger_screen_shake(10, e->bossEnraged ? 4 : 3);
+                        hal_audio_play_sound(SOUND_BOSS_SLAM, 0.95f, e->bossEnraged ? 1.10f : 0.85f);
+                    }
+                }
+
+                // Dano de contato ao herói (corpo gigante esmagador)
+                if (*link_invuln_timer <= 0 && dist < 24.0f && e->z <= 12.0f) {
+                    if (*link_hearts > 0) (*link_hearts)--;
+                    *link_invuln_timer = 60;
+                    hal_audio_play_sound(SOUND_HEART_BEEP, 0.9f, 0.9f);
+                    float knock_force = 4.5f;
+                    *link_knock_x = (dx > 0.0f) ? -knock_force : knock_force;
+                    *link_knock_y = (dy > 0.0f) ? -knock_force : knock_force;
+                }
+            }
+
+            // AÇÃO 2: Sendo Sugado pelo Pote Mágico (Suctioned Wobble)
+            else if (e->action == 2) {
+                if (e->bossSuctionTimer >= 55) {
+                    // Pés totalmente sugados! Perde o equilíbrio e DESABA!
+                    e->action = 3; // Toppled / Vulnerável
+                    e->subAction = 0;
+                    e->bossToppleTimer = 180; // 3 segundos inteiros desabado no chão
+                    e->bossBaseScale = 0.15f;
+                    e->z = 0.0f;
+                    e->vx = 0.0f;
+                    e->vy = 0.0f;
+                    entity_trigger_screen_shake(16, 5);
+                    hal_audio_play_sound(SOUND_BOSS_SLAM, 1.0f, 0.70f);
+                    hal_audio_play_sound(SOUND_CHUCHU_SQUISH, 1.0f, 0.60f);
+                    printf("[BOSS] Big Green ChuChu toppled! A cabeca desabou no chao, vulneravel a espada!\n");
+                }
+            }
+
+            // AÇÃO 3: Desabado no Chão (Toppled & Vulnerable)
+            else if (e->action == 3) {
+                e->bossToppleTimer--;
+                if (e->bossToppleTimer <= 0) {
+                    // Recupera-se e levanta de volta!
+                    e->action = 4; // Recuperação
+                    e->aiTimer = 40;
+                    hal_audio_play_sound(SOUND_CHUCHU_SQUISH, 0.95f, 0.85f);
+                }
+            }
+
+            // AÇÃO 4: Recuperação e Regeneração dos Pés
+            else if (e->action == 4) {
+                e->aiTimer--;
+                // A base vai expandindo de volta para 1.0
+                e->bossBaseScale += (1.0f - e->bossBaseScale) * 0.10f;
+                if (e->aiTimer <= 0) {
+                    e->bossBaseScale = 1.0f;
+                    e->bossSuctionTimer = 0;
+                    e->action = 1; // Volta a pular
+                    e->subAction = 0;
+                    e->aiTimer = e->bossEnraged ? 20 : 35;
+                }
+            }
+
+            // AÇÃO 5: Sequência de Morte e Explosão de Gosma
+            else if (e->action == 5) {
+                e->bossDeathTimer++;
+                // Tremores contínuos durante a morte
+                if (e->bossDeathTimer % 6 == 0) {
+                    entity_trigger_screen_shake(6, 3);
+                    hal_audio_play_sound(SOUND_CHUCHU_SQUISH, 0.8f, 1.0f + (float)e->bossDeathTimer * 0.01f);
+                }
+
+                if (e->bossDeathTimer >= 80) {
+                    // Clímax da derrota!
+                    e->is_active = false;
+                    s_boss_defeated = true;
+                    hal_audio_play_sound(SOUND_BOSS_DEFEAT, 1.0f, 1.0f);
+                    entity_trigger_screen_shake(20, 6);
+
+                    // Spawna o cobiçado Heart Container!
+                    entity_spawn(ENTITY_ITEM_HEART_CONTAINER, e->x, e->y);
+                    printf("[BOSS DEFEATED] Big Green ChuChu explodiu em gosma verde! Recompensa liberada!\n");
+                    continue;
+                }
+            }
+        }
     }
 }
 
@@ -660,6 +888,43 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
                 e->is_active = false; // Destrói a pedra
                 hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 1.5f);
                 hit_something = true;
+            }
+        }
+        // Golpeando o Chefe Big Green ChuChu
+        else if (e->type == ENTITY_BOSS_BIG_CHUCHU) {
+            // Se o chefe estiver toppled/desabado no chão, a cabeça está vulnerável!
+            if (e->action == 3 && e->invulnerableTimer <= 0) {
+                float bx1 = e->x - 22.0f;
+                float by1 = e->y - 12.0f;
+                float bx2 = e->x + 22.0f;
+                float by2 = e->y + 16.0f;
+
+                if (sx1 < bx2 && sx2 > bx1 && sy1 < by2 && sy2 > by1) {
+                    e->health -= damage;
+                    e->invulnerableTimer = 22;
+                    hal_audio_play_sound(SOUND_BOSS_HIT, 1.0f, 1.0f);
+                    entity_trigger_screen_shake(8, 3);
+                    printf("[BOSS HIT] Golpe na cabeca vulneravel! Dano aplicado! HP restante: %d / %d\n",
+                           e->health, e->maxHealth);
+
+                    if (e->health <= 0) {
+                        e->health = 0;
+                        e->action = 5; // Sequência climática de morte
+                        e->bossDeathTimer = 0;
+                        hal_audio_play_sound(SOUND_BOSS_DEFEAT, 1.0f, 1.0f);
+                    }
+                    hit_something = true;
+                }
+            } else if (e->action == 1) {
+                // Golpe com a espada enquanto em pé: resvala na borracha gelatinosa sem causar dano
+                float bx1 = e->x - 22.0f;
+                float by1 = e->y - 36.0f;
+                float bx2 = e->x + 22.0f;
+                float by2 = e->y + 16.0f;
+                if (sx1 < bx2 && sx2 > bx1 && sy1 < by2 && sy2 > by1) {
+                    hal_audio_play_sound(SOUND_SWORD_HIT, 0.75f, 0.70f);
+                    hit_something = true;
+                }
             }
         }
     }
@@ -747,6 +1012,28 @@ bool entity_check_subweapon_hit(float px, float py, float pw, float ph, int dama
                 return true;
             }
         }
+
+        // 4. Ataque com subarma no Chefe Big Green ChuChu quando desabado
+        else if (e->type == ENTITY_BOSS_BIG_CHUCHU && e->action == 3 && e->invulnerableTimer <= 0) {
+            float bx1 = e->x - 22.0f;
+            float by1 = e->y - 12.0f;
+            float bx2 = e->x + 22.0f;
+            float by2 = e->y + 16.0f;
+
+            if (px1 < bx2 && px2 > bx1 && py1 < by2 && py2 > by1) {
+                e->health -= damage;
+                e->invulnerableTimer = 22;
+                hal_audio_play_sound(SOUND_BOSS_HIT, 1.0f, 1.15f);
+                entity_trigger_screen_shake(6, 2);
+                if (e->health <= 0) {
+                    e->health = 0;
+                    e->action = 5;
+                    e->bossDeathTimer = 0;
+                    hal_audio_play_sound(SOUND_BOSS_DEFEAT, 1.0f, 1.0f);
+                }
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -804,6 +1091,20 @@ bool entity_apply_gust_suction(float jar_x, float jar_y, Direction dir, float ra
         else if (e->type == ENTITY_ENEMY_OCTOROK || e->type == ENTITY_ENEMY_KEESE) {
             e->x += pull_x * 0.85f;
             e->y += pull_y * 0.85f;
+        }
+        // Sucção na base / pés do Chefe Big Green ChuChu
+        else if (e->type == ENTITY_BOSS_BIG_CHUCHU) {
+            if (e->action == 1 || e->action == 2) {
+                e->action = 2; // Estado de sucção ativa
+                e->bossSuctionTimer += 1;
+                e->bossBaseScale = 1.0f - (float)e->bossSuctionTimer / 55.0f;
+                if (e->bossBaseScale < 0.15f) e->bossBaseScale = 0.15f;
+
+                // Leve puxão físico em direção ao jarro
+                e->x += pull_x * 0.22f;
+                e->y += pull_y * 0.22f;
+                absorbed_something = true;
+            }
         }
     }
 
@@ -1218,6 +1519,251 @@ void entity_manager_render(const Camera* cam) {
                 draw_filled_rect(sx + 1, sy + 11, 14, 2, c_gold_dk);
                 draw_filled_rect(sx + 3, sy + 6, 2, 6, c_wood);
                 draw_filled_rect(sx + 11, sy + 6, 2, 6, c_wood);
+            }
+        }
+
+        // 8. ITEM: HEART CONTAINER (RECIPIENTE DE CORAÇÃO PERMANENTE)
+        else if (e->type == ENTITY_ITEM_HEART_CONTAINER) {
+            int bob = (int)(sinf((float)e->animTimer * 0.12f) * 3.0f);
+            int hy = sy + bob;
+
+            // Sombra oval suave no chão
+            draw_filled_rect(sx - 7, sy + 8, 14, 3, 0x05100766);
+            draw_filled_rect(sx - 5, sy + 7, 10, 5, 0x05100766);
+
+            // Moldura externa circular dourada com garras (16x16)
+            u32 c_gold_dark  = 0x9A7B1CFF;
+            u32 c_gold_base  = 0xF59E0BFF;
+            u32 c_gold_light = 0xFDE047FF;
+            u32 c_heart_red  = 0xEF4444FF;
+            u32 c_heart_dark = 0x991B1BFF;
+            u32 c_sparkle    = 0xFFFFFFFF;
+
+            // Anel do receptáculo dourado
+            draw_filled_rect(sx - 8, hy - 4, 16, 12, c_gold_dark);
+            draw_filled_rect(sx - 7, hy - 5, 14, 14, c_gold_base);
+            draw_filled_rect(sx - 5, hy - 7, 10, 18, c_gold_base);
+            draw_filled_rect(sx - 6, hy - 4, 12, 12, c_gold_light);
+
+            // Coração vermelho pulsante dentro do receptáculo
+            int pulse = ((e->animTimer / 15) % 2 == 0) ? 1 : 0;
+            draw_filled_rect(sx - 4 - pulse, hy - 2 - pulse, 8 + pulse * 2, 7 + pulse, c_heart_red);
+            draw_filled_rect(sx - 3, hy - 4, 3, 2, c_heart_red);
+            draw_filled_rect(sx + 1, hy - 4, 3, 2, c_heart_red);
+            draw_filled_rect(sx - 2, hy + 5, 4, 2, c_heart_dark);
+            draw_filled_rect(sx - 1, hy + 7, 2, 2, c_heart_dark);
+
+            // Brilho cintilante no coração
+            put_pixel_safe(sx - 2, hy - 2, c_sparkle);
+            put_pixel_safe(sx - 1, hy - 3, c_sparkle);
+
+            // Partículas de luz sagrada orbitando o Heart Container
+            for (int p = 0; p < 4; p++) {
+                float ang = ((float)e->animTimer * 0.08f) + (float)p * (PI_F / 2.0f);
+                int px = sx + (int)(cosf(ang) * 12.0f);
+                int py = hy + (int)(sinf(ang) * 9.0f);
+                put_pixel_safe(px, py, c_gold_light);
+            }
+        }
+
+        // 9. CHEFE: BIG GREEN CHUCHU (COLOSSO GELATINOSO DE DEEPWOOD SHRINE)
+        else if (e->type == ENTITY_BOSS_BIG_CHUCHU) {
+            // Piscar quando atingido por dano da espada (flicker)
+            if (e->invulnerableTimer > 0 && ((e->invulnerableTimer / 3) % 2 == 0)) {
+                // Durante o dano, pisca frame alternado
+                continue;
+            }
+
+            int boss_cx = sx;
+            int boss_cy = sy - (int)e->z;
+
+            // Paleta de cores autêntica do ChuChu Gigante
+            u32 c_jelly_base = 0x16A34AFF; // Verde esmeralda translúcido
+            u32 c_jelly_dark = 0x14532DFF; // Sombra inferior densa
+            u32 c_jelly_lite = 0x4ADE80FF; // Gelatina iluminada
+            u32 c_jelly_mint = 0x86EFACFF; // Destaque suave
+            u32 c_white      = 0xFFFFFFFF; // Brilho especular e olhos
+            u32 c_pupil      = e->bossEnraged ? 0xEF4444FF : 0x111111FF; // Pupilas normais ou enfurecidas
+            u32 c_iris       = e->bossEnraged ? 0xF87171FF : 0x334155FF;
+
+            // Se estiver sofrendo dano, tintura vermelha/branca
+            if (e->invulnerableTimer > 0) {
+                c_jelly_base = 0xEF4444FF;
+                c_jelly_lite = 0xFCA5A5FF;
+                c_jelly_dark = 0x991B1BFF;
+            }
+
+            // Sombra no chão (escala com a altitude Z)
+            float shadow_scale = 1.0f - (e->z / 60.0f);
+            if (shadow_scale < 0.35f) shadow_scale = 0.35f;
+            int sw = (int)(44.0f * shadow_scale);
+            int sh = (int)(14.0f * shadow_scale);
+            draw_filled_rect(sx - sw / 2, sy + 10, sw, sh, 0x05100766);
+            draw_filled_rect(sx - (sw - 8) / 2, sy + 9, sw - 8, sh + 2, 0x05100766);
+
+            // AÇÃO 3: Desabado no chão (Toppled & Vulnerable)
+            if (e->action == 3) {
+                // Poça espalmada no piso (58x24 px)
+                int pw = 58;
+                int ph = 24;
+                int wobble = (int)(sinf((float)e->animTimer * 0.25f) * 2.0f);
+                pw += wobble;
+
+                draw_filled_rect(boss_cx - pw / 2, boss_cy - 8, pw, ph, c_jelly_dark);
+                draw_filled_rect(boss_cx - (pw - 6) / 2, boss_cy - 12, pw - 6, ph, c_jelly_base);
+                draw_filled_rect(boss_cx - (pw - 14) / 2, boss_cy - 16, pw - 14, ph - 4, c_jelly_lite);
+                draw_filled_rect(boss_cx - 16, boss_cy - 14, 12, 4, c_jelly_mint);
+                draw_filled_rect(boss_cx + 4, boss_cy - 14, 12, 4, c_jelly_mint);
+
+                // Núcleo gelatinoso vulnerável exposto (pulsando)
+                int n_pulse = (int)(sinf((float)e->animTimer * 0.35f) * 2.0f);
+                draw_filled_rect(boss_cx - 8 - n_pulse, boss_cy - 4 - n_pulse, 16 + n_pulse * 2, 12 + n_pulse * 2, 0xA3E635FF);
+                draw_filled_rect(boss_cx - 4, boss_cy - 2, 8, 8, 0xBEF264FF);
+                draw_filled_rect(boss_cx - 2, boss_cy, 4, 4, c_white);
+
+                // Olhos tontos / em espiral (Dizzy eyes)
+                int eye_y = boss_cy - 4;
+                int ex1 = boss_cx - 14;
+                int ex2 = boss_cx + 8;
+                draw_filled_rect(ex1, eye_y, 7, 7, c_white);
+                draw_filled_rect(ex2, eye_y, 7, 7, c_white);
+
+                // Cruz/espiral de tontura nos olhos
+                int spin = (e->animTimer / 6) % 4;
+                int ox[4] = { 2, 4, 2, 0 };
+                int oy[4] = { 0, 2, 4, 2 };
+                draw_filled_rect(ex1 + ox[spin], eye_y + oy[spin], 3, 3, c_pupil);
+                draw_filled_rect(ex2 + ox[(spin + 2) % 4], eye_y + oy[(spin + 2) % 4], 3, 3, c_pupil);
+            }
+            // AÇÃO 5: Explosão de Morte
+            else if (e->action == 5) {
+                // Boss inflando e piscando cores cromáticas antes de estourar
+                int expand = e->bossDeathTimer / 3;
+                int bw = 48 + expand;
+                int bh = 60 + expand;
+
+                u32 death_colors[4] = { 0xFFFFFFFF, 0x22C55EFF, 0xEAB308FF, 0xEC4899FF };
+                u32 flash_col = death_colors[(e->bossDeathTimer / 4) % 4];
+
+                draw_filled_rect(boss_cx - bw / 2, boss_cy - bh + 16, bw, bh, flash_col);
+
+                // Gotículas de gosma verde explodindo radialmente
+                for (int p = 0; p < 16; p++) {
+                    float ang = (float)p * (PI_F / 8.0f);
+                    float spd = (float)e->bossDeathTimer * 1.3f;
+                    int px = boss_cx + (int)(cosf(ang) * spd);
+                    int py = boss_cy - 20 + (int)(sinf(ang) * spd * 0.8f);
+                    draw_filled_rect(px - 2, py - 2, 4, 4, 0x22C55EFF);
+                    put_pixel_safe(px - 1, py - 1, 0x86EFACFF);
+                }
+            }
+            // AÇÃO 1, 2 e 4: Em pé / Pulando / Sendo sugado
+            else {
+                // Cálculo de Squash & Stretch dinâmico
+                int bw = 46;
+                int bh = 62;
+
+                if (e->z > 2.0f) {
+                    // No ar: estica verticalmente (Stretch)
+                    bw = 38;
+                    bh = 68;
+                } else if (e->subAction == 0 && e->aiTimer < 14) {
+                    // Agachando antes de saltar (Squash)
+                    bw = 54;
+                    bh = 50;
+                }
+
+                // Efeito do Pote Mágico sugando a base:
+                // Wobble lateral violento
+                int wobble_x = 0;
+                if (e->action == 2) {
+                    wobble_x = (int)(sinf((float)e->animTimer * 0.55f) * 6.0f);
+                }
+
+                int draw_x = boss_cx + wobble_x;
+                int draw_y = boss_cy;
+
+                // Desenho do Corpo Gelatinoso Gigante (3 camadas de profundidade)
+                int body_top = draw_y - bh + 16;
+
+                // 1. Cúpula e Base Externa
+                draw_filled_rect(draw_x - bw / 2, body_top, bw, bh, c_jelly_dark);
+                draw_filled_rect(draw_x - (bw - 6) / 2, body_top - 4, bw - 6, bh + 4, c_jelly_dark);
+
+                // 2. Volume Interno Translúcido
+                draw_filled_rect(draw_x - (bw - 4) / 2, body_top + 2, bw - 4, bh - 6, c_jelly_base);
+                draw_filled_rect(draw_x - (bw - 10) / 2, body_top - 2, bw - 10, bh, c_jelly_lite);
+
+                // 3. Brilho especular curvado do topo gelatinoso
+                draw_filled_rect(draw_x - 14, body_top + 2, 8, 6, c_jelly_mint);
+                draw_filled_rect(draw_x - 12, body_top + 4, 4, 3, c_white);
+
+                // Pés / Base: largura escala com bossBaseScale!
+                int base_w = (int)((float)bw * e->bossBaseScale);
+                if (base_w < 8) base_w = 8;
+                draw_filled_rect(draw_x - base_w / 2, draw_y + 10, base_w, 6, c_jelly_dark);
+                draw_filled_rect(draw_x - (base_w - 4) / 2, draw_y + 8, base_w - 4, 4, c_jelly_base);
+
+                // Olhos Gigantescos Expressivos (Rastreiam a posição do Link)
+                int eye_center_y = body_top + 22;
+                int eye_spacing  = 12;
+
+                // Direção do olhar para o Link
+                float edx = s_last_link_x - e->x;
+                float edy = s_last_link_y - e->y;
+                int look_ox = (edx > 15.0f) ? 2 : ((edx < -15.0f) ? -2 : 0);
+                int look_oy = (edy > 15.0f) ? 2 : ((edy < -15.0f) ? -2 : 0);
+
+                // Olho Esquerdo
+                int ex1 = draw_x - eye_spacing - 4;
+                draw_filled_rect(ex1 - 1, eye_center_y - 1, 9, 11, c_jelly_dark);
+                draw_filled_rect(ex1, eye_center_y, 7, 9, c_white);
+                draw_filled_rect(ex1 + 1 + look_ox, eye_center_y + 2 + look_oy, 4, 5, c_pupil);
+                put_pixel_safe(ex1 + 2 + look_ox, eye_center_y + 2 + look_oy, c_iris);
+                put_pixel_safe(ex1 + 1, eye_center_y + 1, c_white); // Reflexo
+
+                // Olho Direito
+                int ex2 = draw_x + eye_spacing - 4;
+                draw_filled_rect(ex2 - 1, eye_center_y - 1, 9, 11, c_jelly_dark);
+                draw_filled_rect(ex2, eye_center_y, 7, 9, c_white);
+                draw_filled_rect(ex2 + 1 + look_ox, eye_center_y + 2 + look_oy, 4, 5, c_pupil);
+                put_pixel_safe(ex2 + 2 + look_ox, eye_center_y + 2 + look_oy, c_iris);
+                put_pixel_safe(ex2 + 1, eye_center_y + 1, c_white); // Reflexo
+
+                // Sobrancelhas furiosas se em Fase 2 (Enraged)
+                if (e->bossEnraged) {
+                    for (int b = 0; b < 6; b++) {
+                        put_pixel_safe(ex1 + b, eye_center_y - 2 + (b / 2), 0x991B1BFF);
+                        put_pixel_safe(ex2 + 5 - b, eye_center_y - 2 + (b / 2), 0x991B1BFF);
+                    }
+                }
+            }
+
+            // HUD DE VIDA DO CHEFE (BARRA DE BOSS CANÔNICA GBA)
+            if (e->action != 5 && e->health > 0) {
+                int bar_w = 84;
+                int bar_h = 7;
+                int bar_x = (cam->viewport_w - bar_w) / 2;
+                int bar_y = 18;
+
+                // Fundo preto e moldura dourada
+                draw_filled_rect(bar_x - 1, bar_y - 1, bar_w + 2, bar_h + 2, 0x0B0F19FF);
+                draw_filled_rect(bar_x, bar_y, bar_w, bar_h, 0x1E293BFF);
+
+                // Segmentos de vida (10 slots de HP)
+                int pip_w = 7;
+                for (int hp = 0; hp < e->maxHealth; hp++) {
+                    int px = bar_x + 2 + (hp * 8);
+                    u32 pip_col = (hp < e->health) ? (e->bossEnraged ? 0xEF4444FF : 0x22C55EFF) : 0x475569FF;
+                    draw_filled_rect(px, bar_y + 1, pip_w, bar_h - 2, pip_col);
+                    if (hp < e->health) {
+                        put_pixel_safe(px + 1, bar_y + 2, 0xFFFFFFFF); // Brilho no pip
+                    }
+                }
+
+                // Nome do Chefe centralizado
+                const char* boss_title = e->bossEnraged ? "BIG CHUCHU (FURIOSO)" : "BIG GREEN CHUCHU";
+                font_draw_text(bar_x + 6, bar_y - 8, boss_title, e->bossEnraged ? 0xF87171FF : 0x4ADE80FF, true);
             }
         }
     }

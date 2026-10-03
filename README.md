@@ -147,10 +147,25 @@ O **OpenMinish** é um projeto de estudo universitário e pesquisa técnica foca
   - **Câmara 3 (Santuário Interno & Altar do Elemento Terra)**:
     - Tochas cerimoniais com pedestais de ouro e labaredas de fogo azul místico.
     - Altar sagrado com o **Grande Baú Dourado de Vitória da Masmorra**: abertura interativa com `[A]`, concedendo **+100 Rupees**, restauração plena de vida e a clássica fanfarra de triunfo.
+    - Portal norte em arco dourado conectando à Câmara do Chefe.
+  - **Câmara 4 (Arena do Chefe: Big Green ChuChu)**:
+    - Arena cerimonial circular com círculos concêntricos gravados na pedra e 4 pilares arcanos nos cantos com tochas de fogo verde esmeralda e ciano.
+    - Fechamento dramático das grades de ferro levadiças (Shutter Door) aprisionando Link com o colosso (`SOUND_DOOR_SHUTTER`).
+    - **Combate Épico contra o Chefe (Big Green ChuChu)**:
+      - Titã gelatinoso colossal ($48 \times 64$ pixels) com física de *squash & stretch* em tempo real e olhos expressivos que rastreiam o herói.
+      - **Saltos Esmagadores com Tremor de Tela (Screen Shake)**: Impactos pesados no solo que balançam a câmera virtual (`SOUND_BOSS_SLAM`).
+      - **Mecânica Gimmick com o Pote Mágico (Gust Jar)**: A base emborrachada é imune a golpes de espada; Link deve sugar os pés do monstro com o vórtice de ar até desestabilizá-lo (`bossBaseScale` $\to 0.15$).
+      - **Estado Desabado no Solo (Toppled & Vulnerable)**: O monstro perde o equilíbrio e tomba espalmado no chão com olhos em espiral tontos e núcleo exposto, permitindo desferir golpes certeiros de espada na cabeça (`SOUND_BOSS_HIT`).
+      - **Fase 2 de Fúria (Enrage)**: Ao atingir 50% de HP ($\le 5\text{ HP}$), os olhos mudam para vermelho carmesim flamejante com sobrancelhas angulares, acelerando a frequência de passos e força de saltos.
+      - **Sequência Climática de Derrota**: Tremor contínuo, flashes cromáticos, colapso dramático (`SOUND_BOSS_DEFEAT`) e explosão de 16 gotículas de gosma verde.
+    - **Recompensas Lendárias de Vitória**:
+      - **Recipiente de Coração Permanente (Heart Container)**: Girando e flutuando no ar em receptáculo dourado com partículas de luz mística. Ao coletar, concede **+1 Coração Máximo permanente** (expandindo o HUD para 4 corações) e cura plena (`SOUND_HEART_CONTAINER`).
+      - **Portal Mágico de Teletransporte (Warp Portal)**: Anéis giratórios de luz azul e ciano no centro da arena que teletransportam Link diretamente de volta à clareira de Minish Woods.
 - **Transição Cinematográfica entre Câmaras (Screen Wipe)**:
   - Efeito suave de cortina preta de fade/wipe com 20 frames entre as salas da masmorra, posicionando o herói na entrada correta de cada câmara.
-- **Trilha Sonora Chiptune Autêntica de Masmorra (`BGM_DEEPWOOD_SHRINE`)**:
-  - Trilha polifônica de 45.7s em Dó menor (C minor) a 82 BPM, sintetizada proceduralmente em C puro com gotejamento rítmico de água cavernosa (*ping* senoidal reverberado), melodia assombrada em ocarina com vibrato analógico, baixo acústico pizzicato e pulsação acústica cavernosa.
+- **Trilha Sonora Chiptune Autêntica de Masmorra & Batalha de Chefe**:
+  - **`BGM_DEEPWOOD_SHRINE`**: Trilha polifônica de 45.7s em Dó menor (C minor) a 82 BPM com gotejamento rítmico cavernoso, melodia em ocarina com vibrato e pulsação acústica cavernosa.
+  - **`BGM_BOSS_BATTLE`**: Trilha épica de combate contra o chefe em Ré menor (D minor) a 144 BPM em compasso 4/4 com baixo motor em semicolcheias, melodia heroica agressiva em onda pulso 50% com vibrato, arpejos sincopados ping-pong estéreo e bateria dinâmica (bumbo, caixa enérgica, hi-hats e pratos de ataque).
 - **Transição Perfeita Overworld $\leftrightarrow$ Dungeon**:
   - Entrada física ao caminhar pelo archway do santuário ao norte da clareira de Minish Woods ou atalho de teste rápido via tecla `[D]`.
 

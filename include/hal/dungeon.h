@@ -35,6 +35,7 @@ typedef enum {
     ROOM_GUARDIANS,       // Sala 1: Arena com inimigos e drop de Small Key
     ROOM_WATER_CHANNEL,   // Sala 2: Canal de água e porta trancada
     ROOM_SANCTUARY_ALTAR, // Sala 3: Altar com grande baú do tesouro
+    ROOM_BOSS_ARENA,      // Sala 4: Câmara do Chefe Big Green ChuChu
     ROOM_COUNT
 } DungeonRoomId;
 
@@ -79,10 +80,18 @@ typedef struct {
     bool             door_locked_open;
     bool             chest_altar_opened;
 
+    // Estado da Câmara do Chefe (Big Green ChuChu)
+    bool             boss_chamber_entered;
+    bool             boss_cleared;
+    bool             boss_portal_spawned;
+    float            portal_x;
+    float            portal_y;
+
     DungeonBlock     block;
     DungeonSwitch    sw_entrance;
     DungeonDoorState door_north_entrance;
     DungeonDoorState door_locked_water;
+    DungeonDoorState door_boss_shutter;
 
     // Transição de sala / fade
     bool             transitioning;

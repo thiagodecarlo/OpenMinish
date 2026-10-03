@@ -14,6 +14,10 @@
 #include <string.h>
 #include <math.h>
 
+#ifndef PI_F
+#define PI_F 3.14159265358979323846f
+#endif
+
 #define C_DUNG_WALL_TOP   0x4A5568FF // Parede de pedra topo
 #define C_DUNG_WALL_FACE  0x2D3748FF // Parede de pedra frontal
 #define C_DUNG_WALL_DARK  0x1A202CFF // Argamassa e sombra
@@ -101,6 +105,17 @@ void dungeon_init(void) {
     // Sala 1 (Arena de Inimigos)
     s_dungeon.key_x = 7.5f * TILE_SIZE;
     s_dungeon.key_y = 4.5f * TILE_SIZE;
+
+    // Sala 4 (Arena do Chefe Big Green ChuChu)
+    s_dungeon.door_boss_shutter.x = 7.0f * TILE_SIZE;
+    s_dungeon.door_boss_shutter.y = 9.0f * TILE_SIZE;
+    s_dungeon.door_boss_shutter.is_locked = false;
+    s_dungeon.door_boss_shutter.is_open = false;
+    s_dungeon.boss_chamber_entered = false;
+    s_dungeon.boss_cleared = false;
+    s_dungeon.boss_portal_spawned = false;
+    s_dungeon.portal_x = 7.5f * TILE_SIZE;
+    s_dungeon.portal_y = 4.5f * TILE_SIZE;
 }
 
 bool dungeon_is_active(void) {
@@ -170,6 +185,20 @@ void dungeon_update(float* link_x, float* link_y, Direction* link_dir, bool is_m
                 entity_spawn(ENTITY_ENEMY_KEESE, 10.0f * TILE_SIZE, 3.0f * TILE_SIZE);
                 entity_spawn(ENTITY_ENEMY_CHUCHU, 7.5f * TILE_SIZE, 5.0f * TILE_SIZE);
                 hal_audio_play_sound(SOUND_KEESE_CHIRP, 0.80f, 1.0f);
+            } else if (s_dungeon.current_room == ROOM_BOSS_ARENA) {
+                if (!s_dungeon.boss_cleared) {
+                    s_dungeon.door_boss_shutter.is_open = false; // Fecha as grades com estrondo!
+                    entity_spawn(ENTITY_BOSS_BIG_CHUCHU, 7.5f * TILE_SIZE, 3.5f * TILE_SIZE);
+                    hal_audio_play_sound(SOUND_DOOR_SHUTTER, 0.95f, 0.85f);
+                    hal_audio_play_bgm(BGM_BOSS_BATTLE);
+                    printf("[DUNGEON] Link entrou na Arena do Chefe! Big Green ChuChu apareceu!\n");
+                } else {
+                    s_dungeon.door_boss_shutter.is_open = true;
+                }
+            } else if (s_dungeon.current_room == ROOM_SANCTUARY_ALTAR) {
+                if (hal_audio_get_current_bgm() == BGM_BOSS_BATTLE) {
+                    hal_audio_play_bgm(BGM_DEEPWOOD_SHRINE);
+                }
             }
         }
         if (s_dungeon.trans_timer <= 0) {
@@ -364,6 +393,46 @@ void dungeon_update(float* link_x, float* link_y, Direction* link_dir, bool is_m
                 dungeon_interact(lx, ly, link_rupees, link_hearts);
             }
         }
+
+        // 3. Passagem Norte para a Arena do Chefe (ROOM_BOSS_ARENA)
+        if (ly <= 1.0f * TILE_SIZE && lx >= 6.5f * TILE_SIZE && lx <= 9.5f * TILE_SIZE) {
+            trigger_room_transition(ROOM_BOSS_ARENA, 7.5f * TILE_SIZE, 8.0f * TILE_SIZE);
+            return;
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    // CÂMARA 4: ARENA DO CHEFE (BIG GREEN CHUCHU)
+    // ------------------------------------------------------------------------
+    else if (s_dungeon.current_room == ROOM_BOSS_ARENA) {
+        // 1. Verifica se o chefe acabou de ser derrotado
+        if (!s_dungeon.boss_cleared && entity_is_boss_defeated()) {
+            s_dungeon.boss_cleared = true;
+            s_dungeon.boss_portal_spawned = true;
+            s_dungeon.door_boss_shutter.is_open = true;
+            hal_audio_play_sound(SOUND_DOOR_SHUTTER, 0.90f, 1.15f);
+            hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.1f);
+            hal_audio_play_bgm(BGM_DEEPWOOD_SHRINE);
+            printf("[BOSS] Big Green ChuChu derrotado! Grades abertas e Portal de Teletransporte ativado!\n");
+        }
+
+        // 2. Passagem de volta para o Santuário Interno pelo sul (se as grades estiverem abertas)
+        if (s_dungeon.door_boss_shutter.is_open) {
+            if (ly >= 8.8f * TILE_SIZE && lx >= 6.5f * TILE_SIZE && lx <= 9.5f * TILE_SIZE) {
+                trigger_room_transition(ROOM_SANCTUARY_ALTAR, 7.5f * TILE_SIZE, 1.5f * TILE_SIZE);
+                return;
+            }
+        }
+
+        // 3. Teletransporte pelo Portal Sagrado de volta a Minish Woods
+        if (s_dungeon.boss_portal_spawned) {
+            float px = s_dungeon.portal_x;
+            float py = s_dungeon.portal_y;
+            if (fabsf(lx + 8.0f - px) <= 14.0f && fabsf(ly + 8.0f - py) <= 14.0f) {
+                dungeon_exit(link_x, link_y, link_dir);
+                return;
+            }
+        }
     }
 }
 
@@ -402,10 +471,12 @@ bool dungeon_is_solid(float world_x, float world_y) {
         if (row == 0 && (col == 7 || col == 8)) {
             if (s_dungeon.current_room == ROOM_ENTRANCE && s_dungeon.door_north_entrance.is_open) return false;
             if (s_dungeon.current_room == ROOM_WATER_CHANNEL && s_dungeon.door_locked_water.is_open) return false;
+            if (s_dungeon.current_room == ROOM_SANCTUARY_ALTAR) return false; // Passagem para o boss
         }
         if (row == 9 && (col == 7 || col == 8)) {
             // Escada de saída na Sala 0 ou portas sul nas outras salas
             if (s_dungeon.current_room == ROOM_GUARDIANS && !s_dungeon.room_guardians_cleared) return true;
+            if (s_dungeon.current_room == ROOM_BOSS_ARENA && !s_dungeon.door_boss_shutter.is_open) return true;
             return false;
         }
         if (col == 15 && (row == 4 || row == 5) && s_dungeon.current_room == ROOM_GUARDIANS) {
@@ -435,9 +506,14 @@ bool dungeon_is_solid(float world_x, float world_y) {
         }
     }
 
-    // Colisão com o Altar na Sala 3
+    // Colisão com o Altar na Sala 3 (apenas o bloco cerimonial)
     if (s_dungeon.current_room == ROOM_SANCTUARY_ALTAR) {
         if (col >= 6 && col <= 9 && row >= 2 && row <= 3) return true;
+    }
+
+    // Colisão na Sala do Chefe (4 pilares rituais nos cantos)
+    if (s_dungeon.current_room == ROOM_BOSS_ARENA) {
+        if ((col == 3 || col == 12) && (row == 3 || row == 7)) return true;
     }
 
     return false;
@@ -625,6 +701,13 @@ void dungeon_render(const Camera* cam) {
             draw_rect_blend(ch_sx + 2, ch_sy + 5, 12, 4, 0x881111FF);
         }
 
+        // Porta Norte para a Arena do Chefe (ROOM_BOSS_ARENA)
+        int dn_sx, dn_sy;
+        map_world_to_screen(cam, 7.0f * TILE_SIZE, 0.0f, &dn_sx, &dn_sy);
+        draw_rect_blend(dn_sx, dn_sy, 32, 16, 0x050810FF);
+        draw_rect_blend(dn_sx + 2, dn_sy + 2, 28, 2, 0xD4AF37FF);
+        draw_rect_blend(dn_sx + 14, dn_sy + 4, 4, 3, 0x22C55EFF);
+
         // Tochas Místicas de Fogo Azul do Altar
         int b1_x, b1_y, b2_x, b2_y;
         map_world_to_screen(cam, 4.0f * TILE_SIZE, 2.0f * TILE_SIZE, &b1_x, &b1_y);
@@ -635,6 +718,74 @@ void dungeon_render(const Camera* cam) {
         draw_rect_blend(b2_x + 4, b2_y + 8, 8, 8, 0xD4AF37FF);
         draw_rect_blend(b1_x + 5, b1_y + 3, 6, 6, blue_fire);
         draw_rect_blend(b2_x + 5, b2_y + 3, 6, 6, blue_fire);
+    } else if (s_dungeon.current_room == ROOM_BOSS_ARENA) {
+        // Porta Sul (Grades Shutter para o Santuário)
+        int ds_sx, ds_sy;
+        map_world_to_screen(cam, 7.0f * TILE_SIZE, 9.0f * TILE_SIZE, &ds_sx, &ds_sy);
+        if (!s_dungeon.door_boss_shutter.is_open) {
+            for (int bar = 0; bar < 6; bar++) {
+                draw_rect_blend(ds_sx + 2 + (bar * 5), ds_sy + 2, 2, 14, C_DUNG_IRON);
+            }
+        } else {
+            draw_rect_blend(ds_sx, ds_sy, 32, 16, 0x050810FF);
+        }
+
+        // Círculo Sagrado Ritual da Arena do Chefe (Círculos concêntricos de pedra polida)
+        int ac_x, ac_y;
+        map_world_to_screen(cam, 7.5f * TILE_SIZE + 8.0f, 4.5f * TILE_SIZE + 8.0f, &ac_x, &ac_y);
+        for (int r = 48; r >= 16; r -= 16) {
+            u32 ring_col = (r == 48) ? 0x1E293BFF : ((r == 32) ? 0x475569FF : 0xD4AF37FF);
+            for (int deg = 0; deg < 360; deg += 6) {
+                float rad = (float)deg * (PI_F / 180.0f);
+                int rx = ac_x + (int)(cosf(rad) * (float)r);
+                int ry = ac_y + (int)(sinf(rad) * (float)(r * 0.65f));
+                hal_video_put_pixel(rx, ry, ring_col);
+                hal_video_put_pixel(rx + 1, ry, ring_col);
+            }
+        }
+
+        // 4 Pilares Arcanos nos cantos (col 3, col 12, row 3, row 7) com Tochas Místicas
+        int pil_cols[4] = { 3, 12, 3, 12 };
+        int pil_rows[4] = { 3, 3, 7, 7 };
+        for (int p = 0; p < 4; p++) {
+            int p_sx, p_sy;
+            map_world_to_screen(cam, (float)(pil_cols[p] * TILE_SIZE), (float)(pil_rows[p] * TILE_SIZE), &p_sx, &p_sy);
+            draw_rect_blend(p_sx + 1, p_sy + 1, 14, 14, 0x1E293BFF);
+            draw_rect_blend(p_sx + 3, p_sy + 3, 10, 10, 0x475569FF);
+            draw_rect_blend(p_sx + 4, p_sy + 4, 8, 8, 0xD4AF37FF);
+
+            // Fogo Místico de Deepwood Shrine (Verde Esmeralda e Ciano)
+            int b_anim = ((s_anim_timer + p * 8) / 5) % 3;
+            u32 boss_fire = (b_anim == 0) ? 0x22C55EFF : ((b_anim == 1) ? 0x10B981FF : 0x06B6D4FF);
+            draw_rect_blend(p_sx + 5, p_sy + 1, 6, 6, boss_fire);
+            draw_rect_blend(p_sx + 6, p_sy + 2, 4, 4, 0xFFFFFFFF);
+        }
+
+        // Portal Mágico de Teletransporte de Saída (Spawned após derrotar o Boss)
+        if (s_dungeon.boss_portal_spawned) {
+            int pt_sx, pt_sy;
+            map_world_to_screen(cam, s_dungeon.portal_x, s_dungeon.portal_y, &pt_sx, &pt_sy);
+
+            // Anéis concêntricos girando e pulsando em ciano e azul cobalto
+            float time_f = (float)s_anim_timer * 0.12f;
+            for (int ring = 1; ring <= 3; ring++) {
+                float rad_base = (float)(ring * 7) + sinf(time_f + (float)ring) * 2.0f;
+                u32 pcol = (ring == 1) ? 0xFFFFFFFF : ((ring == 2) ? 0x38BDF8FF : 0x1D4ED8FF);
+                for (int d = 0; d < 360; d += 15) {
+                    float a = ((float)d * (PI_F / 180.0f)) + (time_f * (ring % 2 == 0 ? 1.0f : -1.0f));
+                    int px = pt_sx + (int)(cosf(a) * rad_base);
+                    int py = pt_sy + (int)(sinf(a) * rad_base * 0.65f);
+                    hal_video_put_pixel(px, py, pcol);
+                    hal_video_put_pixel(px + 1, py, pcol);
+                }
+            }
+
+            hal_video_put_pixel(pt_sx, pt_sy, 0xFFFFFFFF);
+            hal_video_put_pixel(pt_sx - 1, pt_sy, 0x38BDF8FF);
+            hal_video_put_pixel(pt_sx + 1, pt_sy, 0x38BDF8FF);
+
+            font_draw_text(pt_sx - 24, pt_sy - 22, "PORTAL DE SAIDA", 0x38BDF8FF, true);
+        }
     }
 
     // 3. Tochas Animadas nas Paredes
