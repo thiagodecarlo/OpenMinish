@@ -24,7 +24,9 @@ typedef enum {
     ENTITY_PROJECTILE_ROCK,   // Pedra disparada pelo Octorok
     ENTITY_ITEM_RUPEE,        // Rupee Verde (+5) dropado no chão
     ENTITY_ITEM_HEART,        // Coração de cura (+1 HP) dropado
-    ENTITY_NPC_FOREST_MINISH  // Habitante Minish amigável dos bosques
+    ENTITY_NPC_FOREST_MINISH, // Habitante Minish amigável dos bosques
+    ENTITY_ENEMY_KEESE,       // Morcego clássico Keese (Voo com sombra e oscilação)
+    ENTITY_ENEMY_CHUCHU       // Gosma gelatinosa Green ChuChu (Brota e salta)
 } EntityType;
 
 // Caixa delimitadora de colisão e dano (Hitbox / Hurtbox)
@@ -38,12 +40,14 @@ typedef struct {
 // Estrutura canônica de Entidade (Actor)
 typedef struct Entity {
     u8         type;               // Tipo da entidade (EntityType)
-    u8         action;             // Estado principal (0=Init, 1=Patrulha, 2=Alerta, 3=Disparo, 4=Recuo, 5=Morte)
+    u8         action;             // Estado principal (0=Init, 1=Patrulha/Idle, 2=Alerta/Salto, 3=Ataque/Mergulho, 4=Recuo, 5=Morte)
     u8         subAction;          // Sub-estágio da ação
     float      x;                  // Coordenada X no mundo (float sub-pixel)
     float      y;                  // Coordenada Y no mundo (float sub-pixel)
+    float      z;                  // Altitude Z / Altura acima do solo (para entidades voadoras como Keese)
     float      vx;                 // Vetor de velocidade X
     float      vy;                 // Vetor de velocidade Y
+    float      vz;                 // Vetor de velocidade Z
     Direction  dir;                // Orientação visual (DIR_DOWN, DIR_UP, etc.)
     int        health;             // Vida atual
     int        maxHealth;          // Vida máxima

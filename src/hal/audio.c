@@ -290,6 +290,52 @@ static void synth_generate_all_sfx(void) {
         s_precalc_sfx[SOUND_EZLO_ALERT].total_frames = num_frames;
         s_precalc_sfx[SOUND_EZLO_ALERT].is_stereo = false;
     }
+
+    // 10. SOUND_KEESE_CHIRP: Guincho ultrassônico e bater de asas do Keese (120ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.120f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float freq = 1800.0f + 600.0f * sinf(2.0f * PI_F * 22.0f * t);
+            float flutter = 0.7f + 0.3f * sinf(2.0f * PI_F * 35.0f * t);
+            float env = expf(-18.0f * t) * flutter;
+            phase += freq / (float)AUDIO_SAMPLE_RATE;
+            float pulse = synth_square_wave(phase, 0.20f) * 0.7f;
+            float noise = synth_noise() * 0.3f * expf(-25.0f * t);
+            float total = (pulse + noise) * env * 21000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_KEESE_CHIRP].samples = buf;
+        s_precalc_sfx[SOUND_KEESE_CHIRP].total_frames = num_frames;
+        s_precalc_sfx[SOUND_KEESE_CHIRP].is_stereo = false;
+    }
+
+    // 11. SOUND_CHUCHU_SQUISH: Som elástico/gelatinoso de salto do Green ChuChu (140ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.140f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            // Sweep elástico ascendente e queda rápida
+            float f = (t < 0.06f) ? (160.0f + 320.0f * (t / 0.06f)) : (480.0f - 260.0f * ((t - 0.06f) / 0.08f));
+            float env = expf(-16.0f * t);
+            phase += f / (float)AUDIO_SAMPLE_RATE;
+            float tone1 = sinf(2.0f * PI_F * phase);
+            float tone2 = synth_triangle_wave(phase * 1.5f) * 0.35f;
+            float total = (tone1 + tone2) * env * 24000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_CHUCHU_SQUISH].samples = buf;
+        s_precalc_sfx[SOUND_CHUCHU_SQUISH].total_frames = num_frames;
+        s_precalc_sfx[SOUND_CHUCHU_SQUISH].is_stereo = false;
+    }
 }
 
 // ----------------------------------------------------------------------------

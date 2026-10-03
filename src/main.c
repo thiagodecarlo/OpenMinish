@@ -325,18 +325,27 @@ int main(int argc, char* argv[]) {
     link.knock_x = 0.0f;
     link.knock_y = 0.0f;
 
-    // Inicialização do Subsistema de Entidades e Spawn de Inimigos (Octoroks) e NPCs
+    // Inicialização do Subsistema de Entidades e Spawn de Inimigos e NPCs
     entity_manager_init();
     if (world_map && world_map->is_authentic) {
+        // Inimigos clássicos Octorok
         entity_spawn(ENTITY_ENEMY_OCTOROK, 400.0f, 620.0f);
         entity_spawn(ENTITY_ENEMY_OCTOROK, 500.0f, 620.0f);
         entity_spawn(ENTITY_ENEMY_OCTOROK, 448.0f, 500.0f);
+        // Morcegos voadores Keese (com sombra e vôo senoidal)
+        entity_spawn(ENTITY_ENEMY_KEESE, 380.0f, 540.0f);
+        entity_spawn(ENTITY_ENEMY_KEESE, 520.0f, 550.0f);
+        // Gosmas Green ChuChu (camufladas no chão)
+        entity_spawn(ENTITY_ENEMY_CHUCHU, 420.0f, 660.0f);
+        entity_spawn(ENTITY_ENEMY_CHUCHU, 480.0f, 660.0f);
         // Habitante Minish amigável próximo ao caminho da clareira
         entity_spawn(ENTITY_NPC_FOREST_MINISH, 448.0f, 570.0f);
     } else {
         entity_spawn(ENTITY_ENEMY_OCTOROK, 160.0f, 220.0f);
         entity_spawn(ENTITY_ENEMY_OCTOROK, 420.0f, 150.0f);
         entity_spawn(ENTITY_ENEMY_OCTOROK, 340.0f, 310.0f);
+        entity_spawn(ENTITY_ENEMY_KEESE, 200.0f, 130.0f);
+        entity_spawn(ENTITY_ENEMY_CHUCHU, 320.0f, 220.0f);
         entity_spawn(ENTITY_NPC_FOREST_MINISH, 250.0f, 176.0f);
     }
 

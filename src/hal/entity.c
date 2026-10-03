@@ -7,6 +7,10 @@
 #include <string.h>
 #include <math.h>
 
+#ifndef PI_F
+#define PI_F 3.14159265358979323846f
+#endif
+
 /*
  * ============================================================================
  * src/hal/entity.c - Gerenciador de Entidades, IA do Octorok e NPCs
@@ -80,6 +84,32 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     e->damage    = 0;
                     e->dir       = DIR_DOWN;
                     e->action    = 1; // Idle/respirando
+                    e->z         = 0.0f;
+                    e->vz        = 0.0f;
+                    e->hitbox    = (Hitbox){ 2.0f, 2.0f, 12.0f, 12.0f };
+                    break;
+
+                case ENTITY_ENEMY_KEESE:
+                    e->health    = 1;
+                    e->maxHealth = 1;
+                    e->damage    = 1;
+                    e->dir       = DIR_DOWN;
+                    e->action    = 1; // Voo de cruzeiro
+                    e->z         = 10.0f;
+                    e->vz        = 0.0f;
+                    e->aiTimer   = 60 + (rand() % 60);
+                    e->hitbox    = (Hitbox){ 1.0f, 1.0f, 14.0f, 12.0f };
+                    break;
+
+                case ENTITY_ENEMY_CHUCHU:
+                    e->health    = 2;
+                    e->maxHealth = 2;
+                    e->damage    = 1;
+                    e->dir       = DIR_DOWN;
+                    e->action    = 0; // Poça de gosma camuflada no solo
+                    e->z         = 0.0f;
+                    e->vz        = 0.0f;
+                    e->aiTimer   = 30;
                     e->hitbox    = (Hitbox){ 2.0f, 2.0f, 12.0f, 12.0f };
                     break;
 
@@ -334,6 +364,198 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
                 }
             }
         }
+
+        // --------------------------------------------------------------------
+        // 5. INIMIGO: KEESE (MORCEGO VOADOR)
+        // --------------------------------------------------------------------
+        else if (e->type == ENTITY_ENEMY_KEESE) {
+            e->animTimer++;
+            if (e->invulnerableTimer > 0) e->invulnerableTimer--;
+
+            // Ação 4: Recuo por golpe de espada
+            if (e->action == 4) {
+                e->x += e->knockbackVx;
+                e->y += e->knockbackVy;
+                e->knockbackVx *= 0.86f;
+                e->knockbackVy *= 0.86f;
+                e->knockbackTimer--;
+                if (e->knockbackTimer <= 0) {
+                    if (e->health <= 0) {
+                        e->is_active = false;
+                        if ((rand() % 100) < 65) {
+                            EntityType drop = ((rand() % 2) == 0) ? ENTITY_ITEM_RUPEE : ENTITY_ITEM_HEART;
+                            entity_spawn(drop, e->x, e->y);
+                        }
+                        continue;
+                    }
+                    e->action = 3; // Foge após o golpe
+                    e->aiTimer = 60;
+                }
+                continue;
+            }
+
+            // Oscilação vertical senoidal de altitude no voo (bobbing)
+            e->z = 10.0f + 3.5f * sinf((float)e->animTimer * 0.16f);
+
+            float dx = link_x - e->x;
+            float dy = link_y - e->y;
+            float dist = sqrtf(dx * dx + dy * dy);
+
+            // Máquina de estados da IA
+            if (e->action == 1) { // Voo de cruzeiro / patrulha
+                e->x += e->vx;
+                e->y += e->vy;
+                e->aiTimer--;
+                if (e->aiTimer <= 0) {
+                    float angle = ((float)(rand() % 360)) * (PI_F / 180.0f);
+                    e->vx = cosf(angle) * 0.65f;
+                    e->vy = sinf(angle) * 0.65f;
+                    e->aiTimer = 45 + (rand() % 45);
+                }
+
+                // Detecta Link se estiver a até 80 pixels
+                if (dist < 80.0f && dist > 1.0f) {
+                    e->action = 2; // Alerta e rasante
+                    e->aiTimer = 90;
+                    hal_audio_play_sound(SOUND_KEESE_CHIRP, 0.65f, 1.05f);
+                }
+            } else if (e->action == 2) { // Rasante em direção ao Link
+                if (dist > 1.0f) {
+                    float target_vx = (dx / dist) * 1.35f;
+                    float target_vy = (dy / dist) * 1.35f;
+                    e->vx += (target_vx - e->vx) * 0.10f;
+                    e->vy += (target_vy - e->vy) * 0.10f;
+                }
+                e->x += e->vx;
+                e->y += e->vy;
+
+                // Baixa um pouco a altitude ao mergulhar
+                e->z = 6.0f + 2.0f * sinf((float)e->animTimer * 0.22f);
+
+                e->aiTimer--;
+                if (e->aiTimer <= 0) {
+                    e->action = 3; // Afasta-se em arco
+                    e->aiTimer = 50;
+                }
+            } else if (e->action == 3) { // Recuo / circundar para nova investida
+                if (dist > 1.0f) {
+                    float away_vx = -(dx / dist) * 0.90f;
+                    float away_vy = -(dy / dist) * 0.90f;
+                    e->vx += (away_vx - e->vx) * 0.08f;
+                    e->vy += (away_vy - e->vy) * 0.08f;
+                }
+                e->x += e->vx;
+                e->y += e->vy;
+                e->aiTimer--;
+                if (e->aiTimer <= 0) {
+                    e->action = 1;
+                    e->aiTimer = 50;
+                }
+            }
+
+            // Dano de contato ao herói (se estiver baixo o suficiente e o Link vulnerável)
+            if (e->z <= 12.0f && *link_invuln_timer <= 0 && dist < 12.0f) {
+                if (*link_hearts > 0) (*link_hearts)--;
+                *link_invuln_timer = 50;
+                hal_audio_play_sound(SOUND_HEART_BEEP, 0.85f, 1.0f);
+                *link_knock_x = (e->vx > 0.0f) ? 3.0f : -3.0f;
+                *link_knock_y = (e->vy > 0.0f) ? 3.0f : -3.0f;
+                e->action = 3; // Recua após acertar
+                e->aiTimer = 45;
+            }
+        }
+
+        // --------------------------------------------------------------------
+        // 6. INIMIGO: GREEN CHUCHU (GOSMA GELATINOSA)
+        // --------------------------------------------------------------------
+        else if (e->type == ENTITY_ENEMY_CHUCHU) {
+            e->animTimer++;
+            if (e->invulnerableTimer > 0) e->invulnerableTimer--;
+
+            // Ação 4: Recuo por golpe de espada
+            if (e->action == 4) {
+                e->x += e->knockbackVx;
+                e->y += e->knockbackVy;
+                e->knockbackVx *= 0.82f;
+                e->knockbackVy *= 0.82f;
+                e->knockbackTimer--;
+                if (e->knockbackTimer <= 0) {
+                    if (e->health <= 0) {
+                        e->is_active = false;
+                        if ((rand() % 100) < 70) {
+                            EntityType drop = ((rand() % 2) == 0) ? ENTITY_ITEM_RUPEE : ENTITY_ITEM_HEART;
+                            entity_spawn(drop, e->x, e->y);
+                        }
+                        continue;
+                    }
+                    e->action = 2; // Volta a se preparar para o próximo salto
+                    e->aiTimer = 35;
+                }
+                continue;
+            }
+
+            float dx = link_x - e->x;
+            float dy = link_y - e->y;
+            float dist = sqrtf(dx * dx + dy * dy);
+
+            // Estado 0: Poça disfarçada no solo
+            if (e->action == 0) {
+                if (dist <= 65.0f) {
+                    e->action = 1; // Brotar / Emergência vertical
+                    e->aiTimer = 20;
+                    hal_audio_play_sound(SOUND_CHUCHU_SQUISH, 0.70f, 0.90f);
+                }
+            }
+            // Estado 1: Emergindo da terra
+            else if (e->action == 1) {
+                e->aiTimer--;
+                if (e->aiTimer <= 0) {
+                    e->action = 2; // Em pé, preparando salto
+                    e->aiTimer = 30;
+                }
+            }
+            // Estado 2: Agachando (squash) para impulso de salto
+            else if (e->action == 2) {
+                e->aiTimer--;
+                if (e->aiTimer <= 0) {
+                    if (dist > 1.0f && dist < 120.0f) {
+                        e->action = 3; // Salto parabólico no ar!
+                        e->vx = (dx / dist) * 1.55f;
+                        e->vy = (dy / dist) * 1.55f;
+                        e->vz = 3.2f; // Impulso vertical inicial
+                        e->z = 0.0f;
+                        hal_audio_play_sound(SOUND_CHUCHU_SQUISH, 0.85f, 1.15f);
+                    } else {
+                        e->aiTimer = 30; // Espera o herói se aproximar
+                    }
+                }
+            }
+            // Estado 3: Salto aéreo balístico
+            else if (e->action == 3) {
+                e->x += e->vx;
+                e->y += e->vy;
+                e->z += e->vz;
+                e->vz -= 0.26f; // Gravidade que puxa a gosma de volta
+
+                // Colisão de aterrissagem
+                if (e->z <= 0.0f) {
+                    e->z = 0.0f;
+                    e->vx = 0.0f;
+                    e->vy = 0.0f;
+                    e->action = 2; // Recuperação pós-salto
+                    e->aiTimer = 40;
+                }
+            }
+
+            // Dano de contato ao Link (quando emergido)
+            if (e->action > 0 && *link_invuln_timer <= 0 && dist < 13.0f && e->z <= 8.0f) {
+                if (*link_hearts > 0) (*link_hearts)--;
+                *link_invuln_timer = 50;
+                hal_audio_play_sound(SOUND_HEART_BEEP, 0.85f, 1.0f);
+                *link_knock_x = (dx > 0.0f) ? -3.0f : 3.0f;
+                *link_knock_y = (dy > 0.0f) ? -3.0f : 3.0f;
+            }
+        }
     }
 }
 
@@ -350,8 +572,17 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
         Entity* e = &s_entities[i];
         if (!e->is_active) continue;
 
-        // Golpeando o Octorok
-        if (e->type == ENTITY_ENEMY_OCTOROK && e->invulnerableTimer <= 0) {
+        // Golpeando Inimigo (Octorok, Keese ou ChuChu)
+        if ((e->type == ENTITY_ENEMY_OCTOROK ||
+             e->type == ENTITY_ENEMY_KEESE ||
+             (e->type == ENTITY_ENEMY_CHUCHU && e->action > 0)) &&
+            e->invulnerableTimer <= 0) {
+
+            // Se o Keese estiver voando alto demais fora do alcance da lâmina
+            if (e->type == ENTITY_ENEMY_KEESE && e->z > 16.0f) {
+                continue;
+            }
+
             float ox1 = e->x + e->hitbox.offset_x;
             float oy1 = e->y + e->hitbox.offset_y;
             float ox2 = ox1 + e->hitbox.width;
@@ -361,9 +592,9 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
                 e->health -= damage;
                 e->invulnerableTimer = 18; // Pisca de dano
                 e->action = 4; // Knockback
-                e->knockbackTimer = 10;
+                e->knockbackTimer = (e->type == ENTITY_ENEMY_KEESE) ? 14 : 10;
 
-                float force = 3.2f;
+                float force = (e->type == ENTITY_ENEMY_KEESE) ? 4.2f : 3.0f;
                 e->knockbackVx = 0.0f;
                 e->knockbackVy = 0.0f;
                 if (slash_dir == DIR_DOWN)  e->knockbackVy = force;
@@ -371,7 +602,8 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
                 if (slash_dir == DIR_LEFT)  e->knockbackVx = -force;
                 if (slash_dir == DIR_RIGHT) e->knockbackVx = force;
 
-                hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 1.2f);
+                float hit_pitch = (e->type == ENTITY_ENEMY_CHUCHU) ? 1.45f : 1.20f;
+                hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, hit_pitch);
                 hit_something = true;
             }
         }
@@ -589,6 +821,116 @@ void entity_manager_render(const Camera* cam) {
                 int prompt_y = sy - 14 + bounce;
                 draw_filled_rect(prompt_x - 1, prompt_y - 1, 48, 10, 0x0A2010EE);
                 font_draw_text(prompt_x + 1, prompt_y, "[A] Falar", 0xFFE27AFF, true);
+            }
+        }
+
+        // 6. INIMIGO: KEESE (MORCEGO VOADOR COM SOMBRA PROJETADA)
+        else if (e->type == ENTITY_ENEMY_KEESE) {
+            // Sombra oval no chão (projeção de altitude 3D no terreno)
+            draw_filled_rect(sx + 3, sy + 12, 10, 3, 0x05100766);
+            draw_filled_rect(sx + 4, sy + 11, 8, 4, 0x05100766);
+
+            // Piscar ao receber dano da espada
+            if (e->invulnerableTimer > 0 && ((e->invulnerableTimer / 3) % 2 == 0)) {
+                continue;
+            }
+
+            int by = sy - (int)e->z;
+
+            u32 c_body  = 0x2A0E3DFF; // Roxo escuro do corpo
+            u32 c_wing  = 0x58247DFF; // Asas violeta
+            u32 c_rib   = 0x8239B5FF; // Nervuras das asas
+            u32 c_eye   = 0xFFD700FF; // Olhos dourados brilhantes
+            u32 c_pupil = 0xEE1100FF; // Íris vermelha
+
+            // Corpo e cabeça central do morcego
+            draw_filled_rect(sx + 6, by + 4, 4, 6, c_body);
+            put_pixel_safe(sx + 6, by + 3, c_body); // Orelha esq
+            put_pixel_safe(sx + 9, by + 3, c_body); // Orelha dir
+
+            // Olhos brilhantes
+            put_pixel_safe(sx + 6, by + 5, c_eye);
+            put_pixel_safe(sx + 9, by + 5, c_eye);
+            put_pixel_safe(sx + 7, by + 6, c_pupil);
+            put_pixel_safe(sx + 8, by + 6, c_pupil);
+
+            // Presas brancas
+            put_pixel_safe(sx + 6, by + 8, 0xFFFFFFFF);
+            put_pixel_safe(sx + 9, by + 8, 0xFFFFFFFF);
+
+            // Animação de bater asas (Wings Up / Wings Down)
+            bool wings_up = ((e->animTimer / 6) % 2 == 0);
+            if (wings_up) {
+                // Asas apontadas para cima
+                draw_filled_rect(sx + 2, by + 1, 4, 4, c_wing);
+                draw_filled_rect(sx + 10, by + 1, 4, 4, c_wing);
+                put_pixel_safe(sx + 1, by, c_rib);
+                put_pixel_safe(sx + 14, by, c_rib);
+            } else {
+                // Asas apontadas para baixo/horizontal
+                draw_filled_rect(sx + 1, by + 5, 5, 4, c_wing);
+                draw_filled_rect(sx + 10, by + 5, 5, 4, c_wing);
+                put_pixel_safe(sx, by + 8, c_rib);
+                put_pixel_safe(sx + 15, by + 8, c_rib);
+            }
+        }
+
+        // 7. INIMIGO: GREEN CHUCHU (GOSMA GELATINOSA)
+        else if (e->type == ENTITY_ENEMY_CHUCHU) {
+            // Piscar ao receber dano
+            if (e->invulnerableTimer > 0 && ((e->invulnerableTimer / 3) % 2 == 0)) {
+                continue;
+            }
+
+            u32 c_jelly = 0x26C437FF; // Verde translúcido
+            u32 c_dark  = 0x146B1EFF; // Base escura
+            u32 c_shine = 0x88FFAAFF; // Brilho de gelatina
+            u32 c_white = 0xFFFFFFFF; // Olhos brancos
+            u32 c_pupil = 0x111111FF; // Pupilas
+
+            // Estado 0: Poça camuflada no solo
+            if (e->action == 0) {
+                draw_filled_rect(sx + 2, sy + 13, 12, 3, c_jelly);
+                draw_filled_rect(sx + 4, sy + 12, 8, 1, c_shine);
+                put_pixel_safe(sx + 3, sy + 14, c_dark);
+                put_pixel_safe(sx + 12, sy + 14, c_dark);
+            }
+            // Estado 1: Emergindo da terra
+            else if (e->action == 1) {
+                int h = 4 + (20 - e->aiTimer) / 2;
+                if (h > 12) h = 12;
+                draw_filled_rect(sx + 3, sy + 16 - h, 10, h, c_jelly);
+                draw_filled_rect(sx + 5, sy + 16 - h, 6, 2, c_shine);
+            }
+            // Estado 2: Agachado (Squash) preparando salto
+            else if (e->action == 2 || e->action == 4) {
+                int wobble = (e->action == 4) ? ((e->animTimer % 2 == 0) ? 1 : -1) : 0;
+                draw_filled_rect(sx + 1 + wobble, sy + 7, 14, 8, c_jelly);
+                draw_filled_rect(sx + 2 + wobble, sy + 14, 12, 2, c_dark);
+                draw_filled_rect(sx + 3 + wobble, sy + 6, 10, 2, c_shine);
+
+                // Olhos cômicos esbugalhados
+                draw_filled_rect(sx + 4 + wobble, sy + 8, 3, 4, c_white);
+                draw_filled_rect(sx + 9 + wobble, sy + 8, 3, 4, c_white);
+                put_pixel_safe(sx + 5 + wobble, sy + 9, c_pupil);
+                put_pixel_safe(sx + 10 + wobble, sy + 9, c_pupil);
+            }
+            // Estado 3: Salto balístico no ar
+            else if (e->action == 3) {
+                // Sombra no chão durante o salto
+                draw_filled_rect(sx + 3, sy + 13, 10, 3, 0x05100766);
+
+                int cy = sy - (int)e->z;
+                // Formato alongado de gota d'água / lágrima
+                draw_filled_rect(sx + 3, cy + 2, 10, 13, c_jelly);
+                draw_filled_rect(sx + 5, cy, 6, 3, c_shine);
+                draw_filled_rect(sx + 4, cy + 14, 8, 2, c_dark);
+
+                // Olhos abertos no ar
+                draw_filled_rect(sx + 4, cy + 5, 3, 4, c_white);
+                draw_filled_rect(sx + 9, cy + 5, 3, 4, c_white);
+                put_pixel_safe(sx + 5, cy + 7, c_pupil);
+                put_pixel_safe(sx + 10, cy + 7, c_pupil);
             }
         }
     }
