@@ -891,6 +891,74 @@ static void synth_generate_all_sfx(void) {
         s_precalc_sfx[SOUND_TIGER_SCROLL].total_frames = num_frames;
         s_precalc_sfx[SOUND_TIGER_SCROLL].is_stereo = false;
     }
+
+    // 31. SOUND_SHOP_BUY: Chime cristalino de moedas/compra na loja do Stockwell (280ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.280f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase1 = 0.0f;
+        float phase2 = 0.0f;
+        float phase3 = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float total = 0.0f;
+            if (t < 0.090f) {
+                // Primeira moeda (B5: 987.77 Hz + harmônico)
+                float env = expf(-18.0f * t);
+                phase1 += 987.77f / (float)AUDIO_SAMPLE_RATE;
+                phase2 += 1975.53f / (float)AUDIO_SAMPLE_RATE;
+                float bell = sinf(2.0f * PI_F * phase1) * 0.65f + sinf(2.0f * PI_F * phase2) * 0.35f;
+                total = bell * env * 25000.0f;
+            } else {
+                // Segunda moeda mais aguda com brilho cintilante (E6: 1318.51 Hz + B6: 1975.53 Hz)
+                float rel_t = t - 0.090f;
+                float env = expf(-11.0f * rel_t);
+                phase2 += 1318.51f / (float)AUDIO_SAMPLE_RATE;
+                phase3 += 2637.02f / (float)AUDIO_SAMPLE_RATE;
+                float bell = sinf(2.0f * PI_F * phase2) * 0.60f + sinf(2.0f * PI_F * phase3) * 0.40f;
+                total = bell * env * 27000.0f;
+            }
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_SHOP_BUY].samples = buf;
+        s_precalc_sfx[SOUND_SHOP_BUY].total_frames = num_frames;
+        s_precalc_sfx[SOUND_SHOP_BUY].is_stereo = false;
+    }
+
+    // 32. SOUND_TOWN_BELL: Sino ressonante da torre da Cidade de Hyrule (650ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.650f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float p_fund = 0.0f;
+        float p_oct = 0.0f;
+        float p_fifth = 0.0f;
+        float p_strike = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-4.8f * t);
+            float strike_env = expf(-40.0f * t);
+
+            p_fund   += 523.25f / (float)AUDIO_SAMPLE_RATE;  // Dó5
+            p_oct    += 1046.50f / (float)AUDIO_SAMPLE_RATE; // Dó6
+            p_fifth  += 783.99f / (float)AUDIO_SAMPLE_RATE;  // Sol5
+            p_strike += 2093.00f / (float)AUDIO_SAMPLE_RATE; // Dó7
+
+            float bell = sinf(2.0f * PI_F * p_fund) * 0.45f +
+                         sinf(2.0f * PI_F * p_oct) * 0.30f +
+                         sinf(2.0f * PI_F * p_fifth) * 0.25f;
+            float strike = sinf(2.0f * PI_F * p_strike) * strike_env * 0.35f;
+
+            float total = (bell * env + strike) * 26000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_TOWN_BELL].samples = buf;
+        s_precalc_sfx[SOUND_TOWN_BELL].total_frames = num_frames;
+        s_precalc_sfx[SOUND_TOWN_BELL].is_stereo = false;
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -1648,6 +1716,244 @@ static s16* synth_generate_boss_battle(u32* out_total_frames) {
     return out_buf;
 }
 
+static s16* synth_generate_hyrule_town(u32* out_total_frames) {
+    float bpm = 124.0f;
+    float beat_sec = 60.0f / bpm;
+    int total_bars = 8;
+    float total_seconds = total_bars * 4.0f * beat_sec;
+    u32 total_frames = (u32)(total_seconds * AUDIO_SAMPLE_RATE);
+
+    float* mix_l = (float*)calloc(total_frames, sizeof(float));
+    float* mix_r = (float*)calloc(total_frames, sizeof(float));
+    if (!mix_l || !mix_r) {
+        if (mix_l) free(mix_l);
+        if (mix_r) free(mix_r);
+        return NULL;
+    }
+
+    // ------------------------------------------------------------------------
+    // Canal 1: Melodia Principal Alegre (Flauta Minish / Lead Solene Fá Maior)
+    // ------------------------------------------------------------------------
+    static const NoteEvent s_town_melody[] = {
+        // Compasso 1 (Fá Maior - salto alegre)
+        { 65, 1.0f }, { 69, 1.0f }, { 72, 1.5f }, { 74, 0.5f },
+        // Compasso 2 (Fá -> Dó)
+        { 72, 1.0f }, { 69, 1.0f }, { 65, 1.5f }, { 67, 0.5f },
+        // Compasso 3 (Si bemol)
+        { 69, 0.5f }, { 70, 0.5f }, { 72, 1.0f }, { 74, 1.0f }, { 72, 1.0f },
+        // Compasso 4 (Dó7 - cadência doce)
+        { 70, 1.0f }, { 69, 1.0f }, { 67, 2.0f },
+        // Compasso 5 (Fá Maior agudo)
+        { 65, 1.0f }, { 69, 1.0f }, { 72, 1.0f }, { 77, 1.0f },
+        // Compasso 6 (Si bemol -> Fá)
+        { 76, 1.0f }, { 74, 1.0f }, { 72, 1.0f }, { 69, 1.0f },
+        // Compasso 7 (Sol menor -> Dó7)
+        { 70, 1.0f }, { 74, 1.0f }, { 72, 1.0f }, { 67, 1.0f },
+        // Compasso 8 (Fá Gran Finale)
+        { 65, 3.0f }, { 0, 1.0f }
+    };
+    int melody_count = (int)(sizeof(s_town_melody) / sizeof(s_town_melody[0]));
+
+    float cur_time = 0.0f;
+    for (int n = 0; n < melody_count; n++) {
+        float dur_sec = s_town_melody[n].duration * beat_sec;
+        u32 start_frame = (u32)(cur_time * AUDIO_SAMPLE_RATE);
+        u32 num_frames  = (u32)(dur_sec * AUDIO_SAMPLE_RATE);
+        float base_freq = note_to_freq(s_town_melody[n].note);
+        float phase = 0.0f;
+
+        if (base_freq > 0.0f) {
+            for (u32 i = 0; i < num_frames; i++) {
+                u32 idx = (start_frame + i) % total_frames;
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+
+                float att = (t < 0.02f) ? (t / 0.02f) : 1.0f;
+                float dec = (t > dur_sec - 0.04f) ? ((dur_sec - t) / 0.04f) : 1.0f;
+                if (dec < 0.0f) dec = 0.0f;
+
+                float cur_freq = base_freq;
+                if (dur_sec > 0.40f && t > 0.20f) {
+                    cur_freq += sinf(2.0f * PI_F * 5.5f * (t - 0.20f)) * (base_freq * 0.015f);
+                }
+
+                phase += cur_freq / (float)AUDIO_SAMPLE_RATE;
+                float sample = synth_square_wave(phase, 0.50f) * att * dec * 0.35f;
+
+                mix_l[idx] += sample * 0.50f;
+                mix_r[idx] += sample * 0.50f;
+            }
+        }
+        cur_time += dur_sec;
+    }
+
+    // ------------------------------------------------------------------------
+    // Canal 2: Acordes e Pizzicato em Contratempo (Onda de 25% Duty)
+    // ------------------------------------------------------------------------
+    static const NoteEvent s_town_chords[] = {
+        // Compasso 1 (F)
+        { 0, 0.5f }, { 69, 0.5f }, { 0, 0.5f }, { 72, 0.5f }, { 0, 0.5f }, { 69, 0.5f }, { 0, 0.5f }, { 72, 0.5f },
+        // Compasso 2 (Dm)
+        { 0, 0.5f }, { 65, 0.5f }, { 0, 0.5f }, { 69, 0.5f }, { 0, 0.5f }, { 65, 0.5f }, { 0, 0.5f }, { 67, 0.5f },
+        // Compasso 3 (Bb)
+        { 0, 0.5f }, { 65, 0.5f }, { 0, 0.5f }, { 70, 0.5f }, { 0, 0.5f }, { 74, 0.5f }, { 0, 0.5f }, { 72, 0.5f },
+        // Compasso 4 (C7)
+        { 0, 0.5f }, { 64, 0.5f }, { 0, 0.5f }, { 67, 0.5f }, { 0, 0.5f }, { 70, 0.5f }, { 0, 0.5f }, { 67, 0.5f },
+        // Compasso 5 (F)
+        { 0, 0.5f }, { 69, 0.5f }, { 0, 0.5f }, { 72, 0.5f }, { 0, 0.5f }, { 77, 0.5f }, { 0, 0.5f }, { 72, 0.5f },
+        // Compasso 6 (Bb)
+        { 0, 0.5f }, { 70, 0.5f }, { 0, 0.5f }, { 74, 0.5f }, { 0, 0.5f }, { 72, 0.5f }, { 0, 0.5f }, { 69, 0.5f },
+        // Compasso 7 (Gm / C7)
+        { 0, 0.5f }, { 67, 0.5f }, { 0, 0.5f }, { 70, 0.5f }, { 0, 0.5f }, { 72, 0.5f }, { 0, 0.5f }, { 67, 0.5f },
+        // Compasso 8 (F)
+        { 0, 0.5f }, { 65, 0.5f }, { 0, 0.5f }, { 69, 0.5f }, { 72, 1.0f }, { 0, 1.0f }
+    };
+    int chord_count = (int)(sizeof(s_town_chords) / sizeof(s_town_chords[0]));
+
+    cur_time = 0.0f;
+    for (int c = 0; c < chord_count; c++) {
+        float dur_sec = s_town_chords[c].duration * beat_sec;
+        u32 start_frame = (u32)(cur_time * AUDIO_SAMPLE_RATE);
+        u32 num_frames  = (u32)(dur_sec * AUDIO_SAMPLE_RATE);
+        float freq = note_to_freq(s_town_chords[c].note);
+        float phase = 0.0f;
+
+        if (freq > 0.0f) {
+            for (u32 i = 0; i < num_frames; i++) {
+                u32 idx = (start_frame + i) % total_frames;
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-14.0f * t);
+
+                phase += freq / (float)AUDIO_SAMPLE_RATE;
+                float sample = synth_square_wave(phase, 0.25f) * env * 0.20f;
+
+                mix_l[idx] += sample * 0.60f;
+                mix_r[idx] += sample * 0.40f;
+            }
+        }
+        cur_time += dur_sec;
+    }
+
+    // ------------------------------------------------------------------------
+    // Canal 3: Baixo Saltarico de Marcha Alegre (Onda Triangular PSG)
+    // ------------------------------------------------------------------------
+    static const NoteEvent s_town_bass[] = {
+        // Compasso 1: Fá2, Dó3, Fá2, Lá2
+        { 41, 1.0f }, { 48, 1.0f }, { 41, 1.0f }, { 45, 1.0f },
+        // Compasso 2: Ré2, Lá2, Ré2, Fá2
+        { 38, 1.0f }, { 45, 1.0f }, { 38, 1.0f }, { 41, 1.0f },
+        // Compasso 3: Si bemol 2, Fá2, Si bemol 2, Ré3
+        { 46, 1.0f }, { 41, 1.0f }, { 46, 1.0f }, { 50, 1.0f },
+        // Compasso 4: Dó2, Sol2, Dó3, Mi2
+        { 36, 1.0f }, { 43, 1.0f }, { 48, 1.0f }, { 40, 1.0f },
+        // Compasso 5: Fá2, Dó3, Fá2, Lá2
+        { 41, 1.0f }, { 48, 1.0f }, { 41, 1.0f }, { 45, 1.0f },
+        // Compasso 6: Si bemol 2, Ré3, Fá3, Ré3
+        { 46, 1.0f }, { 50, 1.0f }, { 53, 1.0f }, { 50, 1.0f },
+        // Compasso 7: Dó2, Mi2, Sol2, Dó3
+        { 36, 1.0f }, { 40, 1.0f }, { 43, 1.0f }, { 48, 1.0f },
+        // Compasso 8: Fá2, Dó2, Fá2, Fá2
+        { 41, 1.0f }, { 36, 1.0f }, { 41, 1.0f }, { 41, 1.0f }
+    };
+    int bass_count = (int)(sizeof(s_town_bass) / sizeof(s_town_bass[0]));
+
+    cur_time = 0.0f;
+    for (int b = 0; b < bass_count; b++) {
+        float dur_sec = s_town_bass[b].duration * beat_sec;
+        u32 start_frame = (u32)(cur_time * AUDIO_SAMPLE_RATE);
+        u32 num_frames  = (u32)(dur_sec * AUDIO_SAMPLE_RATE);
+        float freq = note_to_freq(s_town_bass[b].note);
+        float phase = 0.0f;
+
+        for (u32 i = 0; i < num_frames; i++) {
+            u32 idx = (start_frame + i) % total_frames;
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-4.5f * t);
+
+            phase += freq / (float)AUDIO_SAMPLE_RATE;
+            float sample = synth_triangle_wave(phase) * env * 0.32f;
+
+            mix_l[idx] += sample * 0.50f;
+            mix_r[idx] += sample * 0.50f;
+        }
+        cur_time += dur_sec;
+    }
+
+    // ------------------------------------------------------------------------
+    // Canal 4: Percussão da Praça (Pandeiro e Caixa Rítmica)
+    // ------------------------------------------------------------------------
+    for (int bar = 0; bar < total_bars; bar++) {
+        float bar_time = bar * 4.0f * beat_sec;
+
+        for (int beat = 0; beat < 4; beat++) {
+            float beat_time = bar_time + beat * beat_sec;
+
+            // Hi-Hat fechado leve em todos os tempos
+            u32 hat_start = (u32)(beat_time * AUDIO_SAMPLE_RATE);
+            u32 hat_frames = (u32)(0.035f * AUDIO_SAMPLE_RATE);
+            for (u32 i = 0; i < hat_frames; i++) {
+                u32 idx = (hat_start + i) % total_frames;
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-42.0f * t);
+                float sample = synth_noise() * env * 0.08f;
+                mix_l[idx] += sample * 0.55f;
+                mix_r[idx] += sample * 0.45f;
+            }
+
+            // Pandeiro / Palmas nos tempos 2 e 4 (índices 1 e 3)
+            if (beat == 1 || beat == 3) {
+                u32 snare_start = (u32)(beat_time * AUDIO_SAMPLE_RATE);
+                u32 snare_frames = (u32)(0.090f * AUDIO_SAMPLE_RATE);
+                for (u32 i = 0; i < snare_frames; i++) {
+                    u32 idx = (snare_start + i) % total_frames;
+                    float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                    float env = expf(-18.0f * t);
+                    float sample = synth_noise() * env * 0.16f;
+                    mix_l[idx] += sample * 0.48f;
+                    mix_r[idx] += sample * 0.52f;
+                }
+            }
+
+            // Repique sincopado no último contratempo de cada compasso
+            if (beat == 3) {
+                u32 rep_start = (u32)((beat_time + beat_sec * 0.5f) * AUDIO_SAMPLE_RATE);
+                u32 rep_frames = (u32)(0.040f * AUDIO_SAMPLE_RATE);
+                for (u32 i = 0; i < rep_frames; i++) {
+                    u32 idx = (rep_start + i) % total_frames;
+                    float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                    float env = expf(-36.0f * t);
+                    float sample = synth_noise() * env * 0.11f;
+                    mix_l[idx] += sample * 0.50f;
+                    mix_r[idx] += sample * 0.50f;
+                }
+            }
+        }
+    }
+
+    s16* out_buf = (s16*)malloc(total_frames * 2 * sizeof(s16));
+    if (!out_buf) {
+        free(mix_l);
+        free(mix_r);
+        return NULL;
+    }
+
+    for (u32 i = 0; i < total_frames; i++) {
+        float l = mix_l[i] * 28000.0f;
+        float r = mix_r[i] * 28000.0f;
+        if (l > 32767.0f)  l = 32767.0f;
+        if (l < -32768.0f) l = -32768.0f;
+        if (r > 32767.0f)  r = 32767.0f;
+        if (r < -32768.0f) r = -32768.0f;
+
+        out_buf[i * 2 + 0] = (s16)l;
+        out_buf[i * 2 + 1] = (s16)r;
+    }
+
+    free(mix_l);
+    free(mix_r);
+    *out_total_frames = total_frames;
+    return out_buf;
+}
+
 // ----------------------------------------------------------------------------
 // CALLBACK DO MIXER DE BAIXA LATÊNCIA DO SDL2
 // ----------------------------------------------------------------------------
@@ -1885,6 +2191,7 @@ const char* hal_audio_get_bgm_name(BgmTrack track) {
         case BGM_HYRULE_OVERWORLD: return "Hyrule Overworld (Theme)";
         case BGM_DEEPWOOD_SHRINE:  return "Deepwood Shrine (Dungeon)";
         case BGM_BOSS_BATTLE:      return "Boss Battle (Big Green ChuChu)";
+        case BGM_HYRULE_TOWN:      return "Hyrule Town (Hub Central)";
         case BGM_NONE:
         default:                   return "Mudo / Silencio";
     }
@@ -1906,7 +2213,7 @@ void hal_audio_play_bgm(BgmTrack track) {
 
     // 1. Suporte a mods de audio: verifica se existe arquivo WAV customizado em assets/audio/
     char mod_path[256];
-    const char* track_tags[] = { "none", "minish_woods", "hyrule_overworld", "deepwood_shrine", "boss_battle" };
+    const char* track_tags[] = { "none", "minish_woods", "hyrule_overworld", "deepwood_shrine", "boss_battle", "hyrule_town" };
     snprintf(mod_path, sizeof(mod_path), "assets/audio/%s.wav", track_tags[track]);
 
     if (hal_audio_play_music(mod_path, 0.75f, true)) {
@@ -1927,6 +2234,8 @@ void hal_audio_play_bgm(BgmTrack track) {
         samples = synth_generate_deepwood_shrine(&total_frames);
     } else if (track == BGM_BOSS_BATTLE) {
         samples = synth_generate_boss_battle(&total_frames);
+    } else if (track == BGM_HYRULE_TOWN) {
+        samples = synth_generate_hyrule_town(&total_frames);
     }
 
     if (!samples || total_frames == 0) return;

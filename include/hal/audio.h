@@ -51,6 +51,8 @@ typedef enum {
     SOUND_SPIN_READY,      // Chime metálico agudo quando a carga do Spin Attack atinge o máximo
     SOUND_SPIN_ATTACK,     // Giro veloz cortante da lâmina em 360 graus
     SOUND_TIGER_SCROLL,    // Fanfarra marcial sagrada ao receber o Pergaminho do Tigre (Tiger Scroll)
+    SOUND_SHOP_BUY,        // Chime cristalino de compra na loja do Stockwell (moedas / registradora)
+    SOUND_TOWN_BELL,       // Sino ressonante da torre do sino da Cidade de Hyrule
     SOUND_COUNT
 } SoundEffect;
 
@@ -61,6 +63,7 @@ typedef enum {
     BGM_HYRULE_OVERWORLD, // O lendário tema marcial de Hyrule Field
     BGM_DEEPWOOD_SHRINE,  // A atmosfera enigmática e gótica de Deepwood Shrine
     BGM_BOSS_BATTLE,      // Batalha urgente e épica contra o Chefe (Boss Battle)
+    BGM_HYRULE_TOWN,      // O tema alegre, festivo e vibrante da Cidade de Hyrule (Hyrule Town Hub)
     BGM_COUNT
 } BgmTrack;
 

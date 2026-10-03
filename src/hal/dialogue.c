@@ -320,6 +320,218 @@ static void render_portrait_swiftblade(int px, int py, bool is_talking) {
     }
 }
 
+static void render_portrait_shopkeeper(int px, int py, bool is_talking) {
+    draw_rect_blend(px, py, 32, 32, 0x1B140EFF);
+
+    u32 c_cap       = 0x4A148CFF; // Boina roxa mercantil
+    u32 c_cap_dk    = 0x310D5CFF;
+    u32 c_cap_trim  = 0xF1C40FFF; // Fita dourada na boina
+    u32 c_skin      = 0xFDE8CDFF; // Pele clara
+    u32 c_skin_dk   = 0xE0BA94FF;
+    u32 c_hair      = 0x5D4037FF; // Cabelos castanhos
+    u32 c_glasses   = 0xF59E0BFF; // Aro dourado dos óculos
+    u32 c_lens      = 0xE0F2FEFF; // Lentes brilhantes
+    u32 c_pupil     = 0x1E293BFF; // Olhos atentos
+    u32 c_mustache  = 0x4E342EFF; // Bigode
+    u32 c_shirt     = 0xFFFFFFFF; // Colarinho branco
+    u32 c_tie       = 0xDC2626FF; // Gravata borboleta
+    u32 c_apron     = 0x059669FF; // Avental esmeralda
+
+    int talk_offset = (is_talking && ((s_anim_counter / 5) % 2 == 1)) ? 1 : 0;
+
+    // 1. Boina roxa inclinada com fita dourada
+    for (int y = 2; y <= 9; y++) {
+        int w = 18 - (y - 2);
+        for (int x = 16 - w / 2; x <= 16 + w / 2 + 3; x++) {
+            u32 c = (x > 18 || y > 7) ? c_cap_dk : c_cap;
+            hal_video_put_pixel(px + x, py + y - talk_offset, c);
+        }
+    }
+    for (int x = 8; x <= 24; x++) {
+        hal_video_put_pixel(px + x, py + 9 - talk_offset, c_cap_trim);
+    }
+
+    // 2. Cabelo e orelhas
+    draw_rect_blend(px + 6, py + 10, 3, 7, c_hair);
+    draw_rect_blend(px + 23, py + 10, 3, 7, c_hair);
+    hal_video_put_pixel(px + 5, py + 15, c_skin_dk);
+    hal_video_put_pixel(px + 26, py + 15, c_skin_dk);
+
+    // 3. Rosto redondo e simpático
+    for (int y = 10; y <= 22; y++) {
+        for (int x = 8; x <= 23; x++) {
+            float dx = (float)(x - 16) / 7.5f;
+            float dy = (float)(y - 16) / 6.5f;
+            if (dx * dx + dy * dy <= 1.0f) {
+                u32 col = (y > 19) ? c_skin_dk : c_skin;
+                hal_video_put_pixel(px + x, py + y, col);
+            }
+        }
+    }
+
+    // 4. Óculos redondos de Stockwell
+    draw_rect_blend(px + 10, py + 13, 4, 4, c_glasses);
+    draw_rect_blend(px + 11, py + 14, 2, 2, c_lens);
+    hal_video_put_pixel(px + 12, py + 14, c_pupil);
+    hal_video_put_pixel(px + 11, py + 13, 0xFFFFFFFF);
+
+    draw_rect_blend(px + 18, py + 13, 4, 4, c_glasses);
+    draw_rect_blend(px + 19, py + 14, 2, 2, c_lens);
+    hal_video_put_pixel(px + 19, py + 14, c_pupil);
+    hal_video_put_pixel(px + 20, py + 13, 0xFFFFFFFF);
+
+    draw_rect_blend(px + 14, py + 14, 4, 1, c_glasses);
+
+    // 5. Bigodinho e boca
+    draw_rect_blend(px + 14, py + 18, 4, 2, c_mustache);
+    if (talk_offset > 0) {
+        draw_rect_blend(px + 15, py + 20, 2, 2, 0x450A0AFF);
+    } else {
+        hal_video_put_pixel(px + 15, py + 20, 0x8A4520FF);
+        hal_video_put_pixel(px + 16, py + 20, 0x8A4520FF);
+    }
+
+    // 6. Colarinho, gravata e avental
+    draw_rect_blend(px + 12, py + 23, 8, 3, c_shirt);
+    draw_rect_blend(px + 14, py + 23, 4, 2, c_tie);
+    hal_video_put_pixel(px + 15, py + 23, 0xFF6B6BFF);
+    draw_rect_blend(px + 6, py + 25, 20, 7, c_apron);
+    draw_rect_blend(px + 8, py + 24, 2, 8, 0x047857FF);
+    draw_rect_blend(px + 22, py + 24, 2, 8, 0x047857FF);
+}
+
+static void render_portrait_town_citizen(int px, int py, bool is_talking) {
+    draw_rect_blend(px, py, 32, 32, 0x152834FF);
+
+    u32 c_bonnet    = 0xEC4899FF; // Touca rosa
+    u32 c_bonnet_dk = 0xBE185DFF;
+    u32 c_bonnet_lt = 0xFBCFE8FF;
+    u32 c_skin      = 0xFDE8CDFF; // Pele clara
+    u32 c_hair      = 0xD97706FF; // Cabelos castanho-dourados
+    u32 c_blush     = 0xFCA5A5FF; // Bochechas rosadas
+    u32 c_eye       = 0x1E1B4BFF; // Olhos
+    u32 c_dress     = 0x0284C7FF; // Vestido azul celeste
+    u32 c_collar    = 0xFFFFFFFF; // Gola branca
+
+    int talk_offset = (is_talking && ((s_anim_counter / 5) % 2 == 1)) ? 1 : 0;
+
+    // Touca / Bonnet
+    for (int y = 2; y <= 11; y++) {
+        for (int x = 6; x <= 25; x++) {
+            float dx = (float)(x - 16) / 9.5f;
+            float dy = (float)(y - 7) / 5.5f;
+            if (dx * dx + dy * dy <= 1.0f) {
+                u32 col = (y > 8) ? c_bonnet_dk : c_bonnet;
+                hal_video_put_pixel(px + x, py + y, col);
+            }
+        }
+    }
+    for (int x = 5; x <= 26; x += 2) {
+        hal_video_put_pixel(px + x, py + 11, c_bonnet_lt);
+        hal_video_put_pixel(px + x + 1, py + 12, 0xFFFFFFFF);
+    }
+
+    // Cabelos
+    draw_rect_blend(px + 7, py + 12, 3, 8, c_hair);
+    draw_rect_blend(px + 22, py + 12, 3, 8, c_hair);
+    hal_video_put_pixel(px + 9, py + 13, 0xF59E0BFF);
+    hal_video_put_pixel(px + 22, py + 13, 0xF59E0BFF);
+
+    // Rosto
+    for (int y = 12; y <= 23; y++) {
+        for (int x = 9; x <= 22; x++) {
+            float dx = (float)(x - 16) / 6.5f;
+            float dy = (float)(y - 17) / 5.5f;
+            if (dx * dx + dy * dy <= 1.0f) {
+                hal_video_put_pixel(px + x, py + y, c_skin);
+            }
+        }
+    }
+
+    // Olhos e bochechas
+    draw_rect_blend(px + 11, py + 16, 2, 3, c_eye);
+    draw_rect_blend(px + 19, py + 16, 2, 3, c_eye);
+    hal_video_put_pixel(px + 11, py + 16, 0xFFFFFFFF);
+    hal_video_put_pixel(px + 19, py + 16, 0xFFFFFFFF);
+    draw_rect_blend(px + 9, py + 18, 3, 2, c_blush);
+    draw_rect_blend(px + 20, py + 18, 3, 2, c_blush);
+
+    if (talk_offset > 0) {
+        draw_rect_blend(px + 15, py + 21, 2, 2, 0xBE123CFF);
+    } else {
+        hal_video_put_pixel(px + 14, py + 21, 0xE11D48FF);
+        hal_video_put_pixel(px + 15, py + 21, 0xE11D48FF);
+        hal_video_put_pixel(px + 16, py + 21, 0xE11D48FF);
+    }
+
+    // Vestido azul celeste
+    draw_rect_blend(px + 6, py + 25, 20, 7, c_dress);
+    draw_rect_blend(px + 12, py + 24, 8, 3, c_collar);
+    hal_video_put_pixel(px + 15, py + 26, c_bonnet);
+}
+
+static void render_portrait_town_guard(int px, int py) {
+    draw_rect_blend(px, py, 32, 32, 0x1A202CFF);
+
+    u32 c_steel     = 0xD1D5DBFF; // Aço brilhante
+    u32 c_steel_dk  = 0x6B7280FF;
+    u32 c_steel_hi  = 0xFFFFFFFF;
+    u32 c_plume     = 0xDC2626FF; // Pluma vermelha
+    u32 c_plume_dk  = 0x991B1BFF;
+    u32 c_visor     = 0x111827FF;
+    u32 c_eye_glow  = 0x60A5FAFF;
+    u32 c_tunic     = 0x1E3A8AFF; // Manto azul real
+    u32 c_gold      = 0xF59E0BFF;
+
+    // Pluma vermelha
+    for (int y = 2; y <= 8; y++) {
+        int w = 4 + (y - 2);
+        for (int x = 16 - w / 2; x <= 16 + w / 2; x++) {
+            u32 col = (y > 5) ? c_plume_dk : c_plume;
+            hal_video_put_pixel(px + x, py + y, col);
+        }
+    }
+    draw_rect_blend(px + 15, py + 1, 3, 2, c_plume);
+
+    // Elmo de aço
+    for (int y = 7; y <= 21; y++) {
+        for (int x = 8; x <= 24; x++) {
+            float dx = (float)(x - 16) / 7.5f;
+            float dy = (float)(y - 14) / 7.0f;
+            if (dx * dx + dy * dy <= 1.0f) {
+                u32 col = (x > 18 || y > 18) ? c_steel_dk : c_steel;
+                hal_video_put_pixel(px + x, py + y, col);
+            }
+        }
+    }
+    for (int y = 7; y <= 13; y++) {
+        hal_video_put_pixel(px + 16, py + y, c_steel_hi);
+    }
+
+    // Viseira
+    draw_rect_blend(px + 10, py + 14, 13, 4, c_visor);
+    draw_rect_blend(px + 12, py + 15, 3, 2, c_eye_glow);
+    draw_rect_blend(px + 18, py + 15, 3, 2, c_eye_glow);
+    hal_video_put_pixel(px + 13, py + 15, 0xFFFFFFFF);
+    hal_video_put_pixel(px + 19, py + 15, 0xFFFFFFFF);
+
+    for (int x = 12; x <= 20; x += 2) {
+        hal_video_put_pixel(px + x, py + 19, c_visor);
+        hal_video_put_pixel(px + x, py + 20, c_visor);
+    }
+
+    // Peitoral e manto real
+    draw_rect_blend(px + 6, py + 22, 20, 10, c_tunic);
+    draw_rect_blend(px + 10, py + 22, 12, 10, c_steel);
+    draw_rect_blend(px + 12, py + 23, 8, 8, c_steel_hi);
+    hal_video_put_pixel(px + 15, py + 25, c_gold);
+    hal_video_put_pixel(px + 16, py + 25, c_gold);
+    hal_video_put_pixel(px + 14, py + 26, c_gold);
+    hal_video_put_pixel(px + 15, py + 26, c_gold);
+    hal_video_put_pixel(px + 16, py + 26, c_gold);
+    hal_video_put_pixel(px + 17, py + 26, c_gold);
+}
+
 // ----------------------------------------------------------------------------
 // INTERFACE PÚBLICA DO SISTEMA DE DIÁLOGO
 // ----------------------------------------------------------------------------
@@ -440,6 +652,38 @@ bool dialogue_is_swiftblade_reward_pending(void) {
 
 void dialogue_clear_swiftblade_reward(void) {
     s_swiftblade_reward_pending = false;
+}
+
+void dialogue_trigger_shopkeeper_talk(int link_rupees) {
+    static char buf[256];
+    snprintf(buf, sizeof(buf),
+             "Voce possui %d Rupees na sacola!\nAproxime-se do balcao e aperte [A]\npara comprar quando quiser!",
+             link_rupees);
+
+    static const char* pages[3];
+    pages[0] = "Bem-vindo a Loja de Stockwell!\nTrabalho duro para trazer as melhores\nmercadorias de toda a terra de Hyrule!";
+    pages[1] = "Meus produtos de hoje:\n- Pocao Vermelha (Cura Total): 30 R\n- Pedaco de Coracao (+1 Max HP): 80 R\n- Bolsa de Bombas: 50 R";
+    pages[2] = buf;
+
+    dialogue_show(SPEAKER_SHOPKEEPER, "Stockwell", pages, 3);
+}
+
+void dialogue_trigger_town_citizen_talk(void) {
+    static const char* citizen_speech[] = {
+        "Ola, rapazinho! O sol brilha radiante\nsobre a nossa querida Cidade de Hyrule!",
+        "Ouvi dizer que o grande Torneio da\nEspada trara guerreiros de toda parte!",
+        "Se encontrar um pedaco azul de Kinstone,\npressione [L] para unirmos nossa sorte!"
+    };
+    dialogue_show(SPEAKER_TOWN_CITIZEN, "Cidada", citizen_speech, 3);
+}
+
+void dialogue_trigger_town_guard_talk(void) {
+    static const char* guard_speech[] = {
+        "Alto la! Este e o Portao Real que da\nacesso ao Castelo de Hyrule!",
+        "Sua Majestade, o Rei Daltus, ordenou\nvigilancia redobrada nas muralhas.",
+        "Mantenha sua espada afiada e que as\nDeusas de Hyrule iluminem seu caminho!"
+    };
+    dialogue_show(SPEAKER_TOWN_GUARD, "Guarda Real", guard_speech, 3);
 }
 
 void dialogue_update(void) {
@@ -565,7 +809,10 @@ void dialogue_render(void) {
 
         // Texto do nome
         u32 name_col = (s_speaker == SPEAKER_EZLO) ? 0xFFE27AFF :
-                       (s_speaker == SPEAKER_SWIFTBLADE) ? 0xFF6B6BFF : 0x77FF99FF;
+                       (s_speaker == SPEAKER_SWIFTBLADE) ? 0xFF6B6BFF :
+                       (s_speaker == SPEAKER_SHOPKEEPER) ? 0xFDE047FF :
+                       (s_speaker == SPEAKER_TOWN_CITIZEN) ? 0xF472B6FF :
+                       (s_speaker == SPEAKER_TOWN_GUARD) ? 0x60A5FAFF : 0x77FF99FF;
         font_draw_text(badge_x + 6, badge_y + 1, s_speaker_name, name_col, true);
     }
 
@@ -585,6 +832,14 @@ void dialogue_render(void) {
     } else if (s_speaker == SPEAKER_SWIFTBLADE) {
         bool is_talking = (s_state == DIALOGUE_STATE_TYPING);
         render_portrait_swiftblade(port_x, port_y, is_talking);
+    } else if (s_speaker == SPEAKER_SHOPKEEPER) {
+        bool is_talking = (s_state == DIALOGUE_STATE_TYPING);
+        render_portrait_shopkeeper(port_x, port_y, is_talking);
+    } else if (s_speaker == SPEAKER_TOWN_CITIZEN) {
+        bool is_talking = (s_state == DIALOGUE_STATE_TYPING);
+        render_portrait_town_citizen(port_x, port_y, is_talking);
+    } else if (s_speaker == SPEAKER_TOWN_GUARD) {
+        render_portrait_town_guard(port_x, port_y);
     }
 
     // 6. Área de Texto com quebra de linhas (\n)

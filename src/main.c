@@ -67,6 +67,8 @@ static Texture* s_sheet1 = NULL;
 static Texture* s_link_tex = NULL;
 static Texture* s_octo_tex = NULL;
 static Tilemap* s_world_map = NULL;
+static Tilemap* s_town_map  = NULL;
+static bool     s_in_town   = false;
 static SelectedRegion s_current_region = REGION_USA;
 
 static void load_region_sheets(SelectedRegion region) {
@@ -130,6 +132,57 @@ static void spawn_overworld_entities(Tilemap* world_map) {
         entity_spawn(ENTITY_NPC_FOREST_MINISH, 250.0f, 176.0f);
         entity_spawn(ENTITY_NPC_SWIFTBLADE, 260.0f, 220.0f);
     }
+}
+
+static void spawn_town_entities(void) {
+    entity_clear_all();
+    // 1. Comerciante Stockwell em seu mercado (balcão a leste da praça)
+    entity_spawn(ENTITY_NPC_SHOPKEEPER, 448.0f, 104.0f);
+
+    // 2. Chafariz Central ornamental borbulhante no meio da praça
+    entity_spawn(ENTITY_TOWN_FOUNTAIN, 280.0f, 216.0f);
+
+    // 3. Cidadãos e Moradores de Hyrule
+    // Cidadã com metade de Kinstone azul passeando pela praça
+    entity_spawn(ENTITY_NPC_TOWN_CITIZEN, 224.0f, 240.0f);
+    // Cidadã perto das residências a oeste
+    entity_spawn(ENTITY_NPC_TOWN_CITIZEN, 112.0f, 128.0f);
+
+    // 4. Guardas Reais vigiando o Portão Norte do Castelo de Hyrule
+    entity_spawn(ENTITY_NPC_TOWN_GUARD, 240.0f, 32.0f);
+    entity_spawn(ENTITY_NPC_TOWN_GUARD, 320.0f, 32.0f);
+
+    printf("[TOWN] Entidades de Hyrule Town spawnadas com sucesso (Stockwell, Chafariz, Cidadaos, Guardas)!\n");
+}
+
+static void transition_to_town(Player* link) {
+    if (dungeon_is_active()) return;
+    s_in_town = true;
+    link->x = 280.0f; // Portão Sul (x = 17.5 * 16)
+    link->y = 392.0f; // Entrada Sul (y = 24.5 * 16)
+    link->dir = DIR_UP;
+    link->is_moving = false;
+    spawn_town_entities();
+    hal_audio_play_bgm(BGM_HYRULE_TOWN);
+    hal_audio_play_sound(SOUND_TOWN_BELL, 1.0f, 1.0f);
+    printf("[SCENE] Entrando na Cidade de Hyrule (Hyrule Town Hub)!\n");
+}
+
+static void transition_to_overworld(Player* link, Tilemap* world_map) {
+    if (dungeon_is_active()) return;
+    s_in_town = false;
+    if (world_map && world_map->is_authentic) {
+        link->x = 448.0f;
+        link->y = 624.0f;
+    } else {
+        link->x = 296.0f;
+        link->y = 240.0f;
+    }
+    link->dir = DIR_DOWN;
+    link->is_moving = false;
+    spawn_overworld_entities(world_map);
+    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    printf("[SCENE] Retornando a Minish Woods / Overworld!\n");
 }
 
 static void draw_rect(int rx, int ry, int rw, int rh, u32 color) {
@@ -416,10 +469,10 @@ int main(int argc, char* argv[]) {
     printf("  - Fusao Kinstone: [K] ou [Gatilho L no Gamepad] (Unir pedras da sorte com NPCs parceiros!)\n");
     printf("  - Ciclar Itens:   [Q] ou [Gatilho L no Gamepad] (Alternar item secundario equipado)\n");
     printf("  - Falar com Ezlo: [E] ou [Select no Gamepad] (Dicas e orientacoes do gorro companheiro!)\n");
-    printf("  - Trilha Sonora:  [T] ou [Gatilho R no Gamepad] (Minish Woods / Hyrule / Deepwood / Mudo)\n");
+    printf("  - Trilha Sonora:  [T] ou [Gatilho R no Gamepad] (Woods / Hyrule / Dungeon / Boss / Town)\n");
+    printf("  - Cidade Hyrule:  [H] Entrar/Sair do Hub da Cidade de Hyrule (Hyrule Town Hub!)\n");
     printf("  - Masmorra:       [D] Entrar/Sair de Deepwood Shrine (ou caminhar ao santuario ao norte!)\n");
     printf("  - Segredo Zelda:  [M] (Chime lendario de 8 notas!)\n");
-    printf("  - Alarme de Vida: [H] (Chime classico de coracao)\n");
     printf("  - Trocar Regiao:  [1] USA | [2] EUR | [3] JPN\n");
     printf("  - Widescreen:     [W] Alternar proporcao 16:9\n");
     printf("  - Sair do Jogo:   [ESC]\n\n");
@@ -445,6 +498,8 @@ int main(int argc, char* argv[]) {
     // Inicialização da Engine de Mapas e Câmera Widescreen (Autêntico Minish Woods ou Fallback)
     Tilemap* world_map = map_create_woods(s_region_tags[REGION_USA]);
     s_world_map = world_map;
+    Tilemap* town_map = map_create_hyrule_town();
+    s_town_map = town_map;
     load_region_sheets(REGION_USA);
 
     // Inicialização da entidade do Link
@@ -527,7 +582,13 @@ int main(int argc, char* argv[]) {
                             hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
                             break;
                         case SDLK_h:
-                            hal_audio_play_sound(SOUND_HEART_BEEP, 0.85f, 1.0f);
+                            if (!dungeon_is_active()) {
+                                if (s_in_town) {
+                                    transition_to_overworld(&link, world_map);
+                                } else {
+                                    transition_to_town(&link);
+                                }
+                            }
                             break;
                         case SDLK_t:
                             hal_audio_cycle_bgm();
@@ -570,6 +631,7 @@ int main(int argc, char* argv[]) {
         // 2. ATUALIZAÇÃO DA LÓGICA DO JOGADOR (INPUT -> FÍSICA)
         // --------------------------------------------------------------------
         const HalVideoContext* ctx = hal_video_get_context();
+        Tilemap* active_map = s_in_town ? s_town_map : world_map;
 
         if (kinstone_is_active()) {
             kinstone_update();
@@ -612,7 +674,7 @@ int main(int argc, char* argv[]) {
                 link.tiger_scroll_banner_timer--;
             }
 
-            // Ação com Botão A: Primeiro interage com Masmorra / Baús Dourados / Swiftblade / NPCs, depois golpe de espada!
+            // Ação com Botão A: Primeiro interage com Masmorra / Loja / Guarda / Cidadã / Baús / Swiftblade / NPCs, depois golpe de espada!
             if (hal_input_is_pressed(KEY_A) && !link.is_attacking && !link.is_spinning && !link.is_charging_spin) {
                 if (dungeon_is_active()) {
                     if (dungeon_interact(link.x, link.y, &link.rupees, &link.hearts)) {
@@ -621,6 +683,35 @@ int main(int argc, char* argv[]) {
                         link.is_attacking = true;
                         link.attack_timer = 12;
                         hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                    }
+                } else if (s_in_town) {
+                    Entity* shopkeeper = entity_find_nearby_shopkeeper(link.x, link.y, 40.0f);
+                    if (shopkeeper) {
+                        dialogue_trigger_shopkeeper_talk(link.rupees);
+                        // Se estiver perto do balcão de compras:
+                        if (link.x >= 420.0f && link.x <= 468.0f && link.y <= 136.0f) {
+                            if (link.hearts < link.max_hearts && link.rupees >= 30) {
+                                entity_buy_shop_item(0, &link.rupees, &link.hearts, &link.max_hearts); // Poção Vermelha
+                            } else if (link.max_hearts < 6 && link.rupees >= 80) {
+                                entity_buy_shop_item(1, &link.rupees, &link.hearts, &link.max_hearts); // Piece of Heart
+                            } else if (link.rupees >= 50) {
+                                entity_buy_shop_item(2, &link.rupees, &link.hearts, &link.max_hearts); // Bolsa de Bombas
+                            }
+                        }
+                    } else {
+                        Entity* guard = entity_find_nearby_town_guard(link.x, link.y, 30.0f);
+                        if (guard) {
+                            dialogue_trigger_town_guard_talk();
+                        } else {
+                            Entity* citizen = entity_find_nearby_town_citizen(link.x, link.y, 30.0f);
+                            if (citizen) {
+                                dialogue_trigger_town_citizen_talk();
+                            } else {
+                                link.is_attacking = true;
+                                link.attack_timer = 12;
+                                hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                            }
+                        }
                     }
                 } else if (entity_interact_chest(link.x, link.y, &link.rupees, &link.hearts)) {
                     // Abriu o baú dourado!
@@ -657,7 +748,7 @@ int main(int argc, char* argv[]) {
                 entity_check_sword_hit(hit_x, hit_y, hit_w, hit_h, 1, link.dir);
 
                 // Interação da espada com o cenário (cortar arbustos ou abrir baú no overworld)
-                if (!dungeon_is_active() && map_interact_slash(world_map, hit_x + 6.0f, hit_y + 6.0f)) {
+                if (!dungeon_is_active() && map_interact_slash(active_map, hit_x + 6.0f, hit_y + 6.0f)) {
                     hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 1.25f);
                     link.rupees += 5; // Recompensa clássica de Zelda!
                 }
@@ -719,7 +810,7 @@ int main(int argc, char* argv[]) {
 
                 // Corte simultâneo de todos os arbustos no raio de 360 graus
                 if (!dungeon_is_active()) {
-                    int bushes = map_interact_spin(world_map, spin_cx, spin_cy, spin_r);
+                    int bushes = map_interact_spin(active_map, spin_cx, spin_cy, spin_r);
                     if (bushes > 0) {
                         hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 1.30f);
                         link.rupees += bushes * 5;
@@ -855,14 +946,14 @@ int main(int argc, char* argv[]) {
                             dungeon_is_solid(link.x + 4.0f, new_y + 16.0f) ||
                             dungeon_is_solid(link.x + 12.0f, new_y + 16.0f);
             } else {
-                blocked_x = map_is_solid(world_map, new_x + 4.0f, link.y + 12.0f) ||
-                            map_is_solid(world_map, new_x + 12.0f, link.y + 12.0f) ||
-                            map_is_solid(world_map, new_x + 4.0f, link.y + 16.0f) ||
-                            map_is_solid(world_map, new_x + 12.0f, link.y + 16.0f);
-                blocked_y = map_is_solid(world_map, link.x + 4.0f, new_y + 12.0f) ||
-                            map_is_solid(world_map, link.x + 12.0f, new_y + 12.0f) ||
-                            map_is_solid(world_map, link.x + 4.0f, new_y + 16.0f) ||
-                            map_is_solid(world_map, link.x + 12.0f, new_y + 16.0f);
+                blocked_x = map_is_solid(active_map, new_x + 4.0f, link.y + 12.0f) ||
+                            map_is_solid(active_map, new_x + 12.0f, link.y + 12.0f) ||
+                            map_is_solid(active_map, new_x + 4.0f, link.y + 16.0f) ||
+                            map_is_solid(active_map, new_x + 12.0f, link.y + 16.0f);
+                blocked_y = map_is_solid(active_map, link.x + 4.0f, new_y + 12.0f) ||
+                            map_is_solid(active_map, link.x + 12.0f, new_y + 12.0f) ||
+                            map_is_solid(active_map, link.x + 4.0f, new_y + 16.0f) ||
+                            map_is_solid(active_map, link.x + 12.0f, new_y + 16.0f);
             }
 
             if (!blocked_x) {
@@ -878,27 +969,34 @@ int main(int argc, char* argv[]) {
                 if (link.y < 0.0f) link.y = 0.0f;
                 if (link.y > 160.0f - 16.0f) link.y = 160.0f - 16.0f;
             } else {
-                // Confinamento dentro dos limites do mundo (640x480 pixels)
+                // Confinamento dentro dos limites do mapa ativo (Overworld ou Hyrule Town)
                 if (link.x < 16.0f) link.x = 16.0f;
-                if (link.x > (world_map->width * TILE_SIZE) - 32.0f) link.x = (world_map->width * TILE_SIZE) - 32.0f;
+                if (link.x > (active_map->width * TILE_SIZE) - 32.0f) link.x = (active_map->width * TILE_SIZE) - 32.0f;
                 if (link.y < 16.0f) link.y = 16.0f;
-                if (link.y > (world_map->height * TILE_SIZE) - 32.0f) link.y = (world_map->height * TILE_SIZE) - 32.0f;
+                if (link.y > (active_map->height * TILE_SIZE) - 32.0f) link.y = (active_map->height * TILE_SIZE) - 32.0f;
 
-                // Checagem de Entrada no Deepwood Shrine pelo archway do santuário ao norte
-                bool enter_shrine = false;
-                if (world_map && world_map->is_authentic) {
-                    if (link.x >= 436.0f && link.x <= 468.0f && link.y <= 485.0f && link.dir == DIR_UP) {
-                        enter_shrine = true;
+                // Transição no Portão Sul de Hyrule Town (x entre 256 e 304, ao sul da praça)
+                if (s_in_town) {
+                    if (link.x >= 256.0f && link.x <= 304.0f && link.y >= (active_map->height * TILE_SIZE) - 36.0f && link.dir == DIR_DOWN) {
+                        transition_to_overworld(&link, world_map);
                     }
                 } else {
-                    if (link.x >= 280.0f && link.x <= 312.0f && link.y <= 40.0f && link.dir == DIR_UP) {
-                        enter_shrine = true;
+                    // Checagem de Entrada no Deepwood Shrine pelo archway do santuário ao norte
+                    bool enter_shrine = false;
+                    if (world_map && world_map->is_authentic) {
+                        if (link.x >= 436.0f && link.x <= 468.0f && link.y <= 485.0f && link.dir == DIR_UP) {
+                            enter_shrine = true;
+                        }
+                    } else {
+                        if (link.x >= 280.0f && link.x <= 312.0f && link.y <= 40.0f && link.dir == DIR_UP) {
+                            enter_shrine = true;
+                        }
                     }
-                }
 
-                if (enter_shrine) {
-                    entity_clear_all();
-                    dungeon_enter(&link.x, &link.y, &link.dir);
+                    if (enter_shrine) {
+                        entity_clear_all();
+                        dungeon_enter(&link.x, &link.y, &link.dir);
+                    }
                 }
             }
         }
@@ -919,10 +1017,10 @@ int main(int argc, char* argv[]) {
                 k_blocked_y = dungeon_is_solid(link.x + 4.0f, k_new_y + 12.0f) ||
                               dungeon_is_solid(link.x + 12.0f, k_new_y + 16.0f);
             } else {
-                k_blocked_x = map_is_solid(world_map, k_new_x + 4.0f, link.y + 12.0f) ||
-                              map_is_solid(world_map, k_new_x + 12.0f, link.y + 12.0f);
-                k_blocked_y = map_is_solid(world_map, link.x + 4.0f, k_new_y + 12.0f) ||
-                              map_is_solid(world_map, link.x + 12.0f, k_new_y + 16.0f);
+                k_blocked_x = map_is_solid(active_map, k_new_x + 4.0f, link.y + 12.0f) ||
+                              map_is_solid(active_map, k_new_x + 12.0f, link.y + 12.0f);
+                k_blocked_y = map_is_solid(active_map, link.x + 4.0f, k_new_y + 12.0f) ||
+                              map_is_solid(active_map, link.x + 12.0f, k_new_y + 16.0f);
             }
 
             if (!k_blocked_x) link.x = k_new_x;
@@ -944,7 +1042,11 @@ int main(int argc, char* argv[]) {
         // --------------------------------------------------------------------
         static bool s_was_dungeon_active = false;
         if (s_was_dungeon_active && !dungeon_is_active()) {
-            spawn_overworld_entities(world_map);
+            if (s_in_town) {
+                spawn_town_entities();
+            } else {
+                spawn_overworld_entities(world_map);
+            }
         }
         s_was_dungeon_active = dungeon_is_active();
 
@@ -953,12 +1055,12 @@ int main(int argc, char* argv[]) {
                            &link.hearts, &link.rupees);
         }
 
-        entity_manager_update(world_map, link.x, link.y,
+        entity_manager_update(active_map, link.x, link.y,
                               &link.hearts, &link.max_hearts, &link.rupees,
                               &link.invuln_timer, &link.knock_x, &link.knock_y);
 
         // Atualizacao do Subsistema de Subarmas (Bumerangue, Vórtice do Pote Magico, Projeteis)
-        subweapon_update(world_map, link.x, link.y, &link.rupees, &link.hearts);
+        subweapon_update(active_map, link.x, link.y, &link.rupees, &link.hearts);
 
         // Respawn de teste caso o Link zere os corações
         if (link.hearts <= 0) {
@@ -966,6 +1068,9 @@ int main(int argc, char* argv[]) {
             if (dungeon_is_active()) {
                 link.x = 7.5f * TILE_SIZE;
                 link.y = 8.0f * TILE_SIZE;
+            } else if (s_in_town) {
+                link.x = 280.0f;
+                link.y = 392.0f;
             } else {
                 link.x = (world_map && world_map->is_authentic) ? 448.0f : 296.0f;
                 link.y = (world_map && world_map->is_authentic) ? 624.0f : 176.0f;
@@ -998,7 +1103,7 @@ int main(int argc, char* argv[]) {
             camera.x = (float)(256 - camera.viewport_w) / 2.0f;
             camera.y = 0.0f;
         } else {
-            camera_update(&camera, link.x, link.y, ctx->render_width, ctx->render_height, world_map);
+            camera_update(&camera, link.x, link.y, ctx->render_width, ctx->render_height, active_map);
         }
 
         // Aplicação do tremor de tela (Screen Shake) causado pelos passos gigantes e impacto do Chefe
@@ -1023,7 +1128,7 @@ int main(int argc, char* argv[]) {
             dungeon_render_transition(&camera);
         } else {
             // 1. Renderiza o mapa com Frustum Culling inteligente
-            map_render(world_map, &camera);
+            map_render(active_map, &camera);
             // 2. Renderiza as entidades ativas (Octoroks, Projéteis e Itens no chão)
             entity_manager_render(&camera);
             // 3. Desenha a entidade do Link nas coordenadas relativas da câmera
@@ -1067,12 +1172,13 @@ int main(int argc, char* argv[]) {
         hal_video_put_pixel(67, 3, 0x00FF88FF);
         hal_video_put_pixel(67, 10, 0x00FF88FF);
 
-        // Indicador de Trilha Sonora BGM no HUD (Minish Woods: Turquesa, Hyrule: Dourado, Deepwood: Roxo, Boss: Vermelho, Mudo: Cinza)
+        // Indicador de Trilha Sonora BGM no HUD (Minish Woods: Turquesa, Hyrule: Dourado, Deepwood: Roxo, Boss: Vermelho, Town: Esmeralda, Mudo: Cinza)
         BgmTrack current_bgm = hal_audio_get_current_bgm();
         u32 bgm_color = (current_bgm == BGM_MINISH_WOODS)     ? 0x00E5FFFF :
                         (current_bgm == BGM_HYRULE_OVERWORLD) ? 0xFFD700FF :
                         (current_bgm == BGM_DEEPWOOD_SHRINE)  ? 0xA855F7FF :
                         (current_bgm == BGM_BOSS_BATTLE)      ? 0xEF4444FF :
+                        (current_bgm == BGM_HYRULE_TOWN)      ? 0x10B981FF :
                                                                 0x666666FF;
         draw_rect(76, 5, 3, 5, bgm_color);
         hal_video_put_pixel(79, 4, bgm_color);
@@ -1141,6 +1247,7 @@ int main(int argc, char* argv[]) {
     if (s_octo_tex) texture_free(s_octo_tex);
 
     entity_manager_shutdown();
+    if (s_town_map) map_destroy(s_town_map);
     map_destroy(world_map);
     hal_audio_shutdown();
     hal_input_shutdown();

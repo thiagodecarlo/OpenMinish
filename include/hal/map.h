@@ -29,6 +29,15 @@ typedef enum {
     TILE_CHEST_CLOSED,   // Baú de tesouro fechado
     TILE_CHEST_OPEN,     // Baú de tesouro aberto
     TILE_WOOD_FENCE,     // Cerca de madeira
+    TILE_COBBLESTONE,    // Calçamento de pedras polidas da Cidade de Hyrule
+    TILE_TOWN_WALL,      // Fachada e paredes de alvenaria/madeira da cidade
+    TILE_ROOF_RED,       // Telhado de telhas vermelhas de terracota
+    TILE_ROOF_BLUE,      // Telhado azul da Loja do Stockwell
+    TILE_TOWN_DOOR,      // Porta de madeira da loja/casas com maçaneta de latão
+    TILE_TOWN_WINDOW,    // Janela com venezianas e vidros reflexivos
+    TILE_FOUNTAIN_EDGE,  // Borda esculpida em mármore da fonte central
+    TILE_MARKET_STALL,   // Toldo listrado e balcão do mercado
+    TILE_BARREL_CRATE,   // Caixotes e barris de provisões do armazém
     TILE_COUNT
 } TileType;
 
@@ -56,6 +65,14 @@ typedef struct {
  * contendo caminhos, árvores, lago, arbustos cortáveis e baú secreto.
  */
 Tilemap* map_create_demo_world(void);
+
+/*
+ * Cria e constrói a metrópole central do reino: A Cidade de Hyrule (Hyrule Town Hub)
+ * Dimensões: 36x28 tiles (576x448 pixels) contendo a praça central com chafariz,
+ * calçamento de pedras (cobblestone), o Mercado e Loja do Stockwell, residências,
+ * canteiros de flores e portões para o Castelo de Hyrule e Minish Woods.
+ */
+Tilemap* map_create_hyrule_town(void);
 
 /*
  * Carrega o mapa de Minish Woods para a região ativa (ex: "usa", "eur", "jpn").

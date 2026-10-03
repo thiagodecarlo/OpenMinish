@@ -30,7 +30,11 @@ typedef enum {
     ENTITY_CHEST_GOLD,        // Baú do Tesouro Dourado (destravado por Fusão de Kinstone)
     ENTITY_BOSS_BIG_CHUCHU,   // Chefe Gigante do Deepwood Shrine (Big Green ChuChu)
     ENTITY_ITEM_HEART_CONTAINER, // Recipiente de Coração permanente (+1 Coração Máximo e Cura Total)
-    ENTITY_NPC_SWIFTBLADE     // Mestre Espadachim Swiftblade (Treinador do Spin Attack e Tiger Scrolls)
+    ENTITY_NPC_SWIFTBLADE,    // Mestre Espadachim Swiftblade (Treinador do Spin Attack e Tiger Scrolls)
+    ENTITY_NPC_SHOPKEEPER,    // Comerciante Stockwell (Dono da loja de Hyrule com balcão de compras)
+    ENTITY_NPC_TOWN_CITIZEN,  // Cidadã da Cidade de Hyrule (NPC de praça com Kinstone)
+    ENTITY_NPC_TOWN_GUARD,    // Guarda Real do Castelo de Hyrule (Cavaleiro em armadura)
+    ENTITY_TOWN_FOUNTAIN      // Chafariz central com jatos d'água borbulhantes animados
 } EntityType;
 
 // Caixa delimitadora de colisão e dano (Hitbox / Hurtbox)
@@ -152,6 +156,30 @@ Entity* entity_find_nearby_npc(float world_x, float world_y, float max_dist);
  * Procura pelo Mestre Espadachim Swiftblade próximo às coordenadas fornecidas.
  */
 Entity* entity_find_nearby_swiftblade(float world_x, float world_y, float max_dist);
+
+/*
+ * Procura pelo Comerciante Stockwell próximo às coordenadas fornecidas dentro do raio max_dist.
+ */
+Entity* entity_find_nearby_shopkeeper(float world_x, float world_y, float max_dist);
+
+/*
+ * Procura pela Cidadã da Cidade de Hyrule próxima ao herói.
+ */
+Entity* entity_find_nearby_town_citizen(float world_x, float world_y, float max_dist);
+
+/*
+ * Procura pelo Guarda Real do Castelo de Hyrule próximo ao herói.
+ */
+Entity* entity_find_nearby_town_guard(float world_x, float world_y, float max_dist);
+
+/*
+ * Executa a compra de uma mercadoria na Loja do Stockwell:
+ * item_idx: 0 = Poção Vermelha (30 Rupees, restaura vida total)
+ *           1 = Pedaço de Coração (80 Rupees, concede +1 Coração Máximo)
+ *           2 = Bolsa de Bombas / Provisões (50 Rupees)
+ * Retorna true se a compra teve êxito (Rupees deduzidos e efeito concedido).
+ */
+bool entity_buy_shop_item(int item_idx, int* link_rupees, int* link_hearts, int* link_max_hearts);
 
 /*
  * Procura um NPC amigável com fusão de Kinstone pendente próximo ao herói.
