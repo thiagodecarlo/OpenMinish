@@ -37,6 +37,7 @@ typedef enum {
     ROOM_FLAMES_BARREL,       // Sala 2: Cilindro espinhoso giratório
     ROOM_FLAMES_CRUCIBLE,     // Sala 3: Crisol de combate (Fire Keese + Small Key)
     ROOM_FLAMES_BOSS_DOOR,    // Sala 4: Antecâmara com porta trancada do Chefe Gleerok
+    ROOM_FLAMES_BOSS_ARENA,   // Sala 5: Arena de Combate contra o Chefe Gleerok
     ROOM_FLAMES_COUNT
 } DungeonFlamesRoomId;
 
@@ -99,6 +100,18 @@ typedef struct {
     FlamesDoor          door_north_entrance;
     FlamesDoor          door_crucible_shutter;
     FlamesDoor          door_boss_locked;
+    FlamesDoor          door_boss_shutter;
+
+    // Estado da Câmara do Chefe Gleerok
+    bool                boss_chamber_entered;
+    bool                boss_cleared;
+    bool                boss_portal_spawned;
+    float               portal_x;
+    float               portal_y;
+    bool                fire_element_spawned;
+    bool                fire_element_collected;
+    float               fire_element_x;
+    float               fire_element_y;
 
     // Ponto de segurança contra lava
     float               safe_x;
@@ -181,5 +194,15 @@ bool dungeon_flames_is_link_riding_cart(void);
  * Renderiza o contador de chaves pequenas no HUD.
  */
 void dungeon_flames_render_hud_keys(int x, int y);
+
+/*
+ * Retorna true se o Chefe Gleerok foi derrotado.
+ */
+bool dungeon_flames_is_boss_cleared(void);
+
+/*
+ * Retorna true se o Elemento Fogo já foi coletado por Link.
+ */
+bool dungeon_flames_has_fire_element(void);
 
 #endif // HAL_DUNGEON_FLAMES_H
