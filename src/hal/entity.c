@@ -98,6 +98,10 @@ int entity_count_active_enemies(void) {
         if (s_entities[i].type == ENTITY_ENEMY_OCTOROK ||
             s_entities[i].type == ENTITY_ENEMY_KEESE ||
             s_entities[i].type == ENTITY_ENEMY_CHUCHU ||
+            s_entities[i].type == ENTITY_ENEMY_MOBLIN ||
+            s_entities[i].type == ENTITY_ENEMY_PEAHAT ||
+            s_entities[i].type == ENTITY_ENEMY_TEKTITE ||
+            s_entities[i].type == ENTITY_ENEMY_SPINY_BEETLE ||
             (s_entities[i].type == ENTITY_BOSS_BIG_CHUCHU && s_entities[i].health > 0)) {
             count++;
         }
@@ -348,6 +352,39 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     e->kinstoneType  = 1; // KINSTONE_BLUE
                     e->kinstoneFused = false;
                     e->bubbleBob     = 0.0f;
+                    break;
+
+                case ENTITY_ENEMY_TEKTITE:
+                    e->health        = 3;
+                    e->maxHealth     = 3;
+                    e->damage        = 1;
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1; // Solo se preparando para saltar
+                    e->aiTimer       = 40 + (rand() % 40);
+                    e->animTimer     = 0;
+                    e->z             = 0.0f;
+                    e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
+                    break;
+
+                case ENTITY_ENEMY_SPINY_BEETLE:
+                    e->health        = 2;
+                    e->maxHealth     = 2;
+                    e->damage        = 1;
+                    e->dir           = (Direction)(rand() % 4);
+                    e->action        = 1; // Patrulha / espreita sob a rocha
+                    e->aiTimer       = 60 + (rand() % 30);
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -7.0f, -7.0f, 14.0f, 14.0f };
+                    break;
+
+                case ENTITY_NPC_BUSINESS_SCRUB:
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1; // No arbusto espiando
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
                     break;
 
                 default:
@@ -1238,6 +1275,240 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
                 e->dir = DIR_DOWN;
             }
         }
+
+        // 16. INIMIGO: TEKTITE (ARACNÍDEO SALTITANTE DO MONTE CRENEL)
+        else if (e->type == ENTITY_ENEMY_TEKTITE) {
+            if (e->invulnerableTimer > 0) e->invulnerableTimer--;
+
+            // Ação 4: Recuo por dano (Knockback)
+            if (e->action == 4) {
+                float next_x = e->x + e->knockbackVx;
+                float next_y = e->y + e->knockbackVy;
+                if (!entity_is_solid(map, next_x + 8.0f, next_y + 8.0f)) {
+                    e->x = next_x;
+                    e->y = next_y;
+                }
+                e->knockbackTimer--;
+                if (e->knockbackTimer <= 0) {
+                    if (e->health <= 0) {
+                        int roll = rand() % 100;
+                        if (roll < 55) {
+                            entity_spawn(ENTITY_ITEM_RUPEE, e->x + 4.0f, e->y + 4.0f);
+                        } else {
+                            entity_spawn(ENTITY_ITEM_HEART, e->x + 4.0f, e->y + 4.0f);
+                        }
+                        e->is_active = false;
+                        continue;
+                    } else {
+                        e->action = 1;
+                        e->aiTimer = 35;
+                    }
+                }
+            }
+            // Ação 1: No solo, preparando o impulso de salto
+            else if (e->action == 1) {
+                e->animTimer++;
+                e->aiTimer--;
+                if (e->aiTimer <= 0) {
+                    e->action = 2; // Salto parabólico!
+                    float dx = link_x - e->x;
+                    float dy = link_y - e->y;
+                    float dist = sqrtf(dx * dx + dy * dy);
+                    float spd = 1.35f;
+
+                    if (dist > 1.0f && dist < 130.0f) {
+                        e->vx = (dx / dist) * spd;
+                        e->vy = (dy / dist) * spd;
+                    } else {
+                        float ang = (float)(rand() % 360) * (PI_F / 180.0f);
+                        e->vx = cosf(ang) * spd;
+                        e->vy = sinf(ang) * spd;
+                    }
+                    e->vz = 3.6f; // Impulso aéreo vertical
+                    e->z = 0.0f;
+                    hal_audio_play_sound(SOUND_CHUCHU_SQUISH, 0.85f, 1.35f);
+                }
+            }
+            // Ação 2: Trajetória balística no ar
+            else if (e->action == 2) {
+                e->animTimer++;
+                e->x += e->vx;
+                e->y += e->vy;
+                e->z += e->vz;
+                e->vz -= 0.22f; // Gravidade
+
+                if (e->z <= 0.0f) {
+                    e->z = 0.0f;
+                    e->vx = 0.0f;
+                    e->vy = 0.0f;
+                    e->action = 1;
+                    e->aiTimer = 40 + (rand() % 35);
+                }
+            }
+
+            // Dano por contato com Link (quando perto do solo)
+            if (e->z <= 8.0f && *link_invuln_timer <= 0) {
+                float tx1 = e->x - 6.0f;
+                float ty1 = e->y - 6.0f;
+                float tx2 = e->x + 14.0f;
+                float ty2 = e->y + 14.0f;
+                float lx1 = link_x + 2.0f;
+                float ly1 = link_y + 4.0f;
+                float lx2 = lx1 + 12.0f;
+                float ly2 = ly1 + 12.0f;
+
+                if (tx1 < lx2 && tx2 > lx1 && ty1 < ly2 && ty2 > ly1) {
+                    if (*link_hearts > 0) (*link_hearts)--;
+                    *link_invuln_timer = 50;
+                    hal_audio_play_sound(SOUND_HEART_BEEP, 0.85f, 1.0f);
+
+                    float p_dx = (link_x + 8.0f) - (e->x + 8.0f);
+                    float p_dy = (link_y + 8.0f) - (e->y + 8.0f);
+                    float p_len = sqrtf(p_dx * p_dx + p_dy * p_dy);
+                    if (p_len > 0.01f) {
+                        *link_knock_x = (p_dx / p_len) * 3.5f;
+                        *link_knock_y = (p_dy / p_len) * 3.5f;
+                    }
+                }
+            }
+        }
+
+        // 17. INIMIGO: SPINY BEETLE (BESOURO COM CARAPAÇA DE ROCHA ESPINHOSA)
+        else if (e->type == ENTITY_ENEMY_SPINY_BEETLE) {
+            if (e->invulnerableTimer > 0) e->invulnerableTimer--;
+
+            // Ação 4: Recuo por dano (Knockback)
+            if (e->action == 4) {
+                float next_x = e->x + e->knockbackVx;
+                float next_y = e->y + e->knockbackVy;
+                if (!entity_is_solid(map, next_x + 8.0f, next_y + 8.0f)) {
+                    e->x = next_x;
+                    e->y = next_y;
+                }
+                e->knockbackTimer--;
+                if (e->knockbackTimer <= 0) {
+                    if (e->health <= 0) {
+                        int roll = rand() % 100;
+                        if (roll < 60) {
+                            entity_spawn(ENTITY_ITEM_RUPEE, e->x + 4.0f, e->y + 4.0f);
+                        } else {
+                            entity_spawn(ENTITY_ITEM_HEART, e->x + 4.0f, e->y + 4.0f);
+                        }
+                        e->is_active = false;
+                        continue;
+                    } else {
+                        e->action = 1;
+                        e->aiTimer = 40;
+                    }
+                }
+            }
+            // Ação 1: Patrulha e espreita lenta
+            else if (e->action == 1) {
+                float spd = 0.45f;
+                float mx = 0.0f, my = 0.0f;
+                if (e->dir == DIR_DOWN)  my = spd;
+                if (e->dir == DIR_UP)    my = -spd;
+                if (e->dir == DIR_LEFT)  mx = -spd;
+                if (e->dir == DIR_RIGHT) mx = spd;
+
+                float cx = e->x + mx + 8.0f;
+                float cy = e->y + my + 8.0f;
+
+                if (entity_is_solid(map, cx, cy)) {
+                    e->dir = (Direction)(rand() % 4);
+                    e->aiTimer = 45;
+                } else {
+                    e->x += mx;
+                    e->y += my;
+                }
+
+                e->animTimer++;
+                e->aiTimer--;
+                if (e->aiTimer <= 0) {
+                    e->dir = (Direction)(rand() % 4);
+                    e->aiTimer = 50 + (rand() % 40);
+                }
+
+                // Se Link estiver próximo (linha de visão / alerta), entra em investida rápida!
+                float dx = (link_x + 8.0f) - (e->x + 8.0f);
+                float dy = (link_y + 8.0f) - (e->y + 8.0f);
+                float dist = sqrtf(dx * dx + dy * dy);
+                if (dist <= 65.0f) {
+                    e->action = 2; // Investida agressiva!
+                    e->aiTimer = 80;
+                    hal_audio_play_sound(SOUND_SWORD_HIT, 0.5f, 1.6f);
+                }
+            }
+            // Ação 2: Investida veloz em perseguição direta
+            else if (e->action == 2) {
+                float dx = (link_x + 8.0f) - (e->x + 8.0f);
+                float dy = (link_y + 8.0f) - (e->y + 8.0f);
+                float dist = sqrtf(dx * dx + dy * dy);
+                float spd = 1.30f;
+
+                if (dist > 1.0f) {
+                    float mx = (dx / dist) * spd;
+                    float my = (dy / dist) * spd;
+                    if (!entity_is_solid(map, e->x + mx + 8.0f, e->y + my + 8.0f)) {
+                        e->x += mx;
+                        e->y += my;
+                    } else {
+                        // Bateu na parede, fica atordoado e volta a patrulhar
+                        e->action = 1;
+                        e->aiTimer = 40;
+                    }
+                }
+
+                e->animTimer += 2;
+                e->aiTimer--;
+                if (e->aiTimer <= 0 || dist > 110.0f) {
+                    e->action = 1;
+                    e->aiTimer = 50;
+                }
+            }
+
+            // Dano por colisão espinhosa com Link
+            if (*link_invuln_timer <= 0) {
+                float bx1 = e->x - 6.0f;
+                float by1 = e->y - 6.0f;
+                float bx2 = e->x + 14.0f;
+                float by2 = e->y + 14.0f;
+                float lx1 = link_x + 2.0f;
+                float ly1 = link_y + 4.0f;
+                float lx2 = lx1 + 12.0f;
+                float ly2 = ly1 + 12.0f;
+
+                if (bx1 < lx2 && bx2 > lx1 && by1 < ly2 && by2 > ly1) {
+                    if (*link_hearts > 0) (*link_hearts)--;
+                    *link_invuln_timer = 50;
+                    hal_audio_play_sound(SOUND_HEART_BEEP, 0.85f, 1.0f);
+
+                    float p_dx = (link_x + 8.0f) - (e->x + 8.0f);
+                    float p_dy = (link_y + 8.0f) - (e->y + 8.0f);
+                    float p_len = sqrtf(p_dx * p_dx + p_dy * p_dy);
+                    if (p_len > 0.01f) {
+                        *link_knock_x = (p_dx / p_len) * 3.6f;
+                        *link_knock_y = (p_dy / p_len) * 3.6f;
+                    }
+                }
+            }
+        }
+
+        // 18. NPC: BUSINESS SCRUB (DEKU SCRUB COMERCIANTE DO MONTE CRENEL)
+        else if (e->type == ENTITY_NPC_BUSINESS_SCRUB) {
+            e->animTimer++;
+            float dx = link_x - e->x;
+            float dy = link_y - e->y;
+            if (dx * dx + dy * dy <= 48.0f * 48.0f) {
+                if (fabsf(dx) > fabsf(dy)) {
+                    e->dir = (dx > 0.0f) ? DIR_RIGHT : DIR_LEFT;
+                } else {
+                    e->dir = (dy > 0.0f) ? DIR_DOWN : DIR_UP;
+                }
+            } else {
+                e->dir = DIR_DOWN;
+            }
+        }
     }
 }
 
@@ -1254,16 +1525,18 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
         Entity* e = &s_entities[i];
         if (!e->is_active) continue;
 
-        // Golpeando Inimigo (Octorok, Keese, ChuChu, Moblin ou Peahat)
+        // Golpeando Inimigo (Octorok, Keese, ChuChu, Moblin, Peahat, Tektite ou Spiny Beetle)
         if ((e->type == ENTITY_ENEMY_OCTOROK ||
              e->type == ENTITY_ENEMY_KEESE ||
              e->type == ENTITY_ENEMY_MOBLIN ||
              e->type == ENTITY_ENEMY_PEAHAT ||
+             e->type == ENTITY_ENEMY_TEKTITE ||
+             e->type == ENTITY_ENEMY_SPINY_BEETLE ||
              (e->type == ENTITY_ENEMY_CHUCHU && e->action > 0)) &&
             e->invulnerableTimer <= 0) {
 
-            // Se o Keese ou Peahat estiver voando alto demais fora do alcance da lâmina
-            if ((e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_PEAHAT) && e->z > 8.0f) {
+            // Se o Keese, Peahat ou Tektite estiver voando alto demais fora do alcance da lâmina
+            if ((e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_PEAHAT || e->type == ENTITY_ENEMY_TEKTITE) && e->z > 8.0f) {
                 continue;
             }
 
@@ -1353,16 +1626,18 @@ int entity_check_spin_attack_hit(float center_x, float center_y, float radius, i
         Entity* e = &s_entities[i];
         if (!e->is_active) continue;
 
-        // Inimigos: Octorok, Keese, ChuChu, Moblin, Peahat
+        // Inimigos: Octorok, Keese, ChuChu, Moblin, Peahat, Tektite, Spiny Beetle
         if ((e->type == ENTITY_ENEMY_OCTOROK ||
              e->type == ENTITY_ENEMY_KEESE ||
              e->type == ENTITY_ENEMY_MOBLIN ||
              e->type == ENTITY_ENEMY_PEAHAT ||
+             e->type == ENTITY_ENEMY_TEKTITE ||
+             e->type == ENTITY_ENEMY_SPINY_BEETLE ||
              (e->type == ENTITY_ENEMY_CHUCHU && e->action > 0)) &&
             e->invulnerableTimer <= 0) {
 
             // Se voando alto demais desvia do golpe circular
-            if ((e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_PEAHAT) && e->z > 8.0f) continue;
+            if ((e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_PEAHAT || e->type == ENTITY_ENEMY_TEKTITE) && e->z > 8.0f) continue;
 
             float ex = e->x + e->hitbox.offset_x + (e->hitbox.width * 0.5f);
             float ey = e->y + e->hitbox.offset_y + (e->hitbox.height * 0.5f);
@@ -1450,12 +1725,14 @@ int entity_check_bomb_explosion(float center_x, float center_y, float radius, in
         Entity* e = &s_entities[i];
         if (!e->is_active) continue;
 
-        // Inimigos padrão: Octorok, Keese, ChuChu, Moblin, Peahat
+        // Inimigos padrão: Octorok, Keese, ChuChu, Moblin, Peahat, Tektite, Spiny Beetle
         if ((e->type == ENTITY_ENEMY_OCTOROK ||
              e->type == ENTITY_ENEMY_KEESE ||
              e->type == ENTITY_ENEMY_CHUCHU ||
              e->type == ENTITY_ENEMY_MOBLIN ||
-             e->type == ENTITY_ENEMY_PEAHAT) &&
+             e->type == ENTITY_ENEMY_PEAHAT ||
+             e->type == ENTITY_ENEMY_TEKTITE ||
+             e->type == ENTITY_ENEMY_SPINY_BEETLE) &&
             e->invulnerableTimer <= 0) {
 
             float ex = e->x + e->hitbox.offset_x + (e->hitbox.width * 0.5f);
@@ -1596,11 +1873,13 @@ bool entity_check_subweapon_hit(float px, float py, float pw, float ph, int dama
                   e->type == ENTITY_ENEMY_KEESE ||
                   e->type == ENTITY_ENEMY_MOBLIN ||
                   e->type == ENTITY_ENEMY_PEAHAT ||
+                  e->type == ENTITY_ENEMY_TEKTITE ||
+                  e->type == ENTITY_ENEMY_SPINY_BEETLE ||
                   (e->type == ENTITY_ENEMY_CHUCHU && e->action > 0)) &&
                  e->invulnerableTimer <= 0) {
 
             // Se voando alto demais desvia do projétil
-            if ((e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_PEAHAT) && e->z > 8.0f) continue;
+            if ((e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_PEAHAT || e->type == ENTITY_ENEMY_TEKTITE) && e->z > 8.0f) continue;
 
             float ex1 = e->x + e->hitbox.offset_x;
             float ey1 = e->y + e->hitbox.offset_y;
@@ -1726,6 +2005,10 @@ bool entity_apply_gust_suction(float jar_x, float jar_y, Direction dir, float ra
         else if (e->type == ENTITY_ENEMY_MOBLIN) {
             e->x += pull_x * 0.45f;
             e->y += pull_y * 0.45f;
+        }
+        else if (e->type == ENTITY_ENEMY_TEKTITE || e->type == ENTITY_ENEMY_SPINY_BEETLE) {
+            e->x += pull_x * 0.75f;
+            e->y += pull_y * 0.75f;
         }
         // Sucção na base / pés do Chefe Big Green ChuChu
         else if (e->type == ENTITY_BOSS_BIG_CHUCHU) {
@@ -3073,6 +3356,157 @@ void entity_manager_render(const Camera* cam) {
                 font_draw_text(prompt_x + 2, prompt_y, "[A] Falar", 0x60A5FAFF, true);
             }
         }
+
+        // 20. INIMIGO: TEKTITE (ARACNÍDEO SALTITANTE DO MONTE CRENEL)
+        else if (e->type == ENTITY_ENEMY_TEKTITE) {
+            if (e->z > 0.0f) {
+                draw_filled_rect(sx + 4, sy + 13, 8, 3, 0x00000044); // Sombra no solo
+            }
+
+            int ty = sy - (int)e->z;
+            u32 c_chitin    = (e->invulnerableTimer > 0 && ((e->invulnerableTimer / 3) % 2 == 1)) ? 0xFFFFFFFF : 0xDC2626FF;
+            u32 c_chitin_dk = 0x991B1BFF;
+            u32 c_eye       = 0xFEF08AFF;
+            u32 c_pupil     = 0x111111FF;
+            u32 c_leg       = 0x78350FFF;
+
+            // Carapaça vermelha arredondada
+            draw_filled_rect(sx + 5, ty + 4, 6, 6, c_chitin);
+            draw_filled_rect(sx + 6, ty + 3, 4, 8, c_chitin);
+            put_pixel_safe(sx + 6, ty + 4, c_chitin_dk);
+            put_pixel_safe(sx + 9, ty + 4, c_chitin_dk);
+
+            // Olho central amarelo
+            put_pixel_safe(sx + 7, ty + 6, c_eye);
+            put_pixel_safe(sx + 8, ty + 6, c_eye);
+            put_pixel_safe(sx + 7, ty + 7, c_pupil);
+
+            // 4 Patas articuladas de aracnídeo
+            if (e->z <= 0.0f) {
+                // No chão: patas abertas para estabilidade
+                put_pixel_safe(sx + 4, ty + 5, c_leg);
+                put_pixel_safe(sx + 3, ty + 4, c_leg);
+                put_pixel_safe(sx + 2, ty + 7, c_leg);
+                put_pixel_safe(sx + 1, ty + 9, c_leg);
+
+                put_pixel_safe(sx + 11, ty + 5, c_leg);
+                put_pixel_safe(sx + 12, ty + 4, c_leg);
+                put_pixel_safe(sx + 13, ty + 7, c_leg);
+                put_pixel_safe(sx + 14, ty + 9, c_leg);
+
+                put_pixel_safe(sx + 4, ty + 8, c_leg);
+                put_pixel_safe(sx + 3, ty + 10, c_leg);
+                put_pixel_safe(sx + 2, ty + 12, c_leg);
+
+                put_pixel_safe(sx + 11, ty + 8, c_leg);
+                put_pixel_safe(sx + 12, ty + 10, c_leg);
+                put_pixel_safe(sx + 13, ty + 12, c_leg);
+            } else {
+                // No ar: patas dobradas balísticas
+                put_pixel_safe(sx + 4, ty + 7, c_leg);
+                put_pixel_safe(sx + 3, ty + 9, c_leg);
+                put_pixel_safe(sx + 4, ty + 11, c_leg);
+
+                put_pixel_safe(sx + 11, ty + 7, c_leg);
+                put_pixel_safe(sx + 12, ty + 9, c_leg);
+                put_pixel_safe(sx + 11, ty + 11, c_leg);
+            }
+        }
+
+        // 21. INIMIGO: SPINY BEETLE (BESOURO COM CARAPAÇA DE ROCHA ESPINHOSA)
+        else if (e->type == ENTITY_ENEMY_SPINY_BEETLE) {
+            u32 c_rock    = (e->invulnerableTimer > 0 && ((e->invulnerableTimer / 3) % 2 == 1)) ? 0xFFFFFFFF : 0x64748BFF;
+            u32 c_rock_dk = 0x334155FF;
+            u32 c_rock_hi = 0x94A3B8FF;
+            u32 c_spike   = 0xCBD5E1FF;
+            u32 c_eyes    = 0xEF4444FF;
+            u32 c_leg     = 0x1E293BFF;
+
+            // Patas de inseto scurrying
+            int leg_anim = (e->animTimer / 4) % 2;
+            if (leg_anim == 0) {
+                put_pixel_safe(sx + 2, sy + 6, c_leg);
+                put_pixel_safe(sx + 1, sy + 7, c_leg);
+                put_pixel_safe(sx + 2, sy + 10, c_leg);
+                put_pixel_safe(sx + 1, sy + 11, c_leg);
+                put_pixel_safe(sx + 13, sy + 6, c_leg);
+                put_pixel_safe(sx + 14, sy + 7, c_leg);
+                put_pixel_safe(sx + 13, sy + 10, c_leg);
+                put_pixel_safe(sx + 14, sy + 11, c_leg);
+            } else {
+                put_pixel_safe(sx + 2, sy + 5, c_leg);
+                put_pixel_safe(sx + 1, sy + 6, c_leg);
+                put_pixel_safe(sx + 2, sy + 9, c_leg);
+                put_pixel_safe(sx + 1, sy + 10, c_leg);
+                put_pixel_safe(sx + 13, sy + 5, c_leg);
+                put_pixel_safe(sx + 14, sy + 6, c_leg);
+                put_pixel_safe(sx + 13, sy + 9, c_leg);
+                put_pixel_safe(sx + 14, sy + 10, c_leg);
+            }
+
+            // Carapaça rochosa pontiaguda
+            draw_filled_rect(sx + 3, sy + 3, 10, 9, c_rock);
+            draw_filled_rect(sx + 4, sy + 2, 8, 11, c_rock);
+
+            // Espinhos e relevos de pedra
+            put_pixel_safe(sx + 7, sy + 1, c_spike);
+            put_pixel_safe(sx + 8, sy + 1, c_spike);
+            put_pixel_safe(sx + 2, sy + 5, c_rock_hi);
+            put_pixel_safe(sx + 13, sy + 6, c_rock_hi);
+            put_pixel_safe(sx + 6, sy + 6, c_rock_dk);
+            put_pixel_safe(sx + 9, sy + 7, c_rock_dk);
+
+            // Olhos vermelhos ameaçadores espreitando por baixo da rocha
+            if (e->action == 2 || e->dir == DIR_DOWN) {
+                put_pixel_safe(sx + 5, sy + 11, c_eyes);
+                put_pixel_safe(sx + 10, sy + 11, c_eyes);
+            }
+        }
+
+        // 22. NPC: BUSINESS SCRUB (DEKU SCRUB COMERCIANTE DO MONTE CRENEL)
+        else if (e->type == ENTITY_NPC_BUSINESS_SCRUB) {
+            u32 c_bush    = 0x16A34AFF; // Folhagem verde
+            u32 c_bush_dk = 0x15803DFF;
+            u32 c_scrub   = 0x78350FFF; // Madeira Deku
+            u32 c_snout   = 0x9A3412FF; // Bico de trombeta
+            u32 c_eyes    = 0xFDE047FF; // Olhos amarelos
+            u32 c_leaves  = 0x22C55EFF;
+
+            // Arbusto ao redor
+            draw_filled_rect(sx + 2, sy + 9, 12, 6, c_bush);
+            draw_filled_rect(sx + 4, sy + 7, 8, 4, c_bush);
+            put_pixel_safe(sx + 3, sy + 10, c_bush_dk);
+            put_pixel_safe(sx + 12, sy + 10, c_bush_dk);
+
+            // Cabeça do Deku Scrub espiando do arbusto
+            int bob = ((e->animTimer / 12) % 2 == 1) ? 1 : 0;
+            int by = sy - bob;
+
+            draw_filled_rect(sx + 5, by + 3, 6, 6, c_scrub);
+            // Coroa de folhas
+            draw_filled_rect(sx + 4, by + 1, 8, 2, c_leaves);
+            put_pixel_safe(sx + 7, by, 0x86EFACFF);
+
+            // Olhos amarelos
+            put_pixel_safe(sx + 6, by + 4, c_eyes);
+            put_pixel_safe(sx + 9, by + 4, c_eyes);
+
+            // Focinho de madeira
+            draw_filled_rect(sx + 6, by + 6, 4, 3, c_snout);
+            put_pixel_safe(sx + 7, by + 7, 0x451A03FF);
+
+            // Prompt de interação [A] Falar (Comerciante)
+            float dx = s_last_link_x - e->x;
+            float dy = s_last_link_y - e->y;
+            if (dx * dx + dy * dy <= 32.0f * 32.0f) {
+                int bounce = ((e->animTimer / 10) % 2 == 1) ? 1 : 0;
+                int prompt_x = sx - 32;
+                int prompt_y = by - 16 + bounce;
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 80, 12, 0x1A0F06F0);
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 80, 1, 0xF59E0BFF);
+                font_draw_text(prompt_x + 2, prompt_y + 1, "[A] Comerciante", 0xFDE047FF, true);
+            }
+        }
     }
 }
 
@@ -3366,6 +3800,43 @@ Entity* entity_find_nearby_malon(float world_x, float world_y, float max_dist) {
         }
     }
     return best;
+}
+
+Entity* entity_find_nearby_business_scrub(float world_x, float world_y, float max_dist) {
+    float best_dist_sq = max_dist * max_dist;
+    Entity* best = NULL;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active || e->type != ENTITY_NPC_BUSINESS_SCRUB) continue;
+
+        float dx = e->x - world_x;
+        float dy = e->y - world_y;
+        float dist_sq = dx * dx + dy * dy;
+
+        if (dist_sq <= best_dist_sq) {
+            best_dist_sq = dist_sq;
+            best = e;
+        }
+    }
+    return best;
+}
+
+bool entity_buy_grip_ring(int* link_rupees, bool* out_has_grip_ring) {
+    if (!link_rupees) return false;
+    int cost = 40;
+    if (*link_rupees >= cost) {
+        *link_rupees -= cost;
+        if (out_has_grip_ring) *out_has_grip_ring = true;
+        hal_audio_play_sound(SOUND_SHOP_BUY, 1.0f, 1.0f);
+        hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.25f);
+        printf("[BUSINESS SCRUB] Comprou Grip Ring por %d Rupees! Escalada destravada!\n", cost);
+        return true;
+    }
+
+    hal_audio_play_sound(SOUND_SWORD_HIT, 0.7f, 0.8f);
+    printf("[BUSINESS SCRUB] Rupees insuficientes para comprar o Grip Ring (Custa %d Rupees)!\n", cost);
+    return false;
 }
 
 void entity_manager_shutdown(void) {

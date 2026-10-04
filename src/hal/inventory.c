@@ -99,6 +99,7 @@ const char* inventory_get_item_name(InventoryItem item) {
         case INV_ITEM_LANTERN:       return "Lanterna de Fogo";
         case INV_ITEM_ROCS_CAPE:     return "Capa de Roc";
         case INV_ITEM_BOW:           return "Arco e Flechas";
+        case INV_ITEM_GRIP_RING:     return "Anel de Escalada (Grip Ring)";
         default:                     return "---";
     }
 }
@@ -127,6 +128,8 @@ const char* inventory_get_item_desc(InventoryItem item) {
             return "Manto celestial. Permite saltar no ar e planar sobre abismos.";
         case INV_ITEM_BOW:
             return "Arco de precisão. Dispara flechas e aciona interruptores distantes.";
+        case INV_ITEM_GRIP_RING:
+            return "Anel com garras de escalada. Permite escalar escarpas e paredões de rocha.";
         default:
             return "Slot de inventário vazio.";
     }
@@ -321,6 +324,22 @@ static void draw_item_icon(int x, int y, InventoryItem item) {
             for (int dx = 4; dx <= 11; dx++) {
                 hal_video_put_pixel(x + dx, y + 7, 0xF8FAFCFF); // Flecha
             }
+            break;
+
+        case INV_ITEM_GRIP_RING:
+            // Anel dourado com garras afiadas e rubi central
+            for (int dy = 4; dy <= 10; dy++) {
+                for (int dx = 4; dx <= 10; dx++) {
+                    if (dy == 4 || dy == 10 || dx == 4 || dx == 10)
+                        hal_video_put_pixel(x + dx, y + dy, 0xF59E0BFF); // Aro dourado
+                }
+            }
+            // Garras de escalada
+            hal_video_put_pixel(x + 3, y + 4, 0x94A3B8FF);
+            hal_video_put_pixel(x + 7, y + 2, 0x94A3B8FF);
+            hal_video_put_pixel(x + 11, y + 4, 0x94A3B8FF);
+            // Rubi central
+            hal_video_put_pixel(x + 7, y + 7, 0xEF4444FF);
             break;
 
         default:

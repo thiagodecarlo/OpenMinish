@@ -31,6 +31,7 @@ typedef struct {
     bool  has_flippers;
     bool  has_spin_attack;
     bool  is_minish;
+    bool  has_grip_ring;
     int   slot_a;
     int   slot_b;
     u32   unlocked_items_mask;

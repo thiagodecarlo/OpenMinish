@@ -52,6 +52,12 @@ typedef enum {
     TILE_SECRET_ENTRANCE, // Passagem secreta revelada após a explosão da parede rachada
     TILE_FENCE_GATE,      // Portão de madeira da Fazenda Lon Lon
     TILE_CRENEL_ROAD_SIGN,// Placa de madeira indicando caminho para Monte Crenel
+    TILE_CRENEL_CLIFF_FACE,// Paredão de rocha vulcânica escarpado de Monte Crenel (sólido intransponível)
+    TILE_CLIMBABLE_WALL,  // Paredão rochoso com fissuras e saliências escalável com o Grip Ring
+    TILE_MINERAL_WATER,   // Água mineral termal verde efervescente de Monte Crenel
+    TILE_MAGIC_BEAN_SPROUT,// Broto de feijão mágico plantado na terra fofa
+    TILE_CLIMBABLE_VINE,  // Caule/videira gigante de feijão escalável que alcança o platô
+    TILE_CRENEL_GRAVEL,   // Solo terroso de cascalho e pedriscos vulcânicos
     TILE_COUNT
 } TileType;
 
@@ -110,6 +116,13 @@ Tilemap* map_create_south_hyrule_field(void);
 Tilemap* map_create_north_hyrule_field(void);
 
 /*
+ * Constrói o sopé e paredões rochosos do Monte Crenel (Mount Crenel Base)
+ * Dimensões: 32x24 tiles (512x384 pixels) contendo paredões escaláveis com Grip Ring,
+ * fontes de água mineral termal, broto de feijão mágico e caverna do Deku Scrub.
+ */
+Tilemap* map_create_mount_crenel_base(void);
+
+/*
  * Carrega o mapa de Minish Woods para a região ativa (ex: "usa", "eur", "jpn").
  * Se os assets autênticos (map_woods.bmp e map_woods_collision.bin) existirem,
  * ativa o modo de renderização autêntica com colisão precisa.
@@ -153,6 +166,22 @@ bool map_is_solid(const Tilemap* map, float world_x, float world_y);
  * Retorna true se o ponto no mundo contiver água (TILE_WATER, TILE_VILLAGE_STREAM ou lago autêntico).
  */
 bool map_is_water(const Tilemap* map, float world_x, float world_y);
+
+/*
+ * Retorna true se o ponto no mundo for um paredão ou videira escalável (TILE_CLIMBABLE_WALL ou TILE_CLIMBABLE_VINE).
+ */
+bool map_is_climbable(const Tilemap* map, float world_x, float world_y);
+
+/*
+ * Retorna true se o ponto contiver água mineral termal de Monte Crenel (TILE_MINERAL_WATER).
+ */
+bool map_is_mineral_water(const Tilemap* map, float world_x, float world_y);
+
+/*
+ * Rega e faz brotar o feijão mágico em Monte Crenel, transformando-o em videira gigante escalável.
+ * Retorna true se regou um broto com sucesso.
+ */
+bool map_interact_grow_bean(Tilemap* map, float world_x, float world_y);
 
 /*
  * Interage com o cenário no ponto do golpe de espada (ex: corta arbusto e revela item).
