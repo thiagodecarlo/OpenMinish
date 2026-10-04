@@ -46,7 +46,8 @@ typedef enum {
     ENTITY_ENEMY_SPINY_BEETLE,// Besouro com carapaça de pedra/arbusto que corre em investida
     ENTITY_NPC_BUSINESS_SCRUB,// Deku Scrub comerciante do Monte Crenel (Vendedor do Grip Ring)
     ENTITY_NPC_MELARI,        // Mestre Ferreiro Melari (Forjador da White Sword)
-    ENTITY_NPC_MOUNTAIN_MINISH// Minerador / Aprendiz das Minas de Melari
+    ENTITY_NPC_MOUNTAIN_MINISH,// Minerador / Aprendiz das Minas de Melari
+    ENTITY_ENEMY_FIRE_KEESE   // Morcego vulcânico em chamas (Cave of Flames)
 } EntityType;
 
 // Caixa delimitadora de colisão e dano (Hitbox / Hurtbox)
@@ -286,6 +287,11 @@ void entity_manager_render(const Camera* cam);
  * Define a folha de sprites das entidades (octorok.bmp).
  */
 void entity_set_texture(const Texture* tex);
+
+/*
+ * Remove todas as entidades ativas da sala (usado em transição de masmorras).
+ */
+void entity_clear_all(void);
 
 /*
  * Finaliza o subsistema de entidades.

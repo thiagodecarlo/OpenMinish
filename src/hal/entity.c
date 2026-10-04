@@ -97,6 +97,7 @@ int entity_count_active_enemies(void) {
         if (!s_entities[i].is_active) continue;
         if (s_entities[i].type == ENTITY_ENEMY_OCTOROK ||
             s_entities[i].type == ENTITY_ENEMY_KEESE ||
+            s_entities[i].type == ENTITY_ENEMY_FIRE_KEESE ||
             s_entities[i].type == ENTITY_ENEMY_CHUCHU ||
             s_entities[i].type == ENTITY_ENEMY_MOBLIN ||
             s_entities[i].type == ENTITY_ENEMY_PEAHAT ||
@@ -173,9 +174,10 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     break;
 
                 case ENTITY_ENEMY_KEESE:
-                    e->health    = 1;
-                    e->maxHealth = 1;
-                    e->damage    = 1;
+                case ENTITY_ENEMY_FIRE_KEESE:
+                    e->health    = (e->type == ENTITY_ENEMY_FIRE_KEESE) ? 2 : 1;
+                    e->maxHealth = e->health;
+                    e->damage    = (e->type == ENTITY_ENEMY_FIRE_KEESE) ? 2 : 1;
                     e->dir       = DIR_DOWN;
                     e->action    = 1; // Voo de cruzeiro
                     e->z         = 10.0f;
@@ -664,9 +666,9 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
         }
 
         // --------------------------------------------------------------------
-        // 5. INIMIGO: KEESE (MORCEGO VOADOR)
+        // 5. INIMIGO: KEESE & FIRE KEESE (MORCEGO VOADOR / EM CHAMAS)
         // --------------------------------------------------------------------
-        else if (e->type == ENTITY_ENEMY_KEESE) {
+        else if (e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_FIRE_KEESE) {
             e->animTimer++;
             if (e->invulnerableTimer > 0) e->invulnerableTimer--;
 
@@ -1588,9 +1590,10 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
         Entity* e = &s_entities[i];
         if (!e->is_active) continue;
 
-        // Golpeando Inimigo (Octorok, Keese, ChuChu, Moblin, Peahat, Tektite ou Spiny Beetle)
+        // Golpeando Inimigo (Octorok, Keese, Fire Keese, ChuChu, Moblin, Peahat, Tektite ou Spiny Beetle)
         if ((e->type == ENTITY_ENEMY_OCTOROK ||
              e->type == ENTITY_ENEMY_KEESE ||
+             e->type == ENTITY_ENEMY_FIRE_KEESE ||
              e->type == ENTITY_ENEMY_MOBLIN ||
              e->type == ENTITY_ENEMY_PEAHAT ||
              e->type == ENTITY_ENEMY_TEKTITE ||
@@ -1599,7 +1602,7 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
             e->invulnerableTimer <= 0) {
 
             // Se o Keese, Peahat ou Tektite estiver voando alto demais fora do alcance da lâmina
-            if ((e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_PEAHAT || e->type == ENTITY_ENEMY_TEKTITE) && e->z > 8.0f) {
+            if ((e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_FIRE_KEESE || e->type == ENTITY_ENEMY_PEAHAT || e->type == ENTITY_ENEMY_TEKTITE) && e->z > 8.0f) {
                 continue;
             }
 
@@ -1617,9 +1620,9 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
                 }
                 e->invulnerableTimer = 18; // Pisca de dano
                 e->action = 4; // Knockback
-                e->knockbackTimer = (e->type == ENTITY_ENEMY_KEESE) ? 14 : ((e->type == ENTITY_ENEMY_MOBLIN) ? 12 : 10);
+                e->knockbackTimer = (e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_FIRE_KEESE) ? 14 : ((e->type == ENTITY_ENEMY_MOBLIN) ? 12 : 10);
 
-                float force = (e->type == ENTITY_ENEMY_KEESE) ? 4.2f : ((e->type == ENTITY_ENEMY_MOBLIN) ? 2.8f : 3.0f);
+                float force = (e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_FIRE_KEESE) ? 4.2f : ((e->type == ENTITY_ENEMY_MOBLIN) ? 2.8f : 3.0f);
                 e->knockbackVx = 0.0f;
                 e->knockbackVy = 0.0f;
                 if (slash_dir == DIR_DOWN)  e->knockbackVy = force;
@@ -1694,9 +1697,10 @@ int entity_check_spin_attack_hit(float center_x, float center_y, float radius, i
         Entity* e = &s_entities[i];
         if (!e->is_active) continue;
 
-        // Inimigos: Octorok, Keese, ChuChu, Moblin, Peahat, Tektite, Spiny Beetle
+        // Inimigos: Octorok, Keese, Fire Keese, ChuChu, Moblin, Peahat, Tektite, Spiny Beetle
         if ((e->type == ENTITY_ENEMY_OCTOROK ||
              e->type == ENTITY_ENEMY_KEESE ||
+             e->type == ENTITY_ENEMY_FIRE_KEESE ||
              e->type == ENTITY_ENEMY_MOBLIN ||
              e->type == ENTITY_ENEMY_PEAHAT ||
              e->type == ENTITY_ENEMY_TEKTITE ||
@@ -1705,7 +1709,7 @@ int entity_check_spin_attack_hit(float center_x, float center_y, float radius, i
             e->invulnerableTimer <= 0) {
 
             // Se voando alto demais desvia do golpe circular
-            if ((e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_PEAHAT || e->type == ENTITY_ENEMY_TEKTITE) && e->z > 8.0f) continue;
+            if ((e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_FIRE_KEESE || e->type == ENTITY_ENEMY_PEAHAT || e->type == ENTITY_ENEMY_TEKTITE) && e->z > 8.0f) continue;
 
             float ex = e->x + e->hitbox.offset_x + (e->hitbox.width * 0.5f);
             float ey = e->y + e->hitbox.offset_y + (e->hitbox.height * 0.5f);
@@ -1723,10 +1727,10 @@ int entity_check_spin_attack_hit(float center_x, float center_y, float radius, i
                 }
                 e->invulnerableTimer = 22; // Pisca de dano
                 e->action = 4; // Knockback
-                e->knockbackTimer = (e->type == ENTITY_ENEMY_KEESE) ? 18 : 14;
+                e->knockbackTimer = (e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_FIRE_KEESE) ? 18 : 14;
 
                 // Força de repulsão radial centrífuga para longe do herói
-                float force = (e->type == ENTITY_ENEMY_KEESE) ? 5.0f : 4.0f;
+                float force = (e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_FIRE_KEESE) ? 5.0f : 4.0f;
                 if (dist > 0.1f) {
                     e->knockbackVx = (dx / dist) * force;
                     e->knockbackVy = (dy / dist) * force;
@@ -1798,9 +1802,10 @@ int entity_check_bomb_explosion(float center_x, float center_y, float radius, in
         Entity* e = &s_entities[i];
         if (!e->is_active) continue;
 
-        // Inimigos padrão: Octorok, Keese, ChuChu, Moblin, Peahat, Tektite, Spiny Beetle
+        // Inimigos padrão: Octorok, Keese, Fire Keese, ChuChu, Moblin, Peahat, Tektite, Spiny Beetle
         if ((e->type == ENTITY_ENEMY_OCTOROK ||
              e->type == ENTITY_ENEMY_KEESE ||
+             e->type == ENTITY_ENEMY_FIRE_KEESE ||
              e->type == ENTITY_ENEMY_CHUCHU ||
              e->type == ENTITY_ENEMY_MOBLIN ||
              e->type == ENTITY_ENEMY_PEAHAT ||
@@ -1944,6 +1949,7 @@ bool entity_check_subweapon_hit(float px, float py, float pw, float ph, int dama
         // 3. Impacto e atordoamento contra Inimigos
         else if ((e->type == ENTITY_ENEMY_OCTOROK ||
                   e->type == ENTITY_ENEMY_KEESE ||
+                  e->type == ENTITY_ENEMY_FIRE_KEESE ||
                   e->type == ENTITY_ENEMY_MOBLIN ||
                   e->type == ENTITY_ENEMY_PEAHAT ||
                   e->type == ENTITY_ENEMY_TEKTITE ||
@@ -1952,7 +1958,7 @@ bool entity_check_subweapon_hit(float px, float py, float pw, float ph, int dama
                  e->invulnerableTimer <= 0) {
 
             // Se voando alto demais desvia do projétil
-            if ((e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_PEAHAT || e->type == ENTITY_ENEMY_TEKTITE) && e->z > 8.0f) continue;
+            if ((e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_FIRE_KEESE || e->type == ENTITY_ENEMY_PEAHAT || e->type == ENTITY_ENEMY_TEKTITE) && e->z > 8.0f) continue;
 
             float ex1 = e->x + e->hitbox.offset_x;
             float ey1 = e->y + e->hitbox.offset_y;
@@ -1968,7 +1974,7 @@ bool entity_check_subweapon_hit(float px, float py, float pw, float ph, int dama
                 float dx = e->x - px;
                 float dy = e->y - py;
                 float dist = sqrtf(dx * dx + dy * dy);
-                float force = (e->type == ENTITY_ENEMY_KEESE) ? 3.8f : 2.6f;
+                float force = (e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_FIRE_KEESE) ? 3.8f : 2.6f;
 
                 if (dist > 0.1f) {
                     e->knockbackVx = (dx / dist) * force;
@@ -2039,6 +2045,7 @@ bool entity_check_pacci_hit(float px, float py, float pw, float ph) {
             // Sofrem forte impacto mágico de inversão e atordoamento
             else if (e->type == ENTITY_ENEMY_OCTOROK ||
                      e->type == ENTITY_ENEMY_KEESE ||
+                     e->type == ENTITY_ENEMY_FIRE_KEESE ||
                      e->type == ENTITY_ENEMY_MOBLIN ||
                      e->type == ENTITY_ENEMY_PEAHAT ||
                      e->type == ENTITY_ENEMY_TEKTITE ||
@@ -2118,8 +2125,8 @@ bool entity_apply_gust_suction(float jar_x, float jar_y, Direction dir, float ra
             e->x += pull_x * 0.75f;
             e->y += pull_y * 0.75f;
         }
-        // Puxar Octorok e Keese
-        else if (e->type == ENTITY_ENEMY_OCTOROK || e->type == ENTITY_ENEMY_KEESE) {
+        // Puxar Octorok, Keese e Fire Keese
+        else if (e->type == ENTITY_ENEMY_OCTOROK || e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_FIRE_KEESE) {
             e->x += pull_x * 0.85f;
             e->y += pull_y * 0.85f;
         }
@@ -2398,8 +2405,8 @@ void entity_manager_render(const Camera* cam) {
             }
         }
 
-        // 6. INIMIGO: KEESE (MORCEGO VOADOR COM SOMBRA PROJETADA)
-        else if (e->type == ENTITY_ENEMY_KEESE) {
+        // 6. INIMIGO: KEESE & FIRE KEESE (MORCEGO VOADOR / EM CHAMAS)
+        else if (e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_FIRE_KEESE) {
             // Sombra oval no chão (projeção de altitude 3D no terreno)
             draw_filled_rect(sx + 3, sy + 12, 10, 3, 0x05100766);
             draw_filled_rect(sx + 4, sy + 11, 8, 4, 0x05100766);
@@ -2411,11 +2418,20 @@ void entity_manager_render(const Camera* cam) {
 
             int by = sy - (int)e->z;
 
-            u32 c_body  = 0x2A0E3DFF; // Roxo escuro do corpo
-            u32 c_wing  = 0x58247DFF; // Asas violeta
-            u32 c_rib   = 0x8239B5FF; // Nervuras das asas
-            u32 c_eye   = 0xFFD700FF; // Olhos dourados brilhantes
+            bool is_fire = (e->type == ENTITY_ENEMY_FIRE_KEESE);
+            u32 c_body  = is_fire ? 0x7F1D1DFF : 0x2A0E3DFF; // Vermelho escuro ou Roxo escuro do corpo
+            u32 c_wing  = is_fire ? 0xEA580CFF : 0x58247DFF; // Asas laranja-fogo ou violeta
+            u32 c_rib   = is_fire ? 0xFBBF24FF : 0x8239B5FF; // Nervuras douradas de chama ou nervuras das asas
+            u32 c_eye   = is_fire ? 0xFEF08AFF : 0xFFD700FF; // Olhos amarelos incandescentes
             u32 c_pupil = 0xEE1100FF; // Íris vermelha
+
+            // Partículas de fagulhas de fogo para o Fire Keese
+            if (is_fire) {
+                int f_tick = (e->animTimer / 3) % 4;
+                put_pixel_safe(sx + 2 + f_tick, by - 2 + (f_tick % 2), 0xFDE047FF);
+                put_pixel_safe(sx + 12 - f_tick, by - 1 - (f_tick % 2), 0xEF4444FF);
+                put_pixel_safe(sx + 7 + ((f_tick * 3) % 5) - 2, by + 10, 0xF97316FF);
+            }
 
             // Corpo e cabeça central do morcego
             draw_filled_rect(sx + 6, by + 4, 4, 6, c_body);
