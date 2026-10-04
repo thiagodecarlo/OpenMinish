@@ -93,6 +93,15 @@ static FILE* open_binary_asset(const char* rel_path) {
 
 static int s_water_anim_frame = 0;
 static int s_water_timer = 0;
+static bool s_armos_circuit_active = false;
+
+bool armos_circuit_is_active(void) {
+    return s_armos_circuit_active;
+}
+
+void armos_circuit_set_active(bool active) {
+    s_armos_circuit_active = active;
+}
 
 static inline void draw_tile_pixel(int sx, int sy, u32 color) {
     hal_video_put_pixel(sx, sy, color);
@@ -1118,6 +1127,136 @@ static void render_metatile(int sx, int sy, TileType type) {
                         draw_tile_pixel(sx + x, sy + y, c);
                     }
                 }
+            }
+            break;
+
+        case TILE_WIND_RUINS_STONE:
+            // Laje de pedra antiga das ruínas com fissuras e musgo verde
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x64748BFF; // Ardósia cinza base
+                    if (x == 0 || y == 0) c = 0x94A3B8FF; // Chanfro superior
+                    else if (x == 15 || y == 15) c = 0x334155FF; // Borda sombreada
+                    else if ((x + y) % 7 == 0) c = 0x475569FF;
+                    // Fissuras ancestrais
+                    if ((x == 6 && y >= 3 && y <= 8) || (x == 10 && y >= 7 && y <= 12)) c = 0x1E293BFF;
+                    // Pedaços de musgo verde que cresce na pedra úmida
+                    if ((x == 3 && y == 4) || (x == 4 && y == 4) || (x == 12 && y == 11)) c = 0x15803DFF;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_WIND_RUINS_WALL:
+            // Parede de blocos de cantaria antiga das Wind Ruins
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x475569FF;
+                    if (y == 0 || y == 7 || y == 15) c = 0x1E293BFF; // Rejunte de argamassa antiga
+                    else if ((y < 7 && x == 8) || (y > 7 && (x == 4 || x == 12))) c = 0x1E293BFF;
+                    else if (y == 1 || y == 8) c = 0x94A3B8FF; // Realce de topo do bloco
+                    // Hera e musgo trepando pela pedra
+                    if ((x == 2 && y >= 3 && y <= 6) || (x == 11 && y >= 9 && y <= 13)) c = 0x166534FF;
+                    if (x == 3 && y == 4) c = 0x22C55EFF;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_WIND_PILLAR:
+            // Coluna dórica cilíndrica de pedra com capitel e estrias verticais
+            render_metatile(sx, sy, TILE_WIND_RUINS_STONE);
+            for (int y = 0; y < 16; y++) {
+                for (int x = 2; x <= 13; x++) {
+                    u32 c = 0x94A3B8FF;
+                    // Curvatura cilíndrica com sombreamento nas bordas
+                    if (x == 2 || x == 13) c = 0x334155FF;
+                    else if (x == 3 || x == 12) c = 0x475569FF;
+                    else if (x >= 6 && x <= 9) c = 0xE2E8F0FF; // Reflexo de luz frontal
+                    // Capitel no topo e pedestal na base
+                    if (y <= 2 || y >= 13) {
+                        c = (x == 2 || x == 13) ? 0x1E293BFF : 0xCBD5E1FF;
+                        if (y == 0 || y == 15) c = 0x475569FF;
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_WIND_FORTRESS_GATE:
+            // Portal de pedra em arco monumental da Fortress of Winds
+            render_metatile(sx, sy, TILE_WIND_RUINS_WALL);
+            for (int y = 2; y < 16; y++) {
+                for (int x = 1; x < 15; x++) {
+                    u32 c = 0x090D16FF; // Escuridão do interior
+                    if (y == 2 || x == 1 || x == 14) c = 0xF59E0BFF; // Moldura dourada
+                    else if (y == 4 && (x == 4 || x == 7 || x == 11)) c = 0x38BDF8FF; // Runas mágicas ciano
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_ARMOS_CIRCUIT_FLOOR:
+            // Piso mecânico de placas de bronze e cobre com trilhas de circuito
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x78350FFF; // Bronze base
+                    if (x == 0 || y == 0 || x == 15 || y == 15) c = 0x451A03FF; // Rebites e juntas
+                    else if ((x == 2 && y == 2) || (x == 13 && y == 13)) c = 0xF59E0BFF; // Parafuso de latão
+                    // Linhas de circuito condutor
+                    if (x == 8 || y == 8) {
+                        c = s_armos_circuit_active ? 0x38BDF8FF : 0xB45309FF; // Ciano elétrico ativo / cobre inativo
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_ARMOS_CIRCUIT_WALL:
+            // Parede interna do robô com bobinas elétricas e engrenagens
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x2A180AFF; // Bronze escuro do casco
+                    if (y >= 4 && y <= 11) {
+                        // Bobina cilíndrica de cobre com espiras
+                        c = (x % 3 == 0) ? 0x92400EFF : 0xD97706FF;
+                        if (s_armos_circuit_active && ((x + s_water_anim_frame) % 4 == 0)) {
+                            c = 0xBAE6FDFF; // Arcos voltaicos cintilantes
+                        }
+                    }
+                    if (y == 0 || y == 15) c = 0x180D05FF;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_ARMOS_CIRCUIT_SWITCH:
+            // Alavanca mecânica central de ignição do Armos
+            render_metatile(sx, sy, TILE_ARMOS_CIRCUIT_FLOOR);
+            // Pedestal circular do gerador
+            for (int y = 3; y <= 12; y++) {
+                for (int x = 3; x <= 12; x++) {
+                    float d = sqrtf((float)((x - 7.5f) * (x - 7.5f) + (y - 7.5f) * (y - 7.5f)));
+                    if (d <= 4.5f) {
+                        u32 c = 0x475569FF;
+                        if (d <= 2.5f) {
+                            c = s_armos_circuit_active ? 0x0284C7FF : 0x78350FFF;
+                        }
+                        draw_tile_pixel(sx + x, sy + y, c);
+                    }
+                }
+            }
+            if (!s_armos_circuit_active) {
+                // Alavanca para cima (desligada)
+                for (int y = 2; y <= 8; y++) draw_tile_pixel(sx + 7, sy + y, 0xCBD5E1FF);
+                draw_tile_pixel(sx + 7, sy + 1, 0xEF4444FF);
+                draw_tile_pixel(sx + 8, sy + 1, 0xEF4444FF);
+            } else {
+                // Alavanca ligada (azul radiante com faíscas)
+                for (int i = 0; i <= 6; i++) draw_tile_pixel(sx + 7 + i, sy + 7 + (i / 2), 0x38BDF8FF);
+                draw_tile_pixel(sx + 13, sy + 10, 0x22C55EFF);
+                draw_tile_pixel(sx + 14, sy + 10, 0x22C55EFF);
+                draw_tile_pixel(sx + 7, sy + 5, 0xFFFFFFFF);
             }
             break;
 
@@ -2907,5 +3046,168 @@ Tilemap* map_create_mole_cave(void) {
     m->collision_map[3 * w + 15] = 1;
 
     printf("[MAP] Mole Mitts Cavern (Caverna de Escavacao) criada com sucesso (%dx%d tiles)!\n", w, h);
+    return m;
+}
+
+// ----------------------------------------------------------------------------
+// CONSTRUÇÃO DE WIND RUINS (RUÍNAS DO VENTO - 36x24 TILES = 576x384 PIXELS)
+// ----------------------------------------------------------------------------
+Tilemap* map_create_wind_ruins(void) {
+    int w = 36;
+    int h = 24;
+    Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
+    if (!m) return NULL;
+
+    m->width  = w;
+    m->height = h;
+    m->is_authentic = false;
+    m->authentic_tex = NULL;
+    m->ground_layer  = (u8*)malloc(w * h * sizeof(u8));
+    m->overlay_layer = (u8*)malloc(w * h * sizeof(u8));
+    m->collision_map = (u8*)malloc(w * h * sizeof(u8));
+
+    // 1. Base das Ruínas do Vento: lajes de pedra antiga (TILE_WIND_RUINS_STONE)
+    for (int i = 0; i < w * h; i++) {
+        m->ground_layer[i]  = TILE_WIND_RUINS_STONE;
+        m->overlay_layer[i] = 0xFF;
+        m->collision_map[i] = 0;
+    }
+
+    // 2. Paredes limítrofes e desfiladeiros rochosos
+    for (int x = 0; x < w; x++) {
+        // Paredes norte e sul
+        m->overlay_layer[0 * w + x] = TILE_WIND_RUINS_WALL;
+        m->collision_map[0 * w + x] = 1;
+        m->overlay_layer[(h - 1) * w + x] = TILE_WIND_RUINS_WALL;
+        m->collision_map[(h - 1) * w + x] = 1;
+    }
+    for (int y = 0; y < h; y++) {
+        // Paredes leste e oeste
+        m->overlay_layer[y * w + (w - 1)] = TILE_WIND_RUINS_WALL;
+        m->collision_map[y * w + (w - 1)] = 1;
+        // Borda oeste (com passagem para Castor Wilds em y=10..13)
+        if (y < 10 || y > 13) {
+            m->overlay_layer[y * w + 0] = TILE_WIND_RUINS_WALL;
+            m->collision_map[y * w + 0] = 1;
+        }
+    }
+
+    // 3. Portão monumental da Fortaleza dos Ventos (Fortress of Winds) ao norte
+    m->overlay_layer[0 * w + 17] = TILE_WIND_FORTRESS_GATE;
+    m->collision_map[0 * w + 17] = 0; // Transição para Masmorra 3
+    m->overlay_layer[0 * w + 18] = TILE_WIND_FORTRESS_GATE;
+    m->collision_map[0 * w + 18] = 0;
+
+    // 4. Colunatas Dóricas Sagradas (Colunas de pedra esculpida flanqueando a avenida)
+    int pillars[][2] = {
+        {13, 3}, {22, 3},
+        {13, 7}, {22, 7},
+        {13, 11}, {22, 11},
+        {13, 15}, {22, 15},
+        {13, 19}, {22, 19},
+        {6, 5},   {6, 17},
+        {29, 5},  {29, 17}
+    };
+    int num_pillars = sizeof(pillars) / sizeof(pillars[0]);
+    for (int i = 0; i < num_pillars; i++) {
+        int px = pillars[i][0];
+        int py = pillars[i][1];
+        m->overlay_layer[py * w + px] = TILE_WIND_PILLAR;
+        m->collision_map[py * w + px] = 1;
+    }
+
+    // 5. Paredes intermediárias que formam terraços e corredores em ruínas
+    for (int y = 6; y <= 16; y++) {
+        if (y != 11) {
+            m->overlay_layer[y * w + 9] = TILE_WIND_RUINS_WALL;
+            m->collision_map[y * w + 9] = 1;
+            m->overlay_layer[y * w + 26] = TILE_WIND_RUINS_WALL;
+            m->collision_map[y * w + 26] = 1;
+        }
+    }
+
+    // 6. Passagem central bloqueada pela sentinela Armos (x=17..18, y=10)
+    // Se o circuito não foi ativado, fica como barreira sólida
+    if (!s_armos_circuit_active) {
+        m->collision_map[10 * w + 17] = 1;
+        m->collision_map[10 * w + 18] = 1;
+    }
+
+    // 7. Arbustos e flores antigas crescendo entre as ruínas
+    m->overlay_layer[4 * w + 15] = TILE_BUSH;
+    m->collision_map[4 * w + 15] = 1;
+    m->overlay_layer[4 * w + 20] = TILE_BUSH;
+    m->collision_map[4 * w + 20] = 1;
+    m->overlay_layer[18 * w + 16] = TILE_BUSH;
+    m->collision_map[18 * w + 16] = 1;
+    m->overlay_layer[18 * w + 19] = TILE_BUSH;
+    m->collision_map[18 * w + 19] = 1;
+
+    // Baú secreto com 100 Rupees em um pátio lateral (x=31, y=3)
+    m->overlay_layer[3 * w + 31] = TILE_CHEST_CLOSED;
+    m->collision_map[3 * w + 31] = 1;
+
+    printf("[MAP] Wind Ruins (Ruinas do Vento) criadas com sucesso (%dx%d tiles)!\n", w, h);
+    return m;
+}
+
+// ----------------------------------------------------------------------------
+// CONSTRUÇÃO DO INTERIOR MECÂNICO DO ARMOS (16x16 TILES = 256x256 PIXELS)
+// ----------------------------------------------------------------------------
+Tilemap* map_create_armos_interior(void) {
+    int w = 16;
+    int h = 16;
+    Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
+    if (!m) return NULL;
+
+    m->width  = w;
+    m->height = h;
+    m->is_authentic = false;
+    m->authentic_tex = NULL;
+    m->ground_layer  = (u8*)malloc(w * h * sizeof(u8));
+    m->overlay_layer = (u8*)malloc(w * h * sizeof(u8));
+    m->collision_map = (u8*)malloc(w * h * sizeof(u8));
+
+    // 1. Chão interno de engrenagens de bronze e cobre condutor (TILE_ARMOS_CIRCUIT_FLOOR)
+    for (int i = 0; i < w * h; i++) {
+        m->ground_layer[i]  = TILE_ARMOS_CIRCUIT_FLOOR;
+        m->overlay_layer[i] = 0xFF;
+        m->collision_map[i] = 0;
+    }
+
+    // 2. Casco robótico com bobinas elétricas (TILE_ARMOS_CIRCUIT_WALL)
+    for (int x = 0; x < w; x++) {
+        m->overlay_layer[0 * w + x] = TILE_ARMOS_CIRCUIT_WALL;
+        m->collision_map[0 * w + x] = 1;
+        // Borda sul com saída Minish em x=7, 8
+        if (x < 7 || x > 8) {
+            m->overlay_layer[(h - 1) * w + x] = TILE_ARMOS_CIRCUIT_WALL;
+            m->collision_map[(h - 1) * w + x] = 1;
+        }
+    }
+    for (int y = 0; y < h; y++) {
+        m->overlay_layer[y * w + 0] = TILE_ARMOS_CIRCUIT_WALL;
+        m->collision_map[y * w + 0] = 1;
+        m->overlay_layer[y * w + (w - 1)] = TILE_ARMOS_CIRCUIT_WALL;
+        m->collision_map[y * w + (w - 1)] = 1;
+    }
+
+    // 3. Gerador e Interruptor Central do Circuito (x=7..8, y=7..8)
+    m->overlay_layer[7 * w + 7] = TILE_ARMOS_CIRCUIT_SWITCH;
+    m->collision_map[7 * w + 7] = 1;
+    m->overlay_layer[7 * w + 8] = TILE_ARMOS_CIRCUIT_SWITCH;
+    m->collision_map[7 * w + 8] = 1;
+
+    // Pilares de sustentação interna do dínamo (x=4, y=4), (x=11, y=4), (x=4, y=11), (x=11, y=11)
+    m->overlay_layer[4 * w + 4] = TILE_ARMOS_CIRCUIT_WALL;
+    m->collision_map[4 * w + 4] = 1;
+    m->overlay_layer[4 * w + 11] = TILE_ARMOS_CIRCUIT_WALL;
+    m->collision_map[4 * w + 11] = 1;
+    m->overlay_layer[11 * w + 4] = TILE_ARMOS_CIRCUIT_WALL;
+    m->collision_map[11 * w + 4] = 1;
+    m->overlay_layer[11 * w + 11] = TILE_ARMOS_CIRCUIT_WALL;
+    m->collision_map[11 * w + 11] = 1;
+
+    printf("[MAP] Armos Interior (Mecanismo Interno) criado com sucesso (%dx%d tiles)!\n", w, h);
     return m;
 }

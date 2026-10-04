@@ -77,6 +77,13 @@ typedef enum {
     TILE_DIRT_WALL,          // Parede de terra fofa escavável pelas Luvas de Toupeira (Mole Mitts)
     TILE_DIRT_WALL_TUNNEL,   // Piso de túnel escavado com marcas de garras
     TILE_DIRT_MOUND,         // Montículo de terra fofa escavável
+    TILE_WIND_RUINS_STONE,   // Laje de pedra das Wind Ruins com musgo e rachaduras
+    TILE_WIND_RUINS_WALL,    // Parede de alvenaria ancestral das ruínas
+    TILE_WIND_PILLAR,        // Coluna/pilar dórico de pedra esculpida
+    TILE_WIND_FORTRESS_GATE, // Portão em arco de entrada da Fortaleza dos Ventos (Fortress of Winds)
+    TILE_ARMOS_CIRCUIT_FLOOR,// Piso de cobre e engrenagens do interior do robô Armos
+    TILE_ARMOS_CIRCUIT_WALL, // Parede de circuitos elétricos e bobinas de bronze
+    TILE_ARMOS_CIRCUIT_SWITCH,// Alavanca de ignição do circuito do Armos
     TILE_COUNT
 } TileType;
 
@@ -298,5 +305,25 @@ bool map_is_diggable(const Tilemap* map, float world_x, float world_y);
  * Retorna true se um bloco foi escavado com sucesso.
  */
 bool map_dig_tile(Tilemap* map, float world_x, float world_y, int* out_drop);
+
+/*
+ * Constrói o mapa de Wind Ruins (Ruínas do Vento).
+ * Dimensões: 36x24 tiles (576x384 pixels) com ruínas antigas de pedra, pilares caídos,
+ * toco de árvore Minish e estátuas Armos bloqueando os desfiladeiros até a Fortaleza dos Ventos.
+ */
+Tilemap* map_create_wind_ruins(void);
+
+/*
+ * Constrói o interior mecânico do robô Armos (Armos Interior).
+ * Dimensões: 16x16 tiles (256x256 pixels) com engrenagens de bronze, bobinas elétricas
+ * e o interruptor central que reativa a estátua ancestral.
+ */
+Tilemap* map_create_armos_interior(void);
+
+/*
+ * Gerenciamento do estado global de ativação do Armos.
+ */
+bool armos_circuit_is_active(void);
+void armos_circuit_set_active(bool active);
 
 #endif // HAL_MAP_H
