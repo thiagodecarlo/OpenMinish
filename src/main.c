@@ -15,6 +15,7 @@
 #include "hal/dungeon_flames.h"
 #include "hal/inventory.h"
 #include "hal/save.h"
+#include "hal/sanctuary.h"
 #include <math.h>
 
 /*
@@ -90,6 +91,10 @@ typedef struct {
     // Elemento Canônico: Sagrado Elemento Fogo (Fire Element)
     bool has_fire_element;          // Conquistado ao derrotar Gleerok na Cave of Flames
     int  fire_element_banner_timer; // Temporizador do banner festivo de obtenção
+
+    // Habilidade Lendária Four Sword: Infusão de 2 Elementos & Clones
+    bool has_two_elements;          // White Sword (Two Elements) infundida no Santuário
+    int  two_elements_banner_timer; // Temporizador do banner da Four Sword
 } Player;
 
 static const char* s_region_tags[REGION_COUNT] = { "usa", "eur", "jpn" };
@@ -500,7 +505,7 @@ static void transition_to_crenel_base_from_melari(Player* link) {
 }
 
 static void transition_to_cave_of_flames(Player* link) {
-    if (dungeon_is_active() || dungeon_flames_is_active()) return;
+    if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active()) return;
     s_in_town = false;
     s_in_village = false;
     s_in_south_field = false;
@@ -509,6 +514,18 @@ static void transition_to_cave_of_flames(Player* link) {
     s_in_melari_mines = false;
     entity_clear_all();
     dungeon_flames_enter(&link->x, &link->y, &link->dir);
+}
+
+static void transition_to_sanctuary(Player* link) {
+    if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active()) return;
+    s_in_town = false;
+    s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = false;
+    s_in_crenel_base = false;
+    s_in_melari_mines = false;
+    entity_clear_all();
+    sanctuary_enter(&link->x, &link->y, &link->dir);
 }
 
 static void draw_rect(int rx, int ry, int rw, int rh, u32 color) {
@@ -1074,6 +1091,9 @@ static inline bool is_world_solid_for_player(const Tilemap* map, float wx, float
     if (dungeon_flames_is_active()) {
         return dungeon_flames_is_solid(wx, wy);
     }
+    if (sanctuary_is_active()) {
+        return sanctuary_is_solid(wx, wy);
+    }
     // Mecânica Salto do Cajado de Pacci: no ar (z > 4.0f) salta por cima de buracos e escarpas
     if (z > 4.0f) {
         return false;
@@ -1140,6 +1160,7 @@ int main(int argc, char* argv[]) {
     kinstone_init();
     dungeon_init();
     dungeon_flames_init();
+    sanctuary_init();
     inventory_init();
     save_system_init();
 
@@ -1230,6 +1251,10 @@ int main(int argc, char* argv[]) {
             link.has_grip_ring = save.has_grip_ring;
             link.has_cane_of_pacci = save.has_cane_of_pacci;
             link.has_white_sword = save.has_white_sword;
+            link.has_two_elements = save.has_two_elements;
+            if (link.has_two_elements) {
+                sanctuary_set_two_elements(true);
+            }
             if (link.has_grip_ring) {
                 inventory_unlock_item(INV_ITEM_GRIP_RING);
             }
@@ -1259,6 +1284,8 @@ int main(int argc, char* argv[]) {
                 s_in_melari_mines = true;
             } else if (save.current_map == 8) {
                 dungeon_flames_enter(&link.x, &link.y, &link.dir);
+            } else if (save.current_map == 9) {
+                sanctuary_enter(&link.x, &link.y, &link.dir);
             }
         }
     }
@@ -1345,6 +1372,7 @@ int main(int argc, char* argv[]) {
                                 else if (s_in_south_field) cur_m = 4;
                                 else if (dungeon_is_active()) cur_m = 3;
                                 else if (dungeon_flames_is_active()) cur_m = 8;
+                                else if (sanctuary_is_active()) cur_m = 9;
                                 else if (s_in_village) cur_m = 2;
                                 else if (s_in_town) cur_m = 1;
                                 current_save.current_map = cur_m;
@@ -1358,6 +1386,7 @@ int main(int argc, char* argv[]) {
                                 current_save.has_grip_ring = link.has_grip_ring;
                                 current_save.has_cane_of_pacci = link.has_cane_of_pacci;
                                 current_save.has_white_sword = link.has_white_sword;
+                                current_save.has_two_elements = link.has_two_elements;
                                 current_save.slot_a = (int)inventory_get_slot_a();
                                 current_save.slot_b = (int)inventory_get_slot_b();
                                 if (save_game(1, &current_save)) {
@@ -1423,6 +1452,17 @@ int main(int argc, char* argv[]) {
                                     spawn_melari_mines_entities();
                                 } else {
                                     transition_to_cave_of_flames(&link);
+                                }
+                            }
+                            break;
+                        case SDLK_0:
+                            if (!dungeon_is_active() && !dungeon_flames_is_active()) {
+                                if (sanctuary_is_active()) {
+                                    sanctuary_exit(&link.x, &link.y, &link.dir);
+                                    s_in_north_field = true;
+                                    spawn_north_field_entities();
+                                } else {
+                                    transition_to_sanctuary(&link);
                                 }
                             }
                             break;
@@ -1628,6 +1668,9 @@ int main(int argc, char* argv[]) {
             if (link.fire_element_banner_timer > 0) {
                 link.fire_element_banner_timer--;
             }
+            if (link.two_elements_banner_timer > 0) {
+                link.two_elements_banner_timer--;
+            }
 
             // Ação com Botão A: Primeiro Natação (Mergulho), Portal Minish, Masmorra / Loja / Guarda / Cidadã / Baús / Swiftblade / NPCs, depois golpe de espada!
             if (hal_input_is_pressed(KEY_A) && !link.is_attacking && !link.is_spinning && !link.is_charging_spin) {
@@ -1669,6 +1712,15 @@ int main(int argc, char* argv[]) {
                             link.is_attacking = true;
                             link.attack_timer = 12;
                             hal_audio_play_sound(SOUND_SWORD_SLASH, link.is_minish ? 0.7f : 1.0f, link.is_minish ? 1.38f : 1.0f);
+                        }
+                    } else if (sanctuary_is_active()) {
+                        if (sanctuary_interact(link.x, link.y, link.has_white_sword, true, link.has_fire_element)) {
+                            link.has_two_elements = true;
+                            link.two_elements_banner_timer = 240;
+                        } else {
+                            link.is_attacking = true;
+                            link.attack_timer = 12;
+                            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
                         }
                     } else if (s_in_town) {
                         Entity* shopkeeper = entity_find_nearby_shopkeeper(link.x, link.y, 40.0f);
@@ -1809,8 +1861,15 @@ int main(int argc, char* argv[]) {
                 int sword_dmg = link.has_white_sword ? 2 : 1;
                 entity_check_sword_hit(hit_x, hit_y, hit_w, hit_h, sword_dmg, link.dir);
 
+                // Ataque sincronizado do Clone da Four Sword
+                float c_hx, c_hy, c_hw, c_hh;
+                int c_dmg;
+                if (sanctuary_get_clone_sword_hitbox(&c_hx, &c_hy, &c_hw, &c_hh, &c_dmg)) {
+                    entity_check_sword_hit(c_hx, c_hy, c_hw, c_hh, c_dmg, sanctuary_get_clone()->dir);
+                }
+
                 // Interação da espada com o cenário (cortar arbustos ou abrir baú no overworld)
-                if (!dungeon_is_active() && !dungeon_flames_is_active() && map_interact_slash(active_map, hit_x + 6.0f, hit_y + 6.0f)) {
+                if (!dungeon_is_active() && !dungeon_flames_is_active() && !sanctuary_is_active() && map_interact_slash(active_map, hit_x + 6.0f, hit_y + 6.0f)) {
                     hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 1.25f);
                     link.rupees += 5; // Recompensa clássica de Zelda!
                 }
@@ -2177,6 +2236,10 @@ int main(int argc, char* argv[]) {
                     else if (link.x <= 24.0f && link.y >= 140.0f && link.y <= 240.0f && link.dir == DIR_LEFT) {
                         transition_to_crenel_base(&link);
                     }
+                    // Portal Norte de North Field para o Santuario Elemental (Hyrule Castle Courtyard)
+                    else if (link.x >= 210.0f && link.x <= 290.0f && link.y <= 24.0f && link.dir == DIR_UP) {
+                        transition_to_sanctuary(&link);
+                    }
                 } else if (s_in_crenel_base) {
                     // Estrada Leste de Mount Crenel Base de volta para North Field
                     if (link.x >= (active_map->width * TILE_SIZE) - 32.0f && link.dir == DIR_RIGHT) {
@@ -2322,6 +2385,14 @@ int main(int argc, char* argv[]) {
         }
         s_was_dungeon_flames_active = dungeon_flames_is_active();
 
+        static bool s_was_sanctuary_active = false;
+        if (s_was_sanctuary_active && !sanctuary_is_active()) {
+            s_in_north_field = true;
+            spawn_north_field_entities();
+            hal_audio_play_bgm(BGM_MINISH_WOODS);
+        }
+        s_was_sanctuary_active = sanctuary_is_active();
+
         if (dungeon_is_active()) {
             dungeon_update(&link.x, &link.y, &link.dir, link.is_moving,
                            &link.hearts, &link.rupees);
@@ -2333,6 +2404,17 @@ int main(int argc, char* argv[]) {
                 link.fire_element_banner_timer = 220;
                 hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.2f);
                 printf("[FIRE ELEMENT] Link conquistou o segundo elemento sagrado: ELEMENTO FOGO!\n");
+            }
+        } else if (sanctuary_is_active()) {
+            sanctuary_update(&link.x, &link.y, &link.dir, link.is_moving,
+                             link.is_charging_spin, link.spin_ready,
+                             link.is_attacking, link.attack_timer,
+                             &link.hearts);
+            if (sanctuary_has_two_elements() && !link.has_two_elements) {
+                link.has_two_elements = true;
+                link.two_elements_banner_timer = 240;
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.3f);
+                printf("[FOUR SWORD] White Sword infundida com Terra e Fogo! Divisao em 2 Clones!\n");
             }
         }
 
@@ -2346,7 +2428,7 @@ int main(int argc, char* argv[]) {
         // Respawn de teste caso o Link zere os corações
         if (link.hearts <= 0) {
             link.hearts = link.max_hearts;
-            if (dungeon_is_active() || dungeon_flames_is_active()) {
+            if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active()) {
                 link.x = 7.5f * TILE_SIZE;
                 link.y = 8.0f * TILE_SIZE;
             } else if (s_in_village) {
@@ -2437,6 +2519,12 @@ int main(int argc, char* argv[]) {
             subweapon_render(&camera);
             // Renderiza transição de salas
             dungeon_flames_render_transition(&camera);
+        } else if (sanctuary_is_active()) {
+            // Renderiza o Santuário Elemental (mármore sagrado, vitrais, altar, pisos de clones)
+            sanctuary_render(&camera, link.x, link.y, link.dir);
+            entity_manager_render(&camera);
+            draw_link(&link, &camera);
+            subweapon_render(&camera);
         } else {
             // 1. Renderiza o mapa com Frustum Culling inteligente
             map_render(active_map, &camera);
@@ -2627,6 +2715,28 @@ int main(int argc, char* argv[]) {
 
             font_draw_text(ban_x + 26, ban_y + 6, "ELEMENTO FOGO OBTIDO!", 0xFDE047FF, true);
             font_draw_text(ban_x + 26, ban_y + 18, "Cave of Flames | Gleerok", 0xF97316FF, true);
+        }
+
+        // 6d. Banner Festivo da Four Sword: White Sword (Two Elements)
+        if (link.two_elements_banner_timer > 0) {
+            int ban_w = 216;
+            int ban_h = 32;
+            int ban_x = (ctx->render_width - ban_w) / 2;
+            int ban_y = 64;
+
+            draw_rect(ban_x - 2, ban_y - 2, ban_w + 4, ban_h + 4, 0x061826EE);
+            draw_rect(ban_x - 1, ban_y - 1, ban_w + 2, ban_h + 2, 0x38BDF8FF);
+            draw_rect(ban_x, ban_y, ban_w, ban_h, 0x0A2540FF);
+            draw_rect(ban_x + 2, ban_y + 2, ban_w - 4, ban_h - 4, 0x0E3A64EE);
+
+            // Icones dos 2 Clones da Four Sword (dois herois lado a lado)
+            draw_rect(ban_x + 6, ban_y + 7, 7, 14, 0x22C55EFF);  // Link 1 (Verde)
+            draw_rect(ban_x + 14, ban_y + 7, 7, 14, 0x38BDF8FF); // Link 2 (Clone Ciano)
+            hal_video_put_pixel(ban_x + 9, ban_y + 9, 0xFDE8CDFF);
+            hal_video_put_pixel(ban_x + 17, ban_y + 9, 0xFDE8CDFF);
+
+            font_draw_text(ban_x + 26, ban_y + 6, "ESPADA BRANCA (2 ELEMENTOS)!", 0xFFFFFFFF, true);
+            font_draw_text(ban_x + 26, ban_y + 18, "DIVISAO FOUR SWORD (2 CLONES)!", 0x38BDF8FF, true);
         }
 
         // 7. Badge do Estado Minish no HUD
