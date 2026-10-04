@@ -27,6 +27,7 @@ typedef enum {
     INV_ITEM_ROCS_CAPE,      // Capa de Roc (Pulo livre/Planar)
     INV_ITEM_BOW,            // Arco e Flechas
     INV_ITEM_GRIP_RING,      // Anel de Escalada (Grip Ring - Escala escarpas e paredões)
+    INV_ITEM_OCARINA,        // Ocarina do Vento (Ocarina of Wind - Invoca o pássaro Zeffa)
     INV_ITEM_COUNT
 } InventoryItem;
 

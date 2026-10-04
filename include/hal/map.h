@@ -84,6 +84,12 @@ typedef enum {
     TILE_ARMOS_CIRCUIT_FLOOR,// Piso de cobre e engrenagens do interior do robô Armos
     TILE_ARMOS_CIRCUIT_WALL, // Parede de circuitos elétricos e bobinas de bronze
     TILE_ARMOS_CIRCUIT_SWITCH,// Alavanca de ignição do circuito do Armos
+    TILE_FORTRESS_FLOOR,     // Laje de piso da Fortaleza dos Ventos (pedra turquesa/cinza com relevos)
+    TILE_FORTRESS_WALL,      // Paredão da Fortaleza dos Ventos com frisos e relevos aerodinâmicos
+    TILE_FORTRESS_PIT,       // Abismo escuro com correntes de ar ascendentes
+    TILE_FORTRESS_EYE_CLOSED,// Estátua de olho na parede da fortaleza (fechado)
+    TILE_FORTRESS_EYE_OPEN,  // Estátua de olho aberta por flecha (ativa ponte ou porta)
+    TILE_FORTRESS_BOSS_DOOR, // Portão dourado do Chefe Mazaal
     TILE_COUNT
 } TileType;
 
@@ -177,6 +183,7 @@ void camera_update(Camera* cam, float target_x, float target_y, int viewport_w, 
  * visíveis na janela da câmera, economizando 80% do custo de desenho).
  */
 void map_render(const Tilemap* map, const Camera* cam);
+void render_metatile(int sx, int sy, TileType type);
 
 /*
  * Converte coordenadas do mundo do jogo para coordenadas de tela da câmera.

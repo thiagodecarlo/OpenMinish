@@ -31,6 +31,7 @@ typedef enum {
     ITEM_CANE_OF_PACCI,   // Cajado de Pacci (Projétil mágico de inversão e super salto)
     ITEM_BOW,             // Arco e Flechas (Disparo de flechas velozes e ativação de estátuas de olho)
     ITEM_MOLE_MITTS,      // Luvas de Toupeira (Escavação de terra fofa e paredes)
+    ITEM_OCARINA_OF_WIND, // Ocarina do Vento (Canção do Vento / Zeffa)
     ITEM_COUNT
 } SubweaponType;
 

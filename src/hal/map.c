@@ -110,7 +110,7 @@ static inline void draw_tile_pixel(int sx, int sy, u32 color) {
 // ----------------------------------------------------------------------------
 // RENDERIZADOR PROCEDURAL DE METATILES 16x16 (ESTILO MINISH CAP)
 // ----------------------------------------------------------------------------
-static void render_metatile(int sx, int sy, TileType type) {
+void render_metatile(int sx, int sy, TileType type) {
     switch (type) {
         case TILE_GRASS:
             for (int y = 0; y < TILE_SIZE; y++) {
@@ -1257,6 +1257,113 @@ static void render_metatile(int sx, int sy, TileType type) {
                 draw_tile_pixel(sx + 13, sy + 10, 0x22C55EFF);
                 draw_tile_pixel(sx + 14, sy + 10, 0x22C55EFF);
                 draw_tile_pixel(sx + 7, sy + 5, 0xFFFFFFFF);
+            }
+            break;
+
+        case TILE_FORTRESS_FLOOR:
+            // Laje de piso da Fortaleza dos Ventos (pedra ardósia com relevos e sutis runas de vento turquesa)
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x334155FF; // Ardósia base
+                    if (x == 0 || y == 0) c = 0x64748BFF; // Chanfro luminoso
+                    else if (x == 15 || y == 15) c = 0x1E293BFF; // Sombra chanfrada
+                    else if ((x + y * 3) % 7 == 0) c = 0x1E3A52FF; // Tom de pedra do vento
+                    // Relevo central em espiral de vento
+                    if ((x >= 6 && x <= 9) && (y >= 6 && y <= 9)) {
+                        c = 0x0E7490FF; // Glifo de vento turquesa
+                        if (x == 7 && y == 7) c = 0x38BDF8FF;
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_FORTRESS_WALL:
+            // Paredão ancestral da Fortaleza dos Ventos com frisos horizontais aerodinâmicos
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x1E293BFF; // Pedra escura da fortaleza
+                    if (y == 0 || y == 5 || y == 10 || y == 15) c = 0x0F172AFF; // Frisos horizontais entalhados
+                    else if (y == 1 || y == 6 || y == 11) c = 0x475569FF; // Realce superior
+                    else if ((x == 0 || x == 8) && (y < 5 || (y > 10 && y < 15))) c = 0x0F172AFF; // Juntas
+                    if ((x + y) % 9 == 0) c = 0x065F46FF; // Líquen e musgo das alturas
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_FORTRESS_PIT:
+            // Abismo sem fundo da Fortaleza com correntes de ar ascendentes
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x050811FF; // Vazio infinito
+                    if (y == 0 || x == 0) c = 0x0A0F1DFF;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            // Riscas de vento e brisa animada flutuando no abismo
+            {
+                int w_shift = (s_water_anim_frame * 2) % 16;
+                draw_tile_pixel(sx + ((4 + w_shift) % 16), sy + 4, 0x0891B2AA);
+                draw_tile_pixel(sx + ((5 + w_shift) % 16), sy + 4, 0x38BDF8FF);
+                draw_tile_pixel(sx + ((6 + w_shift) % 16), sy + 4, 0xBAE6FDAA);
+                draw_tile_pixel(sx + ((10 + w_shift) % 16), sy + 11, 0x0891B2AA);
+                draw_tile_pixel(sx + ((11 + w_shift) % 16), sy + 11, 0x38BDF8FF);
+            }
+            break;
+
+        case TILE_FORTRESS_EYE_CLOSED:
+            // Estátua mecânica de olho fechado na parede da fortaleza
+            render_metatile(sx, sy, TILE_FORTRESS_WALL);
+            // Moldura cilíndrica de bronze
+            for (int y = 3; y <= 12; y++) {
+                for (int x = 3; x <= 12; x++) {
+                    float dist = sqrtf((float)((x - 7.5f) * (x - 7.5f) + (y - 7.5f) * (y - 7.5f)));
+                    if (dist <= 4.5f) {
+                        u32 c = 0xD97706FF; // Moldura dourada/bronze
+                        if (dist <= 3.2f) c = 0x1E293BFF; // Fundo escuro do olho
+                        if (dist <= 1.0f || (y == 7 && x >= 4 && x <= 11)) c = 0x0F172AFF; // Pálpebra fechada
+                        draw_tile_pixel(sx + x, sy + y, c);
+                    }
+                }
+            }
+            break;
+
+        case TILE_FORTRESS_EYE_OPEN:
+            // Estátua de olho da fortaleza ativada e aberta por flecha
+            render_metatile(sx, sy, TILE_FORTRESS_WALL);
+            for (int y = 3; y <= 12; y++) {
+                for (int x = 3; x <= 12; x++) {
+                    float dist = sqrtf((float)((x - 7.5f) * (x - 7.5f) + (y - 7.5f) * (y - 7.5f)));
+                    if (dist <= 4.5f) {
+                        u32 c = 0xF59E0BFF; // Moldura dourada radiante
+                        if (dist <= 3.2f) c = 0xFEF08AFF; // Esclera dourada
+                        if (dist <= 2.0f) c = 0x0284C7FF; // Íris azul vibrante
+                        if (dist <= 0.8f) c = 0xFFFFFFFF; // Pupila pura branca
+                        draw_tile_pixel(sx + x, sy + y, c);
+                    }
+                }
+            }
+            break;
+
+        case TILE_FORTRESS_BOSS_DOOR:
+            // Portão alado monumental do Chefe Mazaal com asas douradas e olho central
+            render_metatile(sx, sy, TILE_FORTRESS_WALL);
+            for (int y = 1; y <= 14; y++) {
+                for (int x = 1; x <= 14; x++) {
+                    u32 c = 0x78350FFF; // Bronze e ouro maciço
+                    if (x == 1 || x == 14 || y == 1 || y == 14) c = 0x451A03FF;
+                    else if (y <= 3) c = 0xF59E0BFF; // Asas estilizadas no topo
+                    else if (x == 7 || x == 8) c = 0x0F172AFF; // Fenda entre as duas folhas do portão
+                    // Olho mecânico de Mazaal entalhado no centro
+                    float d = sqrtf((float)((x - 7.5f) * (x - 7.5f) + (y - 8.0f) * (y - 8.0f)));
+                    if (d <= 3.2f) {
+                        c = 0xFBBF24FF;
+                        if (d <= 1.8f) c = 0xDC2626FF; // Olho rubi escarlate de Mazaal
+                        if (d <= 0.6f) c = 0xFFFFFFFF;
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
             }
             break;
 
