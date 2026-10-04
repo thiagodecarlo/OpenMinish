@@ -54,6 +54,11 @@ void dialogue_show(DialogueSpeaker speaker, const char* name, const char* const*
 void dialogue_trigger_ezlo_hint(void);
 
 /*
+ * Aciona o diálogo de Ezlo enquanto Link está no tamanho Minish.
+ */
+void dialogue_trigger_ezlo_minish_hint(void);
+
+/*
  * Inicia uma conversa amigável com um NPC Minish da floresta.
  */
 void dialogue_trigger_minish_talk(void);

@@ -269,6 +269,15 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     e->hitbox        = (Hitbox){ -16.0f, -16.0f, 32.0f, 32.0f };
                     break;
 
+                case ENTITY_MINISH_STUMP:
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->action        = 0; // 0 = Toco Minish (Woods), 1 = Vaso Minish (Town)
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
+                    break;
+
                 default:
                     break;
             }
@@ -950,6 +959,11 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
 
         // 10. ELEMENTO DINÂMICO: CHAFARIZ CENTRAL
         else if (e->type == ENTITY_TOWN_FOUNTAIN) {
+            e->animTimer++;
+        }
+
+        // 11. PORTAL MINISH (TOCO OU VASO)
+        else if (e->type == ENTITY_MINISH_STUMP) {
             e->animTimer++;
         }
     }
@@ -2276,6 +2290,66 @@ void entity_manager_render(const Camera* cam) {
             draw_filled_rect(f_cx - 1, f_cy - 7, 3, 6, c_spray1);
             put_pixel_safe(f_cx, f_cy - 8, c_white);
         }
+
+        // 13. TOCO DE ÁRVORE / VASO MINISH (MINISH PORTAL)
+        else if (e->type == ENTITY_MINISH_STUMP) {
+            int cx = sx + 8;
+            int cy = sy + 8;
+
+            // Se for portal Vaso (Town, action == 1): desenha o vaso cerâmico ornamental
+            if (e->action == 1) {
+                u32 c_clay_dark  = 0x1E4620FF;
+                u32 c_clay_med   = 0x2D7A32FF;
+                u32 c_clay_light = 0x48B850FF;
+                u32 c_gold       = 0xF5B041FF;
+                u32 c_portal     = 0x00FFCCFF;
+
+                // Base do vaso
+                draw_filled_rect(sx + 4, sy + 13, 8, 3, c_clay_dark);
+                draw_filled_rect(sx + 5, sy + 14, 6, 1, c_gold);
+
+                // Bojo do vaso
+                draw_filled_rect(sx + 2, sy + 6, 12, 7, c_clay_med);
+                draw_filled_rect(sx + 3, sy + 7, 10, 5, c_clay_light);
+                draw_filled_rect(sx + 2, sy + 9, 12, 2, c_gold);
+
+                // Gargalo
+                draw_filled_rect(sx + 4, sy + 3, 8, 3, c_clay_dark);
+
+                // Abertura superior com luz mágica de portal
+                draw_filled_rect(sx + 3, sy + 1, 10, 2, c_clay_dark);
+                draw_filled_rect(sx + 4, sy + 1, 8, 2, c_portal);
+
+                // Alças laterais
+                put_pixel_safe(sx + 1, sy + 7, c_gold);
+                put_pixel_safe(sx + 1, sy + 8, c_gold);
+                put_pixel_safe(sx + 14, sy + 7, c_gold);
+                put_pixel_safe(sx + 14, sy + 8, c_gold);
+            }
+
+            // Aura Mística do Portal Minish (Emanações de partículas mágicas e anel pulsante)
+            float pulse = 0.5f + 0.5f * sinf((float)e->animTimer * 0.08f);
+            int ring_r = 7 + (int)(pulse * 2.0f);
+            u32 c_aura = (e->animTimer % 40 < 20) ? 0x00FFCCAA : 0x70FF80AA;
+
+            // Anel de luz esmeralda no topo do toco/vaso
+            for (int a = 0; a < 16; a++) {
+                float ang = (float)a * (2.0f * PI_F / 16.0f);
+                int rx = cx + (int)(cosf(ang) * (float)ring_r);
+                int ry = cy + (int)(sinf(ang) * ((float)ring_r * 0.60f));
+                put_pixel_safe(rx, ry, c_aura);
+            }
+
+            // Partículas orbitantes de poeira mágica Minish
+            for (int p = 0; p < 4; p++) {
+                float ang = (float)e->animTimer * 0.05f + (float)p * (PI_F / 2.0f);
+                float dist = 6.0f + 3.0f * sinf((float)e->animTimer * 0.1f + p);
+                int sp_x = cx + (int)(cosf(ang) * dist);
+                int sp_y = cy + (int)(sinf(ang) * (dist * 0.65f));
+                put_pixel_safe(sp_x, sp_y, (p % 2 == 0) ? 0xFFFFFFFF : 0x00FFAAFF);
+                put_pixel_safe(sp_x + 1, sp_y, 0x00FFCC88);
+            }
+        }
     }
 }
 
@@ -2466,6 +2540,26 @@ bool entity_interact_chest(float world_x, float world_y, int* link_rupees, int* 
         }
     }
     return false;
+}
+
+Entity* entity_find_nearby_minish_stump(float world_x, float world_y, float max_dist) {
+    float best_dist_sq = max_dist * max_dist;
+    Entity* best = NULL;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active || e->type != ENTITY_MINISH_STUMP) continue;
+
+        float dx = (e->x + 8.0f) - (world_x + 8.0f);
+        float dy = (e->y + 8.0f) - (world_y + 8.0f);
+        float dist_sq = dx * dx + dy * dy;
+
+        if (dist_sq <= best_dist_sq) {
+            best_dist_sq = dist_sq;
+            best = e;
+        }
+    }
+    return best;
 }
 
 void entity_manager_shutdown(void) {

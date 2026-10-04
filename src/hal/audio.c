@@ -959,6 +959,72 @@ static void synth_generate_all_sfx(void) {
         s_precalc_sfx[SOUND_TOWN_BELL].total_frames = num_frames;
         s_precalc_sfx[SOUND_TOWN_BELL].is_stereo = false;
     }
+
+    // 33. SOUND_MINISH_SHRINK: Arpejo descendente cristalino místico de encolhimento (560ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.560f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float notes[7] = { 1318.51f, 987.77f, 830.61f, 659.25f, 493.88f, 415.30f, 329.63f }; // Mi6, Si5, Sol#5, Mi5, Si4, Sol#4, Mi4
+        float note_dur = 0.560f / 7.0f;
+        float phase_pulse = 0.0f;
+        float phase_bell = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            int n_idx = (int)(t / note_dur);
+            if (n_idx > 6) n_idx = 6;
+            float note_t = t - (float)n_idx * note_dur;
+            float note_env = expf(-18.0f * note_t);
+            float freq = notes[n_idx];
+
+            phase_pulse += freq / (float)AUDIO_SAMPLE_RATE;
+            phase_bell  += (freq * 2.0f) / (float)AUDIO_SAMPLE_RATE;
+
+            // Onda pulso 25% com brilho harmônico de sino cristalino
+            float pulse = (fmodf(phase_pulse, 1.0f) < 0.25f) ? 0.6f : -0.6f;
+            float bell = sinf(2.0f * PI_F * phase_bell) * 0.4f;
+            float sparkle = sinf(2.0f * PI_F * phase_bell * 1.5f) * 0.15f * expf(-35.0f * note_t);
+
+            float total = (pulse * 0.55f + bell + sparkle) * note_env * 24000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_MINISH_SHRINK].samples = buf;
+        s_precalc_sfx[SOUND_MINISH_SHRINK].total_frames = num_frames;
+        s_precalc_sfx[SOUND_MINISH_SHRINK].is_stereo = false;
+    }
+
+    // 34. SOUND_MINISH_GROW: Fanfarra mágica ascendente triunfante de crescimento (650ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.650f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float notes[7] = { 329.63f, 415.30f, 493.88f, 659.25f, 830.61f, 987.77f, 1318.51f }; // Mi4, Sol#4, Si4, Mi5, Sol#5, Si5, Mi6
+        float note_dur = 0.650f / 7.0f;
+        float phase_lead = 0.0f;
+        float phase_oct = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            int n_idx = (int)(t / note_dur);
+            if (n_idx > 6) n_idx = 6;
+            float note_t = t - (float)n_idx * note_dur;
+            float note_env = (n_idx == 6) ? expf(-4.5f * note_t) : expf(-14.0f * note_t);
+            float freq = notes[n_idx];
+
+            phase_lead += freq / (float)AUDIO_SAMPLE_RATE;
+            phase_oct  += (freq * 2.0f) / (float)AUDIO_SAMPLE_RATE;
+
+            float pulse = (fmodf(phase_lead, 1.0f) < 0.50f) ? 0.65f : -0.65f;
+            float shimmer = sinf(2.0f * PI_F * phase_oct) * 0.35f;
+
+            float total = (pulse * 0.65f + shimmer) * note_env * 25000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_MINISH_GROW].samples = buf;
+        s_precalc_sfx[SOUND_MINISH_GROW].total_frames = num_frames;
+        s_precalc_sfx[SOUND_MINISH_GROW].is_stereo = false;
+    }
 }
 
 // ----------------------------------------------------------------------------

@@ -617,6 +617,18 @@ void dialogue_trigger_ezlo_hint(void) {
     dialogue_show(SPEAKER_EZLO, "Ezlo", chosen_pages, page_num);
 }
 
+void dialogue_trigger_ezlo_minish_hint(void) {
+    hal_audio_play_sound(SOUND_EZLO_ALERT, 0.95f, 1.0f);
+
+    static const char* minish_hint[] = {
+        "Incrível, Link! Você agora e do\ntamanho exato de um Minish!",
+        "Procure pelo Tronco Oco a leste do\ntoco! So nesse tamanho podemos passar!",
+        "Para voltar ao tamanho humano,\nbasta subir novamente no Toco Minish!"
+    };
+
+    dialogue_show(SPEAKER_EZLO, "Ezlo", minish_hint, 3);
+}
+
 void dialogue_trigger_minish_talk(void) {
     static const char* minish_speech[] = {
         "Ola, nobre heroi de verde!\nEu sou um Minish dos bosques!",

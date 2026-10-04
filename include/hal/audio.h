@@ -53,6 +53,8 @@ typedef enum {
     SOUND_TIGER_SCROLL,    // Fanfarra marcial sagrada ao receber o Pergaminho do Tigre (Tiger Scroll)
     SOUND_SHOP_BUY,        // Chime cristalino de compra na loja do Stockwell (moedas / registradora)
     SOUND_TOWN_BELL,       // Sino ressonante da torre do sino da Cidade de Hyrule
+    SOUND_MINISH_SHRINK,   // Arpejo descendente místico de encolhimento para tamanho Minish
+    SOUND_MINISH_GROW,     // Fanfarra mágica ascendente de crescimento de volta a tamanho humano
     SOUND_COUNT
 } SoundEffect;
 

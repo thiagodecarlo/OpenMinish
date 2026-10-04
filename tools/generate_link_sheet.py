@@ -56,7 +56,7 @@ def generate_link_sheet(source_sheet_path):
     CELL_W = 32
     CELL_H = 32
     NUM_COLS = 10
-    NUM_ROWS = 4
+    NUM_ROWS = 6
 
     sheet = Image.new('RGBA', (CELL_W * NUM_COLS, CELL_H * NUM_ROWS), (0, 0, 0, 0))
 
@@ -103,6 +103,69 @@ def generate_link_sheet(source_sheet_path):
         cx = 683 + k * 32 + 9
         frame = extract_cell(cx, 99)
         sheet.paste(frame, (k * CELL_W, 3 * CELL_H))
+
+    # Carrega e integra os sprites do Link Minish e Balões Beacons (Linhas 4 e 5)
+    brain_scratch = r'C:\Users\thiag\.gemini\antigravity\brain\63e5c37b-a5b5-41d8-bfe9-4100a1f4e6be\scratch'
+    minish_sheet_path = os.path.join(brain_scratch, 'link_minish.png')
+    if os.path.exists(minish_sheet_path):
+        m_img = Image.open(minish_sheet_path)
+        pink = (248, 192, 240)
+
+        def extract_minish_8x8(col, row_y):
+            x1 = col * 9 + 1
+            y1 = row_y + 1
+            c = m_img.crop((x1, y1, x1 + 8, y1 + 8)).convert('RGBA')
+            pix = c.load()
+            for y in range(8):
+                for x in range(8):
+                    if pix[x, y][:3] == pink:
+                        pix[x, y] = (0, 0, 0, 0)
+            return c
+
+        def extract_bubble_16(x1, y1):
+            c = m_img.crop((x1, y1, x1 + 16, y1 + 16)).convert('RGBA')
+            pix = c.load()
+            for y in range(16):
+                for x in range(16):
+                    if pix[x, y][:3] == pink:
+                        pix[x, y] = (0, 0, 0, 0)
+            return c
+
+        m_down_idle     = extract_minish_8x8(3, 305)
+        m_down_a        = extract_minish_8x8(4, 305)
+        m_down_b        = extract_minish_8x8(6, 305)
+
+        m_side_raw_idle = extract_minish_8x8(0, 314)
+        m_side_raw_a    = extract_minish_8x8(1, 314)
+        m_side_raw_b    = extract_minish_8x8(3, 314)
+
+        m_side_r_idle   = m_side_raw_idle.transpose(Image.FLIP_LEFT_RIGHT)
+        m_side_r_a      = m_side_raw_a.transpose(Image.FLIP_LEFT_RIGHT)
+        m_side_r_b      = m_side_raw_b.transpose(Image.FLIP_LEFT_RIGHT)
+        m_side_l_idle   = m_side_raw_idle
+
+        m_up_idle       = extract_minish_8x8(4, 332)
+        m_up_a          = extract_minish_8x8(5, 332)
+        m_up_b          = extract_minish_8x8(7, 332)
+
+        sprites_m = [
+            m_down_idle, m_side_r_idle, m_up_idle, m_side_l_idle,
+            m_down_a, m_down_b, m_side_r_a, m_side_r_b, m_up_a, m_up_b
+        ]
+
+        # Linha 4: Sprites do Link Minish (posicionados com os pés no nível y=25 do tile 32x32)
+        for col, s in enumerate(sprites_m):
+            sheet.paste(s, (col * CELL_W + 12, 4 * CELL_H + 18), s)
+
+        # Linha 5: Balões Indicadores Canônicos (Speech Bubble Beacons, 16x16)
+        b_down  = extract_bubble_16(1, 1)
+        b_left  = extract_bubble_16(1, 18)
+        b_right = b_left.transpose(Image.FLIP_LEFT_RIGHT)
+        b_up    = extract_bubble_16(52, 1)
+
+        bubbles = [b_down, b_right, b_up, b_left]
+        for col, b in enumerate(bubbles):
+            sheet.paste(b, (col * CELL_W + 8, 5 * CELL_H + 8), b)
 
     save_bmp_32('assets/regions/link_master.bmp', sheet)
     save_bmp_32('assets/regions/usa/link.bmp', sheet)
