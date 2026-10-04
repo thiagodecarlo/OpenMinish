@@ -1,6 +1,7 @@
 #include "hal/entity.h"
 #include "hal/dungeon.h"
 #include "hal/subweapon.h"
+#include "hal/inventory.h"
 #include "hal/video.h"
 #include "hal/audio.h"
 #include "hal/font.h"
@@ -492,6 +493,7 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     break;
 
                 case ENTITY_ITEM_BOW:
+                case ENTITY_ITEM_MOLE_MITTS:
                     e->health        = 999;
                     e->maxHealth     = 999;
                     e->damage        = 0;
@@ -1971,6 +1973,21 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
                 subweapon_add_arrows(30);
                 hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.2f);
                 printf("[ITEM BOW] Link obteve o Arco e Flechas! Aljava abastecida com 30 flechas!\n");
+            }
+        }
+
+        // 23. ITEM: LUVAS DE TOUPEIRA (MOLE MITTS)
+        else if (e->type == ENTITY_ITEM_MOLE_MITTS) {
+            e->animTimer++;
+            float dx = link_x - e->x;
+            float dy = link_y - e->y;
+            if (dx * dx + dy * dy <= 16.0f * 16.0f) {
+                // Link coletou as Luvas de Toupeira!
+                e->is_active = false;
+                subweapon_set_current(ITEM_MOLE_MITTS);
+                inventory_unlock_item(INV_ITEM_MOLE_MITTS);
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.2f);
+                printf("[ITEM MOLE MITTS] Link obteve as Luvas de Toupeira (Mole Mitts)! Pronto para escavar paredes e montes!\n");
             }
         }
     }
@@ -4598,6 +4615,58 @@ void entity_manager_render(const Camera* cam) {
             int spark_tick = (e->animTimer / 6) % 4;
             if (spark_tick == 0) put_pixel_safe(sx + 8, by - 2, 0xFFFFFFFF);
             else if (spark_tick == 2) put_pixel_safe(sx - 2, by + 4, 0xFFFFFFFF);
+        }
+
+        // 30. ITEM: LUVAS DE TOUPEIRA (MOLE MITTS)
+        else if (e->type == ENTITY_ITEM_MOLE_MITTS) {
+            int bob = (int)(sinf((float)e->animTimer * 0.12f) * 2.5f);
+            int by = sy + bob;
+
+            // Sombra suave no chão
+            draw_filled_rect(sx - 6, sy + 10, 16, 3, 0x05100766);
+            draw_filled_rect(sx - 4, sy + 9, 12, 5, 0x05100766);
+
+            // Halo místico âmbar / dourado
+            draw_rect_blend(sx - 7, by - 7, 22, 22, 0xD9770633);
+            draw_rect_blend(sx - 5, by - 5, 18, 18, 0xFDE04744);
+
+            // Cores das luvas de toupeira
+            u32 c_cuff       = 0xF59E0BFF; // Pulseira dourada
+            u32 c_leather_hi = 0x92400EFF; // Couro marrom claro
+            u32 c_leather_mid= 0x78350FFF; // Couro base
+            u32 c_leather_dk = 0x451A03FF; // Sombra couro
+            u32 c_claw_base  = 0x64748BFF; // Base metálica
+            u32 c_claw_mid   = 0xCBD5E1FF; // Aço prateado
+            u32 c_claw_tip   = 0xFFFFFFFF; // Brilho na ponta afiada
+
+            // Punho / Bracelete dourado
+            draw_filled_rect(sx - 4, by + 5, 10, 2, c_cuff);
+
+            // Corpo da luva em couro resistente
+            draw_filled_rect(sx - 5, by - 1, 12, 6, c_leather_mid);
+            draw_filled_rect(sx - 4, by - 2, 10, 1, c_leather_hi);
+            draw_filled_rect(sx - 5, by + 3, 12, 2, c_leather_dk);
+
+            // 3 Garras afiadas escavadoras
+            // Garra esquerda
+            draw_filled_rect(sx - 4, by - 4, 2, 3, c_claw_mid);
+            put_pixel_safe(sx - 4, by - 5, c_claw_tip);
+            put_pixel_safe(sx - 3, by - 2, c_claw_base);
+
+            // Garra central (mais longa)
+            draw_filled_rect(sx - 1, by - 6, 2, 5, c_claw_mid);
+            put_pixel_safe(sx - 1, by - 7, c_claw_tip);
+            put_pixel_safe(sx, by - 2, c_claw_base);
+
+            // Garra direita
+            draw_filled_rect(sx + 2, by - 4, 2, 3, c_claw_mid);
+            put_pixel_safe(sx + 3, by - 5, c_claw_tip);
+            put_pixel_safe(sx + 2, by - 2, c_claw_base);
+
+            // Partícula de brilho cintilante
+            int spark_tick = (e->animTimer / 6) % 4;
+            if (spark_tick == 0) put_pixel_safe(sx + 6, by - 3, 0xFFFFFFFF);
+            else if (spark_tick == 2) put_pixel_safe(sx - 5, by + 1, 0xFFFFFFFF);
         }
     }
 }

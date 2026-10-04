@@ -102,6 +102,10 @@ typedef struct {
     int  mud_sink_timer;           // Temporizador de afundamento no lodo movediço
     float last_safe_x;             // Posição segura para respawn caso afunde
     float last_safe_y;
+
+    // Item Canônico: Luvas de Toupeira (Mole Mitts) & Mole Cave
+    bool has_mole_mitts;           // Possui as Luvas de Toupeira
+    int  mole_mitts_banner_timer;  // Temporizador do banner das Mole Mitts
 } Player;
 
 static const char* s_region_tags[REGION_COUNT] = { "usa", "eur", "jpn" };
@@ -123,6 +127,7 @@ static Tilemap* s_north_field_map  = NULL;
 static Tilemap* s_crenel_base_map  = NULL;
 static Tilemap* s_melari_mines_map = NULL;
 static Tilemap* s_castor_wilds_map = NULL;
+static Tilemap* s_mole_cave_map    = NULL;
 static bool     s_in_town          = false;
 static bool     s_in_village       = false;
 static bool     s_in_south_field   = false;
@@ -130,6 +135,7 @@ static bool     s_in_north_field   = false;
 static bool     s_in_crenel_base   = false;
 static bool     s_in_melari_mines  = false;
 static bool     s_in_castor_wilds  = false;
+static bool     s_in_mole_cave     = false;
 static SelectedRegion s_current_region = REGION_USA;
 
 static void load_region_sheets(SelectedRegion region) {
@@ -557,6 +563,7 @@ static void transition_to_castor_wilds(Player* link) {
     s_in_crenel_base = false;
     s_in_melari_mines = false;
     s_in_castor_wilds = true;
+    s_in_mole_cave = false;
     link->x = 520.0f; // Entrada leste vindo de South Hyrule Field
     link->y = 224.0f;
     link->dir = DIR_LEFT;
@@ -575,6 +582,7 @@ static void transition_to_south_field_from_castor(Player* link) {
     s_in_crenel_base = false;
     s_in_melari_mines = false;
     s_in_castor_wilds = false;
+    s_in_mole_cave = false;
     link->x = 32.0f; // Fronteira oeste de South Hyrule Field
     link->y = 224.0f;
     link->dir = DIR_RIGHT;
@@ -582,6 +590,59 @@ static void transition_to_south_field_from_castor(Player* link) {
     spawn_south_field_entities();
     hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
     printf("[SCENE] Retornando a South Hyrule Field a partir de Castor Wilds!\n");
+}
+
+static void spawn_mole_cave_entities(bool has_mole_mitts) {
+    entity_clear_all();
+    if (!has_mole_mitts) {
+        // Pedestal com as Luvas de Toupeira (Mole Mitts) na câmara central da caverna
+        entity_spawn(ENTITY_ITEM_MOLE_MITTS, 256.0f, 80.0f);
+    }
+    // Inimigos e baús no labirinto de terra escavável
+    entity_spawn(ENTITY_ENEMY_KEESE, 120.0f, 160.0f);
+    entity_spawn(ENTITY_ENEMY_KEESE, 380.0f, 160.0f);
+    entity_spawn(ENTITY_ENEMY_CHUCHU, 256.0f, 220.0f);
+    entity_spawn(ENTITY_CHEST_GOLD, 80.0f, 80.0f);
+    entity_spawn(ENTITY_CHEST_GOLD, 432.0f, 80.0f);
+    printf("[MOLE CAVE] Entidades da Mole Cave spawnadas (Mole Mitts, Keese, ChuChu, Baus de Ouro)!\n");
+}
+
+static void transition_to_mole_cave(Player* link) {
+    if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active()) return;
+    s_in_town = false;
+    s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = false;
+    s_in_crenel_base = false;
+    s_in_melari_mines = false;
+    s_in_castor_wilds = false;
+    s_in_mole_cave = true;
+    link->x = 256.0f; // Entrada sul da caverna
+    link->y = 350.0f;
+    link->dir = DIR_UP;
+    link->is_moving = false;
+    spawn_mole_cave_entities(link->has_mole_mitts);
+    hal_audio_play_bgm(BGM_DEEPWOOD_SHRINE);
+    printf("[SCENE] Entrando na Caverna das Luvas de Toupeira (Mole Cave)!\n");
+}
+
+static void transition_to_castor_from_cave(Player* link) {
+    if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active()) return;
+    s_in_town = false;
+    s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = false;
+    s_in_crenel_base = false;
+    s_in_melari_mines = false;
+    s_in_castor_wilds = true;
+    s_in_mole_cave = false;
+    link->x = 112.0f; // Saída na caverna no noroeste de Castor Wilds
+    link->y = 120.0f;
+    link->dir = DIR_DOWN;
+    link->is_moving = false;
+    spawn_castor_wilds_entities();
+    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    printf("[SCENE] Retornando a Castor Wilds a partir da Caverna!\n");
 }
 
 static void draw_rect(int rx, int ry, int rw, int rh, u32 color) {
@@ -971,6 +1032,56 @@ static void draw_link_mud_effects(const Player* p, int px, int py) {
     }
 }
 
+static void draw_link_digging_effects(const Player* p, int px, int py) {
+    if (!subweapon_is_digging()) return;
+
+    u32 c_mitt_leather = 0x78350FFF;
+    u32 c_claw_steel   = 0xE2E8F0FF;
+    u32 c_claw_tip     = 0xFFFFFFFF;
+
+    // Garras afiadas cortando a terra na direção do herói
+    switch (p->dir) {
+        case DIR_DOWN:
+            draw_rect(px + 2, py + 12, 4, 3, c_mitt_leather);
+            draw_rect(px + 10, py + 12, 4, 3, c_mitt_leather);
+            draw_rect(px + 3, py + 15, 1, 3, c_claw_steel);
+            draw_rect(px + 5, py + 15, 1, 3, c_claw_steel);
+            draw_rect(px + 10, py + 15, 1, 3, c_claw_steel);
+            draw_rect(px + 12, py + 15, 1, 3, c_claw_steel);
+            hal_video_put_pixel(px + 3, py + 18, c_claw_tip);
+            hal_video_put_pixel(px + 5, py + 18, c_claw_tip);
+            hal_video_put_pixel(px + 10, py + 18, c_claw_tip);
+            hal_video_put_pixel(px + 12, py + 18, c_claw_tip);
+            break;
+        case DIR_UP:
+            draw_rect(px + 2, py + 1, 4, 3, c_mitt_leather);
+            draw_rect(px + 10, py + 1, 4, 3, c_mitt_leather);
+            draw_rect(px + 3, py - 2, 1, 3, c_claw_steel);
+            draw_rect(px + 5, py - 2, 1, 3, c_claw_steel);
+            draw_rect(px + 10, py - 2, 1, 3, c_claw_steel);
+            draw_rect(px + 12, py - 2, 1, 3, c_claw_steel);
+            hal_video_put_pixel(px + 3, py - 3, c_claw_tip);
+            hal_video_put_pixel(px + 5, py - 3, c_claw_tip);
+            hal_video_put_pixel(px + 10, py - 3, c_claw_tip);
+            hal_video_put_pixel(px + 12, py - 3, c_claw_tip);
+            break;
+        case DIR_LEFT:
+            draw_rect(px - 1, py + 8, 3, 4, c_mitt_leather);
+            draw_rect(px - 4, py + 9, 3, 1, c_claw_steel);
+            draw_rect(px - 4, py + 11, 3, 1, c_claw_steel);
+            hal_video_put_pixel(px - 5, py + 9, c_claw_tip);
+            hal_video_put_pixel(px - 5, py + 11, c_claw_tip);
+            break;
+        case DIR_RIGHT:
+            draw_rect(px + 14, py + 8, 3, 4, c_mitt_leather);
+            draw_rect(px + 17, py + 9, 3, 1, c_claw_steel);
+            draw_rect(px + 17, py + 11, 3, 1, c_claw_steel);
+            hal_video_put_pixel(px + 20, py + 9, c_claw_tip);
+            hal_video_put_pixel(px + 20, py + 11, c_claw_tip);
+            break;
+    }
+}
+
 // Renderiza o Link no estilo clássico de Minish Cap na posição da Câmera
 static void draw_link(const Player* p, const Camera* cam) {
     // Efeito clássico de piscar ao receber dano (flicker)
@@ -1096,6 +1207,7 @@ static void draw_link(const Player* p, const Camera* cam) {
         draw_link_swimming_effects(p, px, py);
         draw_link_climbing_effects(p, px, py);
         draw_link_mud_effects(p, px, py);
+        draw_link_digging_effects(p, px, py);
         return;
     }
 
@@ -1163,6 +1275,7 @@ static void draw_link(const Player* p, const Camera* cam) {
     draw_link_swimming_effects(p, px, py);
     draw_link_climbing_effects(p, px, py);
     draw_link_mud_effects(p, px, py);
+    draw_link_digging_effects(p, px, py);
 }
 
 static inline bool is_world_solid_for_player(const Tilemap* map, float wx, float wy, bool is_minish, bool has_flippers, bool has_grip_ring, float z) {
@@ -1267,6 +1380,8 @@ int main(int argc, char* argv[]) {
     s_melari_mines_map = melari_mines_map;
     Tilemap* castor_wilds_map = map_create_castor_wilds();
     s_castor_wilds_map = castor_wilds_map;
+    Tilemap* mole_cave_map = map_create_mole_cave();
+    s_mole_cave_map = mole_cave_map;
     load_region_sheets(REGION_USA);
 
     // Inicialização da entidade do Link
@@ -1324,6 +1439,8 @@ int main(int argc, char* argv[]) {
     link.mud_sink_timer = 0;
     link.last_safe_x = link.x;
     link.last_safe_y = link.y;
+    link.has_mole_mitts = false;
+    link.mole_mitts_banner_timer = 0;
 
     // Carregamento automático de progresso salvo (Slot 1)
     if (save_exists(1)) {
@@ -1358,6 +1475,10 @@ int main(int argc, char* argv[]) {
             if (link.has_bow) {
                 inventory_unlock_item(INV_ITEM_BOW);
             }
+            link.has_mole_mitts = save.has_mole_mitts;
+            if (link.has_mole_mitts) {
+                inventory_unlock_item(INV_ITEM_MOLE_MITTS);
+            }
             if (save.bomb_count > 0) {
                 subweapon_add_bombs(save.bomb_count - subweapon_get_bomb_count());
             }
@@ -1382,13 +1503,17 @@ int main(int argc, char* argv[]) {
                 sanctuary_enter(&link.x, &link.y, &link.dir);
             } else if (save.current_map == 10) {
                 s_in_castor_wilds = true;
+            } else if (save.current_map == 11) {
+                s_in_mole_cave = true;
             }
         }
     }
 
     // Inicialização do Subsistema de Entidades e Spawn de Inimigos e NPCs
     entity_manager_init();
-    if (s_in_castor_wilds) {
+    if (s_in_mole_cave) {
+        spawn_mole_cave_entities(link.has_mole_mitts);
+    } else if (s_in_castor_wilds) {
         spawn_castor_wilds_entities();
     } else if (s_in_melari_mines) {
         spawn_melari_mines_entities();
@@ -1464,7 +1589,8 @@ int main(int argc, char* argv[]) {
                                 current_save.player_y = link.y;
                                 current_save.player_dir = (int)link.dir;
                                 int cur_m = 0;
-                                if (s_in_castor_wilds) cur_m = 10;
+                                if (s_in_mole_cave) cur_m = 11;
+                                else if (s_in_castor_wilds) cur_m = 10;
                                 else if (s_in_melari_mines) cur_m = 7;
                                 else if (s_in_crenel_base) cur_m = 6;
                                 else if (s_in_north_field) cur_m = 5;
@@ -1487,6 +1613,7 @@ int main(int argc, char* argv[]) {
                                 current_save.has_white_sword = link.has_white_sword;
                                 current_save.has_two_elements = link.has_two_elements;
                                 current_save.has_bow = link.has_bow;
+                                current_save.has_mole_mitts = link.has_mole_mitts;
                                 current_save.slot_a = (int)inventory_get_slot_a();
                                 current_save.slot_b = (int)inventory_get_slot_b();
                                 if (save_game(1, &current_save)) {
@@ -1684,6 +1811,15 @@ int main(int argc, char* argv[]) {
                                 printf("[DEBUG] [O] Arco e Flechas DESEQUIPADO.\n");
                             }
                             break;
+                        case SDLK_j:
+                            if (!dungeon_is_active() && !dungeon_flames_is_active() && !sanctuary_is_active()) {
+                                if (s_in_mole_cave) {
+                                    transition_to_castor_from_cave(&link);
+                                } else {
+                                    transition_to_mole_cave(&link);
+                                }
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -1704,13 +1840,14 @@ int main(int argc, char* argv[]) {
         // 2. ATUALIZAÇÃO DA LÓGICA DO JOGADOR (INPUT -> FÍSICA)
         // --------------------------------------------------------------------
         const HalVideoContext* ctx = hal_video_get_context();
-        Tilemap* active_map = s_in_castor_wilds ? s_castor_wilds_map :
+        Tilemap* active_map = s_in_mole_cave ? s_mole_cave_map :
+                              (s_in_castor_wilds ? s_castor_wilds_map :
                               (s_in_melari_mines ? s_melari_mines_map :
                               (s_in_crenel_base ? s_crenel_base_map :
                               (s_in_village ? s_village_map :
                               (s_in_town ? s_town_map :
                               (s_in_south_field ? s_south_field_map :
-                              (s_in_north_field ? s_north_field_map : world_map))))));
+                              (s_in_north_field ? s_north_field_map : world_map)))))));
 
         if (inventory_is_paused()) {
             if (hal_input_is_pressed(KEY_UP))    inventory_cursor_move(0, -1);
@@ -1801,6 +1938,14 @@ int main(int argc, char* argv[]) {
             }
             if (link.bow_banner_timer > 0) {
                 link.bow_banner_timer--;
+            }
+            if (subweapon_get_current() == ITEM_MOLE_MITTS && !link.has_mole_mitts) {
+                link.has_mole_mitts = true;
+                inventory_unlock_item(INV_ITEM_MOLE_MITTS);
+                link.mole_mitts_banner_timer = 200;
+            }
+            if (link.mole_mitts_banner_timer > 0) {
+                link.mole_mitts_banner_timer--;
             }
 
             // Ação com Botão A: Primeiro Natação (Mergulho), Portal Minish, Masmorra / Loja / Guarda / Cidadã / Baús / Swiftblade / NPCs, depois golpe de espada!
@@ -2406,6 +2551,15 @@ int main(int argc, char* argv[]) {
                     if (link.x >= (active_map->width * TILE_SIZE) - 32.0f && link.dir == DIR_RIGHT) {
                         transition_to_south_field_from_castor(&link);
                     }
+                    // Entrada para a Caverna das Luvas de Toupeira no noroeste de Castor Wilds
+                    else if (link.x <= 64.0f && link.y <= 64.0f && link.dir == DIR_UP) {
+                        transition_to_mole_cave(&link);
+                    }
+                } else if (s_in_mole_cave) {
+                    // Saída Sul da Caverna das Luvas de Toupeira de volta para Castor Wilds
+                    if (link.y >= (active_map->height * TILE_SIZE) - 32.0f && link.dir == DIR_DOWN) {
+                        transition_to_castor_from_cave(&link);
+                    }
                 } else if (s_in_north_field) {
                     // Portão Sul de North Field de volta para Hyrule Town
                     if (link.x >= 210.0f && link.x <= 290.0f && link.y >= (active_map->height * TILE_SIZE) - 36.0f && link.dir == DIR_DOWN) {
@@ -2552,6 +2706,8 @@ int main(int argc, char* argv[]) {
                 spawn_crenel_base_entities();
             } else if (s_in_castor_wilds) {
                 spawn_castor_wilds_entities();
+            } else if (s_in_mole_cave) {
+                spawn_mole_cave_entities(link.has_mole_mitts);
             } else {
                 spawn_overworld_entities(world_map);
             }
@@ -2627,6 +2783,9 @@ int main(int argc, char* argv[]) {
             } else if (s_in_castor_wilds) {
                 link.x = 520.0f;
                 link.y = 224.0f;
+            } else if (s_in_mole_cave) {
+                link.x = 256.0f;
+                link.y = 350.0f;
             } else {
                 link.x = (world_map && world_map->is_authentic) ? 448.0f : 296.0f;
                 link.y = (world_map && world_map->is_authentic) ? 636.0f : 176.0f;
@@ -2955,6 +3114,33 @@ int main(int argc, char* argv[]) {
             font_draw_text(ban_x + 26, ban_y + 18, "Disparo a Distancia | 30 Flechas", 0x34D399FF, true);
         }
 
+        // 6f. Banner Festivo de Aquisição das Luvas de Toupeira (Mole Mitts)
+        if (link.mole_mitts_banner_timer > 0) {
+            int ban_w = 216;
+            int ban_h = 32;
+            int ban_x = (ctx->render_width - ban_w) / 2;
+            int ban_y = 64;
+
+            draw_rect(ban_x - 2, ban_y - 2, ban_w + 4, ban_h + 4, 0x1A0F05EE);
+            draw_rect(ban_x - 1, ban_y - 1, ban_w + 2, ban_h + 2, 0xD97706FF);
+            draw_rect(ban_x, ban_y, ban_w, ban_h, 0x2A180AFF);
+            draw_rect(ban_x + 2, ban_y + 2, ban_w - 4, ban_h - 4, 0x3D2210EE);
+
+            // Ícone das Luvas de Toupeira em pixel art
+            draw_rect(ban_x + 8, ban_y + 12, 10, 8, 0x78350FFF);
+            draw_rect(ban_x + 7, ban_y + 18, 12, 3, 0xF59E0BFF); // Punho dourado
+            // 3 Garras afiadas
+            draw_rect(ban_x + 9,  ban_y + 7, 2, 5, 0xE2E8F0FF);
+            draw_rect(ban_x + 12, ban_y + 5, 2, 7, 0xE2E8F0FF);
+            draw_rect(ban_x + 15, ban_y + 7, 2, 5, 0xE2E8F0FF);
+            hal_video_put_pixel(ban_x + 9,  ban_y + 6, 0xFFFFFFFF);
+            hal_video_put_pixel(ban_x + 12, ban_y + 4, 0xFFFFFFFF);
+            hal_video_put_pixel(ban_x + 15, ban_y + 6, 0xFFFFFFFF);
+
+            font_draw_text(ban_x + 26, ban_y + 6, "LUVAS DE TOUPEIRA OBTIDAS!", 0xF59E0BFF, true);
+            font_draw_text(ban_x + 26, ban_y + 18, "Escave Paredes de Terra e Segredos!", 0xFDE047FF, true);
+        }
+
         // 7. Badge do Estado Minish no HUD
         if (link.is_minish) {
             int mx = 146;
@@ -3027,6 +3213,7 @@ int main(int argc, char* argv[]) {
     if (s_crenel_base_map) map_destroy(s_crenel_base_map);
     if (s_melari_mines_map) map_destroy(s_melari_mines_map);
     if (s_castor_wilds_map) map_destroy(s_castor_wilds_map);
+    if (s_mole_cave_map)    map_destroy(s_mole_cave_map);
     map_destroy(world_map);
     hal_audio_shutdown();
     hal_input_shutdown();

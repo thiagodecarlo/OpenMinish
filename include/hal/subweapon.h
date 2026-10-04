@@ -30,6 +30,7 @@ typedef enum {
     ITEM_BOMBS,           // Bolsa de Bombas (Colocação de bombas, pavio e explosão)
     ITEM_CANE_OF_PACCI,   // Cajado de Pacci (Projétil mágico de inversão e super salto)
     ITEM_BOW,             // Arco e Flechas (Disparo de flechas velozes e ativação de estátuas de olho)
+    ITEM_MOLE_MITTS,      // Luvas de Toupeira (Escavação de terra fofa e paredes)
     ITEM_COUNT
 } SubweaponType;
 
@@ -127,5 +128,10 @@ int subweapon_get_max_arrows(void);
  * Adiciona flechas à aljava (ex: coletando ou comprando na loja).
  */
 void subweapon_add_arrows(int count);
+
+/*
+ * Retorna true se o herói estiver no meio da animação de escavação com as Luvas de Toupeira.
+ */
+bool subweapon_is_digging(void);
 
 #endif // HAL_SUBWEAPON_H

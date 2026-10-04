@@ -74,6 +74,9 @@ typedef enum {
     TILE_SWAMP_LOG,          // Tronco de árvore caído oco no lodo (passarela / túnel)
     TILE_EYE_STATUE,         // Estátua ancestral de pedra com olho fechado (ativa com Flecha!)
     TILE_EYE_STATUE_OPEN,    // Estátua de olho aberta por disparo certeiro de flecha
+    TILE_DIRT_WALL,          // Parede de terra fofa escavável pelas Luvas de Toupeira (Mole Mitts)
+    TILE_DIRT_WALL_TUNNEL,   // Piso de túnel escavado com marcas de garras
+    TILE_DIRT_MOUND,         // Montículo de terra fofa escavável
     TILE_COUNT
 } TileType;
 
@@ -274,5 +277,26 @@ bool map_is_eye_statue(const Tilemap* map, float world_x, float world_y);
  * Retorna true se acertou e abriu uma estátua de olho.
  */
 bool map_hit_eye_statue(Tilemap* map, float world_x, float world_y);
+
+/*
+ * Constrói a Caverna das Luvas de Toupeira (Mole Mitts Cavern).
+ * Dimensões: 32x24 tiles (512x384 pixels) repleta de paredes de terra fofa escaváveis,
+ * túneis subterrâneos, arcas de tesouro e saída para Castor Wilds.
+ */
+Tilemap* map_create_mole_cave(void);
+
+/*
+ * Retorna true se a coordenada no mundo for um bloco ou parede de terra fofa escavável (TILE_DIRT_WALL ou TILE_DIRT_MOUND).
+ */
+bool map_is_diggable(const Tilemap* map, float world_x, float world_y);
+
+/*
+ * Executa a escavação no ponto especificado com as Luvas de Toupeira (Mole Mitts):
+ * - Converte TILE_DIRT_WALL em TILE_DIRT_WALL_TUNNEL transitável.
+ * - Desobstrui o mapa de colisão.
+ * - Sorteia drops enterrados (out_drop: 0 = nada, 1 = Rupee verde, 2 = Rupee azul, 3 = Coração, 4 = Kinstone).
+ * Retorna true se um bloco foi escavado com sucesso.
+ */
+bool map_dig_tile(Tilemap* map, float world_x, float world_y, int* out_drop);
 
 #endif // HAL_MAP_H

@@ -199,6 +199,7 @@ void inventory_assign_to_slot_b(void) {
     else if (s_slot_b == INV_ITEM_BOMBS)          subweapon_set_current(ITEM_BOMBS);
     else if (s_slot_b == INV_ITEM_CANE_OF_PACCI)  subweapon_set_current(ITEM_CANE_OF_PACCI);
     else if (s_slot_b == INV_ITEM_BOW)            subweapon_set_current(ITEM_BOW);
+    else if (s_slot_b == INV_ITEM_MOLE_MITTS)     subweapon_set_current(ITEM_MOLE_MITTS);
 
     hal_audio_play_sound(SOUND_ITEM_CATCH, 0.9f, 1.2f);
     printf("[INVENTORY] Atribuido ao Botao [B]: %s\n", inventory_get_item_name(sel));

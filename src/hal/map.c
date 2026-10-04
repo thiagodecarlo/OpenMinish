@@ -1073,6 +1073,54 @@ static void render_metatile(int sx, int sy, TileType type) {
             break;
         }
 
+        case TILE_DIRT_WALL:
+            // Parede de terra fofa compactada escavável com as Mole Mitts
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x6B3E1EFF; // Marrom terra fofa base
+                    if ((x + y * 2) % 5 == 0) c = 0x542F15FF; // Camada escura compactada
+                    else if ((x * 3 + y) % 7 == 0) c = 0x824C25FF; // Terra fofa solta clara
+                    // Seixos e pedregulhos incrustados na terra
+                    if ((x == 4 && y == 5) || (x == 11 && y == 10) || (x == 8 && y == 13)) c = 0x3E2310FF;
+                    if ((x == 5 && y == 5) || (x == 12 && y == 10)) c = 0x9A5C30FF;
+                    // Borda sombreada de profundidade
+                    if (y == 0 || x == 0) c = 0x542F15FF;
+                    if (y == 15 || x == 15) c = 0x3E2310FF;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_DIRT_WALL_TUNNEL:
+            // Chão de túnel escavado com marcas de garras e terra batida
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x3D2414FF; // Terra batida escura
+                    if ((x + y) % 6 == 0) c = 0x4E2F1BFF;
+                    // Marcas de garras paralelas cravadas no chão
+                    if ((y == 4 || y == 10) && (x >= 3 && x <= 6)) c = 0x2A180EFF;
+                    if ((y == 5 || y == 11) && (x >= 9 && x <= 12)) c = 0x2A180EFF;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_DIRT_MOUND:
+            // Montículo de terra fofa no chão
+            render_metatile(sx, sy, TILE_DIRT_PATH);
+            for (int y = 3; y <= 13; y++) {
+                for (int x = 3; x <= 13; x++) {
+                    float dist = sqrtf((float)((x - 7.5f) * (x - 7.5f) + (y - 7.5f) * (y - 7.5f)));
+                    if (dist <= 5.5f) {
+                        u32 c = 0x6B3E1EFF;
+                        if (dist <= 2.5f) c = 0x824C25FF;
+                        else if (dist > 4.5f) c = 0x3E2310FF;
+                        draw_tile_pixel(sx + x, sy + y, c);
+                    }
+                }
+            }
+            break;
+
         default:
             render_metatile(sx, sy, TILE_GRASS);
             break;
@@ -2702,5 +2750,162 @@ Tilemap* map_create_castor_wilds(void) {
     m->collision_map[17 * w + 18] = 1;
 
     printf("[MAP] Castor Wilds Swamp (Pantano de Castor Wilds) criado com sucesso (%dx%d tiles)!\n", w, h);
+    return m;
+}
+
+bool map_is_diggable(const Tilemap* map, float world_x, float world_y) {
+    if (!map) return false;
+    if (world_x < 0.0f || world_y < 0.0f) return false;
+
+    int tx = (int)(world_x / TILE_SIZE);
+    int ty = (int)(world_y / TILE_SIZE);
+    if (tx < 0 || tx >= map->width || ty < 0 || ty >= map->height) return false;
+
+    int idx = ty * map->width + tx;
+    if (map->overlay_layer && (map->overlay_layer[idx] == TILE_DIRT_WALL || map->overlay_layer[idx] == TILE_DIRT_MOUND)) {
+        return true;
+    }
+    if (map->ground_layer && (map->ground_layer[idx] == TILE_DIRT_WALL || map->ground_layer[idx] == TILE_DIRT_MOUND)) {
+        return true;
+    }
+    return false;
+}
+
+bool map_dig_tile(Tilemap* map, float world_x, float world_y, int* out_drop) {
+    if (!map) return false;
+    if (world_x < 0.0f || world_y < 0.0f) return false;
+
+    int tx = (int)(world_x / TILE_SIZE);
+    int ty = (int)(world_y / TILE_SIZE);
+    if (tx < 0 || tx >= map->width || ty < 0 || ty >= map->height) return false;
+
+    int idx = ty * map->width + tx;
+    bool dug = false;
+
+    if (map->overlay_layer && (map->overlay_layer[idx] == TILE_DIRT_WALL || map->overlay_layer[idx] == TILE_DIRT_MOUND)) {
+        map->overlay_layer[idx] = TILE_DIRT_WALL_TUNNEL;
+        if (map->collision_map) map->collision_map[idx] = 0; // Desobstrui passagem
+        dug = true;
+    } else if (map->ground_layer && (map->ground_layer[idx] == TILE_DIRT_WALL || map->ground_layer[idx] == TILE_DIRT_MOUND)) {
+        map->ground_layer[idx] = TILE_DIRT_WALL_TUNNEL;
+        if (map->collision_map) map->collision_map[idx] = 0;
+        dug = true;
+    }
+
+    if (dug) {
+        hal_audio_play_sound(SOUND_WALL_CRUMBLE, 0.85f, 1.30f);
+        if (out_drop) {
+            int roll = rand() % 100;
+            if (roll < 35)      *out_drop = 1; // Rupee verde (+1)
+            else if (roll < 55) *out_drop = 2; // Rupee azul (+5)
+            else if (roll < 75) *out_drop = 3; // Coração (+1 HP)
+            else if (roll < 90) *out_drop = 4; // Fragmento de Kinstone
+            else                *out_drop = 0; // Nada
+        }
+        return true;
+    }
+    return false;
+}
+
+Tilemap* map_create_mole_cave(void) {
+    int w = 32;
+    int h = 24;
+    Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
+    if (!m) return NULL;
+
+    m->width  = w;
+    m->height = h;
+    m->is_authentic = false;
+    m->authentic_tex = NULL;
+    m->ground_layer  = (u8*)malloc(w * h * sizeof(u8));
+    m->overlay_layer = (u8*)malloc(w * h * sizeof(u8));
+    m->collision_map = (u8*)malloc(w * h * sizeof(u8));
+
+    // 1. Chão da caverna de terra batida (TILE_DIRT_WALL_TUNNEL)
+    for (int i = 0; i < w * h; i++) {
+        m->ground_layer[i]  = TILE_DIRT_WALL_TUNNEL;
+        m->overlay_layer[i] = 0xFF;
+        m->collision_map[i] = 0;
+    }
+
+    // 2. Paredes de rocha impenetráveis no perímetro
+    // Topo (y=0..1)
+    for (int y = 0; y <= 1; y++) {
+        for (int x = 0; x < w; x++) {
+            m->overlay_layer[y * w + x] = TILE_CRENEL_CLIFF_FACE;
+            m->collision_map[y * w + x] = 1;
+        }
+    }
+    // Fundo (y=22..23) com saída central em x=15..16
+    for (int y = 22; y <= 23; y++) {
+        for (int x = 0; x < w; x++) {
+            if (x < 14 || x > 17) {
+                m->overlay_layer[y * w + x] = TILE_CRENEL_CLIFF_FACE;
+                m->collision_map[y * w + x] = 1;
+            }
+        }
+    }
+    // Laterais Oeste (x=0..1) e Leste (x=30..31)
+    for (int y = 0; y < h; y++) {
+        m->overlay_layer[y * w + 0] = TILE_CRENEL_CLIFF_FACE;
+        m->collision_map[y * w + 0] = 1;
+        m->overlay_layer[y * w + 1] = TILE_CRENEL_CLIFF_FACE;
+        m->collision_map[y * w + 1] = 1;
+        m->overlay_layer[y * w + (w - 2)] = TILE_CRENEL_CLIFF_FACE;
+        m->collision_map[y * w + (w - 2)] = 1;
+        m->overlay_layer[y * w + (w - 1)] = TILE_CRENEL_CLIFF_FACE;
+        m->collision_map[y * w + (w - 1)] = 1;
+    }
+
+    // 3. Paredes maciças de terra fofa escavável (TILE_DIRT_WALL)
+    // Bloco Oeste (x=3..13, y=4..20)
+    for (int y = 4; y <= 20; y++) {
+        for (int x = 3; x <= 13; x++) {
+            m->overlay_layer[y * w + x] = TILE_DIRT_WALL;
+            m->collision_map[y * w + x] = 1; // Sólido até escavar com as Mole Mitts!
+        }
+    }
+    // Bloco Leste (x=18..28, y=4..20)
+    for (int y = 4; y <= 20; y++) {
+        for (int x = 18; x <= 28; x++) {
+            m->overlay_layer[y * w + x] = TILE_DIRT_WALL;
+            m->collision_map[y * w + x] = 1;
+        }
+    }
+
+    // Câmaras secretas escavadas dentro dos blocos de terra:
+    // Câmara Secreta Oeste (x=6..8, y=8..10) com Baú de 50 Rupees
+    for (int y = 8; y <= 10; y++) {
+        for (int x = 6; x <= 8; x++) {
+            m->overlay_layer[y * w + x] = 0xFF;
+            m->collision_map[y * w + x] = 0;
+        }
+    }
+    m->overlay_layer[9 * w + 7] = TILE_CHEST_CLOSED;
+    m->collision_map[9 * w + 7] = 1;
+
+    // Câmara Secreta Leste (x=23..25, y=8..10) com Baú de Kinstones
+    for (int y = 8; y <= 10; y++) {
+        for (int x = 23; x <= 25; x++) {
+            m->overlay_layer[y * w + x] = 0xFF;
+            m->collision_map[y * w + x] = 0;
+        }
+    }
+    m->overlay_layer[9 * w + 24] = TILE_CHEST_CLOSED;
+    m->collision_map[9 * w + 24] = 1;
+
+    // Montículos de terra fofa espalhados no corredor central
+    m->overlay_layer[6 * w + 15]  = TILE_DIRT_MOUND;
+    m->collision_map[6 * w + 15]  = 1;
+    m->overlay_layer[12 * w + 16] = TILE_DIRT_MOUND;
+    m->collision_map[12 * w + 16] = 1;
+    m->overlay_layer[17 * w + 15] = TILE_DIRT_MOUND;
+    m->collision_map[17 * w + 15] = 1;
+
+    // Pedestal ancestral das Luvas de Toupeira na câmara norte (x=15..16, y=3)
+    m->overlay_layer[3 * w + 15] = TILE_CHEST_CLOSED;
+    m->collision_map[3 * w + 15] = 1;
+
+    printf("[MAP] Mole Mitts Cavern (Caverna de Escavacao) criada com sucesso (%dx%d tiles)!\n", w, h);
     return m;
 }

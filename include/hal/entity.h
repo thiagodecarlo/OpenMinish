@@ -52,7 +52,8 @@ typedef enum {
     ENTITY_ITEM_FIRE_ELEMENT, // Elemento Sagrado do Fogo (Fire Element)
     ENTITY_PROJECTILE_FIREBALL,// Bola de fogo / magma cuspida pelo Gleerok
     ENTITY_ENEMY_ROPE,        // Serpente ágil do pântano de Castor Wilds (arrancada veloz em linha reta)
-    ENTITY_ITEM_BOW           // Arco e Flechas relíquia ancestral (item equipável de longo alcance)
+    ENTITY_ITEM_BOW,          // Arco e Flechas relíquia ancestral (item equipável de longo alcance)
+    ENTITY_ITEM_MOLE_MITTS    // Luvas de Toupeira (item equipável de escavação)
 } EntityType;
 
 // Caixa delimitadora de colisão e dano (Hitbox / Hurtbox)

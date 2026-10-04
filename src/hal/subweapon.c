@@ -103,6 +103,29 @@ static ActiveArrow s_arrows[MAX_ACTIVE_ARROWS] = { 0 };
 static int s_arrow_count = 30;
 static int s_max_arrows = 30;
 
+#define MAX_DIG_PARTICLES 12
+
+typedef struct {
+    bool  is_active;
+    float x;
+    float y;
+    float vx;
+    float vy;
+    int   life;
+    u32   color;
+} DigParticle;
+
+typedef struct {
+    bool        is_digging;
+    int         dig_timer;
+    Direction   dig_dir;
+    float       target_x;
+    float       target_y;
+    DigParticle particles[MAX_DIG_PARTICLES];
+} MoleMittsState;
+
+static MoleMittsState s_mitts = { 0 };
+
 void subweapon_init(void) {
     s_current_item = ITEM_BOOMERANG;
     memset(&s_boomerang, 0, sizeof(s_boomerang));
@@ -110,6 +133,7 @@ void subweapon_init(void) {
     memset(s_bombs, 0, sizeof(s_bombs));
     memset(&s_pacci, 0, sizeof(s_pacci));
     memset(s_arrows, 0, sizeof(s_arrows));
+    memset(&s_mitts, 0, sizeof(s_mitts));
     s_bomb_count = 10;
     s_max_bombs = 10;
     s_bomb_screen_shake = 0;
@@ -141,6 +165,7 @@ const char* subweapon_get_name(SubweaponType item) {
         case ITEM_BOMBS:         return "Bolsa de Bombas (Bombs)";
         case ITEM_CANE_OF_PACCI: return "Cajado de Pacci (Inversao)";
         case ITEM_BOW:           return "Arco e Flechas (Bow)";
+        case ITEM_MOLE_MITTS:    return "Luvas de Toupeira (Mole Mitts)";
         default:                 return "Nenhum";
     }
 }
@@ -255,6 +280,19 @@ void subweapon_use_pressed(float link_x, float link_y, Direction dir) {
             hal_audio_play_sound(SOUND_SWITCH_CLICK, 0.7f, 0.8f);
             printf("[BOW] Aljava de flechas vazia!\n");
         }
+    } else if (s_current_item == ITEM_MOLE_MITTS) {
+        s_mitts.is_digging = true;
+        s_mitts.dig_timer = 12;
+        s_mitts.dig_dir = dir;
+        float fx = link_x + 8.0f;
+        float fy = link_y + 12.0f;
+        if (dir == DIR_DOWN)  fy += 12.0f;
+        if (dir == DIR_UP)    fy -= 12.0f;
+        if (dir == DIR_LEFT)  fx -= 12.0f;
+        if (dir == DIR_RIGHT) fx += 12.0f;
+        s_mitts.target_x = fx;
+        s_mitts.target_y = fy;
+        hal_audio_play_sound(SOUND_SWORD_SLASH, 0.85f, 1.6f);
     }
 }
 
@@ -273,6 +311,21 @@ void subweapon_use_held(float link_x, float link_y, Direction dir) {
 
         s_gust.jar_x = link_x + 8.0f + off_x;
         s_gust.jar_y = link_y + 8.0f + off_y;
+    } else if (s_current_item == ITEM_MOLE_MITTS) {
+        if (!s_mitts.is_digging || s_mitts.dig_timer <= 0) {
+            s_mitts.is_digging = true;
+            s_mitts.dig_timer = 10;
+            s_mitts.dig_dir = dir;
+            float fx = link_x + 8.0f;
+            float fy = link_y + 12.0f;
+            if (dir == DIR_DOWN)  fy += 12.0f;
+            if (dir == DIR_UP)    fy -= 12.0f;
+            if (dir == DIR_LEFT)  fx -= 12.0f;
+            if (dir == DIR_RIGHT) fx += 12.0f;
+            s_mitts.target_x = fx;
+            s_mitts.target_y = fy;
+            hal_audio_play_sound(SOUND_SWORD_SLASH, 0.80f, 1.7f);
+        }
     }
 }
 
@@ -531,6 +584,73 @@ void subweapon_update(Tilemap* map, float link_x, float link_y, int* link_rupees
             a->is_active = false;
         }
     }
+
+    // ------------------------------------------------------------------------
+    // 6. ATUALIZAÇÃO DA ESCAVAÇÃO COM AS LUVAS DE TOUPEIRA (MOLE MITTS)
+    // ------------------------------------------------------------------------
+    if (s_mitts.is_digging) {
+        s_mitts.dig_timer--;
+        if (s_mitts.dig_timer == 6) {
+            int drop = 0;
+            if (map && map_dig_tile(map, s_mitts.target_x, s_mitts.target_y, &drop)) {
+                // Gera partículas de terra arremessadas para trás
+                for (int p = 0; p < 4; p++) {
+                    for (int i = 0; i < MAX_DIG_PARTICLES; i++) {
+                        if (!s_mitts.particles[i].is_active) {
+                            s_mitts.particles[i].is_active = true;
+                            s_mitts.particles[i].x = s_mitts.target_x + ((rand() % 8) - 4);
+                            s_mitts.particles[i].y = s_mitts.target_y + ((rand() % 8) - 4);
+                            float p_spd = 1.6f + (rand() % 10) * 0.12f;
+                            float p_vx = 0.0f, p_vy = 0.0f;
+                            if (s_mitts.dig_dir == DIR_DOWN)  { p_vy = -p_spd; p_vx = ((rand() % 10) - 5) * 0.2f; }
+                            if (s_mitts.dig_dir == DIR_UP)    { p_vy = p_spd;  p_vx = ((rand() % 10) - 5) * 0.2f; }
+                            if (s_mitts.dig_dir == DIR_LEFT)  { p_vx = p_spd;  p_vy = ((rand() % 10) - 5) * 0.2f; }
+                            if (s_mitts.dig_dir == DIR_RIGHT) { p_vx = -p_spd; p_vy = ((rand() % 10) - 5) * 0.2f; }
+                            s_mitts.particles[i].vx = p_vx;
+                            s_mitts.particles[i].vy = p_vy;
+                            s_mitts.particles[i].life = 14 + (rand() % 8);
+                            s_mitts.particles[i].color = (rand() % 2 == 0) ? 0x824C25FF : 0x542F15FF;
+                            break;
+                        }
+                    }
+                }
+
+                // Processa recompensas da escavação
+                if (link_rupees && (drop == 1 || drop == 2 || drop == 4)) {
+                    int amt = (drop == 1) ? 1 : ((drop == 2) ? 5 : 10);
+                    *link_rupees += amt;
+                    hal_audio_play_sound(SOUND_SECRET, 0.7f, 1.8f);
+                    printf("[MOLE MITTS] Terra escavada revelou %d Rupees!\n", amt);
+                } else if (link_hearts && drop == 3) {
+                    (*link_hearts)++;
+                    hal_audio_play_sound(SOUND_HEART_BEEP, 0.7f, 1.3f);
+                    printf("[MOLE MITTS] Terra escavada revelou Coracao de cura!\n");
+                }
+            }
+
+            // Golpeia inimigos se estiverem na área da escavação
+            int dummy = 0;
+            entity_check_subweapon_hit(s_mitts.target_x - 6.0f, s_mitts.target_y - 6.0f, 12.0f, 12.0f, 1, &dummy);
+        }
+
+        if (s_mitts.dig_timer <= 0) {
+            s_mitts.is_digging = false;
+        }
+    }
+
+    // Atualização das partículas de terra escavada
+    for (int i = 0; i < MAX_DIG_PARTICLES; i++) {
+        DigParticle* p = &s_mitts.particles[i];
+        if (!p->is_active) continue;
+        p->x += p->vx;
+        p->y += p->vy;
+        p->vx *= 0.88f;
+        p->vy *= 0.88f;
+        p->life--;
+        if (p->life <= 0) {
+            p->is_active = false;
+        }
+    }
 }
 
 void subweapon_render(const Camera* cam) {
@@ -783,6 +903,17 @@ void subweapon_render(const Camera* cam) {
             hal_video_put_pixel(ax + 4, ay + 8, c_fletch);
         }
     }
+
+    // 5. Renderiza as partículas de terra escavada pelas Mole Mitts
+    for (int i = 0; i < MAX_DIG_PARTICLES; i++) {
+        DigParticle* p = &s_mitts.particles[i];
+        if (!p->is_active) continue;
+        int sx, sy;
+        map_world_to_screen(cam, p->x, p->y, &sx, &sy);
+        hal_video_put_pixel(sx, sy, p->color);
+        hal_video_put_pixel(sx + 1, sy, p->color);
+        hal_video_put_pixel(sx, sy + 1, 0x3E2310FF);
+    }
 }
 
 void subweapon_render_hud_icon(int x, int y) {
@@ -856,7 +987,25 @@ void subweapon_render_hud_icon(int x, int y) {
         // Flecha encaixada
         hal_video_put_pixel(x + 11, y + 5, 0xFFFFFFFF);
         hal_video_put_pixel(x + 10, y + 5, 0x92400EFF);
+    } else if (s_current_item == ITEM_MOLE_MITTS) {
+        // Mini Luva de Toupeira (Luva de couro marrom com 3 garras prateadas)
+        hal_video_put_pixel(x + 7, y + 4, 0x78350FFF);
+        hal_video_put_pixel(x + 8, y + 4, 0x92400EFF);
+        hal_video_put_pixel(x + 7, y + 5, 0x78350FFF);
+        hal_video_put_pixel(x + 8, y + 5, 0xB45309FF);
+        hal_video_put_pixel(x + 7, y + 6, 0x78350FFF);
+        hal_video_put_pixel(x + 8, y + 6, 0x92400EFF);
+        // Garras afiadas
+        hal_video_put_pixel(x + 9, y + 3, 0xE2E8F0FF);
+        hal_video_put_pixel(x + 10, y + 4, 0xFFFFFFFF);
+        hal_video_put_pixel(x + 10, y + 5, 0xFFFFFFFF);
+        hal_video_put_pixel(x + 10, y + 6, 0xFFFFFFFF);
+        hal_video_put_pixel(x + 9, y + 7, 0xE2E8F0FF);
     }
+}
+
+bool subweapon_is_digging(void) {
+    return (s_current_item == ITEM_MOLE_MITTS && s_mitts.is_digging);
 }
 
 int subweapon_get_bomb_count(void) {
