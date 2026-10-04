@@ -75,6 +75,12 @@ typedef struct {
     bool is_climbing;          // Escalando paredão rochoso ou vinha
     int  climb_anim_timer;     // Temporizador de animação de escalada
     bool has_mineral_water;    // Carrega Água Mineral do Monte Crenel para regar sementes
+
+    // Item Canônico: Cajado de Pacci (Cane of Pacci) & Salto Vertical
+    bool has_cane_of_pacci;    // Possui o Cajado de Pacci
+    float z;                   // Altitude / Altura do salto no ar
+    float vz;                  // Velocidade vertical do salto
+    bool is_jumping;           // Está no ar executando super-salto
 } Player;
 
 static const char* s_region_tags[REGION_COUNT] = { "usa", "eur", "jpn" };
@@ -771,6 +777,14 @@ static void draw_link(const Player* p, const Camera* cam) {
     int px, py;
     map_world_to_screen(cam, p->x, p->y, &px, &py);
 
+    // Sombra oval no solo durante o super-salto vertical
+    if (p->z > 0.0f) {
+        draw_rect_blend(px + 2, py + 12, 12, 4, 0x05100766, 0.40f);
+        draw_rect_blend(px + 4, py + 11, 8, 6, 0x05100766, 0.40f);
+    }
+    int render_offset_y = (int)p->z;
+    py -= render_offset_y;
+
     int draw_x = px - 8;
     int draw_y = py - 9;
 
@@ -945,9 +959,13 @@ static void draw_link(const Player* p, const Camera* cam) {
     draw_link_climbing_effects(p, px, py);
 }
 
-static inline bool is_world_solid_for_player(const Tilemap* map, float wx, float wy, bool is_minish, bool has_flippers, bool has_grip_ring) {
+static inline bool is_world_solid_for_player(const Tilemap* map, float wx, float wy, bool is_minish, bool has_flippers, bool has_grip_ring, float z) {
     if (dungeon_is_active()) {
         return dungeon_is_solid(wx, wy);
+    }
+    // Mecânica Salto do Cajado de Pacci: no ar (z > 4.0f) salta por cima de buracos e escarpas
+    if (z > 4.0f) {
+        return false;
     }
     // Mecânica Grip Ring: paredes escaláveis e vinhas não bloqueiam se tiver o Anel de Escalada!
     if (has_grip_ring && map_is_climbable(map, wx, wy)) {
@@ -1075,6 +1093,10 @@ int main(int argc, char* argv[]) {
     link.is_climbing = false;
     link.climb_anim_timer = 0;
     link.has_mineral_water = false;
+    link.has_cane_of_pacci = true;
+    link.z = 0.0f;
+    link.vz = 0.0f;
+    link.is_jumping = false;
 
     // Carregamento automático de progresso salvo (Slot 1)
     if (save_exists(1)) {
@@ -1090,8 +1112,12 @@ int main(int argc, char* argv[]) {
             link.has_spin_attack = save.has_spin_attack;
             link.is_minish = save.is_minish;
             link.has_grip_ring = save.has_grip_ring;
+            link.has_cane_of_pacci = save.has_cane_of_pacci;
             if (link.has_grip_ring) {
                 inventory_unlock_item(INV_ITEM_GRIP_RING);
+            }
+            if (link.has_cane_of_pacci) {
+                inventory_unlock_item(INV_ITEM_CANE_OF_PACCI);
             }
             if (save.bomb_count > 0) {
                 subweapon_add_bombs(save.bomb_count - subweapon_get_bomb_count());
@@ -1195,6 +1221,7 @@ int main(int argc, char* argv[]) {
                                 current_save.has_spin_attack = link.has_spin_attack;
                                 current_save.is_minish = link.is_minish;
                                 current_save.has_grip_ring = link.has_grip_ring;
+                                current_save.has_cane_of_pacci = link.has_cane_of_pacci;
                                 current_save.slot_a = (int)inventory_get_slot_a();
                                 current_save.slot_b = (int)inventory_get_slot_b();
                                 if (save_game(1, &current_save)) {
@@ -1309,6 +1336,11 @@ int main(int argc, char* argv[]) {
                             break;
                         case SDLK_q:
                             subweapon_cycle();
+                            break;
+                        case SDLK_c:
+                            subweapon_set_current(ITEM_CANE_OF_PACCI);
+                            hal_audio_play_sound(SOUND_SECRET, 0.9f, 1.8f);
+                            printf("[CANE OF PACCI] [C] Cajado de Pacci EQUIPADO no botao [B]!\n");
                             break;
                         case SDLK_b:
                             subweapon_add_bombs(10);
@@ -1767,6 +1799,31 @@ int main(int argc, char* argv[]) {
             }
         }
 
+        // --------------------------------------------------------------------
+        // LÓGICA DE SUPER-SALTO VERTICAL DO CAJADO DE PACCI (HOLE CATAPULT)
+        // --------------------------------------------------------------------
+        if (map_is_pacci_charged_hole(active_map, link.x + 8.0f, link.y + 12.0f) && !link.is_jumping) {
+            map_discharge_pacci_hole(active_map, link.x + 8.0f, link.y + 12.0f);
+            link.is_jumping = true;
+            link.vz = 5.2f;
+            link.z = 2.0f;
+            entity_trigger_screen_shake(6, 2);
+            hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.85f);
+            printf("[CANE OF PACCI] Link pisou no buraco energizado! Super salto vertical no ar!\n");
+        }
+
+        if (link.is_jumping || link.z > 0.0f) {
+            link.z += link.vz;
+            link.vz -= 0.22f; // Gravidade
+            if (link.z <= 0.0f) {
+                link.z = 0.0f;
+                link.vz = 0.0f;
+                link.is_jumping = false;
+                hal_audio_play_sound(SOUND_ROLL, 0.70f, 1.2f); // Aterrissagem
+                printf("[CANE OF PACCI] Link aterrissou em seguranca apos o super-salto!\n");
+            }
+        }
+
         // Modificador de Velocidade: Dash / Pegasus Boots (Botao B segurado), Carga da Espada, Natação ou Escalada
         float dash_mult = 1.0f;
         if (hal_input_is_held(KEY_B) && subweapon_get_current() == ITEM_PEGASUS_BOOTS && !link.is_swimming && !link.is_climbing) {
@@ -1861,14 +1918,14 @@ int main(int argc, char* argv[]) {
             float off_y1 = link.is_minish ? 13.0f : 12.0f;
             float off_y2 = link.is_minish ? 15.0f : 16.0f;
 
-            blocked_x = is_world_solid_for_player(active_map, new_x + off_x1, link.y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring) ||
-                        is_world_solid_for_player(active_map, new_x + off_x2, link.y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring) ||
-                        is_world_solid_for_player(active_map, new_x + off_x1, link.y + off_y2, link.is_minish, link.has_flippers, link.has_grip_ring) ||
-                        is_world_solid_for_player(active_map, new_x + off_x2, link.y + off_y2, link.is_minish, link.has_flippers, link.has_grip_ring);
-            blocked_y = is_world_solid_for_player(active_map, link.x + off_x1, new_y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring) ||
-                        is_world_solid_for_player(active_map, link.x + off_x2, new_y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring) ||
-                        is_world_solid_for_player(active_map, link.x + off_x1, new_y + off_y2, link.is_minish, link.has_flippers, link.has_grip_ring) ||
-                        is_world_solid_for_player(active_map, link.x + off_x2, new_y + off_y2, link.is_minish, link.has_flippers, link.has_grip_ring);
+            blocked_x = is_world_solid_for_player(active_map, new_x + off_x1, link.y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring, link.z) ||
+                        is_world_solid_for_player(active_map, new_x + off_x2, link.y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring, link.z) ||
+                        is_world_solid_for_player(active_map, new_x + off_x1, link.y + off_y2, link.is_minish, link.has_flippers, link.has_grip_ring, link.z) ||
+                        is_world_solid_for_player(active_map, new_x + off_x2, link.y + off_y2, link.is_minish, link.has_flippers, link.has_grip_ring, link.z);
+            blocked_y = is_world_solid_for_player(active_map, link.x + off_x1, new_y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring, link.z) ||
+                        is_world_solid_for_player(active_map, link.x + off_x2, new_y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring, link.z) ||
+                        is_world_solid_for_player(active_map, link.x + off_x1, new_y + off_y2, link.is_minish, link.has_flippers, link.has_grip_ring, link.z) ||
+                        is_world_solid_for_player(active_map, link.x + off_x2, new_y + off_y2, link.is_minish, link.has_flippers, link.has_grip_ring, link.z);
 
             if (!blocked_x) {
                 link.x = new_x;
@@ -1991,10 +2048,10 @@ int main(int argc, char* argv[]) {
             float off_y1 = link.is_minish ? 13.0f : 12.0f;
             float off_y2 = link.is_minish ? 15.0f : 16.0f;
 
-            k_blocked_x = is_world_solid_for_player(active_map, k_new_x + off_x1, link.y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring) ||
-                          is_world_solid_for_player(active_map, k_new_x + off_x2, link.y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring);
-            k_blocked_y = is_world_solid_for_player(active_map, link.x + off_x1, k_new_y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring) ||
-                          is_world_solid_for_player(active_map, link.x + off_x2, k_new_y + off_y2, link.is_minish, link.has_flippers, link.has_grip_ring);
+            k_blocked_x = is_world_solid_for_player(active_map, k_new_x + off_x1, link.y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring, link.z) ||
+                          is_world_solid_for_player(active_map, k_new_x + off_x2, link.y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring, link.z);
+            k_blocked_y = is_world_solid_for_player(active_map, link.x + off_x1, k_new_y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring, link.z) ||
+                          is_world_solid_for_player(active_map, link.x + off_x2, k_new_y + off_y2, link.is_minish, link.has_flippers, link.has_grip_ring, link.z);
 
             if (!k_blocked_x) link.x = k_new_x;
             if (!k_blocked_y) link.y = k_new_y;
