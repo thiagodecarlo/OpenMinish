@@ -13,6 +13,7 @@
 #include "hal/kinstone.h"
 #include "hal/dungeon.h"
 #include "hal/inventory.h"
+#include "hal/save.h"
 #include <math.h>
 
 /*
@@ -818,6 +819,7 @@ int main(int argc, char* argv[]) {
     kinstone_init();
     dungeon_init();
     inventory_init();
+    save_system_init();
 
     // Inicia a trilha sonora autêntica de Minish Woods no mixer chiptune da HAL
     hal_audio_play_bgm(BGM_MINISH_WOODS);
@@ -871,6 +873,27 @@ int main(int argc, char* argv[]) {
     link.is_diving = false;
     link.dive_timer = 0;
     link.water_ripple_timer = 0;
+
+    // Carregamento automático de progresso salvo (Slot 1)
+    if (save_exists(1)) {
+        SaveData save;
+        if (load_game(1, &save)) {
+            link.x = save.player_x;
+            link.y = save.player_y;
+            link.dir = (Direction)save.player_dir;
+            link.hearts = save.hearts;
+            link.max_hearts = save.max_hearts;
+            link.rupees = save.rupees;
+            link.has_flippers = save.has_flippers;
+            link.has_spin_attack = save.has_spin_attack;
+            link.is_minish = save.is_minish;
+            if (save.bomb_count > 0) {
+                subweapon_add_bombs(save.bomb_count - subweapon_get_bomb_count());
+            }
+            if (save.slot_a > 0) inventory_set_slot_a((InventoryItem)save.slot_a);
+            if (save.slot_b > 0) inventory_set_slot_b((InventoryItem)save.slot_b);
+        }
+    }
 
     // Inicialização do Subsistema de Entidades e Spawn de Inimigos e NPCs
     entity_manager_init();
@@ -927,6 +950,28 @@ int main(int argc, char* argv[]) {
                             case SDLK_x:
                                 inventory_assign_to_slot_b();
                                 break;
+                            case SDLK_s: {
+                                SaveData current_save = { 0 };
+                                strncpy(current_save.player_name, "LINK", sizeof(current_save.player_name));
+                                current_save.player_x = link.x;
+                                current_save.player_y = link.y;
+                                current_save.player_dir = (int)link.dir;
+                                current_save.current_map = s_in_village ? 2 : (s_in_town ? 1 : (dungeon_is_active() ? 3 : 0));
+                                current_save.hearts = link.hearts;
+                                current_save.max_hearts = link.max_hearts;
+                                current_save.rupees = link.rupees;
+                                current_save.bomb_count = subweapon_get_bomb_count();
+                                current_save.has_flippers = link.has_flippers;
+                                current_save.has_spin_attack = link.has_spin_attack;
+                                current_save.is_minish = link.is_minish;
+                                current_save.slot_a = (int)inventory_get_slot_a();
+                                current_save.slot_b = (int)inventory_get_slot_b();
+                                if (save_game(1, &current_save)) {
+                                    hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
+                                    printf("[SAVE] Progresso salvo no Slot 1 com sucesso!\n");
+                                }
+                                break;
+                            }
                             case SDLK_ESCAPE:
                                 inventory_toggle_pause();
                                 break;

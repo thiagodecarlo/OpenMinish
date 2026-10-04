@@ -1,0 +1,58 @@
+#ifndef HAL_SAVE_H
+#define HAL_SAVE_H
+
+/*
+ * ============================================================================
+ * include/hal/save.h - Sistema de Persistência e Salvamento (Save/Load)
+ * ============================================================================
+ * Gerencia a gravação e carregamento de arquivos de progresso (.dat) em disco
+ * com validação por cabeçalho mágico e soma de verificação (checksum).
+ */
+
+#include "gba/types.h"
+#include <stdbool.h>
+
+#define SAVE_MAGIC 0x494E494D // "MINI" em little endian
+#define SAVE_VERSION 1
+#define MAX_SAVE_SLOTS 3
+
+typedef struct {
+    u32   magic;
+    u32   version;
+    char  player_name[16];
+    float player_x;
+    float player_y;
+    int   player_dir;
+    int   current_map;       // 0: Woods, 1: Hyrule Town, 2: Minish Village, 3: Dungeon
+    int   hearts;
+    int   max_hearts;
+    int   rupees;
+    int   bomb_count;
+    bool  has_flippers;
+    bool  has_spin_attack;
+    bool  is_minish;
+    int   slot_a;
+    int   slot_b;
+    u32   unlocked_items_mask;
+    u32   checksum;
+} SaveData;
+
+// Inicialização do sistema de persistência (cria diretório de saves se não existir)
+void save_system_init(void);
+
+// Salva os dados do jogo em um slot específico (1 a 3)
+bool save_game(int slot, const SaveData* data);
+
+// Carrega os dados do jogo de um slot específico (1 a 3)
+bool load_game(int slot, SaveData* out_data);
+
+// Verifica se existe um arquivo de save válido no slot
+bool save_exists(int slot);
+
+// Remove o arquivo de save do slot
+bool save_delete(int slot);
+
+// Calcula o checksum para validação de integridade
+u32 save_calculate_checksum(const SaveData* data);
+
+#endif // HAL_SAVE_H
