@@ -1388,6 +1388,79 @@ void render_metatile(int sx, int sy, TileType type) {
             }
             break;
 
+        case TILE_BOOKSHELF:
+            // Estante de madeira nobre de lei da Biblioteca de Hyrule com tomos encadernados
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x451A03FF; // Mogno escuro base
+                    if (y == 0 || y == 7 || y == 15) c = 0x78350FFF; // Prateleiras de madeira maciça
+                    else if (x == 0 || x == 15) c = 0x2A1005FF; // Colunas laterais
+                    else {
+                        // Lombadas coloridas dos tomos e enciclopédias
+                        int b_idx = (x / 2) % 4;
+                        if (b_idx == 0) c = 0xDC2626FF; // Livro carmesim
+                        else if (b_idx == 1) c = 0x16A34AFF; // Livro esmeralda
+                        else if (b_idx == 2) c = 0x2563EBFF; // Livro safira
+                        else c = 0xD97706FF; // Livro de couro âmbar
+                        // Frisos dourados nas lombadas
+                        if ((y == 3 || y == 11) && (x % 2 == 1)) c = 0xFDE047FF;
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_BOOK_STACK:
+            // Pilha monumental de livros gigantes formando degraus para o Link Minish
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x1E293BFF;
+                    if (y <= 5) {
+                        // Livro superior (Capa de couro carmesim e páginas douradas)
+                        c = (x >= 12) ? 0xFEF08AFF : 0x991B1BFF;
+                        if (x == 11) c = 0xF59E0BFF; // Fita de marcador
+                    } else if (y <= 10) {
+                        // Livro intermediário (Capa azul marinho)
+                        c = (x >= 13) ? 0xFEF08AFF : 0x1E40AFFF;
+                    } else {
+                        // Livro da base (Capa verde esmeralda com relevos)
+                        c = (x >= 14) ? 0xFEF08AFF : 0x065F46FF;
+                        if (x == 5 && y == 13) c = 0xFDE047FF;
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_LIBRARY_CARPET:
+            // Tapete aveludado bordô real da biblioteca com moldura dourada
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x881337FF; // Vermelho rubi nobre
+                    if ((x == 1 || x == 14 || y == 1 || y == 14)) c = 0xF59E0BFF; // Friso dourado
+                    else if ((x + y) % 6 == 0) c = 0x9F1239FF; // Textura aveludada
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_ICE_CAVERN_ENTRANCE:
+            // Portal em arco de gelo translúcido congelado (Temple of Droplets em Lake Hylia)
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x082F49FF; // Profundezas geladas da caverna
+                    float d = sqrtf((float)((x - 7.5f) * (x - 7.5f) + (y - 12.0f) * (y - 12.0f)));
+                    if (d >= 6.5f) {
+                        // Gelo cristalino brilhante e estalactites
+                        c = 0x38BDF8FF;
+                        if (y <= 3) c = 0xBAE6FDFF; // Topo nevado
+                        if ((x + y) % 5 == 0) c = 0xFFFFFFFF; // Brilho de geada
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
         default:
             render_metatile(sx, sy, TILE_GRASS);
             break;
@@ -3343,5 +3416,165 @@ Tilemap* map_create_armos_interior(void) {
     m->collision_map[11 * w + 11] = 1;
 
     printf("[MAP] Armos Interior (Mecanismo Interno) criado com sucesso (%dx%d tiles)!\n", w, h);
+    return m;
+}
+
+Tilemap* map_create_library(void) {
+    int w = 24;
+    int h = 18;
+    Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
+    if (!m) return NULL;
+
+    m->width  = w;
+    m->height = h;
+    m->is_authentic = false;
+    m->authentic_tex = NULL;
+    m->ground_layer  = (u8*)malloc(w * h * sizeof(u8));
+    m->overlay_layer = (u8*)malloc(w * h * sizeof(u8));
+    m->collision_map = (u8*)malloc(w * h * sizeof(u8));
+
+    for (int i = 0; i < w * h; i++) {
+        m->ground_layer[i]  = TILE_COBBLESTONE; // Piso nobre de assoalho
+        m->overlay_layer[i] = 0xFF;
+        m->collision_map[i] = 0;
+    }
+
+    // Paredes perimetrais
+    for (int x = 0; x < w; x++) {
+        m->overlay_layer[0 * w + x] = TILE_TOWN_WALL;
+        m->collision_map[0 * w + x] = 1;
+        // Porta de entrada ao sul (x=11..12)
+        if (x < 11 || x > 12) {
+            m->overlay_layer[(h - 1) * w + x] = TILE_TOWN_WALL;
+            m->collision_map[(h - 1) * w + x] = 1;
+        }
+    }
+    for (int y = 0; y < h; y++) {
+        m->overlay_layer[y * w + 0] = TILE_TOWN_WALL;
+        m->collision_map[y * w + 0] = 1;
+        m->overlay_layer[y * w + (w - 1)] = TILE_TOWN_WALL;
+        m->collision_map[y * w + (w - 1)] = 1;
+    }
+
+    // Tapete central vermelho real (corredor principal)
+    for (int y = 5; y <= 16; y++) {
+        m->ground_layer[y * w + 11] = TILE_LIBRARY_CARPET;
+        m->ground_layer[y * w + 12] = TILE_LIBRARY_CARPET;
+    }
+
+    // Estantes de livros de carvalho ao norte
+    for (int x = 2; x <= 9; x++) {
+        m->overlay_layer[1 * w + x] = TILE_BOOKSHELF;
+        m->collision_map[1 * w + x] = 1;
+        m->overlay_layer[2 * w + x] = TILE_BOOKSHELF;
+        m->collision_map[2 * w + x] = 1;
+    }
+    for (int x = 14; x <= 21; x++) {
+        m->overlay_layer[1 * w + x] = TILE_BOOKSHELF;
+        m->collision_map[1 * w + x] = 1;
+        m->overlay_layer[2 * w + x] = TILE_BOOKSHELF;
+        m->collision_map[2 * w + x] = 1;
+    }
+
+    // Estantes laterais oeste e leste
+    for (int y = 5; y <= 12; y++) {
+        m->overlay_layer[y * w + 2] = TILE_BOOKSHELF;
+        m->collision_map[y * w + 2] = 1;
+        m->overlay_layer[y * w + 21] = TILE_BOOKSHELF;
+        m->collision_map[y * w + 21] = 1;
+    }
+
+    // Balcão de atendimento e pesquisa da bibliotecária (x=10..13, y=4)
+    for (int x = 9; x <= 14; x++) {
+        m->overlay_layer[4 * w + x] = TILE_BARREL_CRATE;
+        m->collision_map[4 * w + x] = 1;
+    }
+
+    // Pilha monumental de livros gigantes formando escadaria para Link Minish (x=4, y=3)
+    m->overlay_layer[3 * w + 4] = TILE_BOOK_STACK;
+    m->collision_map[3 * w + 4] = 0; // Transponível para subir
+
+    printf("[MAP] Hyrule Town Library (Biblioteca Real) criada com sucesso (%dx%d tiles)!\n", w, h);
+    return m;
+}
+
+Tilemap* map_create_lake_hylia(void) {
+    int w = 36;
+    int h = 28;
+    Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
+    if (!m) return NULL;
+
+    m->width  = w;
+    m->height = h;
+    m->is_authentic = false;
+    m->authentic_tex = NULL;
+    m->ground_layer  = (u8*)malloc(w * h * sizeof(u8));
+    m->overlay_layer = (u8*)malloc(w * h * sizeof(u8));
+    m->collision_map = (u8*)malloc(w * h * sizeof(u8));
+
+    // Grande Lago Hylia: quase todo preenchido por águas cristalinas profundas
+    for (int i = 0; i < w * h; i++) {
+        m->ground_layer[i]  = TILE_WATER;
+        m->overlay_layer[i] = 0xFF;
+        m->collision_map[i] = 0;
+    }
+
+    // Margem oeste e noroeste de terra firme e grama (praia / cais)
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < 8; x++) {
+            m->ground_layer[y * w + x] = TILE_GRASS;
+            if (x == 3 || x == 4) m->ground_layer[y * w + x] = TILE_DIRT_PATH;
+        }
+    }
+    for (int x = 0; x < w; x++) {
+        for (int y = 0; y < 4; y++) {
+            m->ground_layer[y * w + x] = TILE_GRASS;
+        }
+    }
+
+    // Paredões rochosos nas bordas do mapa
+    for (int x = 0; x < w; x++) {
+        m->overlay_layer[0 * w + x] = TILE_STONE_WALL;
+        m->collision_map[0 * w + x] = 1;
+        m->overlay_layer[(h - 1) * w + x] = TILE_STONE_WALL;
+        m->collision_map[(h - 1) * w + x] = 1;
+    }
+    for (int y = 0; y < h; y++) {
+        m->overlay_layer[y * w + 0] = TILE_STONE_WALL;
+        m->collision_map[y * w + 0] = 1;
+        m->overlay_layer[y * w + (w - 1)] = TILE_STONE_WALL;
+        m->collision_map[y * w + (w - 1)] = 1;
+    }
+
+    // Ilhota central no lago (x=16..20, y=12..16)
+    for (int y = 12; y <= 16; y++) {
+        for (int x = 16; x <= 20; x++) {
+            m->ground_layer[y * w + x] = TILE_GRASS;
+        }
+    }
+    // Crista de Vento ancestral para pouso de Zeffa na ilha
+    m->ground_layer[14 * w + 18] = TILE_WIND_CREST;
+
+    // Portal em arco do Temple of Droplets (Masmorra 4 congelada ao nordeste: x=28..29, y=2..3)
+    m->overlay_layer[2 * w + 28] = TILE_ICE_CAVERN_ENTRANCE;
+    m->collision_map[2 * w + 28] = 0; // Entrada aberta
+    m->overlay_layer[2 * w + 29] = TILE_ICE_CAVERN_ENTRANCE;
+    m->collision_map[2 * w + 29] = 0;
+
+    // Cabana do Prefeito Hagen na margem sul (x=4..7, y=19..22)
+    m->overlay_layer[19 * w + 4] = TILE_ROOF_RED;
+    m->collision_map[19 * w + 4] = 1;
+    m->overlay_layer[19 * w + 5] = TILE_ROOF_RED;
+    m->collision_map[19 * w + 5] = 1;
+    m->overlay_layer[20 * w + 4] = TILE_TOWN_WALL;
+    m->collision_map[20 * w + 4] = 1;
+    m->overlay_layer[20 * w + 5] = TILE_TOWN_DOOR;
+    m->collision_map[20 * w + 5] = 0;
+
+    // Baú submerso em águas profundas do lago (requer mergulho com Flippers)
+    m->overlay_layer[20 * w + 24] = TILE_CHEST_CLOSED;
+    m->collision_map[20 * w + 24] = 1;
+
+    printf("[MAP] Lake Hylia (Grande Lago Hylia) criado com sucesso (%dx%d tiles)!\n", w, h);
     return m;
 }

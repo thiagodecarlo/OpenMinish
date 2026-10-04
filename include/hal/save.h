@@ -43,6 +43,9 @@ typedef struct {
     bool  has_ocarina;
     bool  dungeon_fortress_cleared;
     u8    unlocked_wind_crests;
+    u8    library_books_mask;
+    bool  librari_met;
+    bool  lake_temple_unlocked;
     int   slot_a;
     int   slot_b;
     u32   unlocked_items_mask;

@@ -49,6 +49,7 @@ add_executable(zelda_port
     src/hal/dungeon_fortress.c
     src/hal/fast_travel.c
     src/hal/inventory.c
+    src/hal/library.c
     src/hal/save.c
     src/hal/sanctuary.c
 )

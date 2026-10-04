@@ -91,6 +91,10 @@ typedef enum {
     TILE_FORTRESS_EYE_OPEN,  // Estátua de olho aberta por flecha (ativa ponte ou porta)
     TILE_FORTRESS_BOSS_DOOR, // Portão dourado do Chefe Mazaal
     TILE_WIND_CREST,         // Placa de pedra com símbolo de crista de vento (Wind Crest para Zeffa)
+    TILE_BOOKSHELF,          // Estante de madeira maciça da Biblioteca de Hyrule com tomos coloridos
+    TILE_BOOK_STACK,         // Pilha monumental de livros gigantes formando escada para Link Minish
+    TILE_LIBRARY_CARPET,     // Tapete nobre aveludado vermelho com frisos dourados da Biblioteca
+    TILE_ICE_CAVERN_ENTRANCE,// Portal de gelo translúcido congelado (entrada do Temple of Droplets em Lake Hylia)
     TILE_COUNT
 } TileType;
 
@@ -333,5 +337,19 @@ Tilemap* map_create_armos_interior(void);
  */
 bool armos_circuit_is_active(void);
 void armos_circuit_set_active(bool active);
+
+/*
+ * Constrói a Biblioteca Real da Cidade de Hyrule (Hyrule Town Library).
+ * Dimensões: 24x18 tiles (384x288 pixels) com estantes de livros, mesas de leitura,
+ * tapete real vermelho e o toco Minish que permite subir nas estantes gigantes.
+ */
+Tilemap* map_create_library(void);
+
+/*
+ * Constrói o Grande Lago Hylia (Lake Hylia Overworld).
+ * Dimensões: 36x28 tiles (576x448 pixels) com águas profundas para mergulho e nado com Flippers,
+ * ilhotas, toco Minish e a entrada glacial para o Temple of Droplets (Masmorra 4).
+ */
+Tilemap* map_create_lake_hylia(void);
 
 #endif // HAL_MAP_H
