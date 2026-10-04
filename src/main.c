@@ -14,6 +14,7 @@
 #include "hal/dungeon.h"
 #include "hal/dungeon_flames.h"
 #include "hal/dungeon_fortress.h"
+#include "hal/dungeon_droplets.h"
 #include "hal/inventory.h"
 #include "hal/save.h"
 #include "hal/sanctuary.h"
@@ -95,6 +96,10 @@ typedef struct {
     // Elemento Canônico: Sagrado Elemento Fogo (Fire Element)
     bool has_fire_element;          // Conquistado ao derrotar Gleerok na Cave of Flames
     int  fire_element_banner_timer; // Temporizador do banner festivo de obtenção
+
+    // Elemento Canônico: Sagrado Elemento Água (Water Element)
+    bool has_water_element;         // Conquistado ao derrotar Big Octorok no Temple of Droplets
+    int  water_element_banner_timer;// Temporizador do banner festivo de obtenção
 
     // Habilidade Lendária Four Sword: Infusão de 2 Elementos & Clones
     bool has_two_elements;          // White Sword (Two Elements) infundida no Santuário
@@ -861,7 +866,7 @@ static void transition_to_south_field_from_lake(Player* link) {
 }
 
 static void handle_fast_travel_transition(int new_map_id, float new_x, float new_y, Player* link, Tilemap* world_map) {
-    if (dungeon_is_active() || dungeon_flames_is_active() || dungeon_fortress_is_active()) return;
+    if (dungeon_is_active() || dungeon_flames_is_active() || dungeon_fortress_is_active() || dungeon_droplets_is_active()) return;
     s_in_town = false;
     s_in_village = false;
     s_in_south_field = false;
@@ -1662,6 +1667,7 @@ int main(int argc, char* argv[]) {
     s_lake_hylia_map = lake_hylia_map;
     library_quest_init();
     lantern_init();
+    dungeon_droplets_init();
     load_region_sheets(REGION_USA);
 
     // Inicialização da entidade do Link
@@ -1727,6 +1733,8 @@ int main(int argc, char* argv[]) {
     link.ocarina_banner_timer = 0;
     link.has_lantern = true;
     link.lantern_banner_timer = 0;
+    link.has_water_element = false;
+    link.water_element_banner_timer = 0;
 
     // Carregamento automático de progresso salvo (Slot 1)
     if (save_exists(1)) {
@@ -1812,10 +1820,13 @@ int main(int argc, char* argv[]) {
                 s_in_library = true;
             } else if (save.current_map == 16) {
                 s_in_lake_hylia = true;
+            } else if (save.current_map == 17) {
+                dungeon_droplets_enter(&link.x, &link.y, &link.dir);
             }
             link.has_lantern = save.has_flame_lantern;
             lantern_set_lit(save.lantern_lit);
             if (link.has_lantern) inventory_unlock_item(INV_ITEM_LANTERN);
+            link.has_water_element = save.has_water_element;
             library_restore_save(save.library_books_mask, save.librari_met, save.lake_temple_unlocked);
         }
     }
@@ -1916,6 +1927,8 @@ int main(int argc, char* argv[]) {
                                 else if (dungeon_is_active()) cur_m = 3;
                                 else if (dungeon_flames_is_active()) cur_m = 8;
                                 else if (sanctuary_is_active()) cur_m = 9;
+                                else if (dungeon_fortress_is_active()) cur_m = 14;
+                                else if (dungeon_droplets_is_active()) cur_m = 17;
                                 else if (s_in_library) cur_m = 15;
                                 else if (s_in_lake_hylia) cur_m = 16;
                                 else if (s_in_village) cur_m = 2;
@@ -1932,6 +1945,7 @@ int main(int argc, char* argv[]) {
                                 current_save.has_cane_of_pacci = link.has_cane_of_pacci;
                                 current_save.has_white_sword = link.has_white_sword;
                                 current_save.has_two_elements = link.has_two_elements;
+                                current_save.has_water_element = link.has_water_element;
                                 current_save.has_bow = link.has_bow;
                                 current_save.has_mole_mitts = link.has_mole_mitts;
                                 current_save.has_armos_activated = link.has_armos_activated;
@@ -2179,12 +2193,12 @@ int main(int argc, char* argv[]) {
                             }
                             break;
                         case SDLK_z:
-                            if (!dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active()) {
+                            if (!dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active() && !dungeon_droplets_is_active()) {
                                 fast_travel_start(link.x, link.y);
                             }
                             break;
                         case SDLK_l:
-                            if (!dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active()) {
+                            if (!dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active() && !dungeon_droplets_is_active()) {
                                 if (s_in_library) {
                                     transition_to_town_from_library(&link);
                                 } else {
@@ -2193,7 +2207,7 @@ int main(int argc, char* argv[]) {
                             }
                             break;
                         case SDLK_n:
-                            if (!dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active()) {
+                            if (!dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active() && !dungeon_droplets_is_active()) {
                                 if (s_in_lake_hylia) {
                                     transition_to_south_field_from_lake(&link);
                                 } else {
@@ -2221,6 +2235,16 @@ int main(int argc, char* argv[]) {
                         case SDLK_F2:
                             lantern_toggle_lit();
                             break;
+                        case SDLK_F3:
+                            if (!dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active()) {
+                                if (dungeon_droplets_is_active()) {
+                                    dungeon_droplets_exit(&link.x, &link.y, &link.dir);
+                                    s_in_lake_hylia = true;
+                                } else {
+                                    dungeon_droplets_enter(&link.x, &link.y, &link.dir);
+                                }
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -2241,7 +2265,8 @@ int main(int argc, char* argv[]) {
         // 2. ATUALIZAÇÃO DA LÓGICA DO JOGADOR (INPUT -> FÍSICA)
         // --------------------------------------------------------------------
         const HalVideoContext* ctx = hal_video_get_context();
-        Tilemap* active_map = s_in_armos_interior ? s_armos_interior_map :
+        Tilemap* active_map = dungeon_droplets_is_active() ? dungeon_droplets_get_current_map() :
+                              (s_in_armos_interior ? s_armos_interior_map :
                               (s_in_wind_ruins ? s_wind_ruins_map :
                               (s_in_mole_cave ? s_mole_cave_map :
                               (s_in_castor_wilds ? s_castor_wilds_map :
@@ -2252,7 +2277,7 @@ int main(int argc, char* argv[]) {
                               (s_in_village ? s_village_map :
                               (s_in_town ? s_town_map :
                               (s_in_south_field ? s_south_field_map :
-                              (s_in_north_field ? s_north_field_map : world_map)))))))))));
+                              (s_in_north_field ? s_north_field_map : world_map))))))))))));
 
         if (inventory_is_paused()) {
             if (hal_input_is_pressed(KEY_UP))    inventory_cursor_move(0, -1);
@@ -2592,6 +2617,9 @@ int main(int argc, char* argv[]) {
                 // Checa acerto contra inimigos (Octoroks, Keese, ChuChu) e projéteis
                 int sword_dmg = link.has_white_sword ? 2 : 1;
                 entity_check_sword_hit(hit_x, hit_y, hit_w, hit_h, sword_dmg, link.dir);
+                if (dungeon_droplets_is_active()) {
+                    dungeon_droplets_check_boss_sword_hit(hit_x, hit_y, hit_w, hit_h, sword_dmg, link.dir);
+                }
 
                 // Ataque sincronizado do Clone da Four Sword
                 float c_hx, c_hy, c_hw, c_hh;
@@ -2661,6 +2689,9 @@ int main(int argc, char* argv[]) {
                 // 2 HP / 4 HP de dano duplicado e knockback radial centrífugo
                 int spin_dmg = link.has_white_sword ? 4 : 2;
                 entity_check_spin_attack_hit(spin_cx, spin_cy, spin_r, spin_dmg);
+                if (dungeon_droplets_is_active()) {
+                    dungeon_droplets_check_boss_sword_hit(spin_cx - spin_r, spin_cy - spin_r, spin_r * 2.0f, spin_r * 2.0f, spin_dmg, link.dir);
+                }
 
                 // Corte simultâneo de todos os arbustos no raio de 360 graus
                 if (!dungeon_is_active() && !dungeon_flames_is_active()) {
@@ -2732,7 +2763,7 @@ int main(int argc, char* argv[]) {
         // --------------------------------------------------------------------
         link.water_ripple_timer++;
         bool on_water = map_is_water(active_map, link.x + 8.0f, link.y + 12.0f);
-        if (on_water && link.has_flippers && !dungeon_is_active() && !dungeon_flames_is_active()) {
+        if (on_water && link.has_flippers && !dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active() && !dungeon_droplets_is_active()) {
             if (!link.is_swimming) {
                 link.is_swimming = true;
                 link.swim_stroke_timer = 0;
@@ -2775,7 +2806,7 @@ int main(int argc, char* argv[]) {
         // LÓGICA DE ESCALADA EM PAREDÕES & VINHAS (GRIP RING)
         // --------------------------------------------------------------------
         bool on_climbable = map_is_climbable(active_map, link.x + 8.0f, link.y + 12.0f);
-        if (on_climbable && link.has_grip_ring && !dungeon_is_active() && !dungeon_flames_is_active()) {
+        if (on_climbable && link.has_grip_ring && !dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active() && !dungeon_droplets_is_active()) {
             if (!link.is_climbing) {
                 link.is_climbing = true;
                 link.climb_anim_timer = 0;
@@ -2962,7 +2993,7 @@ int main(int argc, char* argv[]) {
                 link.y = new_y;
             }
 
-            if (dungeon_is_active()) {
+            if (dungeon_is_active() || dungeon_flames_is_active() || dungeon_fortress_is_active() || dungeon_droplets_is_active()) {
                 if (link.x < 0.0f) link.x = 0.0f;
                 if (link.x > 256.0f - 16.0f) link.x = 256.0f - 16.0f;
                 if (link.y < 0.0f) link.y = 0.0f;
@@ -3019,6 +3050,11 @@ int main(int argc, char* argv[]) {
                     // Saída Oeste do Lago Hylia de volta para South Hyrule Field
                     if (link.x <= 24.0f && link.dir == DIR_LEFT) {
                         transition_to_south_field_from_lake(&link);
+                    }
+                    // Entrada glacial para Temple of Droplets (Dungeon 4)
+                    else if (link.is_minish && link.x >= 430.0f && link.x <= 480.0f && link.y <= 64.0f && link.dir == DIR_UP) {
+                        s_in_lake_hylia = false;
+                        dungeon_droplets_enter(&link.x, &link.y, &link.dir);
                     }
                 } else if (s_in_castor_wilds) {
                     // Saída Leste do Pântano de Castor Wilds:
@@ -3139,6 +3175,11 @@ int main(int argc, char* argv[]) {
                     }
                 }
             }
+        }
+
+        // Inércia física de deslizamento sobre gelo no Temple of Droplets
+        if (dungeon_droplets_is_active() && dungeon_droplets_is_ice_tile(link.x + 8.0f, link.y + 12.0f)) {
+            dungeon_droplets_apply_ice_physics(&link.x, &link.y, link.speed, link.dir, link.is_moving);
         }
 
         // --------------------------------------------------------------------
@@ -3284,7 +3325,22 @@ int main(int argc, char* argv[]) {
                 s_in_wind_ruins = true;
                 spawn_wind_ruins_entities(armos_circuit_is_active());
             }
+        } else if (dungeon_droplets_is_active()) {
+            dungeon_droplets_update(&link.x, &link.y, link.dir, link.is_moving,
+                                    &link.hearts, link.max_hearts, &link.rupees, &link.has_water_element);
+            if (link.has_water_element && link.water_element_banner_timer == 0) {
+                link.water_element_banner_timer = 240;
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.3f);
+            }
         }
+
+        static bool s_was_dungeon_droplets_active = false;
+        if (s_was_dungeon_droplets_active && !dungeon_droplets_is_active()) {
+            s_in_lake_hylia = true;
+            spawn_lake_hylia_entities();
+            hal_audio_play_bgm(BGM_MINISH_WOODS);
+        }
+        s_was_dungeon_droplets_active = dungeon_droplets_is_active();
 
         entity_manager_update(active_map, link.x, link.y,
                               &link.hearts, &link.max_hearts, &link.rupees,
@@ -3292,6 +3348,13 @@ int main(int argc, char* argv[]) {
 
         // Atualizacao do Subsistema de Subarmas (Bumerangue, Vórtice do Pote Magico, Projeteis)
         subweapon_update(active_map, link.x, link.y, &link.rupees, &link.hearts);
+
+        if (dungeon_droplets_is_active()) {
+            LanternState* lstate = lantern_get_state();
+            if (lstate && (lstate->is_swinging || lstate->is_lit)) {
+                dungeon_droplets_check_boss_lantern_hit(lstate->swing_x, lstate->swing_y, 20.0f);
+            }
+        }
 
         // Respawn de teste caso o Link zere os corações
         if (link.hearts <= 0) {
@@ -3348,7 +3411,7 @@ int main(int argc, char* argv[]) {
         } // Fim do bloco de gameplay (se não estiver em diálogo ativo)
 
         // Atualização da Câmera Virtual Widescreen (Segue o Link ou centraliza na Masmorra)
-        if (dungeon_is_active() || dungeon_flames_is_active() || dungeon_fortress_is_active()) {
+        if (dungeon_is_active() || dungeon_flames_is_active() || dungeon_fortress_is_active() || dungeon_droplets_is_active()) {
             camera.viewport_w = widescreen ? 284 : 240;
             camera.viewport_h = 160;
             camera.x = (float)(256 - camera.viewport_w) / 2.0f;
@@ -3402,6 +3465,12 @@ int main(int argc, char* argv[]) {
         } else if (dungeon_fortress_is_active()) {
             // Renderiza Fortress of Winds (Mazaal, ponte de vento, abismo, fresta minish)
             dungeon_fortress_render(&camera, link.is_minish, link.x, link.y);
+            entity_manager_render(&camera);
+            draw_link(&link, &camera);
+            subweapon_render(&camera);
+        } else if (dungeon_droplets_is_active()) {
+            // Renderiza Temple of Droplets (gelo translúcido, facho solar, Big Octorok)
+            dungeon_droplets_render(&camera, link.is_minish, link.x, link.y);
             entity_manager_render(&camera);
             draw_link(&link, &camera);
             subweapon_render(&camera);
@@ -3491,6 +3560,8 @@ int main(int argc, char* argv[]) {
             dungeon_flames_render_hud_keys(106, 2);
         } else if (dungeon_fortress_is_active()) {
             dungeon_fortress_render_hud_keys(106, 2);
+        } else if (dungeon_droplets_is_active()) {
+            dungeon_droplets_render_hud_keys(106, 2);
         }
 
         // Ícone das Nadadeiras de Zora (Zora's Flippers) no HUD
@@ -3846,6 +3917,21 @@ int main(int argc, char* argv[]) {
             font_draw_text(bx + 4, by + 13, b2, 0xFFEDD5FF, false);
         }
 
+        // Banner comemorativo de aquisição do Elemento da Água (Water Element)
+        if (link.water_element_banner_timer > 0) {
+            link.water_element_banner_timer--;
+            const char* b1 = "ELEMENTO DA AGUA CONQUISTADO!";
+            const char* b2 = "A pureza glacial e o fluxo eterno restauram a Forca Divina!";
+            int bw = 240;
+            int bx = (ctx->render_width - bw) / 2;
+            int by = 35;
+            draw_rect(bx - 6, by - 4, bw + 12, 30, 0x082F49EE);
+            draw_rect(bx - 5, by - 3, bw + 10, 28, 0x0284C7FF);
+            draw_rect(bx - 4, by - 2, bw + 8, 26, 0x0C4A6EEE);
+            font_draw_text(bx + 20, by + 1, b1, 0x38BDF8FF, true);
+            font_draw_text(bx + 4, by + 13, b2, 0xE0F2FEFF, false);
+        }
+
         // 10b. Sistema de Transporte Rapido: Ocarina of Wind, Zeffa e Mapa de Cristas de Vento
         fast_travel_render(&camera, link.x, link.y);
 
@@ -3878,6 +3964,7 @@ int main(int argc, char* argv[]) {
     if (s_armos_interior_map)  map_destroy(s_armos_interior_map);
     if (s_library_map)         map_destroy(s_library_map);
     if (s_lake_hylia_map)      map_destroy(s_lake_hylia_map);
+    dungeon_droplets_shutdown();
     map_destroy(world_map);
     hal_audio_shutdown();
     hal_input_shutdown();
