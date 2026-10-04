@@ -151,6 +151,13 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
 int entity_check_spin_attack_hit(float center_x, float center_y, float radius, int damage);
 
 /*
+ * Verifica se a explosão de uma bomba atingiu inimigos ou projéteis no raio de detonação.
+ * Aplica dano massivo (4 HP) e forte knockback radial para longe do epicentro da explosão.
+ * Retorna o número de monstros atingidos.
+ */
+int entity_check_bomb_explosion(float center_x, float center_y, float radius, int damage);
+
+/*
  * Procura um NPC amigável próximo às coordenadas fornecidas dentro do raio max_dist.
  * Retorna o ponteiro para a entidade do NPC ou NULL se nenhum estiver por perto.
  */

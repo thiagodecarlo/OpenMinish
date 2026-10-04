@@ -1,5 +1,6 @@
 #include "hal/map.h"
 #include "hal/video.h"
+#include "hal/audio.h"
 #include <SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -552,6 +553,63 @@ static void render_metatile(int sx, int sy, TileType type) {
             }
             break;
 
+        case TILE_CRACKED_WALL:
+            // Parede de pedra com fissuras proeminentes destrutível por bombas
+            render_metatile(sx, sy, TILE_STONE_WALL);
+            {
+                u32 c_crack_dark  = 0x0F172AFF;
+                u32 c_crack_light = 0xE2E8F0AA;
+
+                int crack_coords[12][2] = {
+                    {7, 2}, {8, 3}, {7, 4}, {8, 5}, {9, 6}, {8, 7},
+                    {7, 8}, {6, 9}, {7, 10}, {8, 11}, {7, 12}, {8, 13}
+                };
+                for (int i = 0; i < 12; i++) {
+                    int cx = crack_coords[i][0];
+                    int cy = crack_coords[i][1];
+                    draw_tile_pixel(sx + cx, sy + cy, c_crack_dark);
+                    draw_tile_pixel(sx + cx + 1, sy + cy, c_crack_light);
+                }
+                draw_tile_pixel(sx + 5, sy + 7, c_crack_dark);
+                draw_tile_pixel(sx + 6, sy + 7, c_crack_light);
+                draw_tile_pixel(sx + 10, sy + 6, c_crack_dark);
+                draw_tile_pixel(sx + 11, sy + 6, c_crack_light);
+            }
+            break;
+
+        case TILE_CRUMBLED_ROCK:
+            // Rocha quebradiça de superfície áspera bloqueando caminhos
+            render_metatile(sx, sy, TILE_DIRT_PATH);
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    float dist = sqrtf((float)((x - 7.5f) * (x - 7.5f) + (y - 7.5f) * (y - 7.5f)));
+                    if (dist <= 7.0f) {
+                        u32 c = 0x78716CFF; // Tom de rocha marrom-acinzentada
+                        if (dist <= 6.0f && (x < 6 || y < 6)) c = 0xA8A29EFF; // Realce superior esquerdo
+                        if (x > 10 || y > 10) c = 0x44403CFF; // Sombra inferior direita
+                        if ((x + y == 14) || (x - y == 2 && y >= 6 && y <= 10)) {
+                            c = 0x1C1917FF; // Fenda de fratura
+                        }
+                        draw_tile_pixel(sx + x, sy + y, c);
+                    }
+                }
+            }
+            break;
+
+        case TILE_SECRET_ENTRANCE:
+            // Portal em arco aberto revelando passagem secreta escura para dentro da rocha/parede
+            render_metatile(sx, sy, TILE_STONE_WALL);
+            for (int y = 2; y < 16; y++) {
+                for (int x = 3; x <= 12; x++) {
+                    if (y <= 4 && (x == 3 || x == 12)) continue;
+                    u32 c = 0x050810FF; // Vazio profundo e misterioso da caverna
+                    if (y == 2 || (y <= 4 && (x == 4 || x == 11))) c = 0x94A3B8FF; // Arco de pedra esculpido
+                    else if (y == 3 || y == 4) c = 0x1E293BFF;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
         default:
             render_metatile(sx, sy, TILE_GRASS);
             break;
@@ -653,6 +711,14 @@ Tilemap* map_create_demo_world(void) {
     m->overlay_layer[18 * w + 14] = TILE_BUSH;
     m->collision_map[18 * w + 14] = 1;
 
+    // Parede rachada e rocha quebradiça destrutíveis por bombas
+    m->overlay_layer[0 * w + 8] = TILE_CRACKED_WALL; // Parede rachada no muro norte
+    m->collision_map[0 * w + 8] = 1;
+    m->overlay_layer[15 * w + 22] = TILE_CRUMBLED_ROCK; // Rocha bloqueando caminho ao baú
+    m->collision_map[15 * w + 22] = 1;
+    m->overlay_layer[15 * w + 23] = TILE_CHEST_CLOSED;
+    m->collision_map[15 * w + 23] = 1;
+
     return m;
 }
 
@@ -693,6 +759,8 @@ Tilemap* map_create_hyrule_town(void) {
             }
         }
     }
+    m->overlay_layer[1 * w + 8] = TILE_CRACKED_WALL; // Parede secreta na muralha norte
+    m->collision_map[1 * w + 8] = 1;
 
     // Muralhas Laterais (Oeste e Leste)
     for (int y = 0; y < h; y++) {
@@ -773,6 +841,12 @@ Tilemap* map_create_hyrule_town(void) {
     m->collision_map[5 * w + 33] = 1;
     m->overlay_layer[6 * w + 33] = TILE_BARREL_CRATE;
     m->collision_map[6 * w + 33] = 1;
+
+    // Rocha quebradiça bloqueando um baú secreto atrás da loja do Stockwell
+    m->overlay_layer[5 * w + 22] = TILE_CRUMBLED_ROCK;
+    m->collision_map[5 * w + 22] = 1;
+    m->overlay_layer[4 * w + 22] = TILE_CHEST_CLOSED;
+    m->collision_map[4 * w + 22] = 1;
 
     // 5. Mansão do Prefeito Hagen e Residências (Noroeste: x=3..12, y=3..7)
     // Telhado de terracota vermelha
@@ -1382,4 +1456,60 @@ int map_interact_spin(Tilemap* map, float center_x, float center_y, float radius
         }
     }
     return cut_count;
+}
+
+int map_interact_bomb(Tilemap* map, float world_x, float world_y, float radius) {
+    if (!map || !map->overlay_layer) return 0;
+
+    int destroyed_count = 0;
+    int min_tx = (int)((world_x - radius) / TILE_SIZE);
+    int max_tx = (int)((world_x + radius) / TILE_SIZE);
+    int min_ty = (int)((world_y - radius) / TILE_SIZE);
+    int max_ty = (int)((world_y + radius) / TILE_SIZE);
+
+    if (min_tx < 0) min_tx = 0;
+    if (max_tx >= map->width) max_tx = map->width - 1;
+    if (min_ty < 0) min_ty = 0;
+    if (max_ty >= map->height) max_ty = map->height - 1;
+
+    float r_check = radius + (TILE_SIZE * 0.45f);
+    float r2 = r_check * r_check;
+
+    for (int ty = min_ty; ty <= max_ty; ty++) {
+        for (int tx = min_tx; tx <= max_tx; tx++) {
+            float tile_cx = tx * TILE_SIZE + (TILE_SIZE * 0.5f);
+            float tile_cy = ty * TILE_SIZE + (TILE_SIZE * 0.5f);
+            float dx = tile_cx - world_x;
+            float dy = tile_cy - world_y;
+
+            if ((dx * dx + dy * dy) <= r2) {
+                int idx = ty * map->width + tx;
+                u8 tile = map->overlay_layer[idx];
+
+                if (tile == TILE_CRACKED_WALL) {
+                    // Detona a parede rachada e abre o portal da passagem secreta!
+                    map->overlay_layer[idx] = TILE_SECRET_ENTRANCE;
+                    map->collision_map[idx] = 0; // Desobstrui passagem
+                    destroyed_count++;
+                } else if (tile == TILE_CRUMBLED_ROCK) {
+                    // Estilhaça a rocha em pedregulhos
+                    map->overlay_layer[idx] = 0xFF; // Removida
+                    map->collision_map[idx] = 0;    // Desobstrui passagem
+                    destroyed_count++;
+                } else if (tile == TILE_BUSH) {
+                    // Desintegra o arbusto na explosão
+                    map->overlay_layer[idx] = 0xFF;
+                    map->collision_map[idx] = 0;
+                } else if (tile == TILE_CHEST_CLOSED) {
+                    map->overlay_layer[idx] = TILE_CHEST_OPEN;
+                }
+            }
+        }
+    }
+
+    if (destroyed_count > 0) {
+        hal_audio_play_sound(SOUND_WALL_CRUMBLE, 1.0f, 1.0f);
+        printf("[BOMB MAP] %d estruturas desmoronadas pelo impacto da explosao!\n", destroyed_count);
+    }
+    return destroyed_count;
 }
