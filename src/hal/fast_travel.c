@@ -157,6 +157,26 @@ void fast_travel_init(void) {
     s_ft.crests[CREST_LAKE_HYLIA].spawn_x = 360.0f;
     s_ft.crests[CREST_LAKE_HYLIA].spawn_y = 200.0f;
     s_ft.crests[CREST_LAKE_HYLIA].unlocked = true;
+
+    // 6: Veil Falls
+    s_ft.crests[CREST_VEIL_FALLS].id = CREST_VEIL_FALLS;
+    s_ft.crests[CREST_VEIL_FALLS].name = "Quedas do Veu (Veil Falls)";
+    s_ft.crests[CREST_VEIL_FALLS].world_map_x = 175;
+    s_ft.crests[CREST_VEIL_FALLS].world_map_y = 25;
+    s_ft.crests[CREST_VEIL_FALLS].target_map_id = 18;
+    s_ft.crests[CREST_VEIL_FALLS].spawn_x = 48.0f;
+    s_ft.crests[CREST_VEIL_FALLS].spawn_y = 110.0f;
+    s_ft.crests[CREST_VEIL_FALLS].unlocked = true;
+
+    // 7: Cloud Tops
+    s_ft.crests[CREST_CLOUD_TOPS].id = CREST_CLOUD_TOPS;
+    s_ft.crests[CREST_CLOUD_TOPS].name = "Topo das Nuvens (Cloud Tops)";
+    s_ft.crests[CREST_CLOUD_TOPS].world_map_x = 120;
+    s_ft.crests[CREST_CLOUD_TOPS].world_map_y = 15;
+    s_ft.crests[CREST_CLOUD_TOPS].target_map_id = 19;
+    s_ft.crests[CREST_CLOUD_TOPS].spawn_x = 128.0f;
+    s_ft.crests[CREST_CLOUD_TOPS].spawn_y = 130.0f;
+    s_ft.crests[CREST_CLOUD_TOPS].unlocked = true;
 }
 
 void fast_travel_start(float link_x, float link_y) {

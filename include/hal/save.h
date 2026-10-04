@@ -45,6 +45,9 @@ typedef struct {
     bool  has_armos_activated;
     bool  has_ocarina;
     bool  dungeon_fortress_cleared;
+    bool  has_veil_falls_unlocked;
+    u8    golden_kinstones_fused;
+    bool  cloud_tornado_active;
     u8    unlocked_wind_crests;
     u8    library_books_mask;
     bool  librari_met;

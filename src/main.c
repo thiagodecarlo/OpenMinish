@@ -21,6 +21,7 @@
 #include "hal/fast_travel.h"
 #include "hal/library.h"
 #include "hal/lantern.h"
+#include "hal/veil_clouds.h"
 #include <math.h>
 
 /*
@@ -106,6 +107,13 @@ typedef struct {
     int  two_elements_banner_timer; // Temporizador do banner da Four Sword
     bool has_three_elements;        // White Sword (Three Elements) infundida no Santuário
     int  three_elements_banner_timer; // Temporizador do banner dos 3 Elementos
+
+    // Regiões Canônicas: Quedas do Véu (Veil Falls) e Topo das Nuvens (Cloud Tops)
+    bool has_veil_falls_unlocked;
+    u8   golden_kinstones_fused;
+    bool cloud_tornado_active;
+    int  veil_banner_timer;
+    int  cloud_banner_timer;
 
     // Item Canônico: Arco e Flechas & Pântano de Castor Wilds
     bool has_bow;                  // Possui o Arco e Flechas
@@ -881,6 +889,9 @@ static void handle_fast_travel_transition(int new_map_id, float new_x, float new
     s_in_armos_interior = false;
     s_in_library = false;
     s_in_lake_hylia = false;
+    if (veil_clouds_is_active()) {
+        veil_clouds_exit(&link->x, &link->y, &link->dir);
+    }
     link->is_swimming = false;
     link->is_diving = false;
     link->is_minish = false;
@@ -912,6 +923,12 @@ static void handle_fast_travel_transition(int new_map_id, float new_x, float new
         s_in_wind_ruins = true;
         spawn_wind_ruins_entities(armos_circuit_is_active());
         hal_audio_play_bgm(BGM_MINISH_WOODS);
+    } else if (new_map_id == 18) { // Veil Falls
+        veil_clouds_enter_falls(&link->x, &link->y, &link->dir);
+        hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
+    } else if (new_map_id == 19) { // Cloud Tops
+        veil_clouds_enter_clouds(&link->x, &link->y, &link->dir);
+        hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
     }
     printf("[ZEFFA] Voo concluido com sucesso! Pouso no mapa %d em (%.1f, %.1f)!\n", new_map_id, new_x, new_y);
 }
@@ -1739,6 +1756,12 @@ int main(int argc, char* argv[]) {
     link.water_element_banner_timer = 0;
     link.has_three_elements = false;
     link.three_elements_banner_timer = 0;
+    link.has_veil_falls_unlocked = false;
+    link.golden_kinstones_fused = 0;
+    link.cloud_tornado_active = false;
+    link.veil_banner_timer = 0;
+    link.cloud_banner_timer = 0;
+    veil_clouds_init();
 
     // Carregamento automático de progresso salvo (Slot 1)
     if (save_exists(1)) {
@@ -1829,12 +1852,20 @@ int main(int argc, char* argv[]) {
                 s_in_lake_hylia = true;
             } else if (save.current_map == 17) {
                 dungeon_droplets_enter(&link.x, &link.y, &link.dir);
+            } else if (save.current_map == 18) {
+                veil_clouds_enter_falls(&link.x, &link.y, &link.dir);
+            } else if (save.current_map == 19) {
+                veil_clouds_enter_clouds(&link.x, &link.y, &link.dir);
             }
             link.has_lantern = save.has_flame_lantern;
             lantern_set_lit(save.lantern_lit);
             if (link.has_lantern) inventory_unlock_item(INV_ITEM_LANTERN);
             link.has_water_element = save.has_water_element;
             library_restore_save(save.library_books_mask, save.librari_met, save.lake_temple_unlocked);
+            link.has_veil_falls_unlocked = save.has_veil_falls_unlocked;
+            link.golden_kinstones_fused = save.golden_kinstones_fused;
+            link.cloud_tornado_active = save.cloud_tornado_active;
+            veil_clouds_set_golden_kinstones(save.golden_kinstones_fused);
         }
     }
 
@@ -1922,7 +1953,10 @@ int main(int argc, char* argv[]) {
                                 current_save.player_y = link.y;
                                 current_save.player_dir = (int)link.dir;
                                 int cur_m = 0;
-                                if (dungeon_fortress_is_active()) cur_m = 14;
+                                if (veil_clouds_is_active()) {
+                                    cur_m = (veil_clouds_get_scene() == VEIL_SCENE_FALLS_BASE || veil_clouds_get_scene() == VEIL_SCENE_FALLS_SUMMIT) ? 18 : 19;
+                                }
+                                else if (dungeon_fortress_is_active()) cur_m = 14;
                                 else if (s_in_armos_interior) cur_m = 13;
                                 else if (s_in_wind_ruins) cur_m = 12;
                                 else if (s_in_mole_cave) cur_m = 11;
@@ -1964,6 +1998,9 @@ int main(int argc, char* argv[]) {
                                 current_save.lake_temple_unlocked = library_is_temple_unlocked();
                                 current_save.has_flame_lantern = link.has_lantern;
                                 current_save.lantern_lit = lantern_is_lit();
+                                current_save.has_veil_falls_unlocked = link.has_veil_falls_unlocked;
+                                current_save.golden_kinstones_fused = veil_clouds_get_golden_kinstones();
+                                current_save.cloud_tornado_active = veil_clouds_is_tornado_active();
                                 current_save.slot_a = (int)inventory_get_slot_a();
                                 current_save.slot_b = (int)inventory_get_slot_b();
                                 if (save_game(1, &current_save)) {
@@ -2263,6 +2300,22 @@ int main(int argc, char* argv[]) {
                                 transition_to_sanctuary(&link);
                             }
                             break;
+                        case SDLK_F5:
+                            if (!dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active() && !dungeon_droplets_is_active() && !sanctuary_is_active()) {
+                                if (veil_clouds_is_active()) {
+                                    if (veil_clouds_get_scene() == VEIL_SCENE_FALLS_BASE) {
+                                        veil_clouds_enter_clouds(&link.x, &link.y, &link.dir);
+                                    } else {
+                                        veil_clouds_exit(&link.x, &link.y, &link.dir);
+                                        s_in_north_field = true;
+                                        spawn_north_field_entities();
+                                    }
+                                } else {
+                                    s_in_town = s_in_village = s_in_south_field = s_in_crenel_base = s_in_melari_mines = s_in_castor_wilds = s_in_mole_cave = s_in_wind_ruins = s_in_armos_interior = s_in_library = s_in_lake_hylia = s_in_north_field = false;
+                                    veil_clouds_enter_falls(&link.x, &link.y, &link.dir);
+                                }
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -2283,7 +2336,8 @@ int main(int argc, char* argv[]) {
         // 2. ATUALIZAÇÃO DA LÓGICA DO JOGADOR (INPUT -> FÍSICA)
         // --------------------------------------------------------------------
         const HalVideoContext* ctx = hal_video_get_context();
-        Tilemap* active_map = dungeon_droplets_is_active() ? dungeon_droplets_get_current_map() :
+        Tilemap* active_map = veil_clouds_is_active() ? veil_clouds_get_current_map() :
+                              (dungeon_droplets_is_active() ? dungeon_droplets_get_current_map() :
                               (s_in_armos_interior ? s_armos_interior_map :
                               (s_in_wind_ruins ? s_wind_ruins_map :
                               (s_in_mole_cave ? s_mole_cave_map :
@@ -2295,7 +2349,7 @@ int main(int argc, char* argv[]) {
                               (s_in_village ? s_village_map :
                               (s_in_town ? s_town_map :
                               (s_in_south_field ? s_south_field_map :
-                              (s_in_north_field ? s_north_field_map : world_map))))))))))));
+                              (s_in_north_field ? s_north_field_map : world_map)))))))))))));
 
         if (inventory_is_paused()) {
             if (hal_input_is_pressed(KEY_UP))    inventory_cursor_move(0, -1);
@@ -2472,6 +2526,14 @@ int main(int argc, char* argv[]) {
                                 link.has_two_elements = true;
                                 link.two_elements_banner_timer = 240;
                             }
+                        } else {
+                            link.is_attacking = true;
+                            link.attack_timer = 12;
+                            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                        }
+                    } else if (veil_clouds_is_active()) {
+                        if (veil_clouds_interact(link.x, link.y, link.dir)) {
+                            link.golden_kinstones_fused = veil_clouds_get_golden_kinstones();
                         } else {
                             link.is_attacking = true;
                             link.attack_timer = 12;
@@ -3147,6 +3209,11 @@ int main(int argc, char* argv[]) {
                     else if (link.x >= 210.0f && link.x <= 290.0f && link.y <= 24.0f && link.dir == DIR_UP) {
                         transition_to_sanctuary(&link);
                     }
+                    // Desfiladeiro Nordeste de North Field para Veil Falls (Quedas do Veu)
+                    else if (link.x >= 400.0f && link.y <= 36.0f && link.dir == DIR_UP) {
+                        s_in_north_field = false;
+                        veil_clouds_enter_falls(&link.x, &link.y, &link.dir);
+                    }
                 } else if (s_in_crenel_base) {
                     // Estrada Leste de Mount Crenel Base de volta para North Field
                     if (link.x >= (active_map->width * TILE_SIZE) - 32.0f && link.dir == DIR_RIGHT) {
@@ -3374,6 +3441,15 @@ int main(int argc, char* argv[]) {
                 link.water_element_banner_timer = 240;
                 hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.3f);
             }
+        } else if (veil_clouds_is_active()) {
+            veil_clouds_update(&link.x, &link.y, link.dir, link.is_moving,
+                               &link.hearts, &link.rupees, link.has_mole_mitts);
+            if (veil_clouds_is_tornado_active() && !link.cloud_tornado_active) {
+                link.cloud_tornado_active = true;
+                link.cloud_banner_timer = 240;
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.5f);
+                printf("[PALACE OF WINDS] O GRANDE TORNADO PARA O PALACIO DO VENTO FOI DESPERTADO!\n");
+            }
         }
 
         static bool s_was_dungeon_droplets_active = false;
@@ -3384,12 +3460,26 @@ int main(int argc, char* argv[]) {
         }
         s_was_dungeon_droplets_active = dungeon_droplets_is_active();
 
+        static bool s_was_veil_clouds_active = false;
+        if (s_was_veil_clouds_active && !veil_clouds_is_active()) {
+            s_in_north_field = true;
+            spawn_north_field_entities();
+            hal_audio_play_bgm(BGM_MINISH_WOODS);
+        }
+        s_was_veil_clouds_active = veil_clouds_is_active();
+
         entity_manager_update(active_map, link.x, link.y,
                               &link.hearts, &link.max_hearts, &link.rupees,
                               &link.invuln_timer, &link.knock_x, &link.knock_y);
 
         // Atualizacao do Subsistema de Subarmas (Bumerangue, Vórtice do Pote Magico, Projeteis)
         subweapon_update(active_map, link.x, link.y, &link.rupees, &link.hearts);
+
+        if (veil_clouds_is_active() && veil_clouds_is_in_clouds() && subweapon_is_digging()) {
+            float dig_x = link.x + (link.dir == DIR_RIGHT ? 14.0f : (link.dir == DIR_LEFT ? -14.0f : 0.0f));
+            float dig_y = link.y + (link.dir == DIR_DOWN ? 16.0f : (link.dir == DIR_UP ? -14.0f : 0.0f));
+            veil_clouds_dig_cloud(dig_x, dig_y, &link.rupees);
+        }
 
         if (dungeon_droplets_is_active()) {
             LanternState* lstate = lantern_get_state();
@@ -3453,7 +3543,7 @@ int main(int argc, char* argv[]) {
         } // Fim do bloco de gameplay (se não estiver em diálogo ativo)
 
         // Atualização da Câmera Virtual Widescreen (Segue o Link ou centraliza na Masmorra)
-        if (dungeon_is_active() || dungeon_flames_is_active() || dungeon_fortress_is_active() || dungeon_droplets_is_active()) {
+        if (dungeon_is_active() || dungeon_flames_is_active() || dungeon_fortress_is_active() || dungeon_droplets_is_active() || veil_clouds_is_active()) {
             camera.viewport_w = widescreen ? 284 : 240;
             camera.viewport_h = 160;
             camera.x = (float)(256 - camera.viewport_w) / 2.0f;
@@ -3513,6 +3603,11 @@ int main(int argc, char* argv[]) {
         } else if (dungeon_droplets_is_active()) {
             // Renderiza Temple of Droplets (gelo translúcido, facho solar, Big Octorok)
             dungeon_droplets_render(&camera, link.is_minish, link.x, link.y);
+            entity_manager_render(&camera);
+            draw_link(&link, &camera);
+            subweapon_render(&camera);
+        } else if (veil_clouds_is_active()) {
+            veil_clouds_render(&camera, link.x, link.y);
             entity_manager_render(&camera);
             draw_link(&link, &camera);
             subweapon_render(&camera);
@@ -3954,6 +4049,26 @@ int main(int argc, char* argv[]) {
             font_draw_text(px, py + 1, lake_prompt, 0xE0F2FEFF, true);
         }
 
+        // Prompt de Contexto: Veil Falls & Cloud Tops
+        if (veil_clouds_is_active() && !dialogue_is_active() && !inventory_is_paused()) {
+            char v_info[64];
+            if (veil_clouds_is_in_clouds()) {
+                snprintf(v_info, sizeof(v_info), "TOPO DAS NUVENS - KINSTONES: %d/5%s",
+                         veil_clouds_get_golden_kinstones(),
+                         veil_clouds_is_tornado_active() ? " (TORNADO ATIVO!)" : "");
+            } else {
+                snprintf(v_info, sizeof(v_info), "%s",
+                         (veil_clouds_get_scene() == VEIL_SCENE_FALLS_BASE) ? "QUEDAS DO VEU (BASE DAS CACHOEIRAS)" : "QUEDAS DO VEU (CUME E REDEMOINHO)");
+            }
+            int tw = 210;
+            int px = (ctx->render_width - tw) / 2;
+            int py = ctx->render_height - 18;
+            draw_rect(px - 4, py - 2, tw + 8, 14, 0x041E38EE);
+            draw_rect(px - 3, py - 1, tw + 6, 12, 0x38BDF8FF);
+            draw_rect(px - 2, py, tw + 4, 10, 0x0A2B4EEE);
+            font_draw_text(px, py + 1, v_info, 0xE0F2FEFF, true);
+        }
+
         // Prompt da Flame Lantern se equipada
         if (subweapon_get_current() == ITEM_FLAME_LANTERN && !dialogue_is_active() && !inventory_is_paused()) {
             char l_info[64];
@@ -3998,6 +4113,21 @@ int main(int argc, char* argv[]) {
             font_draw_text(bx + 4, by + 13, b2, 0xE0F2FEFF, false);
         }
 
+        // Banner do Grande Tornado para o Palácio do Vento (Palace of Winds)
+        if (link.cloud_banner_timer > 0) {
+            link.cloud_banner_timer--;
+            const char* b1 = "GRANDE TORNADO DO PALACIO DO VENTO!";
+            const char* b2 = "5 Kinstones Douradas fundidas! O caminho para o ceu esta aberto!";
+            int bw = 240;
+            int bx = (ctx->render_width - bw) / 2;
+            int by = 35;
+            draw_rect(bx - 6, by - 4, bw + 12, 30, 0x022849EE);
+            draw_rect(bx - 5, by - 3, bw + 10, 28, 0x38BDF8FF);
+            draw_rect(bx - 4, by - 2, bw + 8, 26, 0x0A3A64EE);
+            font_draw_text(bx + 12, by + 1, b1, 0xFDE047FF, true);
+            font_draw_text(bx + 4, by + 13, b2, 0xE0F2FEFF, false);
+        }
+
         // 10b. Sistema de Transporte Rapido: Ocarina of Wind, Zeffa e Mapa de Cristas de Vento
         fast_travel_render(&camera, link.x, link.y);
 
@@ -4031,6 +4161,7 @@ int main(int argc, char* argv[]) {
     if (s_library_map)         map_destroy(s_library_map);
     if (s_lake_hylia_map)      map_destroy(s_lake_hylia_map);
     dungeon_droplets_shutdown();
+    veil_clouds_shutdown();
     map_destroy(world_map);
     hal_audio_shutdown();
     hal_input_shutdown();

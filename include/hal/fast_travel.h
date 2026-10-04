@@ -20,6 +20,8 @@ typedef enum {
     CREST_CASTOR_WILDS,
     CREST_WIND_RUINS,
     CREST_LAKE_HYLIA,
+    CREST_VEIL_FALLS,
+    CREST_CLOUD_TOPS,
     CREST_COUNT
 } FastTravelDestination;
 
