@@ -26,6 +26,7 @@ static int  s_type_timer = 0;
 static int  s_anim_counter = 0;
 static int  s_current_hint_idx = 0;
 static bool s_swiftblade_reward_pending = false;
+static bool s_melari_reward_pending = false;
 
 // Alpha Blending para o fundo esmeralda do balão
 static inline u32 blend_colors(u32 dst, u32 src) {
@@ -785,6 +786,85 @@ static void render_portrait_business_scrub(int px, int py) {
     draw_rect_blend(px + 7, py + 24, 18, 5, c_leaves);
 }
 
+static void render_portrait_melari(int px, int py, bool is_talking) {
+    draw_rect_blend(px, py, 32, 32, 0x18100AFF);
+
+    u32 c_skin   = 0xFDE8CDFF;
+    u32 c_hair   = 0xE2E8F0FF; // Cabelos e barba grisalha de ferreiro
+    u32 c_goggle = 0x92400EFF; // Armação dos óculos de proteção
+    u32 c_lens   = 0xF97316FF; // Lentes âmbar brilhantes
+    u32 c_apron  = 0x78350FFF; // Avental de couro
+    u32 c_shirt  = 0xDC2626FF; // Túnica vermelha dos ferreiros Minish
+    u32 c_eyes   = 0x0F172AFF;
+
+    // Cabelo grisalho robusto
+    draw_rect_blend(px + 6, py + 3, 20, 8, c_hair);
+    // Óculos de ferreiro levantados na testa
+    draw_rect_blend(px + 8, py + 5, 16, 4, c_goggle);
+    draw_rect_blend(px + 10, py + 6, 4, 3, c_lens);
+    draw_rect_blend(px + 18, py + 6, 4, 3, c_lens);
+
+    // Rosto
+    draw_rect_blend(px + 8, py + 9, 16, 10, c_skin);
+    // Sobrancelhas grisalhas franzidas e olhos
+    draw_rect_blend(px + 10, py + 10, 4, 1, c_hair);
+    draw_rect_blend(px + 18, py + 10, 4, 1, c_hair);
+    hal_video_put_pixel(px + 11, py + 12, c_eyes);
+    hal_video_put_pixel(px + 20, py + 12, c_eyes);
+
+    // Nariz arredondado
+    draw_rect_blend(px + 15, py + 13, 2, 2, 0xFCA5A5FF);
+
+    // Barba volumosa de ferreiro cobrindo queixo
+    draw_rect_blend(px + 7, py + 15, 18, 9, c_hair);
+    draw_rect_blend(px + 10, py + 23, 12, 3, c_hair);
+    draw_rect_blend(px + 13, py + 25, 6, 2, c_hair);
+
+    // Boca aberta ao falar no meio da barba
+    if (is_talking && ((s_char_progress / 3) % 2 == 1)) {
+        draw_rect_blend(px + 14, py + 17, 4, 2, 0x450A0AFF);
+    }
+
+    // Túnica vermelha e avental de ferreiro
+    draw_rect_blend(px + 6, py + 24, 20, 7, c_shirt);
+    draw_rect_blend(px + 11, py + 24, 10, 7, c_apron);
+}
+
+static void render_portrait_mountain_minish(int px, int py) {
+    draw_rect_blend(px, py, 32, 32, 0x111827FF);
+
+    u32 c_helmet = 0xFACC15FF; // Capacete amarelo de minerador
+    u32 c_lamp   = 0xFFFFFFFF; // Lanterna do capacete
+    u32 c_beam   = 0xFEF08AFF; // Brilho da luz
+    u32 c_skin   = 0xFDE8CDFF;
+    u32 c_eyes   = 0x1E293BFF;
+    u32 c_cloth  = 0x2563EBFF; // Macacão azul
+    u32 c_cheek  = 0xFCA5A5FF;
+
+    // Capacete de minerador amarelo
+    draw_rect_blend(px + 7, py + 3, 18, 8, c_helmet);
+    draw_rect_blend(px + 5, py + 9, 22, 2, 0xCA8A04FF); // Aba
+    // Lanterna central
+    draw_rect_blend(px + 14, py + 5, 4, 3, c_lamp);
+    hal_video_put_pixel(px + 15, py + 4, c_beam);
+    hal_video_put_pixel(px + 16, py + 4, c_beam);
+
+    // Rosto do Minish
+    draw_rect_blend(px + 8, py + 11, 16, 11, c_skin);
+    // Olhos brilhantes
+    hal_video_put_pixel(px + 11, py + 14, c_eyes);
+    hal_video_put_pixel(px + 20, py + 14, c_eyes);
+    // Bochechas rosadas
+    hal_video_put_pixel(px + 9, py + 16, c_cheek);
+    hal_video_put_pixel(px + 22, py + 16, c_cheek);
+    // Sorriso
+    draw_rect_blend(px + 14, py + 18, 4, 1, 0x991B1BFF);
+
+    // Lenço no pescoço e macacão azul de minerador
+    draw_rect_blend(px + 9, py + 22, 14, 2, 0xDC2626FF);
+    draw_rect_blend(px + 7, py + 24, 18, 7, c_cloth);
+}
+
 // ----------------------------------------------------------------------------
 // INTERFACE PÚBLICA DO SISTEMA DE DIÁLOGO
 // ----------------------------------------------------------------------------
@@ -1024,6 +1104,45 @@ void dialogue_trigger_business_scrub_talk(int link_rupees, bool has_grip_ring) {
     }
 }
 
+void dialogue_trigger_melari_talk(bool has_white_sword) {
+    if (!has_white_sword) {
+        s_melari_reward_pending = true;
+        static const char* melari_forge[] = {
+            "Ora, veja so quem temos aqui!\nUm jovem rapaz em busca do Mestre\nFerreiro Melari do Monte Crenel!",
+            "O que e isso em suas maos?!\nEsta lamina despedacada... e a\nsagrada Lamina Picori forjada pelos\nnossos ancestrais ha seculos!",
+            "Rapazes! Apaguem as conversas e\nacendam o fole da forja com toda\na forca! Temos um trabalho lendario!",
+            "*CLANG! CLANG! CLANG!*\nO fogo e o martelo unem o aco sagrado\nem uma lamina branca reluzente!",
+            "Pronto! Contemple a ESPADA BRANCA\n(White Sword)! Ela corta com o dobro\nde poder de uma lamina comum!",
+            "Mas preste atencao: para restaurar\nseu poder divino total, voce deve\ninfundi-la com os Quatro Elementos!",
+            "Passe pela porta ao norte para entrar\nna Caverna das Chamas e encontrar o\nsegundo elemento: o Elemento Fogo!"
+        };
+        dialogue_show(SPEAKER_MELARI, "Mestre Melari", melari_forge, 7);
+    } else {
+        static const char* melari_guidance[] = {
+            "A Espada Branca e um trabalho-prima!\nCuide bem dela, meu jovem!",
+            "Siga pela passagem ao norte e entre\nna Caverna das Chamas. O Elemento\nFogo aguarda no coracao da montanha!"
+        };
+        dialogue_show(SPEAKER_MELARI, "Mestre Melari", melari_guidance, 2);
+    }
+}
+
+void dialogue_trigger_mountain_minish_talk(void) {
+    static const char* minish_miner_speech[] = {
+        "Trabalhamos dia e noite nestas minas!\nO magma ardente do Monte Crenel mantem\nnossa forja sempre aquecida!",
+        "Tenha muito cuidado ao caminhar perto\ndos canais de lava! Um passo em falso\ne o calor vai chamuscar suas botas!",
+        "Nosso Mestre Melari e o maior ferreiro\nde todo o continente! Nao ha aco ou\nminerio que resista ao seu martelo!"
+    };
+    dialogue_show(SPEAKER_MOUNTAIN_MINISH, "Minerador Minish", minish_miner_speech, 3);
+}
+
+bool dialogue_is_melari_reward_pending(void) {
+    return s_melari_reward_pending;
+}
+
+void dialogue_clear_melari_reward(void) {
+    s_melari_reward_pending = false;
+}
+
 void dialogue_update(void) {
     s_anim_counter++;
 
@@ -1155,7 +1274,9 @@ void dialogue_render(void) {
                        (s_speaker == SPEAKER_FESTARI) ? 0x93C5FDFF :
                        (s_speaker == SPEAKER_VILLAGE_MINISH) ? 0x34D399FF :
                        (s_speaker == SPEAKER_MALON) ? 0xFB923CFF :
-                       (s_speaker == SPEAKER_BUSINESS_SCRUB) ? 0xF59E0BFF : 0x77FF99FF;
+                       (s_speaker == SPEAKER_BUSINESS_SCRUB) ? 0xF59E0BFF :
+                       (s_speaker == SPEAKER_MELARI) ? 0xF97316FF :
+                       (s_speaker == SPEAKER_MOUNTAIN_MINISH) ? 0xFDE047FF : 0x77FF99FF;
         font_draw_text(badge_x + 6, badge_y + 1, s_speaker_name, name_col, true);
     }
 
@@ -1196,6 +1317,11 @@ void dialogue_render(void) {
         render_portrait_malon(port_x, port_y, is_talking);
     } else if (s_speaker == SPEAKER_BUSINESS_SCRUB) {
         render_portrait_business_scrub(port_x, port_y);
+    } else if (s_speaker == SPEAKER_MELARI) {
+        bool is_talking = (s_state == DIALOGUE_STATE_TYPING);
+        render_portrait_melari(port_x, port_y, is_talking);
+    } else if (s_speaker == SPEAKER_MOUNTAIN_MINISH) {
+        render_portrait_mountain_minish(port_x, port_y);
     }
 
     // 6. Área de Texto com quebra de linhas (\n)

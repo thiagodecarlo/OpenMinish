@@ -81,6 +81,10 @@ typedef struct {
     float z;                   // Altitude / Altura do salto no ar
     float vz;                  // Velocidade vertical do salto
     bool is_jumping;           // Está no ar executando super-salto
+
+    // Melhoria Canônica de Espada: White Sword (Espada Branca)
+    bool has_white_sword;          // Possui a lendária Espada Branca forjada por Melari (Dano: 2)
+    int  white_sword_banner_timer; // Temporizador do banner comemorativo de aquisição
 } Player;
 
 static const char* s_region_tags[REGION_COUNT] = { "usa", "eur", "jpn" };
@@ -100,11 +104,13 @@ static Tilemap* s_village_map     = NULL;
 static Tilemap* s_south_field_map = NULL;
 static Tilemap* s_north_field_map = NULL;
 static Tilemap* s_crenel_base_map = NULL;
+static Tilemap* s_melari_mines_map = NULL;
 static bool     s_in_town         = false;
 static bool     s_in_village      = false;
 static bool     s_in_south_field  = false;
 static bool     s_in_north_field  = false;
 static bool     s_in_crenel_base  = false;
+static bool     s_in_melari_mines = false;
 static SelectedRegion s_current_region = REGION_USA;
 
 static void load_region_sheets(SelectedRegion region) {
@@ -207,6 +213,7 @@ static void transition_to_town(Player* link) {
     s_in_south_field = false;
     s_in_north_field = false;
     s_in_crenel_base = false;
+    s_in_melari_mines = false;
     link->x = 280.0f; // Portão Sul (x = 17.5 * 16)
     link->y = 392.0f; // Entrada Sul (y = 24.5 * 16)
     link->dir = DIR_UP;
@@ -224,6 +231,7 @@ static void transition_to_overworld(Player* link, Tilemap* world_map) {
     s_in_south_field = false;
     s_in_north_field = false;
     s_in_crenel_base = false;
+    s_in_melari_mines = false;
     if (world_map && world_map->is_authentic) {
         link->x = 448.0f;
         link->y = 636.0f;
@@ -266,6 +274,7 @@ static void transition_to_minish_village(Player* link) {
     s_in_south_field = false;
     s_in_north_field = false;
     s_in_crenel_base = false;
+    s_in_melari_mines = false;
     link->is_minish = true; // Link sempre no tamanho Minish na Vila dos Minish!
     link->x = 248.0f; // Saída sul (x = 15.5 * 16)
     link->y = 352.0f; // Entrada sul da vila (y = 22 * 16)
@@ -283,6 +292,7 @@ static void transition_to_woods_from_village(Player* link, Tilemap* world_map) {
     s_in_south_field = false;
     s_in_north_field = false;
     s_in_crenel_base = false;
+    s_in_melari_mines = false;
     if (world_map && world_map->is_authentic) {
         link->x = 336.0f; // Topo do Tronco Oco (coluna 21 * 16 = 336)
         link->y = 720.0f; // Logo acima da boca norte do tronco oco
@@ -328,6 +338,7 @@ static void transition_to_south_field(Player* link) {
     s_in_south_field = true;
     s_in_north_field = false;
     s_in_crenel_base = false;
+    s_in_melari_mines = false;
     link->x = 248.0f; // Topo central (saída norte da planície)
     link->y = 36.0f;
     link->dir = DIR_DOWN;
@@ -344,6 +355,7 @@ static void transition_to_north_field(Player* link) {
     s_in_south_field = false;
     s_in_north_field = true;
     s_in_crenel_base = false;
+    s_in_melari_mines = false;
     link->x = 248.0f; // Base sul da planície norte
     link->y = 330.0f;
     link->dir = DIR_UP;
@@ -360,6 +372,7 @@ static void transition_to_town_from_south(Player* link) {
     s_in_south_field = false;
     s_in_north_field = false;
     s_in_crenel_base = false;
+    s_in_melari_mines = false;
     link->x = 280.0f;
     link->y = 380.0f;
     link->dir = DIR_UP;
@@ -377,6 +390,7 @@ static void transition_to_town_from_north(Player* link) {
     s_in_south_field = false;
     s_in_north_field = false;
     s_in_crenel_base = false;
+    s_in_melari_mines = false;
     link->x = 280.0f;
     link->y = 50.0f;
     link->dir = DIR_DOWN;
@@ -408,6 +422,7 @@ static void transition_to_crenel_base(Player* link) {
     s_in_south_field = false;
     s_in_north_field = false;
     s_in_crenel_base = true;
+    s_in_melari_mines = false;
     link->x = 480.0f; // Entrada leste vindo de North Field
     link->y = 240.0f;
     link->dir = DIR_LEFT;
@@ -424,6 +439,7 @@ static void transition_to_north_field_from_crenel(Player* link) {
     s_in_south_field = false;
     s_in_north_field = true;
     s_in_crenel_base = false;
+    s_in_melari_mines = false;
     link->x = 32.0f; // Estrada oeste de North Field
     link->y = 192.0f;
     link->dir = DIR_RIGHT;
@@ -431,6 +447,51 @@ static void transition_to_north_field_from_crenel(Player* link) {
     spawn_north_field_entities();
     hal_audio_play_bgm(BGM_MINISH_WOODS);
     printf("[SCENE] Retornando a North Hyrule Field a partir do Monte Crenel!\n");
+}
+
+static void spawn_melari_mines_entities(void) {
+    entity_clear_all();
+    // 1. Mestre Ferreiro Melari na bigorna da forja central
+    entity_spawn(ENTITY_NPC_MELARI, 248.0f, 100.0f);
+    // 2. Mineradores Mountain Minish
+    entity_spawn(ENTITY_NPC_MOUNTAIN_MINISH, 96.0f, 160.0f);  // minerando no veio oeste
+    entity_spawn(ENTITY_NPC_MOUNTAIN_MINISH, 380.0f, 220.0f); // trabalhando junto ao carrinho leste
+    entity_spawn(ENTITY_NPC_MOUNTAIN_MINISH, 350.0f, 110.0f); // observando os canais de lava
+    printf("[MELARI MINES] Entidades de Melari's Mines spawnadas (Mestre Melari, 3 Mountain Minish)!\n");
+}
+
+static void transition_to_melari_mines(Player* link) {
+    if (dungeon_is_active()) return;
+    s_in_town = false;
+    s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = false;
+    s_in_crenel_base = false;
+    s_in_melari_mines = true;
+    link->x = 256.0f; // Entrada sul vindo do Monte Crenel
+    link->y = 336.0f;
+    link->dir = DIR_UP;
+    link->is_moving = false;
+    spawn_melari_mines_entities();
+    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    printf("[SCENE] Entrando em Melari's Mines (Minas de Melari - Forja da White Sword)!\n");
+}
+
+static void transition_to_crenel_base_from_melari(Player* link) {
+    if (dungeon_is_active()) return;
+    s_in_town = false;
+    s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = false;
+    s_in_melari_mines = false;
+    s_in_crenel_base = true;
+    link->x = 288.0f; // Plataforma norte de Mount Crenel Base
+    link->y = 64.0f;
+    link->dir = DIR_DOWN;
+    link->is_moving = false;
+    spawn_crenel_base_entities();
+    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    printf("[SCENE] Retornando a Mount Crenel Base a partir das Minas de Melari!\n");
 }
 
 static void draw_rect(int rx, int ry, int rw, int rh, u32 color) {
@@ -491,8 +552,10 @@ static void draw_empty_heart(int hx, int hy) {
 
 // Renderiza efeitos de lâmina do Link: Golpe normal, Carga de Spin e Ataque Giratório 360°
 static void draw_link_sword_effects(const Player* p, int px, int py) {
-    u32 sword_steel = 0xCFE2F3FF;
+    u32 sword_steel = p->has_white_sword ? 0xFFFFFFFF : 0xCFE2F3FF;
+    u32 sword_edge  = p->has_white_sword ? 0xBAE6FDFF : 0x94A3B8FF;
     u32 sword_gold  = 0xFFD700FF;
+    u32 sword_ruby  = 0xEF4444FF;
     u32 cyan_glow   = 0x38BDF8FF;
     u32 cyan_white  = 0xBAE6FDFF;
     u32 white       = 0xFFFFFFFF;
@@ -503,18 +566,46 @@ static void draw_link_sword_effects(const Player* p, int px, int py) {
             case DIR_DOWN:
                 draw_rect(px + 6, py + 16, 4, 10, sword_steel);
                 draw_rect(px + 4, py + 16, 8, 2, sword_gold);
+                if (p->has_white_sword) {
+                    draw_rect(px + 7, py + 17, 2, 8, sword_edge);
+                    hal_video_put_pixel(px + 7, py + 16, sword_ruby);
+                    hal_video_put_pixel(px + 8, py + 16, sword_ruby);
+                    hal_video_put_pixel(px + 3, py + 22, white);
+                    hal_video_put_pixel(px + 12, py + 22, cyan_glow);
+                }
                 break;
             case DIR_UP:
                 draw_rect(px + 6, py - 8, 4, 10, sword_steel);
                 draw_rect(px + 4, py + 0, 8, 2, sword_gold);
+                if (p->has_white_sword) {
+                    draw_rect(px + 7, py - 7, 2, 8, sword_edge);
+                    hal_video_put_pixel(px + 7, py + 0, sword_ruby);
+                    hal_video_put_pixel(px + 8, py + 0, sword_ruby);
+                    hal_video_put_pixel(px + 3, py - 4, white);
+                    hal_video_put_pixel(px + 12, py - 4, cyan_glow);
+                }
                 break;
             case DIR_LEFT:
                 draw_rect(px - 10, py + 9, 10, 4, sword_steel);
                 draw_rect(px + 0,  py + 7, 2, 8, sword_gold);
+                if (p->has_white_sword) {
+                    draw_rect(px - 9, py + 10, 8, 2, sword_edge);
+                    hal_video_put_pixel(px + 0, py + 10, sword_ruby);
+                    hal_video_put_pixel(px + 0, py + 11, sword_ruby);
+                    hal_video_put_pixel(px - 6, py + 5, white);
+                    hal_video_put_pixel(px - 6, py + 15, cyan_glow);
+                }
                 break;
             case DIR_RIGHT:
                 draw_rect(px + 14, py + 9, 10, 4, sword_steel);
                 draw_rect(px + 13, py + 7, 2, 8, sword_gold);
+                if (p->has_white_sword) {
+                    draw_rect(px + 15, py + 10, 8, 2, sword_edge);
+                    hal_video_put_pixel(px + 13, py + 10, sword_ruby);
+                    hal_video_put_pixel(px + 13, py + 11, sword_ruby);
+                    hal_video_put_pixel(px + 20, py + 5, white);
+                    hal_video_put_pixel(px + 20, py + 15, cyan_glow);
+                }
                 break;
         }
     }
@@ -1047,6 +1138,8 @@ int main(int argc, char* argv[]) {
     s_north_field_map = north_field_map;
     Tilemap* crenel_base_map = map_create_mount_crenel_base();
     s_crenel_base_map = crenel_base_map;
+    Tilemap* melari_mines_map = map_create_melari_mines();
+    s_melari_mines_map = melari_mines_map;
     load_region_sheets(REGION_USA);
 
     // Inicialização da entidade do Link
@@ -1097,6 +1190,8 @@ int main(int argc, char* argv[]) {
     link.z = 0.0f;
     link.vz = 0.0f;
     link.is_jumping = false;
+    link.has_white_sword = false;
+    link.white_sword_banner_timer = 0;
 
     // Carregamento automático de progresso salvo (Slot 1)
     if (save_exists(1)) {
@@ -1113,11 +1208,15 @@ int main(int argc, char* argv[]) {
             link.is_minish = save.is_minish;
             link.has_grip_ring = save.has_grip_ring;
             link.has_cane_of_pacci = save.has_cane_of_pacci;
+            link.has_white_sword = save.has_white_sword;
             if (link.has_grip_ring) {
                 inventory_unlock_item(INV_ITEM_GRIP_RING);
             }
             if (link.has_cane_of_pacci) {
                 inventory_unlock_item(INV_ITEM_CANE_OF_PACCI);
+            }
+            if (link.has_white_sword) {
+                inventory_set_white_sword(true);
             }
             if (save.bomb_count > 0) {
                 subweapon_add_bombs(save.bomb_count - subweapon_get_bomb_count());
@@ -1135,13 +1234,17 @@ int main(int argc, char* argv[]) {
                 s_in_north_field = true;
             } else if (save.current_map == 6) {
                 s_in_crenel_base = true;
+            } else if (save.current_map == 7) {
+                s_in_melari_mines = true;
             }
         }
     }
 
     // Inicialização do Subsistema de Entidades e Spawn de Inimigos e NPCs
     entity_manager_init();
-    if (s_in_village) {
+    if (s_in_melari_mines) {
+        spawn_melari_mines_entities();
+    } else if (s_in_village) {
         spawn_minish_village_entities();
     } else if (s_in_town) {
         spawn_town_entities();
@@ -1212,7 +1315,7 @@ int main(int argc, char* argv[]) {
                                 current_save.player_x = link.x;
                                 current_save.player_y = link.y;
                                 current_save.player_dir = (int)link.dir;
-                                current_save.current_map = s_in_crenel_base ? 6 : (s_in_village ? 2 : (s_in_town ? 1 : (dungeon_is_active() ? 3 : (s_in_south_field ? 4 : (s_in_north_field ? 5 : 0)))));
+                                current_save.current_map = s_in_melari_mines ? 7 : (s_in_crenel_base ? 6 : (s_in_village ? 2 : (s_in_town ? 1 : (dungeon_is_active() ? 3 : (s_in_south_field ? 4 : (s_in_north_field ? 5 : 0))))));
                                 current_save.hearts = link.hearts;
                                 current_save.max_hearts = link.max_hearts;
                                 current_save.rupees = link.rupees;
@@ -1222,6 +1325,7 @@ int main(int argc, char* argv[]) {
                                 current_save.is_minish = link.is_minish;
                                 current_save.has_grip_ring = link.has_grip_ring;
                                 current_save.has_cane_of_pacci = link.has_cane_of_pacci;
+                                current_save.has_white_sword = link.has_white_sword;
                                 current_save.slot_a = (int)inventory_get_slot_a();
                                 current_save.slot_b = (int)inventory_get_slot_b();
                                 if (save_game(1, &current_save)) {
@@ -1266,6 +1370,18 @@ int main(int argc, char* argv[]) {
                             if (!dungeon_is_active()) {
                                 transition_to_crenel_base(&link);
                             }
+                            break;
+                        case SDLK_7:
+                            if (!dungeon_is_active()) {
+                                transition_to_melari_mines(&link);
+                            }
+                            break;
+                        case SDLK_8:
+                            link.has_white_sword = !link.has_white_sword;
+                            inventory_set_white_sword(link.has_white_sword);
+                            if (link.has_white_sword) link.white_sword_banner_timer = 180;
+                            hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
+                            printf("[DEBUG] Toggle White Sword: %s\n", link.has_white_sword ? "ON (Dano: 2)" : "OFF (Dano: 1)");
                             break;
                         case SDLK_w:
                             widescreen = !widescreen;
@@ -1383,11 +1499,12 @@ int main(int argc, char* argv[]) {
         // 2. ATUALIZAÇÃO DA LÓGICA DO JOGADOR (INPUT -> FÍSICA)
         // --------------------------------------------------------------------
         const HalVideoContext* ctx = hal_video_get_context();
-        Tilemap* active_map = s_in_crenel_base ? s_crenel_base_map :
+        Tilemap* active_map = s_in_melari_mines ? s_melari_mines_map :
+                              (s_in_crenel_base ? s_crenel_base_map :
                               (s_in_village ? s_village_map :
                               (s_in_town ? s_town_map :
                               (s_in_south_field ? s_south_field_map :
-                              (s_in_north_field ? s_north_field_map : world_map))));
+                              (s_in_north_field ? s_north_field_map : world_map)))));
 
         if (inventory_is_paused()) {
             if (hal_input_is_pressed(KEY_UP))    inventory_cursor_move(0, -1);
@@ -1451,6 +1568,19 @@ int main(int argc, char* argv[]) {
             }
             if (link.tiger_scroll_banner_timer > 0) {
                 link.tiger_scroll_banner_timer--;
+            }
+
+            // Recompensa do Mestre Melari: Forja a sagrada White Sword (Espada Branca)
+            if (dialogue_is_melari_reward_pending()) {
+                dialogue_clear_melari_reward();
+                link.has_white_sword = true;
+                inventory_set_white_sword(true);
+                link.white_sword_banner_timer = 200;
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
+                printf("[WHITE SWORD] Lamina Picori reforjada com sucesso na lendaria WHITE SWORD (Dano: 2)!\n");
+            }
+            if (link.white_sword_banner_timer > 0) {
+                link.white_sword_banner_timer--;
             }
 
             // Ação com Botão A: Primeiro Natação (Mergulho), Portal Minish, Masmorra / Loja / Guarda / Cidadã / Baús / Swiftblade / NPCs, depois golpe de espada!
@@ -1577,6 +1707,18 @@ int main(int argc, char* argv[]) {
                             link.attack_timer = 12;
                             hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
                         }
+                    } else if (s_in_melari_mines) {
+                        Entity* melari = entity_find_nearby_melari(link.x, link.y, 36.0f);
+                        Entity* miner = entity_find_nearby_mountain_minish(link.x, link.y, 28.0f);
+                        if (melari) {
+                            dialogue_trigger_melari_talk(link.has_white_sword);
+                        } else if (miner) {
+                            dialogue_trigger_mountain_minish_talk();
+                        } else {
+                            link.is_attacking = true;
+                            link.attack_timer = 12;
+                            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                        }
                     } else if (entity_interact_chest(link.x, link.y, &link.rupees, &link.hearts)) {
                         // Abriu o baú dourado!
                     } else {
@@ -1610,7 +1752,8 @@ int main(int argc, char* argv[]) {
                 if (link.dir == DIR_RIGHT) { hit_x = link.x + 14.0f; hit_y = link.y + 2.0f;  hit_w = 12.0f; hit_h = 14.0f; }
 
                 // Checa acerto contra inimigos (Octoroks, Keese, ChuChu) e projéteis
-                entity_check_sword_hit(hit_x, hit_y, hit_w, hit_h, 1, link.dir);
+                int sword_dmg = link.has_white_sword ? 2 : 1;
+                entity_check_sword_hit(hit_x, hit_y, hit_w, hit_h, sword_dmg, link.dir);
 
                 // Interação da espada com o cenário (cortar arbustos ou abrir baú no overworld)
                 if (!dungeon_is_active() && map_interact_slash(active_map, hit_x + 6.0f, hit_y + 6.0f)) {
@@ -1670,8 +1813,9 @@ int main(int argc, char* argv[]) {
                 float spin_cy = link.y + 8.0f;
                 float spin_r = 26.0f;
 
-                // 2 HP de dano duplicado e knockback radial centrífugo
-                entity_check_spin_attack_hit(spin_cx, spin_cy, spin_r, 2);
+                // 2 HP / 4 HP de dano duplicado e knockback radial centrífugo
+                int spin_dmg = link.has_white_sword ? 4 : 2;
+                entity_check_spin_attack_hit(spin_cx, spin_cy, spin_r, spin_dmg);
 
                 // Corte simultâneo de todos os arbustos no raio de 360 graus
                 if (!dungeon_is_active()) {
@@ -1984,6 +2128,15 @@ int main(int argc, char* argv[]) {
                     if (link.x >= (active_map->width * TILE_SIZE) - 32.0f && link.dir == DIR_RIGHT) {
                         transition_to_north_field_from_crenel(&link);
                     }
+                    // Entrada Norte para as Minas de Melari (x=260..320, y<=48, DIR_UP)
+                    else if (link.x >= 260.0f && link.x <= 320.0f && link.y <= 48.0f && link.dir == DIR_UP) {
+                        transition_to_melari_mines(&link);
+                    }
+                } else if (s_in_melari_mines) {
+                    // Saída Sul das Minas de Melari de volta para Mount Crenel Base
+                    if (link.y >= (active_map->height * TILE_SIZE) - 32.0f && link.dir == DIR_DOWN) {
+                        transition_to_crenel_base_from_melari(&link);
+                    }
                 } else {
                     // Em Minish Woods: Se estiver no tamanho Minish e atravessar a ponta norte do Tronco Oco (coluna 21)
                     if (link.is_minish && world_map && world_map->is_authentic) {
@@ -2067,12 +2220,27 @@ int main(int argc, char* argv[]) {
             link.invuln_timer--;
         }
 
+        // Perigo Ambiental: Canais de Lava Incandescente em Melari's Mines
+        if (s_in_melari_mines && map_is_lava(active_map, link.x + 8.0f, link.y + 12.0f)) {
+            if (link.invuln_timer <= 0 && !link.is_jumping) {
+                if (link.hearts > 1) link.hearts -= 1;
+                link.invuln_timer = 60;
+                link.knock_x = (link.dir == DIR_LEFT) ? 4.0f : (link.dir == DIR_RIGHT ? -4.0f : 0.0f);
+                link.knock_y = (link.dir == DIR_UP) ? 4.0f : -4.0f;
+                hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 0.8f);
+                entity_trigger_screen_shake(12, 3);
+                printf("[LAVA HAZARD] Link tocou na lava incandescente! Dano recebido!\n");
+            }
+        }
+
         // --------------------------------------------------------------------
         // ATUALIZAÇÃO DO SUBSISTEMA DE MASMORRA & ENTIDADES
         // --------------------------------------------------------------------
         static bool s_was_dungeon_active = false;
         if (s_was_dungeon_active && !dungeon_is_active()) {
-            if (s_in_village) {
+            if (s_in_melari_mines) {
+                spawn_melari_mines_entities();
+            } else if (s_in_village) {
                 spawn_minish_village_entities();
             } else if (s_in_town) {
                 spawn_town_entities();
@@ -2080,6 +2248,8 @@ int main(int argc, char* argv[]) {
                 spawn_south_field_entities();
             } else if (s_in_north_field) {
                 spawn_north_field_entities();
+            } else if (s_in_crenel_base) {
+                spawn_crenel_base_entities();
             } else {
                 spawn_overworld_entities(world_map);
             }
@@ -2322,6 +2492,29 @@ int main(int argc, char* argv[]) {
             font_draw_text(ban_x + 24, ban_y + 18, "ATAQUE GIRATORIO (SPIN ATTACK)!", 0x38BDF8FF, true);
         }
 
+        // 6b. Banner Festivo de Aquisição da Lendária White Sword (Espada Branca)
+        if (link.white_sword_banner_timer > 0) {
+            int ban_w = 216;
+            int ban_h = 32;
+            int ban_x = (ctx->render_width - ban_w) / 2;
+            int ban_y = 64;
+
+            draw_rect(ban_x - 2, ban_y - 2, ban_w + 4, ban_h + 4, 0x0A0806EE);
+            draw_rect(ban_x - 1, ban_y - 1, ban_w + 2, ban_h + 2, 0x38BDF8FF);
+            draw_rect(ban_x, ban_y, ban_w, ban_h, 0x0F172AFF);
+            draw_rect(ban_x + 2, ban_y + 2, ban_w - 4, ban_h - 4, 0x1E293BEE);
+
+            // Ícone da Espada Branca
+            draw_rect(ban_x + 10, ban_y + 6, 4, 16, 0xFFFFFFFF);
+            draw_rect(ban_x + 11, ban_y + 6, 2, 16, 0xBAE6FDFF);
+            draw_rect(ban_x + 8, ban_y + 18, 8, 3, 0xFACC15FF); // Guarda asas ouro
+            hal_video_put_pixel(ban_x + 11, ban_y + 19, 0xEF4444FF); // Rubi
+            draw_rect(ban_x + 10, ban_y + 21, 4, 4, 0xF8FAFCFF); // Cabo
+
+            font_draw_text(ban_x + 26, ban_y + 6, "ESPADA BRANCA FORJADA!", 0xFFFFFFFF, true);
+            font_draw_text(ban_x + 26, ban_y + 18, "Dano Dobrado (2 HP) | Melari", 0xFACC15FF, true);
+        }
+
         // 7. Badge do Estado Minish no HUD
         if (link.is_minish) {
             int mx = 146;
@@ -2392,6 +2585,7 @@ int main(int argc, char* argv[]) {
     if (s_south_field_map) map_destroy(s_south_field_map);
     if (s_north_field_map) map_destroy(s_north_field_map);
     if (s_crenel_base_map) map_destroy(s_crenel_base_map);
+    if (s_melari_mines_map) map_destroy(s_melari_mines_map);
     map_destroy(world_map);
     hal_audio_shutdown();
     hal_input_shutdown();

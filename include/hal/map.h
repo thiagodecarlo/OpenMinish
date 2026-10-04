@@ -62,6 +62,12 @@ typedef enum {
     TILE_PACCI_HOLE_CHARGED, // Buraco energizado pelo Cajado de Pacci (catapulta Link no ar)
     TILE_MINECART_UPSIDE_DOWN,// Carrinho de mina tombado/de cabeça para baixo
     TILE_MINECART,           // Carrinho de mina desvirado funcional nos trilhos
+    TILE_MELARI_STONE_FLOOR, // Piso subterrâneo de lajotas de pedra das minas
+    TILE_MELARI_FORGE_ANVIL, // Bigorna de forja do Mestre Melari sobre pedestal com brasas
+    TILE_MELARI_LAVA_CHANNEL,// Canal de lava incandescente borbulhante (dano de fogo)
+    TILE_MELARI_ORE_VEIN,    // Veio de minério com cristais e gemas brilhantes incrustadas
+    TILE_MELARI_MINING_TRACK,// Trilhos da ferrovia de mineração com dormentes de madeira
+    TILE_MELARI_CAVE_ARCHWAY,// Portal de pedra em arco ao norte (entrada para Cave of Flames)
     TILE_COUNT
 } TileType;
 
@@ -218,6 +224,18 @@ bool map_is_pacci_charged_hole(const Tilemap* map, float world_x, float world_y)
  * Descarrega a energia do buraco após o super-salto vertical do herói, revertendo para TILE_PACCI_HOLE_NORMAL.
  */
 bool map_discharge_pacci_hole(Tilemap* map, float world_x, float world_y);
+
+/*
+ * Constrói o vilarejo subterrâneo dos Mountain Minish: As Minas de Melari (Melari's Mines).
+ * Dimensões: 32x24 tiles (512x384 pixels) contendo a forja e bigorna do Mestre Melari,
+ * canais de lava incandescente, veios de minério reluzentes, trilhos e portal para a Masmorra 2.
+ */
+Tilemap* map_create_melari_mines(void);
+
+/*
+ * Retorna true se o ponto no mundo contiver lava incandescente (TILE_MELARI_LAVA_CHANNEL).
+ */
+bool map_is_lava(const Tilemap* map, float world_x, float world_y);
 
 /*
  * Interage com o cenário no ponto do impacto mágico do Cajado de Pacci:
