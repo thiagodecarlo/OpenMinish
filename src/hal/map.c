@@ -844,6 +844,117 @@ static void render_metatile(int sx, int sy, TileType type) {
             draw_tile_pixel(sx + 12, sy + 12, 0x334155FF);
             break;
 
+        case TILE_MELARI_STONE_FLOOR:
+            // Piso de lajotas de pedra escura das minas subterrâneas
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x1E293BFF; // Ardósia escura base
+                    if (x == 7 || y == 7 || x == 15 || y == 15) c = 0x0F172AFF; // Linhas de rejunte
+                    else if ((x == 3 && y == 3) || (x == 11 && y == 11)) c = 0x334155FF; // Realces
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_MELARI_FORGE_ANVIL:
+            // Bigorna monumental e pedestal da forja de Melari com brasas vivas
+            render_metatile(sx, sy, TILE_MELARI_STONE_FLOOR);
+            // Pedestal de cantaria e brasas ardentes na base
+            for (int y = 11; y <= 15; y++) {
+                for (int x = 2; x <= 13; x++) {
+                    u32 c = 0x475569FF;
+                    if (y >= 13 && (x >= 4 && x <= 11)) {
+                        c = ((x + y + s_water_anim_frame) % 2 == 0) ? 0xEA580CFF : 0xF97316FF; // Brasas
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            // Corpo de ferro fundido da bigorna (mesa, chifre e pé)
+            for (int y = 4; y <= 10; y++) {
+                for (int x = 3; x <= 12; x++) {
+                    u32 c = 0x64748BFF;
+                    if (y == 4) c = 0xCBD5E1FF; // Face de impacto de aço polido
+                    else if (x == 3 && y <= 6) c = 0x94A3B8FF; // Chifre cônico
+                    else if (x >= 6 && x <= 9) c = 0x475569FF; // Cintura da bigorna
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_MELARI_LAVA_CHANNEL:
+            // Canal de lava derretida incandescente fluindo pelas rochas
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0xDC2626FF; // Vermelho fogo
+                    if (y == 0 || y == 15) c = 0x292524FF; // Borda de rocha queimada
+                    else if (y >= 2 && y <= 13) {
+                        int pulse = (x + y * 2 + s_water_anim_frame * 3) % 7;
+                        if (pulse == 0 || pulse == 1) c = 0xFBBF24FF; // Bolhas amarelas brilhantes
+                        else if (pulse == 2 || pulse == 3) c = 0xF97316FF; // Laranja incandescente
+                        else c = 0xEA580CFF; // Magma derretido
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_MELARI_ORE_VEIN:
+            // Parede de rocha vulcânica com veios de minério e cristais cintilantes
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x1C1917FF;
+                    if ((x + y) % 5 == 0) c = 0x292524FF;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            // Cristais de minério de alta qualidade incrustados (esmeralda, safira, rubi)
+            draw_tile_pixel(sx + 4, sy + 5, 0x10B981FF); // Esmeralda verde
+            draw_tile_pixel(sx + 5, sy + 5, 0x34D399FF);
+            draw_tile_pixel(sx + 4, sy + 6, 0xFFFFFFFF);
+            draw_tile_pixel(sx + 10, sy + 10, 0x06B6D4FF); // Safira ciano
+            draw_tile_pixel(sx + 11, sy + 10, 0x38BDF8FF);
+            draw_tile_pixel(sx + 11, sy + 11, 0xFFFFFFFF);
+            draw_tile_pixel(sx + 8, sy + 3, 0xEF4444FF); // Rubi vermelho
+            draw_tile_pixel(sx + 9, sy + 3, 0xFCA5A5FF);
+            draw_tile_pixel(sx + 3, sy + 12, 0xFACC15FF); // Ouro amarelo
+            break;
+
+        case TILE_MELARI_MINING_TRACK:
+            // Trilhos de ferro e dormentes de madeira sobre o piso de lajotas
+            render_metatile(sx, sy, TILE_MELARI_STONE_FLOOR);
+            // Dormentes de madeira transversais
+            for (int dy = 3; dy <= 4; dy++) {
+                for (int x = 1; x <= 14; x++) draw_tile_pixel(sx + x, sy + dy, 0x78350FFF);
+            }
+            for (int dy = 11; dy <= 12; dy++) {
+                for (int x = 1; x <= 14; x++) draw_tile_pixel(sx + x, sy + dy, 0x78350FFF);
+            }
+            // Trilhos longitudinais de ferro polido
+            for (int y = 0; y < 16; y++) {
+                draw_tile_pixel(sx + 3, sy + y, 0x475569FF);
+                draw_tile_pixel(sx + 4, sy + y, 0x94A3B8FF);
+                draw_tile_pixel(sx + 11, sy + y, 0x475569FF);
+                draw_tile_pixel(sx + 12, sy + y, 0x94A3B8FF);
+            }
+            break;
+
+        case TILE_MELARI_CAVE_ARCHWAY:
+            // Portal em arco entalhado na rocha para a Caverna das Chamas (Dungeon 2)
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x334155FF; // Arco de pedra
+                    if (y >= 4 && (x >= 3 && x <= 12)) c = 0x020617FF; // Entrada da caverna escura
+                    else if (y < 4 && (x >= 4 && x <= 11)) c = 0x1E293BFF; // Moldura do arco superior
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            // Tochas acesas iluminando a entrada
+            draw_tile_pixel(sx + 1, sy + 7, 0x78350FFF);
+            draw_tile_pixel(sx + 1, sy + 6, 0xF97316FF);
+            draw_tile_pixel(sx + 14, sy + 7, 0x78350FFF);
+            draw_tile_pixel(sx + 14, sy + 6, 0xF97316FF);
+            break;
+
         default:
             render_metatile(sx, sy, TILE_GRASS);
             break;
@@ -2177,5 +2288,127 @@ Tilemap* map_create_mount_crenel_base(void) {
     m->collision_map[5 * w + 18] = 1; // Bloqueado até ser desvirado pelo Cajado de Pacci!
 
     printf("[MAP] Mount Crenel Base (Sope do Monte Crenel) criado com sucesso (%dx%d tiles)!\n", w, h);
+    return m;
+}
+
+bool map_is_lava(const Tilemap* map, float world_x, float world_y) {
+    if (!map) return false;
+    if (world_x < 0.0f || world_y < 0.0f) return false;
+
+    int tx = (int)(world_x / TILE_SIZE);
+    int ty = (int)(world_y / TILE_SIZE);
+
+    if (tx < 0 || tx >= map->width || ty < 0 || ty >= map->height) return false;
+
+    int idx = ty * map->width + tx;
+    if (map->ground_layer && map->ground_layer[idx] == TILE_MELARI_LAVA_CHANNEL) return true;
+    if (map->overlay_layer && map->overlay_layer[idx] == TILE_MELARI_LAVA_CHANNEL) return true;
+
+    return false;
+}
+
+Tilemap* map_create_melari_mines(void) {
+    int w = 32;
+    int h = 24;
+    Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
+    if (!m) return NULL;
+
+    m->width  = w;
+    m->height = h;
+    m->is_authentic = false;
+    m->authentic_tex = NULL;
+    m->ground_layer  = (u8*)malloc(w * h * sizeof(u8));
+    m->overlay_layer = (u8*)malloc(w * h * sizeof(u8));
+    m->collision_map = (u8*)malloc(w * h * sizeof(u8));
+
+    for (int i = 0; i < w * h; i++) {
+        m->ground_layer[i]  = TILE_MELARI_STONE_FLOOR;
+        m->overlay_layer[i] = 0xFF;
+        m->collision_map[i] = 0;
+    }
+
+    // Paredes da caverna circundante (rocha vulcânica escura)
+    // Topo (linhas 0 e 1)
+    for (int y = 0; y <= 1; y++) {
+        for (int x = 0; x < w; x++) {
+            m->overlay_layer[y * w + x] = TILE_CRENEL_CLIFF_FACE;
+            m->collision_map[y * w + x] = 1;
+        }
+    }
+
+    // Fundo sul (linha 23): Saída para Mount Crenel Base (x=14..17 livre)
+    for (int x = 0; x < w; x++) {
+        if (x < 14 || x > 17) {
+            m->overlay_layer[23 * w + x] = TILE_CRENEL_CLIFF_FACE;
+            m->collision_map[23 * w + x] = 1;
+        }
+    }
+
+    // Paredes laterais Oeste (colunas 0 e 1) e Leste (colunas 30 e 31) com veios de minério
+    for (int y = 0; y < h; y++) {
+        m->overlay_layer[y * w + 0] = TILE_CRENEL_CLIFF_FACE;
+        m->collision_map[y * w + 0] = 1;
+        m->overlay_layer[y * w + 1] = (y % 3 == 0) ? TILE_MELARI_ORE_VEIN : TILE_CRENEL_CLIFF_FACE;
+        m->collision_map[y * w + 1] = 1;
+
+        m->overlay_layer[y * w + (w - 2)] = (y % 3 == 1) ? TILE_MELARI_ORE_VEIN : TILE_CRENEL_CLIFF_FACE;
+        m->collision_map[y * w + (w - 2)] = 1;
+        m->overlay_layer[y * w + (w - 1)] = TILE_CRENEL_CLIFF_FACE;
+        m->collision_map[y * w + (w - 1)] = 1;
+    }
+
+    // Portal em arco ao norte: Entrada da Cave of Flames (Dungeon 2) em x=15..16, y=1
+    m->overlay_layer[1 * w + 15] = TILE_MELARI_CAVE_ARCHWAY;
+    m->collision_map[1 * w + 15] = 0; // Passagem
+    m->overlay_layer[1 * w + 16] = TILE_MELARI_CAVE_ARCHWAY;
+    m->collision_map[1 * w + 16] = 0;
+
+    // Canais de Lava Incandescente (aquecendo os foles e forja):
+    // Canal Oeste (y=7..8, x=3..11)
+    for (int y = 7; y <= 8; y++) {
+        for (int x = 3; x <= 11; x++) {
+            m->ground_layer[y * w + x] = TILE_MELARI_LAVA_CHANNEL;
+            m->collision_map[y * w + x] = 1;
+        }
+    }
+    // Canal Leste (y=7..8, x=20..28)
+    for (int y = 7; y <= 8; y++) {
+        for (int x = 20; x <= 28; x++) {
+            m->ground_layer[y * w + x] = TILE_MELARI_LAVA_CHANNEL;
+            m->collision_map[y * w + x] = 1;
+        }
+    }
+
+    // Plataforma central da Forja de Melari (x=13..18, y=4..10):
+    // Bigorna monumental e pedestal da forja em x=15..16, y=7
+    m->overlay_layer[7 * w + 15] = TILE_MELARI_FORGE_ANVIL;
+    m->collision_map[7 * w + 15] = 1;
+    m->overlay_layer[7 * w + 16] = TILE_MELARI_FORGE_ANVIL;
+    m->collision_map[7 * w + 16] = 1;
+
+    // Ferrovia / Trilhos de mineração:
+    // Trilho principal vertical sul (x=16, y=14..23)
+    for (int y = 14; y <= 23; y++) {
+        m->ground_layer[y * w + 16] = TILE_MELARI_MINING_TRACK;
+    }
+    // Ramal de trilhos leste para o veio de minério (y=18, x=17..27)
+    for (int x = 17; x <= 27; x++) {
+        m->ground_layer[18 * w + x] = TILE_MELARI_MINING_TRACK;
+    }
+    // Carrinho de mina funcional no ramal leste (x=24, y=18)
+    m->overlay_layer[18 * w + 24] = TILE_MINECART;
+    m->collision_map[18 * w + 24] = 1;
+
+    // Pilhas de caixotes de ferramentas (x=6..7, y=16)
+    m->overlay_layer[16 * w + 6] = TILE_BARREL_CRATE;
+    m->collision_map[16 * w + 6] = 1;
+    m->overlay_layer[16 * w + 7] = TILE_BARREL_CRATE;
+    m->collision_map[16 * w + 7] = 1;
+
+    // Baú fechado com tesouro nos fundos noroeste (x=4, y=4)
+    m->overlay_layer[4 * w + 4] = TILE_CHEST_CLOSED;
+    m->collision_map[4 * w + 4] = 1;
+
+    printf("[MAP] Melari's Mines (Minas de Melari) criado com sucesso (%dx%d tiles)!\n", w, h);
     return m;
 }

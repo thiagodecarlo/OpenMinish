@@ -44,7 +44,9 @@ typedef enum {
     ENTITY_NPC_MALON,         // Malon da Fazenda Lon Lon (Moça do campo)
     ENTITY_ENEMY_TEKTITE,     // Tektite saltitante (Aracnídeo vulcânico com 4 patas que salta alto)
     ENTITY_ENEMY_SPINY_BEETLE,// Besouro com carapaça de pedra/arbusto que corre em investida
-    ENTITY_NPC_BUSINESS_SCRUB // Deku Scrub comerciante do Monte Crenel (Vendedor do Grip Ring)
+    ENTITY_NPC_BUSINESS_SCRUB,// Deku Scrub comerciante do Monte Crenel (Vendedor do Grip Ring)
+    ENTITY_NPC_MELARI,        // Mestre Ferreiro Melari (Forjador da White Sword)
+    ENTITY_NPC_MOUNTAIN_MINISH// Minerador / Aprendiz das Minas de Melari
 } EntityType;
 
 // Caixa delimitadora de colisão e dano (Hitbox / Hurtbox)
@@ -218,6 +220,16 @@ Entity* entity_find_nearby_malon(float world_x, float world_y, float max_dist);
  * Procura pelo Business Scrub (Deku Scrub comerciante) no Monte Crenel.
  */
 Entity* entity_find_nearby_business_scrub(float world_x, float world_y, float max_dist);
+
+/*
+ * Procura pelo Mestre Ferreiro Melari nas Minas de Melari.
+ */
+Entity* entity_find_nearby_melari(float world_x, float world_y, float max_dist);
+
+/*
+ * Procura por um minerador Mountain Minish nas Minas de Melari.
+ */
+Entity* entity_find_nearby_mountain_minish(float world_x, float world_y, float max_dist);
 
 /*
  * Realiza a compra do Grip Ring com o Business Scrub por 40 Rupees.

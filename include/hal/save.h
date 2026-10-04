@@ -13,7 +13,7 @@
 #include <stdbool.h>
 
 #define SAVE_MAGIC 0x494E494D // "MINI" em little endian
-#define SAVE_VERSION 1
+#define SAVE_VERSION 2
 #define MAX_SAVE_SLOTS 3
 
 typedef struct {
@@ -23,7 +23,7 @@ typedef struct {
     float player_x;
     float player_y;
     int   player_dir;
-    int   current_map;       // 0: Woods, 1: Hyrule Town, 2: Minish Village, 3: Dungeon
+    int   current_map;       // 0: Woods, 1: Hyrule Town, 2: Minish Village, 3: Dungeon, 4: South Field, 5: North Field, 6: Crenel Base, 7: Melari's Mines
     int   hearts;
     int   max_hearts;
     int   rupees;
@@ -33,6 +33,7 @@ typedef struct {
     bool  is_minish;
     bool  has_grip_ring;
     bool  has_cane_of_pacci;
+    bool  has_white_sword;
     int   slot_a;
     int   slot_b;
     u32   unlocked_items_mask;

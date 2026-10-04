@@ -387,6 +387,26 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
                     break;
 
+                case ENTITY_NPC_MELARI:
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1; // Na forja martelando a bigorna
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
+                    break;
+
+                case ENTITY_NPC_MOUNTAIN_MINISH:
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1; // Minerando minérios com picareta
+                    e->animTimer     = rand() % 30;
+                    e->hitbox        = (Hitbox){ -6.0f, -6.0f, 12.0f, 12.0f };
+                    break;
+
                 default:
                     break;
             }
@@ -1520,6 +1540,36 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
                 }
             } else {
                 e->dir = DIR_DOWN;
+            }
+        }
+
+        // 19. NPC: MESTRE FERREIRO MELARI (CHEFE DOS MOUNTAIN MINISH)
+        else if (e->type == ENTITY_NPC_MELARI) {
+            e->animTimer++;
+            float dx = link_x - e->x;
+            float dy = link_y - e->y;
+            if (dx * dx + dy * dy <= 40.0f * 40.0f) {
+                if (fabsf(dx) > fabsf(dy)) {
+                    e->dir = (dx > 0.0f) ? DIR_RIGHT : DIR_LEFT;
+                } else {
+                    e->dir = (dy > 0.0f) ? DIR_DOWN : DIR_UP;
+                }
+            } else {
+                e->dir = DIR_DOWN;
+            }
+        }
+
+        // 20. NPC: MINERADOR MOUNTAIN MINISH
+        else if (e->type == ENTITY_NPC_MOUNTAIN_MINISH) {
+            e->animTimer++;
+            float dx = link_x - e->x;
+            float dy = link_y - e->y;
+            if (dx * dx + dy * dy <= 36.0f * 36.0f) {
+                if (fabsf(dx) > fabsf(dy)) {
+                    e->dir = (dx > 0.0f) ? DIR_RIGHT : DIR_LEFT;
+                } else {
+                    e->dir = (dy > 0.0f) ? DIR_DOWN : DIR_UP;
+                }
             }
         }
     }
@@ -3622,6 +3672,121 @@ void entity_manager_render(const Camera* cam) {
                 font_draw_text(prompt_x + 2, prompt_y + 1, "[A] Comerciante", 0xFDE047FF, true);
             }
         }
+
+        // 23. NPC: MESTRE FERREIRO MELARI
+        else if (e->type == ENTITY_NPC_MELARI) {
+            draw_filled_rect(sx + 3, sy + 13, 10, 3, 0x05100766); // Sombra
+
+            int strike = (e->animTimer / 15) % 4; // Ciclo de forja com o martelo
+            int my = sy;
+
+            u32 c_skin   = 0xFDE8CDFF;
+            u32 c_beard  = 0xE2E8F0FF;
+            u32 c_goggle = 0x92400EFF;
+            u32 c_lens   = 0xF97316FF;
+            u32 c_shirt  = 0xDC2626FF;
+            u32 c_apron  = 0x78350FFF;
+            u32 c_hammer = 0x64748BFF;
+            u32 c_gold   = 0xFACC15FF;
+
+            // Rosto e barba espessa
+            draw_filled_rect(sx + 5, my + 4, 6, 4, c_skin);
+            // Óculos de proteção na testa
+            draw_filled_rect(sx + 4, my + 2, 8, 2, c_goggle);
+            put_pixel_safe(sx + 5, my + 2, c_lens);
+            put_pixel_safe(sx + 8, my + 2, c_lens);
+
+            // Olhos e sobrancelha
+            put_pixel_safe(sx + 6, my + 5, 0x0F172AFF);
+            put_pixel_safe(sx + 9, my + 5, 0x0F172AFF);
+
+            // Barba branca cheia de ferreiro
+            draw_filled_rect(sx + 5, my + 7, 6, 4, c_beard);
+            draw_filled_rect(sx + 6, my + 11, 4, 2, c_beard);
+
+            // Corpo com avental de couro
+            draw_filled_rect(sx + 4, my + 8, 8, 7, c_shirt);
+            draw_filled_rect(sx + 5, my + 9, 6, 6, c_apron);
+
+            // Martelo de ferreiro em movimento
+            if (strike == 0 || strike == 1) {
+                // Martelo erguido alto
+                draw_filled_rect(sx + 12, my, 4, 3, c_hammer);
+                put_pixel_safe(sx + 13, my - 1, c_gold);
+                draw_filled_rect(sx + 11, my + 3, 2, 6, 0x78350FFF); // Cabo
+            } else {
+                // Martelo golpeando a bigorna com faíscas
+                draw_filled_rect(sx + 12, my + 9, 4, 3, c_hammer);
+                draw_filled_rect(sx + 11, my + 7, 2, 4, 0x78350FFF);
+                // Faíscas douradas e brancas do impacto
+                put_pixel_safe(sx + 14, my + 8, 0xFACC15FF);
+                put_pixel_safe(sx + 15, my + 7, 0xFFFFFFFF);
+                put_pixel_safe(sx + 13, my + 6, 0xF97316FF);
+            }
+
+            // Prompt de interação [A] Melari
+            float dx = s_last_link_x - e->x;
+            float dy = s_last_link_y - e->y;
+            if (dx * dx + dy * dy <= 36.0f * 36.0f) {
+                int bounce = ((e->animTimer / 10) % 2 == 1) ? 1 : 0;
+                int prompt_x = sx - 16;
+                int prompt_y = my - 16 + bounce;
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 52, 12, 0x1A0F06F0);
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 52, 1, 0xF97316FF);
+                font_draw_text(prompt_x + 2, prompt_y + 1, "[A] Melari", 0xFDE047FF, true);
+            }
+        }
+
+        // 24. NPC: MINERADOR MOUNTAIN MINISH
+        else if (e->type == ENTITY_NPC_MOUNTAIN_MINISH) {
+            draw_filled_rect(sx + 4, sy + 13, 8, 3, 0x05100766); // Sombra
+
+            int breathe = ((e->animTimer / 16) % 2 == 1) ? 1 : 0;
+            int my = sy - breathe;
+
+            u32 c_helmet = 0xFACC15FF;
+            u32 c_skin   = 0xFDE8CDFF;
+            u32 c_cloth  = 0x2563EBFF;
+            u32 c_pick   = 0x64748BFF;
+
+            // Capacete amarelo com lâmpada acesa
+            draw_filled_rect(sx + 5, my + 1, 6, 4, c_helmet);
+            put_pixel_safe(sx + 7, my + 2, 0xFFFFFFFF); // Lâmpada
+            put_pixel_safe(sx + 8, my + 2, 0xFEF08AFF);
+
+            // Rosto e orelhas
+            draw_filled_rect(sx + 5, my + 5, 6, 3, c_skin);
+            put_pixel_safe(sx + 4, my + 5, c_skin);
+            put_pixel_safe(sx + 11, my + 5, c_skin);
+            put_pixel_safe(sx + 6, my + 6, 0x1E293BFF);
+            put_pixel_safe(sx + 9, my + 6, 0x1E293BFF);
+
+            // Macacão azul
+            draw_filled_rect(sx + 5, my + 8, 6, 6, c_cloth);
+
+            // Picareta de minerador
+            int swing = (e->animTimer / 12) % 3;
+            if (swing == 0) {
+                draw_filled_rect(sx + 11, my + 4, 3, 2, c_pick);
+                draw_filled_rect(sx + 10, my + 6, 2, 5, 0x78350FFF);
+            } else {
+                draw_filled_rect(sx + 11, my + 9, 3, 2, c_pick);
+                draw_filled_rect(sx + 10, my + 7, 2, 3, 0x78350FFF);
+                put_pixel_safe(sx + 13, my + 10, 0xFFFFFFFF); // Faísca de mineração
+            }
+
+            // Prompt de interação [A] Conversar
+            float dx = s_last_link_x - e->x;
+            float dy = s_last_link_y - e->y;
+            if (dx * dx + dy * dy <= 28.0f * 28.0f) {
+                int bounce = ((e->animTimer / 10) % 2 == 1) ? 1 : 0;
+                int prompt_x = sx - 16;
+                int prompt_y = my - 16 + bounce;
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 52, 12, 0x0F172AF0);
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 52, 1, 0x38BDF8FF);
+                font_draw_text(prompt_x + 2, prompt_y + 1, "[A] Conversar", 0xE0F2FEFF, true);
+            }
+        }
     }
 }
 
@@ -3924,6 +4089,46 @@ Entity* entity_find_nearby_business_scrub(float world_x, float world_y, float ma
     for (int i = 0; i < MAX_ENTITIES; i++) {
         Entity* e = &s_entities[i];
         if (!e->is_active || e->type != ENTITY_NPC_BUSINESS_SCRUB) continue;
+
+        float dx = e->x - world_x;
+        float dy = e->y - world_y;
+        float dist_sq = dx * dx + dy * dy;
+
+        if (dist_sq <= best_dist_sq) {
+            best_dist_sq = dist_sq;
+            best = e;
+        }
+    }
+    return best;
+}
+
+Entity* entity_find_nearby_melari(float world_x, float world_y, float max_dist) {
+    float best_dist_sq = max_dist * max_dist;
+    Entity* best = NULL;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active || e->type != ENTITY_NPC_MELARI) continue;
+
+        float dx = e->x - world_x;
+        float dy = e->y - world_y;
+        float dist_sq = dx * dx + dy * dy;
+
+        if (dist_sq <= best_dist_sq) {
+            best_dist_sq = dist_sq;
+            best = e;
+        }
+    }
+    return best;
+}
+
+Entity* entity_find_nearby_mountain_minish(float world_x, float world_y, float max_dist) {
+    float best_dist_sq = max_dist * max_dist;
+    Entity* best = NULL;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active || e->type != ENTITY_NPC_MOUNTAIN_MINISH) continue;
 
         float dx = e->x - world_x;
         float dy = e->y - world_y;

@@ -32,7 +32,9 @@ typedef enum {
     SPEAKER_FESTARI,         // Sacerdote Festari da Abadia do Santuário
     SPEAKER_VILLAGE_MINISH,  // Habitante / Morador da Vila Minish
     SPEAKER_MALON,           // Malon da Fazenda Lon Lon (Moça do campo)
-    SPEAKER_BUSINESS_SCRUB   // Deku Scrub comerciante do Monte Crenel
+    SPEAKER_BUSINESS_SCRUB,  // Deku Scrub comerciante do Monte Crenel
+    SPEAKER_MELARI,          // Mestre Ferreiro Melari (Chefe dos Mountain Minish)
+    SPEAKER_MOUNTAIN_MINISH  // Minerador / Aprendiz das Minas de Melari
 } DialogueSpeaker;
 
 typedef enum {
@@ -117,6 +119,26 @@ void dialogue_trigger_crenel_sign_talk(void);
  * Inicia a conversa de comércio com o Deku Scrub vendedor do Grip Ring no Monte Crenel.
  */
 void dialogue_trigger_business_scrub_talk(int link_rupees, bool has_grip_ring);
+
+/*
+ * Inicia o diálogo de reforja e conselho com o Mestre Ferreiro Melari no Monte Crenel.
+ */
+void dialogue_trigger_melari_talk(bool has_white_sword);
+
+/*
+ * Inicia o diálogo amigável com os mineradores Mountain Minish nas minas.
+ */
+void dialogue_trigger_mountain_minish_talk(void);
+
+/*
+ * Retorna true se Melari concluiu a reforja da lendária White Sword.
+ */
+bool dialogue_is_melari_reward_pending(void);
+
+/*
+ * Consome/limpa a recompensa pendente concedida por Melari.
+ */
+void dialogue_clear_melari_reward(void);
 
 /*
  * Retorna true se a conclusão do diálogo concede o Pergaminho do Tigre nº 1 (Spin Attack).

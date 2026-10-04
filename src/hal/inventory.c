@@ -16,14 +16,24 @@ static int s_cursor_y = 0;
 static int s_cursor_pulse = 0;
 
 static bool s_items_unlocked[INV_ITEM_COUNT] = { false };
+static bool s_has_white_sword = false;
 static InventoryItem s_slot_a = INV_ITEM_SWORD;
 static InventoryItem s_slot_b = INV_ITEM_BOOMERANG;
+
+void inventory_set_white_sword(bool has_white_sword) {
+    s_has_white_sword = has_white_sword;
+}
+
+bool inventory_has_white_sword(void) {
+    return s_has_white_sword;
+}
 
 void inventory_init(void) {
     s_is_paused = false;
     s_cursor_x = 0;
     s_cursor_y = 0;
     s_cursor_pulse = 0;
+    s_has_white_sword = false;
 
     memset(s_items_unlocked, 0, sizeof(s_items_unlocked));
 
@@ -89,7 +99,7 @@ void inventory_set_slot_b(InventoryItem item) {
 
 const char* inventory_get_item_name(InventoryItem item) {
     switch (item) {
-        case INV_ITEM_SWORD:         return "Espada do Smith";
+        case INV_ITEM_SWORD:         return s_has_white_sword ? "Espada Branca" : "Espada do Smith";
         case INV_ITEM_BOOMERANG:     return "Bumerangue Magico";
         case INV_ITEM_GUST_JAR:      return "Pote Magico (Gust Jar)";
         case INV_ITEM_BOMBS:         return "Bolsa de Bombas";
@@ -108,7 +118,9 @@ const char* inventory_get_item_name(InventoryItem item) {
 const char* inventory_get_item_desc(InventoryItem item) {
     switch (item) {
         case INV_ITEM_SWORD:
-            return "Lâmina forjada por Mestre Smith. Desfere cortes e carrega Spin Attack.";
+            return s_has_white_sword ?
+                "Lamina sagrada reforjada por Mestre Melari. Dano dobrado (2 HP) e cortes radiantes!" :
+                "Lamina forjada por Mestre Smith. Desfere cortes e carrega Spin Attack.";
         case INV_ITEM_BOOMERANG:
             return "Arma rotativa voadora. Atordoa monstros e resgata itens distantes.";
         case INV_ITEM_GUST_JAR:
@@ -195,15 +207,29 @@ void inventory_assign_to_slot_b(void) {
 static void draw_item_icon(int x, int y, InventoryItem item) {
     switch (item) {
         case INV_ITEM_SWORD:
-            // Espada brilhante: lâmina de aço, guarda dourada e empunhadura azul
-            for (int i = 0; i < 9; i++) {
-                hal_video_put_pixel(x + 2 + i, y + 11 - i, 0xE2E8F0FF); // Lâmina
-                hal_video_put_pixel(x + 3 + i, y + 11 - i, 0xFFFFFFFF);
+            if (s_has_white_sword) {
+                // Espada Branca: lâmina de prata reluzente, asas douradas e rubi sagrado no guarda-mão
+                for (int i = 0; i < 9; i++) {
+                    hal_video_put_pixel(x + 2 + i, y + 11 - i, 0xBAE6FDFF); // Brilho celeste
+                    hal_video_put_pixel(x + 3 + i, y + 11 - i, 0xFFFFFFFF); // Lâmina de pura prata branca
+                }
+                hal_video_put_pixel(x + 2, y + 9,  0xF59E0BFF); // Guarda asas douradas
+                hal_video_put_pixel(x + 3, y + 10, 0xEF4444FF); // Rubi sagrado central
+                hal_video_put_pixel(x + 4, y + 11, 0xF59E0BFF);
+                hal_video_put_pixel(x + 5, y + 12, 0xF59E0BFF);
+                hal_video_put_pixel(x + 2, y + 12, 0xF8FAFCFF); // Cabo com empunhadura prateada
+                hal_video_put_pixel(x + 1, y + 13, 0xF59E0BFF); // Pomo dourado
+            } else {
+                // Espada do Smith básica: lâmina de aço, guarda dourada e empunhadura azul
+                for (int i = 0; i < 9; i++) {
+                    hal_video_put_pixel(x + 2 + i, y + 11 - i, 0xE2E8F0FF); // Lâmina
+                    hal_video_put_pixel(x + 3 + i, y + 11 - i, 0xFFFFFFFF);
+                }
+                hal_video_put_pixel(x + 3, y + 10, 0xF59E0BFF); // Guarda
+                hal_video_put_pixel(x + 4, y + 11, 0xF59E0BFF);
+                hal_video_put_pixel(x + 2, y + 12, 0x2563EBFF); // Cabo
+                hal_video_put_pixel(x + 1, y + 13, 0xF59E0BFF); // Pomo
             }
-            hal_video_put_pixel(x + 3, y + 10, 0xF59E0BFF); // Guarda
-            hal_video_put_pixel(x + 4, y + 11, 0xF59E0BFF);
-            hal_video_put_pixel(x + 2, y + 12, 0x2563EBFF); // Cabo
-            hal_video_put_pixel(x + 1, y + 13, 0xF59E0BFF); // Pomo
             break;
 
         case INV_ITEM_BOOMERANG:
