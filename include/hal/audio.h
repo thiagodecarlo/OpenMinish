@@ -55,6 +55,9 @@ typedef enum {
     SOUND_TOWN_BELL,       // Sino ressonante da torre do sino da Cidade de Hyrule
     SOUND_MINISH_SHRINK,   // Arpejo descendente místico de encolhimento para tamanho Minish
     SOUND_MINISH_GROW,     // Fanfarra mágica ascendente de crescimento de volta a tamanho humano
+    SOUND_SWIM_STROKE,     // Braçada de nado com espirro de água (Zora's Flippers)
+    SOUND_DIVE,            // Mergulho submundo na água profunda com bolhas
+    SOUND_SURFACE,         // Retorno à superfície com espirros de água
     SOUND_COUNT
 } SoundEffect;
 

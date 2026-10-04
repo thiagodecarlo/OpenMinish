@@ -702,6 +702,17 @@ Tilemap* map_create_hyrule_town(void) {
         m->collision_map[y * w + (w - 1)] = 1;
     }
 
+    // Canal Ornamental de Hyrule Town (Canal Oeste: x=1, y=1..h-3)
+    for (int y = 1; y < h - 2; y++) {
+        m->ground_layer[y * w + 1] = TILE_WATER;
+        m->collision_map[y * w + 1] = 1; // Sólido a pé, navegável com Zora's Flippers!
+        // Pontes de pedra sobre o canal conectando às ruas (y=8 e y=14)
+        if (y == 8 || y == 14) {
+            m->overlay_layer[y * w + 1] = TILE_COBBLESTONE;
+            m->collision_map[y * w + 1] = 0;
+        }
+    }
+
     // Muralha Sul (Portão de saída para Hyrule Field / Minish Woods)
     for (int y = h - 2; y < h; y++) {
         for (int x = 0; x < w; x++) {
@@ -1270,6 +1281,41 @@ bool map_is_solid(const Tilemap* map, float world_x, float world_y) {
     if (tx < 0 || tx >= map->width || ty < 0 || ty >= map->height) return true;
 
     return map->collision_map[ty * map->width + tx] != 0;
+}
+
+bool map_is_water(const Tilemap* map, float world_x, float world_y) {
+    if (!map) return false;
+    if (world_x < 0.0f || world_y < 0.0f) return false;
+
+    int tx = (int)(world_x / TILE_SIZE);
+    int ty = (int)(world_y / TILE_SIZE);
+
+    if (tx < 0 || tx >= map->width || ty < 0 || ty >= map->height) return false;
+
+    if (!map->is_authentic && map->ground_layer) {
+        int idx = ty * map->width + tx;
+        if (map->overlay_layer && (map->overlay_layer[idx] == TILE_VILLAGE_BRIDGE || map->overlay_layer[idx] == TILE_COBBLESTONE)) {
+            return false; // Sobre a ponte de madeira ou calcamento nao e agua
+        }
+        u8 ground = map->ground_layer[idx];
+        return (ground == TILE_WATER || ground == TILE_VILLAGE_STREAM);
+    }
+
+    if (map->is_authentic && map->authentic_tex && map->authentic_tex->pixels) {
+        int px = (int)world_x;
+        int py = (int)world_y;
+        if (px >= 0 && px < map->authentic_tex->width && py >= 0 && py < map->authentic_tex->height) {
+            u32 c = map->authentic_tex->pixels[py * map->authentic_tex->width + px];
+            u8 b = (c >> 8) & 0xFF;
+            u8 g = (c >> 16) & 0xFF;
+            u8 r = (c >> 24) & 0xFF;
+            if (b > 120 && b > r + 25 && b >= g - 25) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 bool map_interact_slash(Tilemap* map, float world_x, float world_y) {

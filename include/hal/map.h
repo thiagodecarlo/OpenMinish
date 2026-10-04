@@ -131,6 +131,11 @@ void map_world_to_screen(const Camera* cam, float world_x, float world_y, int* o
 bool map_is_solid(const Tilemap* map, float world_x, float world_y);
 
 /*
+ * Retorna true se o ponto no mundo contiver água (TILE_WATER, TILE_VILLAGE_STREAM ou lago autêntico).
+ */
+bool map_is_water(const Tilemap* map, float world_x, float world_y);
+
+/*
  * Interage com o cenário no ponto do golpe de espada (ex: corta arbusto e revela item).
  * Retorna true se um arbusto foi cortado ou baú foi aberto.
  */

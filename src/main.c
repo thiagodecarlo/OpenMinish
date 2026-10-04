@@ -59,6 +59,14 @@ typedef struct {
     bool is_transforming;       // Em transição cinemática de transformação
     int  transform_timer;       // Temporizador da animação de transformação (0..50 frames)
     bool transform_to_minish;   // true = encolhendo para Minish, false = crescendo para Humano
+
+    // Item Canônico: Nadadeiras de Zora (Zora's Flippers) & Natação
+    bool has_flippers;          // Possui as Nadadeiras de Zora
+    bool is_swimming;          // Nadando na água
+    int  swim_stroke_timer;    // Temporizador de braçada e áudio de água
+    bool is_diving;            // Mergulhado sob a água
+    int  dive_timer;           // Duração do mergulho (0..45 frames)
+    int  water_ripple_timer;   // Animação de ondulações na água
 } Player;
 
 static const char* s_region_tags[REGION_COUNT] = { "usa", "eur", "jpn" };
@@ -473,6 +481,102 @@ static void draw_link_transformation_effects(const Player* p, int cx, int cy) {
     }
 }
 
+static void draw_rect_blend(int rx, int ry, int rw, int rh, u32 color, float alpha) {
+    const HalVideoContext* ctx = hal_video_get_context();
+    if (!ctx || !ctx->framebuffer || alpha <= 0.0f) return;
+    if (alpha > 1.0f) alpha = 1.0f;
+    u8 cr = (color >> 24) & 0xFF;
+    u8 cg = (color >> 16) & 0xFF;
+    u8 cb = (color >> 8) & 0xFF;
+
+    for (int y = ry; y < ry + rh; y++) {
+        if (y < 0 || y >= ctx->render_height) continue;
+        for (int x = rx; x < rx + rw; x++) {
+            if (x < 0 || x >= ctx->render_width) continue;
+            int idx = y * ctx->render_width + x;
+            u32 bg = ctx->framebuffer[idx];
+            u8 br = (bg >> 24) & 0xFF;
+            u8 bg_g = (bg >> 16) & 0xFF;
+            u8 bb = (bg >> 8) & 0xFF;
+
+            u8 nr = (u8)(cr * alpha + br * (1.0f - alpha));
+            u8 ng = (u8)(cg * alpha + bg_g * (1.0f - alpha));
+            u8 nb = (u8)(cb * alpha + bb * (1.0f - alpha));
+            ctx->framebuffer[idx] = (nr << 24) | (ng << 16) | (nb << 8) | 0xFF;
+        }
+    }
+}
+
+// Renderiza efeitos de água de natação e mergulho com as Nadadeiras de Zora
+static void draw_link_swimming_effects(const Player* p, int px, int py) {
+    if (!p->is_swimming) return;
+
+    int cx = px + 8;
+    int cy = py + 12;
+
+    // 1. Ondulações concêntricas de natação na água
+    int phase = (p->water_ripple_timer / 4) % 8;
+    int r_x1 = 7 + (phase % 4);
+    int r_y1 = 3 + (phase % 4) / 2;
+    int r_x2 = 11 + ((phase + 2) % 4);
+    int r_y2 = 5 + ((phase + 2) % 4) / 2;
+
+    u32 ripple_col1 = 0xBAE6FDFF; // Espuma brilhante (Cyan White)
+    u32 ripple_col2 = 0x38BDF8AA; // Ondulação d'água (Sky Blue)
+
+    for (int a = 0; a < 20; a++) {
+        float ang = (float)a * (2.0f * 3.14159265f / 20.0f);
+        int ox = cx + (int)(cosf(ang) * (float)r_x1);
+        int oy = cy + (int)(sinf(ang) * (float)r_y1);
+        hal_video_put_pixel(ox, oy, ripple_col1);
+    }
+    for (int a = 0; a < 24; a++) {
+        float ang = (float)a * (2.0f * 3.14159265f / 24.0f);
+        int ox = cx + (int)(cosf(ang) * (float)r_x2);
+        int oy = cy + (int)(sinf(ang) * (float)r_y2);
+        hal_video_put_pixel(ox, oy, ripple_col2);
+    }
+
+    // 2. Respingos d'água dinâmicos enquanto se desloca
+    if (p->is_moving) {
+        int splash_phase = (p->anim_timer % 6);
+        u32 splash_col = 0xE0F2FEFF;
+        hal_video_put_pixel(cx - 10, cy - 2 + splash_phase, splash_col);
+        hal_video_put_pixel(cx + 10, cy - 2 + splash_phase, splash_col);
+        if (splash_phase < 3) {
+            hal_video_put_pixel(cx - 12, cy - 4, 0xFFFFFFFF);
+            hal_video_put_pixel(cx + 12, cy - 4, 0xFFFFFFFF);
+        }
+    }
+
+    // 3. Submersão corporal
+    if (!p->is_diving) {
+        // Cintura e pernas sob a superfície da água translúcida
+        draw_rect_blend(px + 2, py + 12, 12, 6, 0x0284C7FF, 0.45f);
+    } else {
+        // Mergulho profundo: corpo inteiro submerso sob tom azul marinho e bolhas de ar
+        draw_rect_blend(px - 1, py + 2, 18, 16, 0x0369A1FF, 0.70f);
+
+        // Bolhas de ar subindo à superfície
+        int b1_y = cy - (p->dive_timer % 14);
+        int b1_x = cx + ((p->dive_timer % 4) - 2);
+        int b2_y = cy - ((p->dive_timer + 7) % 14);
+        int b2_x = cx - ((p->dive_timer % 3) - 1);
+
+        hal_video_put_pixel(b1_x, b1_y, 0xFFFFFFFF);
+        hal_video_put_pixel(b1_x + 1, b1_y, 0x7DD3FCFF);
+        hal_video_put_pixel(b2_x, b2_y, 0xFFFFFFFF);
+        hal_video_put_pixel(b2_x - 1, b2_y, 0x7DD3FCFF);
+
+        for (int a = 0; a < 12; a++) {
+            float ang = (float)a * (2.0f * 3.14159265f / 12.0f);
+            int ox = cx + (int)(cosf(ang) * 5.0f);
+            int oy = cy + (int)(sinf(ang) * 2.5f);
+            hal_video_put_pixel(ox, oy, 0x38BDF888);
+        }
+    }
+}
+
 // Renderiza o Link no estilo clássico de Minish Cap na posição da Câmera
 static void draw_link(const Player* p, const Camera* cam) {
     // Efeito clássico de piscar ao receber dano (flicker)
@@ -545,6 +649,7 @@ static void draw_link(const Player* p, const Camera* cam) {
             if (p->is_attacking) {
                 draw_link_sword_effects(p, px, py);
             }
+            draw_link_swimming_effects(p, px, py);
             return;
         }
 
@@ -585,6 +690,7 @@ static void draw_link(const Player* p, const Camera* cam) {
 
         texture_draw_ex(s_link_tex, src_x, src_y, 32, 32, draw_x, draw_y, flip_h);
         draw_link_sword_effects(p, px, py);
+        draw_link_swimming_effects(p, px, py);
         return;
     }
 
@@ -649,11 +755,16 @@ static void draw_link(const Player* p, const Camera* cam) {
 
     // 6. Efeitos de espada e Spin Attack
     draw_link_sword_effects(p, px, py);
+    draw_link_swimming_effects(p, px, py);
 }
 
-static inline bool is_world_solid_for_player(const Tilemap* map, float wx, float wy, bool is_minish) {
+static inline bool is_world_solid_for_player(const Tilemap* map, float wx, float wy, bool is_minish, bool has_flippers) {
     if (dungeon_is_active()) {
         return dungeon_is_solid(wx, wy);
+    }
+    // Mecânica Zora's Flippers: com as nadadeiras, a água NÃO bloqueia o movimento (permite nadar!)
+    if (has_flippers && map_is_water(map, wx, wy)) {
+        return false;
     }
     // Mecânica Minish: o interior do Tronco Oco (Hollow Log em Minish Woods) é transitável apenas quando Minish!
     if (is_minish && map && map->is_authentic) {
@@ -752,6 +863,12 @@ int main(int argc, char* argv[]) {
     link.is_transforming = false;
     link.transform_timer = 0;
     link.transform_to_minish = false;
+    link.has_flippers = true;
+    link.is_swimming = false;
+    link.swim_stroke_timer = 0;
+    link.is_diving = false;
+    link.dive_timer = 0;
+    link.water_ripple_timer = 0;
 
     // Inicialização do Subsistema de Entidades e Spawn de Inimigos e NPCs
     entity_manager_init();
@@ -851,6 +968,15 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
+                        case SDLK_f:
+                            link.has_flippers = !link.has_flippers;
+                            if (link.has_flippers) {
+                                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
+                                printf("[FLIPPERS] [F] Nadadeiras de Zora EQUIPADAS! Link agora pode nadar na agua profunda!\n");
+                            } else {
+                                printf("[FLIPPERS] [F] Nadadeiras de Zora REMOVIDAS.\n");
+                            }
+                            break;
                         case SDLK_q:
                             subweapon_cycle();
                             break;
@@ -942,93 +1068,102 @@ int main(int argc, char* argv[]) {
                 link.tiger_scroll_banner_timer--;
             }
 
-            // Ação com Botão A: Primeiro Portal Minish, Masmorra / Loja / Guarda / Cidadã / Baús / Swiftblade / NPCs, depois golpe de espada!
+            // Ação com Botão A: Primeiro Natação (Mergulho), Portal Minish, Masmorra / Loja / Guarda / Cidadã / Baús / Swiftblade / NPCs, depois golpe de espada!
             if (hal_input_is_pressed(KEY_A) && !link.is_attacking && !link.is_spinning && !link.is_charging_spin) {
-                Entity* nearby_stump = entity_find_nearby_minish_stump(link.x, link.y, 22.0f);
-                if (nearby_stump) {
-                    link.is_transforming = true;
-                    link.transform_timer = 50;
-                    link.transform_to_minish = !link.is_minish;
-                    link.is_moving = false;
-                    link.x = nearby_stump->x;
-                    link.y = nearby_stump->y;
-                    if (link.transform_to_minish) {
-                        hal_audio_play_sound(SOUND_MINISH_SHRINK, 1.0f, 1.0f);
-                        printf("[MINISH] [A] Link subiu no portal e esta ENCOLHENDO para tamanho Minish!\n");
-                    } else {
-                        hal_audio_play_sound(SOUND_MINISH_GROW, 1.0f, 1.0f);
-                        printf("[MINISH] [A] Link subiu no portal e esta CRESCENDO para tamanho Humano!\n");
+                if (link.is_swimming) {
+                    if (!link.is_diving) {
+                        link.is_diving = true;
+                        link.dive_timer = 45;
+                        hal_audio_play_sound(SOUND_DIVE, 1.0f, 1.0f);
+                        printf("[FLIPPERS] [A] Link mergulhou no fundo da agua! (Diving)\n");
                     }
-                } else if (dungeon_is_active()) {
-                    if (dungeon_interact(link.x, link.y, &link.rupees, &link.hearts)) {
-                        // Abriu o baú do altar da masmorra!
-                    } else {
-                        link.is_attacking = true;
-                        link.attack_timer = 12;
-                        hal_audio_play_sound(SOUND_SWORD_SLASH, link.is_minish ? 0.7f : 1.0f, link.is_minish ? 1.38f : 1.0f);
-                    }
-                } else if (s_in_town) {
-                    Entity* shopkeeper = entity_find_nearby_shopkeeper(link.x, link.y, 40.0f);
-                    if (shopkeeper) {
-                        dialogue_trigger_shopkeeper_talk(link.rupees);
-                        // Se estiver perto do balcão de compras:
-                        if (link.x >= 420.0f && link.x <= 468.0f && link.y <= 136.0f) {
-                            if (link.hearts < link.max_hearts && link.rupees >= 30) {
-                                entity_buy_shop_item(0, &link.rupees, &link.hearts, &link.max_hearts); // Poção Vermelha
-                            } else if (link.max_hearts < 6 && link.rupees >= 80) {
-                                entity_buy_shop_item(1, &link.rupees, &link.hearts, &link.max_hearts); // Piece of Heart
-                            } else if (link.rupees >= 50) {
-                                entity_buy_shop_item(2, &link.rupees, &link.hearts, &link.max_hearts); // Bolsa de Bombas
-                            }
-                        }
-                    } else {
-                        Entity* guard = entity_find_nearby_town_guard(link.x, link.y, 30.0f);
-                        if (guard) {
-                            dialogue_trigger_town_guard_talk();
-                        } else {
-                            Entity* citizen = entity_find_nearby_town_citizen(link.x, link.y, 30.0f);
-                            if (citizen) {
-                                dialogue_trigger_town_citizen_talk();
-                            } else {
-                                link.is_attacking = true;
-                                link.attack_timer = 12;
-                                hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
-                            }
-                        }
-                    }
-                } else if (s_in_village) {
-                    Entity* gentari = entity_find_nearby_gentari(link.x, link.y, 30.0f);
-                    if (gentari) {
-                        dialogue_trigger_gentari_talk();
-                    } else {
-                        Entity* festari = entity_find_nearby_festari(link.x, link.y, 30.0f);
-                        if (festari) {
-                            dialogue_trigger_festari_talk();
-                        } else {
-                            Entity* villager = entity_find_nearby_village_minish(link.x, link.y, 28.0f);
-                            if (villager) {
-                                dialogue_trigger_village_minish_talk();
-                            } else {
-                                link.is_attacking = true;
-                                link.attack_timer = 12;
-                                hal_audio_play_sound(SOUND_SWORD_SLASH, 0.7f, 1.38f);
-                            }
-                        }
-                    }
-                } else if (entity_interact_chest(link.x, link.y, &link.rupees, &link.hearts)) {
-                    // Abriu o baú dourado!
                 } else {
-                    Entity* nearby_swiftblade = entity_find_nearby_swiftblade(link.x, link.y, 28.0f);
-                    if (nearby_swiftblade) {
-                        dialogue_trigger_swiftblade_talk(link.has_spin_attack);
-                    } else {
-                        Entity* nearby_npc = entity_find_nearby_npc(link.x, link.y, 28.0f);
-                        if (nearby_npc) {
-                            dialogue_trigger_minish_talk();
+                    Entity* nearby_stump = entity_find_nearby_minish_stump(link.x, link.y, 22.0f);
+                    if (nearby_stump) {
+                        link.is_transforming = true;
+                        link.transform_timer = 50;
+                        link.transform_to_minish = !link.is_minish;
+                        link.is_moving = false;
+                        link.x = nearby_stump->x;
+                        link.y = nearby_stump->y;
+                        if (link.transform_to_minish) {
+                            hal_audio_play_sound(SOUND_MINISH_SHRINK, 1.0f, 1.0f);
+                            printf("[MINISH] [A] Link subiu no portal e esta ENCOLHENDO para tamanho Minish!\n");
+                        } else {
+                            hal_audio_play_sound(SOUND_MINISH_GROW, 1.0f, 1.0f);
+                            printf("[MINISH] [A] Link subiu no portal e esta CRESCENDO para tamanho Humano!\n");
+                        }
+                    } else if (dungeon_is_active()) {
+                        if (dungeon_interact(link.x, link.y, &link.rupees, &link.hearts)) {
+                            // Abriu o baú do altar da masmorra!
                         } else {
                             link.is_attacking = true;
-                            link.attack_timer = 12; // Dura 12 frames (0.2 segundos)
-                            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                            link.attack_timer = 12;
+                            hal_audio_play_sound(SOUND_SWORD_SLASH, link.is_minish ? 0.7f : 1.0f, link.is_minish ? 1.38f : 1.0f);
+                        }
+                    } else if (s_in_town) {
+                        Entity* shopkeeper = entity_find_nearby_shopkeeper(link.x, link.y, 40.0f);
+                        if (shopkeeper) {
+                            dialogue_trigger_shopkeeper_talk(link.rupees);
+                            // Se estiver perto do balcão de compras:
+                            if (link.x >= 420.0f && link.x <= 468.0f && link.y <= 136.0f) {
+                                if (link.hearts < link.max_hearts && link.rupees >= 30) {
+                                    entity_buy_shop_item(0, &link.rupees, &link.hearts, &link.max_hearts); // Poção Vermelha
+                                } else if (link.max_hearts < 6 && link.rupees >= 80) {
+                                    entity_buy_shop_item(1, &link.rupees, &link.hearts, &link.max_hearts); // Piece of Heart
+                                } else if (link.rupees >= 50) {
+                                    entity_buy_shop_item(2, &link.rupees, &link.hearts, &link.max_hearts); // Bolsa de Bombas
+                                }
+                            }
+                        } else {
+                            Entity* guard = entity_find_nearby_town_guard(link.x, link.y, 30.0f);
+                            if (guard) {
+                                dialogue_trigger_town_guard_talk();
+                            } else {
+                                Entity* citizen = entity_find_nearby_town_citizen(link.x, link.y, 30.0f);
+                                if (citizen) {
+                                    dialogue_trigger_town_citizen_talk();
+                                } else {
+                                    link.is_attacking = true;
+                                    link.attack_timer = 12;
+                                    hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                                }
+                            }
+                        }
+                    } else if (s_in_village) {
+                        Entity* gentari = entity_find_nearby_gentari(link.x, link.y, 30.0f);
+                        if (gentari) {
+                            dialogue_trigger_gentari_talk();
+                        } else {
+                            Entity* festari = entity_find_nearby_festari(link.x, link.y, 30.0f);
+                            if (festari) {
+                                dialogue_trigger_festari_talk();
+                            } else {
+                                Entity* villager = entity_find_nearby_village_minish(link.x, link.y, 28.0f);
+                                if (villager) {
+                                    dialogue_trigger_village_minish_talk();
+                                } else {
+                                    link.is_attacking = true;
+                                    link.attack_timer = 12;
+                                    hal_audio_play_sound(SOUND_SWORD_SLASH, 0.7f, 1.38f);
+                                }
+                            }
+                        }
+                    } else if (entity_interact_chest(link.x, link.y, &link.rupees, &link.hearts)) {
+                        // Abriu o baú dourado!
+                    } else {
+                        Entity* nearby_swiftblade = entity_find_nearby_swiftblade(link.x, link.y, 28.0f);
+                        if (nearby_swiftblade) {
+                            dialogue_trigger_swiftblade_talk(link.has_spin_attack);
+                        } else {
+                            Entity* nearby_npc = entity_find_nearby_npc(link.x, link.y, 28.0f);
+                            if (nearby_npc) {
+                                dialogue_trigger_minish_talk();
+                            } else {
+                                link.is_attacking = true;
+                                link.attack_timer = 12; // Dura 12 frames (0.2 segundos)
+                                hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                            }
                         }
                     }
                 }
@@ -1059,7 +1194,7 @@ int main(int argc, char* argv[]) {
                 if (link.attack_timer <= 0) {
                     link.is_attacking = false;
                     // Se o herói possui o Pergaminho do Tigre e manteve o botão A segurado: inicia a carga!
-                    if (link.has_spin_attack && hal_input_is_held(KEY_A)) {
+                    if (link.has_spin_attack && hal_input_is_held(KEY_A) && !link.is_swimming) {
                         link.is_charging_spin = true;
                         link.spin_charge_timer = 0;
                         link.spin_ready = false;
@@ -1175,12 +1310,58 @@ int main(int argc, char* argv[]) {
                 }
             }
 
-        // Modificador de Velocidade: Dash / Pegasus Boots (Botao B segurado) ou Carga da Espada
+        // --------------------------------------------------------------------
+        // LÓGICA DE NATAÇÃO & MERGULHO (ZORA'S FLIPPERS)
+        // --------------------------------------------------------------------
+        link.water_ripple_timer++;
+        bool on_water = map_is_water(active_map, link.x + 8.0f, link.y + 12.0f);
+        if (on_water && link.has_flippers && !dungeon_is_active()) {
+            if (!link.is_swimming) {
+                link.is_swimming = true;
+                link.swim_stroke_timer = 0;
+                hal_audio_play_sound(SOUND_SWIM_STROKE, 0.85f, 1.0f);
+                printf("[FLIPPERS] Link entrou na agua e comecou a nadar!\n");
+            }
+        } else {
+            if (link.is_swimming) {
+                link.is_swimming = false;
+                if (link.is_diving) {
+                    link.is_diving = false;
+                    link.dive_timer = 0;
+                }
+                hal_audio_play_sound(SOUND_SURFACE, 1.0f, 1.0f);
+                printf("[FLIPPERS] Link saiu da agua e voltou a terra firme!\n");
+            }
+        }
+
+        if (link.is_swimming) {
+            if (link.is_diving) {
+                link.dive_timer--;
+                link.invuln_timer = 2; // Invulnerável a perigos da superfície enquanto mergulhado
+                if (link.dive_timer <= 0) {
+                    link.is_diving = false;
+                    hal_audio_play_sound(SOUND_SURFACE, 1.0f, 1.0f);
+                    printf("[FLIPPERS] Link voltou a tona (resurfaced)!\n");
+                }
+            } else if (link.is_moving) {
+                link.swim_stroke_timer++;
+                if (link.swim_stroke_timer >= 22) {
+                    link.swim_stroke_timer = 0;
+                    hal_audio_play_sound(SOUND_SWIM_STROKE, 0.85f, 1.0f);
+                }
+            } else {
+                link.swim_stroke_timer = 0;
+            }
+        }
+
+        // Modificador de Velocidade: Dash / Pegasus Boots (Botao B segurado), Carga da Espada ou Natação
         float dash_mult = 1.0f;
-        if (hal_input_is_held(KEY_B) && subweapon_get_current() == ITEM_PEGASUS_BOOTS) {
+        if (hal_input_is_held(KEY_B) && subweapon_get_current() == ITEM_PEGASUS_BOOTS && !link.is_swimming) {
             dash_mult = 1.85f; // Arrancada veloz das Botas de Pegasus!
         } else if (link.is_charging_spin) {
             dash_mult = 0.85f; // Movimentação prudente enquanto acumula energia na lâmina
+        } else if (link.is_swimming) {
+            dash_mult = link.is_diving ? 0.65f : 0.82f; // Arrasto hidro-dinâmico natural da água
         }
 
         link.is_moving = false;
@@ -1264,14 +1445,14 @@ int main(int argc, char* argv[]) {
             float off_y1 = link.is_minish ? 13.0f : 12.0f;
             float off_y2 = link.is_minish ? 15.0f : 16.0f;
 
-            blocked_x = is_world_solid_for_player(active_map, new_x + off_x1, link.y + off_y1, link.is_minish) ||
-                        is_world_solid_for_player(active_map, new_x + off_x2, link.y + off_y1, link.is_minish) ||
-                        is_world_solid_for_player(active_map, new_x + off_x1, link.y + off_y2, link.is_minish) ||
-                        is_world_solid_for_player(active_map, new_x + off_x2, link.y + off_y2, link.is_minish);
-            blocked_y = is_world_solid_for_player(active_map, link.x + off_x1, new_y + off_y1, link.is_minish) ||
-                        is_world_solid_for_player(active_map, link.x + off_x2, new_y + off_y1, link.is_minish) ||
-                        is_world_solid_for_player(active_map, link.x + off_x1, new_y + off_y2, link.is_minish) ||
-                        is_world_solid_for_player(active_map, link.x + off_x2, new_y + off_y2, link.is_minish);
+            blocked_x = is_world_solid_for_player(active_map, new_x + off_x1, link.y + off_y1, link.is_minish, link.has_flippers) ||
+                        is_world_solid_for_player(active_map, new_x + off_x2, link.y + off_y1, link.is_minish, link.has_flippers) ||
+                        is_world_solid_for_player(active_map, new_x + off_x1, link.y + off_y2, link.is_minish, link.has_flippers) ||
+                        is_world_solid_for_player(active_map, new_x + off_x2, link.y + off_y2, link.is_minish, link.has_flippers);
+            blocked_y = is_world_solid_for_player(active_map, link.x + off_x1, new_y + off_y1, link.is_minish, link.has_flippers) ||
+                        is_world_solid_for_player(active_map, link.x + off_x2, new_y + off_y1, link.is_minish, link.has_flippers) ||
+                        is_world_solid_for_player(active_map, link.x + off_x1, new_y + off_y2, link.is_minish, link.has_flippers) ||
+                        is_world_solid_for_player(active_map, link.x + off_x2, new_y + off_y2, link.is_minish, link.has_flippers);
 
             if (!blocked_x) {
                 link.x = new_x;
@@ -1346,10 +1527,10 @@ int main(int argc, char* argv[]) {
             float off_y1 = link.is_minish ? 13.0f : 12.0f;
             float off_y2 = link.is_minish ? 15.0f : 16.0f;
 
-            k_blocked_x = is_world_solid_for_player(active_map, k_new_x + off_x1, link.y + off_y1, link.is_minish) ||
-                          is_world_solid_for_player(active_map, k_new_x + off_x2, link.y + off_y1, link.is_minish);
-            k_blocked_y = is_world_solid_for_player(active_map, link.x + off_x1, k_new_y + off_y1, link.is_minish) ||
-                          is_world_solid_for_player(active_map, link.x + off_x2, k_new_y + off_y2, link.is_minish);
+            k_blocked_x = is_world_solid_for_player(active_map, k_new_x + off_x1, link.y + off_y1, link.is_minish, link.has_flippers) ||
+                          is_world_solid_for_player(active_map, k_new_x + off_x2, link.y + off_y1, link.is_minish, link.has_flippers);
+            k_blocked_y = is_world_solid_for_player(active_map, link.x + off_x1, k_new_y + off_y1, link.is_minish, link.has_flippers) ||
+                          is_world_solid_for_player(active_map, link.x + off_x2, k_new_y + off_y2, link.is_minish, link.has_flippers);
 
             if (!k_blocked_x) link.x = k_new_x;
             if (!k_blocked_y) link.y = k_new_y;
@@ -1529,6 +1710,20 @@ int main(int argc, char* argv[]) {
         // Contador de Chaves Pequenas da Masmorra (Small Keys 🔑 xN)
         dungeon_render_hud_keys(106, 2);
 
+        // Ícone das Nadadeiras de Zora (Zora's Flippers) no HUD
+        if (link.has_flippers) {
+            int fx = 120;
+            int fy = 2;
+            // Nadadeira esquerda
+            draw_rect(fx, fy + 2, 3, 6, 0x0284C7FF);
+            draw_rect(fx + 1, fy + 4, 2, 4, 0x38BDF8FF);
+            // Nadadeira direita
+            draw_rect(fx + 4, fy + 2, 3, 6, 0x0284C7FF);
+            draw_rect(fx + 5, fy + 4, 2, 4, 0x38BDF8FF);
+            // Tira superior dourada
+            draw_rect(fx + 1, fy + 1, 5, 2, 0xFBBF24FF);
+        }
+
         // Ícone do Pergaminho do Tigre nº 1 no HUD (se Link dominou o Spin Attack)
         if (link.has_spin_attack) {
             int sx = 132;
@@ -1598,6 +1793,18 @@ int main(int argc, char* argv[]) {
             draw_rect(bpx - 3, bpy - 1, text_w + 6, 12, 0x10B981FF);
             draw_rect(bpx - 2, bpy, text_w + 4, 10, 0x0A1F14EE);
             font_draw_text(bpx, bpy + 1, prompt_text, 0x6EE7B7FF, true);
+        }
+
+        // 9. Prompt de Ação Aquática (Natação / Mergulho Zora)
+        if (link.is_swimming && !dialogue_is_active() && !kinstone_is_active()) {
+            const char* swim_prompt = link.is_diving ? "MERGULHADO (SOB A AGUA)" : "[A] Mergulhar (Zora's Flippers)";
+            int text_w = link.is_diving ? 144 : 166;
+            int spx = (ctx->render_width - text_w) / 2;
+            int spy = ctx->render_height - 18;
+            draw_rect(spx - 4, spy - 2, text_w + 8, 14, 0x04192FEE);
+            draw_rect(spx - 3, spy - 1, text_w + 6, 12, 0x0284C7FF);
+            draw_rect(spx - 2, spy, text_w + 4, 10, 0x0C4A6EEE);
+            font_draw_text(spx, spy + 1, swim_prompt, 0xBAE6FDFF, true);
         }
 
         // --------------------------------------------------------------------

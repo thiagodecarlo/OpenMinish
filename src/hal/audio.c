@@ -1025,6 +1025,85 @@ static void synth_generate_all_sfx(void) {
         s_precalc_sfx[SOUND_MINISH_GROW].total_frames = num_frames;
         s_precalc_sfx[SOUND_MINISH_GROW].is_stereo = false;
     }
+
+    // 35. SOUND_SWIM_STROKE: Braçada de nado com espirro de água (240ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.240f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase_bub = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-14.0f * t);
+            float splash = synth_noise() * env * 0.65f;
+            float freq = 340.0f + 160.0f * sinf(2.0f * PI_F * 18.0f * t);
+            phase_bub += freq / (float)AUDIO_SAMPLE_RATE;
+            float bubble = sinf(2.0f * PI_F * phase_bub) * expf(-18.0f * t) * 0.35f;
+
+            float total = (splash + bubble) * 25000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_SWIM_STROKE].samples = buf;
+        s_precalc_sfx[SOUND_SWIM_STROKE].total_frames = num_frames;
+        s_precalc_sfx[SOUND_SWIM_STROKE].is_stereo = false;
+    }
+
+    // 36. SOUND_DIVE: Mergulho submundo na água profunda (350ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.350f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase_sweep = 0.0f;
+        float phase_sub = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float progress = t / 0.350f;
+            float env = expf(-7.5f * t);
+
+            float freq = 680.0f * expf(-10.0f * progress) + 85.0f;
+            phase_sweep += freq / (float)AUDIO_SAMPLE_RATE;
+            phase_sub += 95.0f / (float)AUDIO_SAMPLE_RATE;
+
+            float plunge = sinf(2.0f * PI_F * phase_sweep) * 0.55f;
+            float sub_thud = sinf(2.0f * PI_F * phase_sub) * expf(-12.0f * t) * 0.30f;
+            float noise_splash = synth_noise() * expf(-32.0f * t) * 0.40f;
+
+            float total = (plunge + sub_thud + noise_splash) * env * 27000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_DIVE].samples = buf;
+        s_precalc_sfx[SOUND_DIVE].total_frames = num_frames;
+        s_precalc_sfx[SOUND_DIVE].is_stereo = false;
+    }
+
+    // 37. SOUND_SURFACE: Retorno à superfície com espirros de água (300ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.300f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase1 = 0.0f;
+        float phase2 = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-9.0f * t);
+
+            float f1 = 280.0f + 500.0f * (t / 0.300f);
+            phase1 += f1 / (float)AUDIO_SAMPLE_RATE;
+            phase2 += 880.0f / (float)AUDIO_SAMPLE_RATE;
+
+            float splash = synth_noise() * env * 0.55f;
+            float drop = sinf(2.0f * PI_F * phase1) * 0.30f + sinf(2.0f * PI_F * phase2) * expf(-16.0f * t) * 0.15f;
+
+            float total = (splash + drop) * env * 26000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_SURFACE].samples = buf;
+        s_precalc_sfx[SOUND_SURFACE].total_frames = num_frames;
+        s_precalc_sfx[SOUND_SURFACE].is_stereo = false;
+    }
 }
 
 // ----------------------------------------------------------------------------
