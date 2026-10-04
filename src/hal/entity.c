@@ -1,5 +1,6 @@
 #include "hal/entity.h"
 #include "hal/dungeon.h"
+#include "hal/subweapon.h"
 #include "hal/video.h"
 #include "hal/audio.h"
 #include "hal/font.h"
@@ -1211,6 +1212,109 @@ int entity_check_spin_attack_hit(float center_x, float center_y, float radius, i
             } else if (e->action == 1) { // Em pé
                 if (dist <= radius + 26.0f) {
                     hal_audio_play_sound(SOUND_SWORD_HIT, 0.75f, 0.70f);
+                    hit_count++;
+                }
+            }
+        }
+    }
+
+    return hit_count;
+}
+
+int entity_check_bomb_explosion(float center_x, float center_y, float radius, int damage) {
+    int hit_count = 0;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active) continue;
+
+        // Inimigos padrão: Octorok, Keese, ChuChu
+        if ((e->type == ENTITY_ENEMY_OCTOROK ||
+             e->type == ENTITY_ENEMY_KEESE ||
+             e->type == ENTITY_ENEMY_CHUCHU) &&
+            e->invulnerableTimer <= 0) {
+
+            float ex = e->x + e->hitbox.offset_x + (e->hitbox.width * 0.5f);
+            float ey = e->y + e->hitbox.offset_y + (e->hitbox.height * 0.5f);
+            float dx = ex - center_x;
+            float dy = ey - center_y;
+            float dist = sqrtf(dx * dx + dy * dy);
+            float max_reach = radius + (e->hitbox.width * 0.5f);
+
+            if (dist <= max_reach) {
+                e->health -= damage;
+                e->invulnerableTimer = 28; // Pisca de dano pela explosão
+
+                // Forte recuo radial e centrífugo
+                if (dist > 0.1f) {
+                    float push = 8.5f;
+                    e->knockbackVx = (dx / dist) * push;
+                    e->knockbackVy = (dy / dist) * push;
+                } else {
+                    e->knockbackVx = 8.5f;
+                    e->knockbackVy = 0.0f;
+                }
+                e->action = 4; // Modo knockback
+                e->knockbackTimer = 20;
+
+                hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 0.75f);
+
+                if (e->health <= 0) {
+                    e->is_active = false;
+                    int r = rand() % 100;
+                    if (r < 40) {
+                        entity_spawn(ENTITY_ITEM_RUPEE, ex, ey);
+                    } else if (r < 75) {
+                        entity_spawn(ENTITY_ITEM_HEART, ex, ey);
+                    }
+                }
+                hit_count++;
+            }
+        }
+        // Destruição de Projéteis de Rocha lançados por Octoroks
+        else if (e->type == ENTITY_PROJECTILE_ROCK) {
+            float rx = e->x + 3.0f;
+            float ry = e->y + 3.0f;
+            float dx = rx - center_x;
+            float dy = ry - center_y;
+            float dist = sqrtf(dx * dx + dy * dy);
+
+            if (dist <= radius + 8.0f) {
+                e->is_active = false;
+                hit_count++;
+            }
+        }
+        // Explosão no Chefe Big Green ChuChu
+        else if (e->type == ENTITY_BOSS_BIG_CHUCHU) {
+            float bx = e->x;
+            float by = e->y;
+            float dx = bx - center_x;
+            float dy = by - center_y;
+            float dist = sqrtf(dx * dx + dy * dy);
+
+            if (dist <= radius + 30.0f) {
+                if (e->action == 3 && e->invulnerableTimer <= 0) {
+                    e->health -= damage;
+                    e->invulnerableTimer = 30;
+                    hal_audio_play_sound(SOUND_BOSS_HIT, 1.0f, 1.10f);
+                    entity_trigger_screen_shake(12, 5);
+                    printf("[BOSS HIT] EXPLOSAO DE BOMBA na cabeca toppled do chefe! Dano: %d, HP: %d / %d\n",
+                           damage, e->health, e->maxHealth);
+                    if (e->health <= 0) {
+                        e->health = 0;
+                        e->action = 5;
+                        e->bossDeathTimer = 0;
+                        hal_audio_play_sound(SOUND_BOSS_DEFEAT, 1.0f, 1.0f);
+                    }
+                    hit_count++;
+                } else if (e->action == 1) {
+                    e->bossBaseScale -= 0.35f;
+                    if (e->bossBaseScale < 0.15f) {
+                        e->action = 3;
+                        e->bossToppleTimer = 180;
+                        hal_audio_play_sound(SOUND_BOSS_SLAM, 1.0f, 1.0f);
+                        printf("[BOSS TOPPLE] Base gelatinosa do chefe implodida por bomba! Chefe desabou!\n");
+                    }
                     hit_count++;
                 }
             }
@@ -2703,12 +2807,14 @@ bool entity_buy_shop_item(int item_idx, int* link_rupees, int* link_hearts, int*
             return true;
         }
     } else if (item_idx == 2) {
-        // Bolsa de Bombas / Provisões (50 Rupees)
+        // Bolsa de Bombas / Provisões (50 Rupees): Adiciona +10 Bombas ao estoque
         int cost = 50;
         if (*link_rupees >= cost) {
             *link_rupees -= cost;
+            subweapon_add_bombs(10);
             hal_audio_play_sound(SOUND_SHOP_BUY, 1.0f, 1.0f);
-            printf("[LOJA STOCKWELL] Comprou Bolsa de Bombas / Provisoes por %d Rupees!\n", cost);
+            printf("[LOJA STOCKWELL] Comprou Bolsa de Bombas por %d Rupees! +10 Bombas adicionadas (Total: %d)!\n",
+                   cost, subweapon_get_bomb_count());
             return true;
         }
     }

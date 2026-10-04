@@ -27,6 +27,7 @@ typedef enum {
     ITEM_BOOMERANG = 0,   // Bumerangue Mágico (Arremesso, retorno e coleta)
     ITEM_GUST_JAR,        // Pote Mágico / Jarro de Vento (Sucção e disparo de ar)
     ITEM_PEGASUS_BOOTS,   // Botas de Pegasus (Dash veloz de corrida)
+    ITEM_BOMBS,           // Bolsa de Bombas (Colocação de bombas, pavio e explosão)
     ITEM_COUNT
 } SubweaponType;
 
@@ -84,5 +85,25 @@ void subweapon_render_hud_icon(int x, int y);
  * Retorna true se o Pote Mágico estiver ativamente sugando ar (trava a locomoção padrão do Link).
  */
 bool subweapon_is_gust_active(void);
+
+/*
+ * Retorna a quantidade de bombas restantes no inventário do herói.
+ */
+int subweapon_get_bomb_count(void);
+
+/*
+ * Retorna a capacidade máxima da bolsa de bombas.
+ */
+int subweapon_get_max_bombs(void);
+
+/*
+ * Adiciona bombas ao inventário (ex: recompensa ou compra na loja).
+ */
+void subweapon_add_bombs(int count);
+
+/*
+ * Retorna o deslocamento de tremor de tela (Screen Shake) causado por explosões de bombas.
+ */
+void subweapon_get_screen_shake(int* out_ox, int* out_oy);
 
 #endif // HAL_SUBWEAPON_H

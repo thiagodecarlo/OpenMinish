@@ -1104,6 +1104,92 @@ static void synth_generate_all_sfx(void) {
         s_precalc_sfx[SOUND_SURFACE].total_frames = num_frames;
         s_precalc_sfx[SOUND_SURFACE].is_stereo = false;
     }
+
+    // 38. SOUND_BOMB_FUSE: Chiado crepitante do pavio da bomba aceso (100ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.100f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase_spark = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = 0.6f + 0.4f * sinf(2.0f * PI_F * 30.0f * t);
+            float sizzle = synth_noise() * env * 0.70f;
+            float freq = 2200.0f + 600.0f * synth_noise();
+            phase_spark += freq / (float)AUDIO_SAMPLE_RATE;
+            float crackle = sinf(2.0f * PI_F * phase_spark) * 0.30f;
+
+            float total = (sizzle + crackle) * 18000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_BOMB_FUSE].samples = buf;
+        s_precalc_sfx[SOUND_BOMB_FUSE].total_frames = num_frames;
+        s_precalc_sfx[SOUND_BOMB_FUSE].is_stereo = false;
+    }
+
+    // 39. SOUND_BOMB_EXPLODE: Detonação explosiva estrondosa com rumble (650ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.650f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase_sub = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env_blast = expf(-6.0f * t);
+            float env_sub   = expf(-3.5f * t);
+
+            // Sub bass impact drop: 90 Hz decaindo para 30 Hz
+            float freq_sub = 90.0f * expf(-8.0f * t) + 30.0f;
+            phase_sub += freq_sub / (float)AUDIO_SAMPLE_RATE;
+            float sub_thud = sinf(2.0f * PI_F * phase_sub) * env_sub * 0.65f;
+
+            // Ruído branco explosivo saturado
+            float noise_blast = synth_noise() * env_blast * 0.60f;
+
+            // Distorção suave clássica de boom retro
+            float raw = (sub_thud + noise_blast);
+            float shaped = tanhf(raw * 1.5f);
+
+            float total = shaped * 31000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_BOMB_EXPLODE].samples = buf;
+        s_precalc_sfx[SOUND_BOMB_EXPLODE].total_frames = num_frames;
+        s_precalc_sfx[SOUND_BOMB_EXPLODE].is_stereo = false;
+    }
+
+    // 40. SOUND_WALL_CRUMBLE: Desmoronamento de rochas e escombros (480ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.480f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase_clatter = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-4.5f * t);
+
+            // 4 impactos sucessivos de pedras desabando
+            float impact1 = expf(-35.0f * fabsf(t - 0.02f));
+            float impact2 = expf(-30.0f * fabsf(t - 0.09f));
+            float impact3 = expf(-25.0f * fabsf(t - 0.18f));
+            float impact4 = expf(-20.0f * fabsf(t - 0.30f));
+            float impacts = (impact1 * 0.8f + impact2 * 0.6f + impact3 * 0.5f + impact4 * 0.4f);
+
+            float noise = synth_noise() * env * 0.50f;
+            float freq_tone = 160.0f + 80.0f * sinf(2.0f * PI_F * 12.0f * t);
+            phase_clatter += freq_tone / (float)AUDIO_SAMPLE_RATE;
+            float stone = sinf(2.0f * PI_F * phase_clatter) * env * 0.35f;
+
+            float total = (noise * impacts + stone) * 28000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_WALL_CRUMBLE].samples = buf;
+        s_precalc_sfx[SOUND_WALL_CRUMBLE].total_frames = num_frames;
+        s_precalc_sfx[SOUND_WALL_CRUMBLE].is_stereo = false;
+    }
 }
 
 // ----------------------------------------------------------------------------

@@ -56,10 +56,31 @@ typedef struct {
 
 static GustJarState s_gust = { 0 };
 
+#define MAX_ACTIVE_BOMBS 4
+
+typedef struct {
+    bool  is_active;
+    float x;
+    float y;
+    int   fuse_timer;       // 110 frames (1.8s)
+    bool  is_exploding;
+    int   explosion_timer;  // 18 frames
+    float radius;
+} ActiveBomb;
+
+static ActiveBomb s_bombs[MAX_ACTIVE_BOMBS] = { 0 };
+static int s_bomb_count = 10;
+static int s_max_bombs = 10;
+static int s_bomb_screen_shake = 0;
+
 void subweapon_init(void) {
     s_current_item = ITEM_BOOMERANG;
     memset(&s_boomerang, 0, sizeof(s_boomerang));
     memset(&s_gust, 0, sizeof(s_gust));
+    memset(s_bombs, 0, sizeof(s_bombs));
+    s_bomb_count = 10;
+    s_max_bombs = 10;
+    s_bomb_screen_shake = 0;
 }
 
 void subweapon_cycle(void) {
@@ -77,6 +98,7 @@ const char* subweapon_get_name(SubweaponType item) {
         case ITEM_BOOMERANG:     return "Bumerangue Magico";
         case ITEM_GUST_JAR:      return "Pote Magico (Gust Jar)";
         case ITEM_PEGASUS_BOOTS: return "Botas de Pegasus (Dash)";
+        case ITEM_BOMBS:         return "Bolsa de Bombas (Bombs)";
         default:                 return "Nenhum";
     }
 }
@@ -113,6 +135,36 @@ void subweapon_use_pressed(float link_x, float link_y, Direction dir) {
         s_gust.jar_x = link_x + 8.0f;
         s_gust.jar_y = link_y + 8.0f;
         hal_audio_play_sound(SOUND_GUST_SUCTION, 0.85f, 1.0f);
+    } else if (s_current_item == ITEM_BOMBS) {
+        if (s_bomb_count > 0) {
+            for (int i = 0; i < MAX_ACTIVE_BOMBS; i++) {
+                if (!s_bombs[i].is_active) {
+                    ActiveBomb* b = &s_bombs[i];
+                    float bx = link_x + 4.0f;
+                    float by = link_y + 8.0f;
+                    if (dir == DIR_DOWN)  by += 12.0f;
+                    if (dir == DIR_UP)    by -= 10.0f;
+                    if (dir == DIR_LEFT)  bx -= 12.0f;
+                    if (dir == DIR_RIGHT) bx += 12.0f;
+
+                    b->is_active = true;
+                    b->x = bx;
+                    b->y = by;
+                    b->fuse_timer = 110;
+                    b->is_exploding = false;
+                    b->explosion_timer = 0;
+                    b->radius = 32.0f;
+                    s_bomb_count--;
+
+                    hal_audio_play_sound(SOUND_BOMB_FUSE, 0.85f, 1.0f);
+                    printf("[BOMB] Bomba armada em (%.1f, %.1f)! Pavio aceso, estoque: %d\n", bx, by, s_bomb_count);
+                    break;
+                }
+            }
+        } else {
+            hal_audio_play_sound(SOUND_SWITCH_CLICK, 0.7f, 0.8f);
+            printf("[BOMB] Bolsa de bombas vazia!\n");
+        }
     }
 }
 
@@ -268,6 +320,57 @@ void subweapon_update(Tilemap* map, float link_x, float link_y, int* link_rupees
             s_gust.blast_active = false;
         }
     }
+
+    // ------------------------------------------------------------------------
+    // 3. ATUALIZAÇÃO DAS BOMBAS (BOMB FUSE, EXPLOSION & SCREEN SHAKE)
+    // ------------------------------------------------------------------------
+    if (s_bomb_screen_shake > 0) s_bomb_screen_shake--;
+
+    for (int i = 0; i < MAX_ACTIVE_BOMBS; i++) {
+        ActiveBomb* b = &s_bombs[i];
+        if (!b->is_active) continue;
+
+        if (!b->is_exploding) {
+            b->fuse_timer--;
+
+            // Chiado do pavio ardendo a cada 20 frames
+            if (b->fuse_timer % 20 == 0) {
+                hal_audio_play_sound(SOUND_BOMB_FUSE, 0.70f, 1.15f);
+            }
+
+            if (b->fuse_timer <= 0) {
+                // DETONAÇÃO EXPLOSIVA!
+                b->is_exploding = true;
+                b->explosion_timer = 18;
+                s_bomb_screen_shake = 8;
+                hal_audio_play_sound(SOUND_BOMB_EXPLODE, 1.0f, 1.0f);
+
+                // 1. Dano em área em todos os monstros
+                entity_check_bomb_explosion(b->x + 4.0f, b->y + 4.0f, b->radius, 4);
+
+                // 2. Destruição do cenário (paredes rachadas, rochas quebradiças, arbustos)
+                if (map) {
+                    map_interact_bomb(map, b->x + 4.0f, b->y + 4.0f, b->radius);
+                }
+
+                // 3. Autodano se o herói estiver muito perto do epicentro da explosão
+                float ldx = (link_x + 8.0f) - (b->x + 4.0f);
+                float ldy = (link_y + 12.0f) - (b->y + 4.0f);
+                float ldist = sqrtf(ldx * ldx + ldy * ldy);
+                if (ldist < 22.0f && link_hearts && *link_hearts > 0) {
+                    (*link_hearts)--;
+                    hal_audio_play_sound(SOUND_HEART_BEEP, 1.0f, 1.0f);
+                    printf("[BOMB SELF-DAMAGE] Link foi pego pela explosao da propria bomba!\n");
+                }
+            }
+        } else {
+            b->explosion_timer--;
+            if (b->explosion_timer <= 0) {
+                b->is_active = false;
+                b->is_exploding = false;
+            }
+        }
+    }
 }
 
 void subweapon_render(const Camera* cam) {
@@ -371,6 +474,77 @@ void subweapon_render(const Camera* cam) {
             }
         }
     }
+
+    // 4. Renderiza as Bombas ativas e Explosões
+    for (int i = 0; i < MAX_ACTIVE_BOMBS; i++) {
+        ActiveBomb* b = &s_bombs[i];
+        if (!b->is_active) continue;
+
+        int bx, by;
+        map_world_to_screen(cam, b->x, b->y, &bx, &by);
+
+        if (!b->is_exploding) {
+            // Pavio e corpo da bomba esférica
+            u32 col_bomb = (b->fuse_timer < 32 && ((b->fuse_timer / 4) % 2 == 0)) ? 0xEF4444FF : 0x1E293BFF;
+            u32 col_highlight = 0x64748BFF;
+            u32 col_cap = 0xD97706FF;
+
+            // Gargalo metálico
+            hal_video_put_pixel(bx + 3, by, col_cap);
+            hal_video_put_pixel(bx + 4, by, col_cap);
+
+            // Faísca do pavio queimando
+            int spark_oy = (b->fuse_timer % 3) + 1;
+            int spark_ox = ((b->fuse_timer % 5) - 2);
+            hal_video_put_pixel(bx + 3 + spark_ox, by - spark_oy, 0xFDE047FF);
+            hal_video_put_pixel(bx + 4 + spark_ox, by - spark_oy, 0xFFFFFFFF);
+
+            // Corpo da bomba (círculo 8x8)
+            for (int dy = 0; dy < 8; dy++) {
+                for (int dx = 0; dx < 8; dx++) {
+                    if ((dx == 0 || dx == 7) && (dy == 0 || dy == 7)) continue;
+                    u32 c = col_bomb;
+                    if (dx == 2 && dy == 2) c = col_highlight;
+                    hal_video_put_pixel(bx + dx, by + 1 + dy, c);
+                }
+            }
+        } else {
+            // DETONAÇÃO EXPLOSIVA COM ONDA DE CHOQUE E LABAREDAS
+            int exp_frame = 18 - b->explosion_timer;
+            float blast_r = 7.0f + (float)exp_frame * 1.5f;
+            int cx = bx + 4;
+            int cy = by + 5;
+
+            // Pétalas de labaredas e anel de fumaça (16 raios angulares)
+            for (int a = 0; a < 16; a++) {
+                float ang = (float)a * (2.0f * PI_F / 16.0f) + (float)exp_frame * 0.15f;
+                int px1 = cx + (int)(cosf(ang) * (blast_r * 0.55f));
+                int py1 = cy + (int)(sinf(ang) * (blast_r * 0.55f));
+                int px2 = cx + (int)(cosf(ang) * blast_r);
+                int py2 = cy + (int)(sinf(ang) * blast_r);
+
+                u32 c_inner = (exp_frame < 8) ? 0xFFFFFFFF : 0xFDE047FF;
+                u32 c_mid   = (exp_frame < 12) ? 0xEA580CFF : 0xDC2626FF;
+                u32 c_smoke = 0x64748BCC;
+
+                hal_video_put_pixel(px1, py1, c_inner);
+                hal_video_put_pixel(px1 + 1, py1, c_inner);
+                hal_video_put_pixel(px2, py2, (exp_frame > 11) ? c_smoke : c_mid);
+                hal_video_put_pixel(px2, py2 - 1, (exp_frame > 11) ? c_smoke : c_mid);
+            }
+
+            // Núcleo incandescente da detonação
+            int core_r = (int)(blast_r * 0.40f);
+            for (int y = -core_r; y <= core_r; y++) {
+                for (int x = -core_r; x <= core_r; x++) {
+                    if (x * x + y * y <= core_r * core_r) {
+                        u32 col = (x * x + y * y <= (core_r / 2) * (core_r / 2)) ? 0xFFFFFFFF : 0xFDE047FF;
+                        hal_video_put_pixel(cx + x, cy + y, col);
+                    }
+                }
+            }
+        }
+    }
 }
 
 void subweapon_render_hud_icon(int x, int y) {
@@ -409,5 +583,40 @@ void subweapon_render_hud_icon(int x, int y) {
         }
         hal_video_put_pixel(x + 8, y + 3, 0xFFFFFFFF); // Asinha branca
         hal_video_put_pixel(x + 9, y + 4, 0xFFFFFFFF);
+    } else if (s_current_item == ITEM_BOMBS) {
+        // Mini Bomba escura com brilho e pavio
+        for (int dy = 4; dy <= 7; dy++) {
+            for (int dx = 7; dx <= 10; dx++) {
+                if ((dx == 7 || dx == 10) && (dy == 4 || dy == 7)) continue;
+                hal_video_put_pixel(x + dx, y + dy, 0x1E293BFF);
+            }
+        }
+        hal_video_put_pixel(x + 8, y + 5, 0x94A3B8FF); // Brilho
+        hal_video_put_pixel(x + 8, y + 3, 0xD97706FF); // Gargalo
+        hal_video_put_pixel(x + 9, y + 2, 0xFDE047FF); // Faísca do pavio
+    }
+}
+
+int subweapon_get_bomb_count(void) {
+    return s_bomb_count;
+}
+
+int subweapon_get_max_bombs(void) {
+    return s_max_bombs;
+}
+
+void subweapon_add_bombs(int count) {
+    s_bomb_count += count;
+    if (s_bomb_count > s_max_bombs) s_bomb_count = s_max_bombs;
+}
+
+void subweapon_get_screen_shake(int* out_ox, int* out_oy) {
+    if (!out_ox || !out_oy) return;
+    if (s_bomb_screen_shake > 0) {
+        *out_ox = ((rand() % 5) - 2);
+        *out_oy = ((rand() % 5) - 2);
+    } else {
+        *out_ox = 0;
+        *out_oy = 0;
     }
 }

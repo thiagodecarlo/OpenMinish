@@ -47,6 +47,9 @@ typedef enum {
     TILE_GIANT_CLOVER,   // Trevo gigante que se ergue sobre os pequeninos
     TILE_CHIMNEY_SMOKE,  // Chaminé com fumaça animada das lareiras minish
     TILE_GENTARI_SANCTUM,// Santuário sagrado do Ancião Gentari com runas douradas
+    TILE_CRACKED_WALL,    // Parede de pedra com fissuras destrutível por bombas
+    TILE_CRUMBLED_ROCK,   // Rocha quebradiça bloqueando caminho, destrutível por bombas
+    TILE_SECRET_ENTRANCE, // Passagem secreta revelada após a explosão da parede rachada
     TILE_COUNT
 } TileType;
 
@@ -147,5 +150,14 @@ bool map_interact_slash(Tilemap* map, float world_x, float world_y);
  * Retorna a quantidade de elementos afetados.
  */
 int map_interact_spin(Tilemap* map, float center_x, float center_y, float radius);
+
+/*
+ * Detonação de bomba interagindo com o cenário no ponto da explosão:
+ * Destrói paredes rachadas (TILE_CRACKED_WALL -> TILE_SECRET_ENTRANCE),
+ * estilhaça rochas (TILE_CRUMBLED_ROCK -> 0)
+ * e corta arbustos próximos.
+ * Retorna a quantidade de estruturas desmoronadas.
+ */
+int map_interact_bomb(Tilemap* map, float world_x, float world_y, float radius);
 
 #endif // HAL_MAP_H

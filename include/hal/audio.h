@@ -58,6 +58,9 @@ typedef enum {
     SOUND_SWIM_STROKE,     // Braçada de nado com espirro de água (Zora's Flippers)
     SOUND_DIVE,            // Mergulho submundo na água profunda com bolhas
     SOUND_SURFACE,         // Retorno à superfície com espirros de água
+    SOUND_BOMB_FUSE,       // Chiado crepitante do pavio da bomba aceso
+    SOUND_BOMB_EXPLODE,    // Detonação explosiva estrondosa de bomba com onda de choque
+    SOUND_WALL_CRUMBLE,    // Desmoronamento de parede rachada ou rocha estilhaçada
     SOUND_COUNT
 } SoundEffect;
 

@@ -980,6 +980,11 @@ int main(int argc, char* argv[]) {
                         case SDLK_q:
                             subweapon_cycle();
                             break;
+                        case SDLK_b:
+                            subweapon_add_bombs(10);
+                            hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.2f);
+                            printf("[DEBUG] [B] +10 Bombas adicionadas a Bolsa de Bombas! (Total: %d)\n", subweapon_get_bomb_count());
+                            break;
                         case SDLK_k:
                             if (!kinstone_is_active() && !dialogue_is_active()) {
                                 Entity* knpc = entity_find_kinstone_npc(link.x, link.y, 32.0f);
@@ -1510,6 +1515,27 @@ int main(int argc, char* argv[]) {
                     }
                 }
             }
+
+            // Checagem de Entrada em Passagem Secreta revelada por explosão de Bomba
+            if (active_map && active_map->overlay_layer) {
+                int l_tx = (int)((link.x + 8.0f) / TILE_SIZE);
+                int l_ty = (int)((link.y + 12.0f) / TILE_SIZE);
+                if (l_tx >= 0 && l_tx < active_map->width && l_ty >= 0 && l_ty < active_map->height) {
+                    int idx = l_ty * active_map->width + l_tx;
+                    if (active_map->overlay_layer[idx] == TILE_SECRET_ENTRANCE) {
+                        static int s_secret_cooldown = 0;
+                        if (s_secret_cooldown > 0) s_secret_cooldown--;
+                        if (s_secret_cooldown <= 0) {
+                            s_secret_cooldown = 180;
+                            hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
+                            link.rupees += 50;
+                            link.hearts = link.max_hearts;
+                            subweapon_add_bombs(5);
+                            printf("[SECRET ROOM] Link adentrou a alcova secreta da fada! +50 Rupees, +5 Bombas e Vida Restaurada!\n");
+                        }
+                    }
+                }
+            }
         }
 
         // --------------------------------------------------------------------
@@ -1625,11 +1651,13 @@ int main(int argc, char* argv[]) {
             camera_update(&camera, link.x, link.y, ctx->render_width, ctx->render_height, active_map);
         }
 
-        // Aplicação do tremor de tela (Screen Shake) causado pelos passos gigantes e impacto do Chefe
+        // Aplicação do tremor de tela (Screen Shake) causado por explosões de bombas e impacto do Chefe
         int shake_x = 0, shake_y = 0;
         entity_get_screen_shake(&shake_x, &shake_y);
-        camera.x += (float)shake_x;
-        camera.y += (float)shake_y;
+        int b_shake_x = 0, b_shake_y = 0;
+        subweapon_get_screen_shake(&b_shake_x, &b_shake_y);
+        camera.x += (float)(shake_x + b_shake_x);
+        camera.y += (float)(shake_y + b_shake_y);
 
         // --------------------------------------------------------------------
         // 3. RENDERIZAÇÃO NO FRAMEBUFFER VIRTUAL
@@ -1706,6 +1734,13 @@ int main(int argc, char* argv[]) {
 
         // Slot e Ícone da Subarma / Item Secundário Equipado [B]
         subweapon_render_hud_icon(88, 1);
+
+        // Contador de Bombas restantes quando a Bolsa de Bombas estiver equipada
+        if (subweapon_get_current() == ITEM_BOMBS && !dungeon_is_active()) {
+            char b_txt[8];
+            snprintf(b_txt, sizeof(b_txt), "%d", subweapon_get_bomb_count());
+            font_draw_text(104, 3, b_txt, 0xFDE047FF, true);
+        }
 
         // Contador de Chaves Pequenas da Masmorra (Small Keys 🔑 xN)
         dungeon_render_hud_keys(106, 2);
