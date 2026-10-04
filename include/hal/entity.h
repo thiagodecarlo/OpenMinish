@@ -38,7 +38,10 @@ typedef enum {
     ENTITY_MINISH_STUMP,      // Toco de Árvore / Portal Mágico de Encolhimento Minish (Minish Stump & Urn)
     ENTITY_NPC_GENTARI,       // Ancião da Vila Minish (Elder Gentari do Santuário)
     ENTITY_NPC_FESTARI,       // Sacerdote Minish Festari (Guardião da ermida para Deepwood Shrine)
-    ENTITY_NPC_VILLAGE_MINISH // Morador da Vila Minish (Picori civil com chapéu colorido)
+    ENTITY_NPC_VILLAGE_MINISH,// Morador da Vila Minish (Picori civil com chapéu colorido)
+    ENTITY_ENEMY_MOBLIN,      // Moblin com armadura de couro e lança afiada (Guardião dos campos)
+    ENTITY_ENEMY_PEAHAT,      // Flor voadora helicóptero Peahat (Voa alto e aterrissa vulnerável)
+    ENTITY_NPC_MALON          // Malon da Fazenda Lon Lon (Moça do campo)
 } EntityType;
 
 // Caixa delimitadora de colisão e dano (Hitbox / Hurtbox)
@@ -202,6 +205,11 @@ Entity* entity_find_nearby_festari(float world_x, float world_y, float max_dist)
  * Procura por um morador Picori (Village Minish) na Vila Minish.
  */
 Entity* entity_find_nearby_village_minish(float world_x, float world_y, float max_dist);
+
+/*
+ * Procura por Malon na Fazenda Lon Lon (South Hyrule Field).
+ */
+Entity* entity_find_nearby_malon(float world_x, float world_y, float max_dist);
 
 /*
  * Executa a compra de uma mercadoria na Loja do Stockwell:

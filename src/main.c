@@ -82,11 +82,15 @@ static Texture* s_sheet0 = NULL;
 static Texture* s_sheet1 = NULL;
 static Texture* s_link_tex = NULL;
 static Texture* s_octo_tex = NULL;
-static Tilemap* s_world_map   = NULL;
-static Tilemap* s_town_map    = NULL;
-static Tilemap* s_village_map = NULL;
-static bool     s_in_town     = false;
-static bool     s_in_village  = false;
+static Tilemap* s_world_map       = NULL;
+static Tilemap* s_town_map        = NULL;
+static Tilemap* s_village_map     = NULL;
+static Tilemap* s_south_field_map = NULL;
+static Tilemap* s_north_field_map = NULL;
+static bool     s_in_town         = false;
+static bool     s_in_village      = false;
+static bool     s_in_south_field  = false;
+static bool     s_in_north_field  = false;
 static SelectedRegion s_current_region = REGION_USA;
 
 static void load_region_sheets(SelectedRegion region) {
@@ -185,6 +189,9 @@ static void spawn_town_entities(void) {
 static void transition_to_town(Player* link) {
     if (dungeon_is_active()) return;
     s_in_town = true;
+    s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = false;
     link->x = 280.0f; // Portão Sul (x = 17.5 * 16)
     link->y = 392.0f; // Entrada Sul (y = 24.5 * 16)
     link->dir = DIR_UP;
@@ -198,6 +205,9 @@ static void transition_to_town(Player* link) {
 static void transition_to_overworld(Player* link, Tilemap* world_map) {
     if (dungeon_is_active()) return;
     s_in_town = false;
+    s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = false;
     if (world_map && world_map->is_authentic) {
         link->x = 448.0f;
         link->y = 636.0f;
@@ -237,6 +247,8 @@ static void transition_to_minish_village(Player* link) {
     if (dungeon_is_active()) return;
     s_in_town = false;
     s_in_village = true;
+    s_in_south_field = false;
+    s_in_north_field = false;
     link->is_minish = true; // Link sempre no tamanho Minish na Vila dos Minish!
     link->x = 248.0f; // Saída sul (x = 15.5 * 16)
     link->y = 352.0f; // Entrada sul da vila (y = 22 * 16)
@@ -251,6 +263,8 @@ static void transition_to_woods_from_village(Player* link, Tilemap* world_map) {
     if (dungeon_is_active()) return;
     s_in_town = false;
     s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = false;
     if (world_map && world_map->is_authentic) {
         link->x = 336.0f; // Topo do Tronco Oco (coluna 21 * 16 = 336)
         link->y = 720.0f; // Logo acima da boca norte do tronco oco
@@ -263,6 +277,92 @@ static void transition_to_woods_from_village(Player* link, Tilemap* world_map) {
     spawn_overworld_entities(world_map);
     hal_audio_play_bgm(BGM_MINISH_WOODS);
     printf("[SCENE] Retornando a Minish Woods a partir da Vila dos Minish!\n");
+}
+
+static void spawn_south_field_entities(void) {
+    entity_clear_all();
+    // Inimigos Moblin guardando as planícies abertas
+    entity_spawn(ENTITY_ENEMY_MOBLIN, 192.0f, 160.0f);
+    entity_spawn(ENTITY_ENEMY_MOBLIN, 320.0f, 220.0f);
+    // Peahat sobrevoando o centro dos campos
+    entity_spawn(ENTITY_ENEMY_PEAHAT, 224.0f, 112.0f);
+    // Malon da Fazenda Lon Lon próxima ao portão de madeira
+    entity_spawn(ENTITY_NPC_MALON, 360.0f, 232.0f);
+
+    printf("[SOUTH FIELD] Entidades de South Hyrule Field spawnadas (Moblins, Peahat, Malon)!\n");
+}
+
+static void spawn_north_field_entities(void) {
+    entity_clear_all();
+    // Moblins de patrulha no caminho norte para o Castelo
+    entity_spawn(ENTITY_ENEMY_MOBLIN, 208.0f, 144.0f);
+    entity_spawn(ENTITY_ENEMY_MOBLIN, 304.0f, 144.0f);
+    // Peahat na encosta rochosa em direção ao Monte Crenel
+    entity_spawn(ENTITY_ENEMY_PEAHAT, 128.0f, 192.0f);
+
+    printf("[NORTH FIELD] Entidades de North Hyrule Field spawnadas (Moblins, Peahat)!\n");
+}
+
+static void transition_to_south_field(Player* link) {
+    if (dungeon_is_active()) return;
+    s_in_town = false;
+    s_in_village = false;
+    s_in_south_field = true;
+    s_in_north_field = false;
+    link->x = 248.0f; // Topo central (saída norte da planície)
+    link->y = 36.0f;
+    link->dir = DIR_DOWN;
+    link->is_moving = false;
+    spawn_south_field_entities();
+    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    printf("[SCENE] Entrando em South Hyrule Field (Planicies do Sul)!\n");
+}
+
+static void transition_to_north_field(Player* link) {
+    if (dungeon_is_active()) return;
+    s_in_town = false;
+    s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = true;
+    link->x = 248.0f; // Base sul da planície norte
+    link->y = 330.0f;
+    link->dir = DIR_UP;
+    link->is_moving = false;
+    spawn_north_field_entities();
+    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    printf("[SCENE] Entrando em North Hyrule Field (Planicies do Norte)!\n");
+}
+
+static void transition_to_town_from_south(Player* link) {
+    if (dungeon_is_active()) return;
+    s_in_town = true;
+    s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = false;
+    link->x = 280.0f;
+    link->y = 380.0f;
+    link->dir = DIR_UP;
+    link->is_moving = false;
+    spawn_town_entities();
+    hal_audio_play_bgm(BGM_HYRULE_TOWN);
+    hal_audio_play_sound(SOUND_TOWN_BELL, 1.0f, 1.0f);
+    printf("[SCENE] Retornando a Hyrule Town via Portao Sul!\n");
+}
+
+static void transition_to_town_from_north(Player* link) {
+    if (dungeon_is_active()) return;
+    s_in_town = true;
+    s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = false;
+    link->x = 280.0f;
+    link->y = 50.0f;
+    link->dir = DIR_DOWN;
+    link->is_moving = false;
+    spawn_town_entities();
+    hal_audio_play_bgm(BGM_HYRULE_TOWN);
+    hal_audio_play_sound(SOUND_TOWN_BELL, 1.0f, 1.0f);
+    printf("[SCENE] Retornando a Hyrule Town via Portao Norte!\n");
 }
 
 static void draw_rect(int rx, int ry, int rw, int rh, u32 color) {
@@ -831,6 +931,10 @@ int main(int argc, char* argv[]) {
     s_town_map = town_map;
     Tilemap* village_map = map_create_minish_village();
     s_village_map = village_map;
+    Tilemap* south_field_map = map_create_south_hyrule_field();
+    s_south_field_map = south_field_map;
+    Tilemap* north_field_map = map_create_north_hyrule_field();
+    s_north_field_map = north_field_map;
     load_region_sheets(REGION_USA);
 
     // Inicialização da entidade do Link
@@ -892,12 +996,32 @@ int main(int argc, char* argv[]) {
             }
             if (save.slot_a > 0) inventory_set_slot_a((InventoryItem)save.slot_a);
             if (save.slot_b > 0) inventory_set_slot_b((InventoryItem)save.slot_b);
+
+            if (save.current_map == 1) {
+                s_in_town = true;
+            } else if (save.current_map == 2) {
+                s_in_village = true;
+            } else if (save.current_map == 4) {
+                s_in_south_field = true;
+            } else if (save.current_map == 5) {
+                s_in_north_field = true;
+            }
         }
     }
 
     // Inicialização do Subsistema de Entidades e Spawn de Inimigos e NPCs
     entity_manager_init();
-    spawn_overworld_entities(world_map);
+    if (s_in_village) {
+        spawn_minish_village_entities();
+    } else if (s_in_town) {
+        spawn_town_entities();
+    } else if (s_in_south_field) {
+        spawn_south_field_entities();
+    } else if (s_in_north_field) {
+        spawn_north_field_entities();
+    } else {
+        spawn_overworld_entities(world_map);
+    }
 
     Camera camera;
     camera.viewport_w = widescreen ? 284 : 240;
@@ -956,7 +1080,7 @@ int main(int argc, char* argv[]) {
                                 current_save.player_x = link.x;
                                 current_save.player_y = link.y;
                                 current_save.player_dir = (int)link.dir;
-                                current_save.current_map = s_in_village ? 2 : (s_in_town ? 1 : (dungeon_is_active() ? 3 : 0));
+                                current_save.current_map = s_in_village ? 2 : (s_in_town ? 1 : (dungeon_is_active() ? 3 : (s_in_south_field ? 4 : (s_in_north_field ? 5 : 0))));
                                 current_save.hearts = link.hearts;
                                 current_save.max_hearts = link.max_hearts;
                                 current_save.rupees = link.rupees;
@@ -993,6 +1117,16 @@ int main(int argc, char* argv[]) {
                             break;
                         case SDLK_3:
                             load_region_sheets(REGION_JPN);
+                            break;
+                        case SDLK_4:
+                            if (!dungeon_is_active()) {
+                                transition_to_south_field(&link);
+                            }
+                            break;
+                        case SDLK_5:
+                            if (!dungeon_is_active()) {
+                                transition_to_north_field(&link);
+                            }
                             break;
                         case SDLK_w:
                             widescreen = !widescreen;
@@ -1105,7 +1239,10 @@ int main(int argc, char* argv[]) {
         // 2. ATUALIZAÇÃO DA LÓGICA DO JOGADOR (INPUT -> FÍSICA)
         // --------------------------------------------------------------------
         const HalVideoContext* ctx = hal_video_get_context();
-        Tilemap* active_map = s_in_village ? s_village_map : (s_in_town ? s_town_map : world_map);
+        Tilemap* active_map = s_in_village ? s_village_map :
+                              (s_in_town ? s_town_map :
+                              (s_in_south_field ? s_south_field_map :
+                              (s_in_north_field ? s_north_field_map : world_map)));
 
         if (inventory_is_paused()) {
             if (hal_input_is_pressed(KEY_UP))    inventory_cursor_move(0, -1);
@@ -1251,6 +1388,27 @@ int main(int argc, char* argv[]) {
                                     hal_audio_play_sound(SOUND_SWORD_SLASH, 0.7f, 1.38f);
                                 }
                             }
+                        }
+                    } else if (s_in_south_field) {
+                        Entity* malon = entity_find_nearby_malon(link.x, link.y, 32.0f);
+                        if (malon) {
+                            dialogue_trigger_malon_talk();
+                        } else if (entity_interact_chest(link.x, link.y, &link.rupees, &link.hearts)) {
+                            // Baú da fazenda Lon Lon aberto!
+                        } else {
+                            link.is_attacking = true;
+                            link.attack_timer = 12;
+                            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                        }
+                    } else if (s_in_north_field) {
+                        float pdx = link.x - 48.0f;
+                        float pdy = link.y - 144.0f;
+                        if (pdx * pdx + pdy * pdy <= 32.0f * 32.0f) {
+                            dialogue_trigger_crenel_sign_talk();
+                        } else {
+                            link.is_attacking = true;
+                            link.attack_timer = 12;
+                            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
                         }
                     } else if (entity_interact_chest(link.x, link.y, &link.rupees, &link.hearts)) {
                         // Abriu o baú dourado!
@@ -1583,9 +1741,27 @@ int main(int argc, char* argv[]) {
                         transition_to_woods_from_village(&link, world_map);
                     }
                 } else if (s_in_town) {
-                    // Portão Sul de Hyrule Town (x entre 256 e 304, ao sul da praça)
-                    if (link.x >= 256.0f && link.x <= 304.0f && link.y >= (active_map->height * TILE_SIZE) - 36.0f && link.dir == DIR_DOWN) {
+                    // Portão Sul de Hyrule Town -> South Hyrule Field
+                    if (link.x >= 240.0f && link.x <= 320.0f && link.y >= (active_map->height * TILE_SIZE) - 36.0f && link.dir == DIR_DOWN) {
+                        transition_to_south_field(&link);
+                    }
+                    // Portão Norte de Hyrule Town -> North Hyrule Field
+                    else if (link.x >= 220.0f && link.x <= 300.0f && link.y <= 36.0f && link.dir == DIR_UP) {
+                        transition_to_north_field(&link);
+                    }
+                } else if (s_in_south_field) {
+                    // Portão Norte de South Field de volta para Hyrule Town
+                    if (link.x >= 210.0f && link.x <= 290.0f && link.y <= 24.0f && link.dir == DIR_UP) {
+                        transition_to_town_from_south(&link);
+                    }
+                    // Estrada Leste de South Field para Minish Woods
+                    else if (link.x >= (active_map->width * TILE_SIZE) - 36.0f && link.y >= 160.0f && link.y <= 220.0f && link.dir == DIR_RIGHT) {
                         transition_to_overworld(&link, world_map);
+                    }
+                } else if (s_in_north_field) {
+                    // Portão Sul de North Field de volta para Hyrule Town
+                    if (link.x >= 210.0f && link.x <= 290.0f && link.y >= (active_map->height * TILE_SIZE) - 36.0f && link.dir == DIR_DOWN) {
+                        transition_to_town_from_north(&link);
                     }
                 } else {
                     // Em Minish Woods: Se estiver no tamanho Minish e atravessar a ponta norte do Tronco Oco (coluna 21)
@@ -1679,6 +1855,10 @@ int main(int argc, char* argv[]) {
                 spawn_minish_village_entities();
             } else if (s_in_town) {
                 spawn_town_entities();
+            } else if (s_in_south_field) {
+                spawn_south_field_entities();
+            } else if (s_in_north_field) {
+                spawn_north_field_entities();
             } else {
                 spawn_overworld_entities(world_map);
             }
@@ -1709,6 +1889,12 @@ int main(int argc, char* argv[]) {
             } else if (s_in_town) {
                 link.x = 280.0f;
                 link.y = 392.0f;
+            } else if (s_in_south_field) {
+                link.x = 248.0f;
+                link.y = 36.0f;
+            } else if (s_in_north_field) {
+                link.x = 248.0f;
+                link.y = 330.0f;
             } else {
                 link.x = (world_map && world_map->is_authentic) ? 448.0f : 296.0f;
                 link.y = (world_map && world_map->is_authentic) ? 636.0f : 176.0f;
@@ -1958,7 +2144,10 @@ int main(int argc, char* argv[]) {
     if (s_octo_tex) texture_free(s_octo_tex);
 
     entity_manager_shutdown();
-    if (s_town_map) map_destroy(s_town_map);
+    if (s_town_map)        map_destroy(s_town_map);
+    if (s_village_map)     map_destroy(s_village_map);
+    if (s_south_field_map) map_destroy(s_south_field_map);
+    if (s_north_field_map) map_destroy(s_north_field_map);
     map_destroy(world_map);
     hal_audio_shutdown();
     hal_input_shutdown();

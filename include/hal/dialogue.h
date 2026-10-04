@@ -30,7 +30,8 @@ typedef enum {
     SPEAKER_TOWN_GUARD,      // Guarda Real do Castelo de Hyrule
     SPEAKER_GENTARI,         // Ancião Gentari da Vila Minish
     SPEAKER_FESTARI,         // Sacerdote Festari da Abadia do Santuário
-    SPEAKER_VILLAGE_MINISH   // Habitante / Morador da Vila Minish
+    SPEAKER_VILLAGE_MINISH,  // Habitante / Morador da Vila Minish
+    SPEAKER_MALON            // Malon da Fazenda Lon Lon (Moça do campo)
 } DialogueSpeaker;
 
 typedef enum {
@@ -100,6 +101,16 @@ void dialogue_trigger_festari_talk(void);
  * Inicia uma conversa amigável com um habitante da Vila Minish.
  */
 void dialogue_trigger_village_minish_talk(void);
+
+/*
+ * Inicia o diálogo com Malon na Fazenda Lon Lon (South Hyrule Field).
+ */
+void dialogue_trigger_malon_talk(void);
+
+/*
+ * Inicia a leitura da placa do caminho para Monte Crenel (North Hyrule Field).
+ */
+void dialogue_trigger_crenel_sign_talk(void);
 
 /*
  * Retorna true se a conclusão do diálogo concede o Pergaminho do Tigre nº 1 (Spin Attack).

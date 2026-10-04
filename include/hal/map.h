@@ -50,6 +50,8 @@ typedef enum {
     TILE_CRACKED_WALL,    // Parede de pedra com fissuras destrutível por bombas
     TILE_CRUMBLED_ROCK,   // Rocha quebradiça bloqueando caminho, destrutível por bombas
     TILE_SECRET_ENTRANCE, // Passagem secreta revelada após a explosão da parede rachada
+    TILE_FENCE_GATE,      // Portão de madeira da Fazenda Lon Lon
+    TILE_CRENEL_ROAD_SIGN,// Placa de madeira indicando caminho para Monte Crenel
     TILE_COUNT
 } TileType;
 
@@ -92,6 +94,20 @@ Tilemap* map_create_hyrule_town(void);
  * riacho cristalino com pontes de madeira rústica, trevos gigantes e o Santuário de Gentari.
  */
 Tilemap* map_create_minish_village(void);
+
+/*
+ * Constrói as planícies verdejantes do Sul de Hyrule (South Hyrule Field)
+ * Dimensões: 32x24 tiles (512x384 pixels) conectando a saída sul da Cidade de Hyrule,
+ * o bosque de Minish Woods a leste e a entrada cercada da Fazenda Lon Lon.
+ */
+Tilemap* map_create_south_hyrule_field(void);
+
+/*
+ * Constrói os campos do Norte de Hyrule (North Hyrule Field)
+ * Dimensões: 32x24 tiles (512x384 pixels) conectando o portão norte da cidade,
+ * a estrada rochosa para a base do Monte Crenel e os jardins do Castelo.
+ */
+Tilemap* map_create_north_hyrule_field(void);
 
 /*
  * Carrega o mapa de Minish Woods para a região ativa (ex: "usa", "eur", "jpn").

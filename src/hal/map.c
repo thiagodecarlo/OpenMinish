@@ -610,6 +610,43 @@ static void render_metatile(int sx, int sy, TileType type) {
             }
             break;
 
+        case TILE_FENCE_GATE:
+            // Portão de madeira rústica da Fazenda Lon Lon
+            render_metatile(sx, sy, TILE_DIRT_PATH);
+            for (int y = 4; y <= 14; y++) {
+                draw_tile_pixel(sx + 2, sy + y, 0x78350FFF); // Poste esquerdo
+                draw_tile_pixel(sx + 3, sy + y, 0xB45309FF);
+                draw_tile_pixel(sx + 12, sy + y, 0x78350FFF); // Poste direito
+                draw_tile_pixel(sx + 13, sy + y, 0xB45309FF);
+            }
+            for (int x = 3; x <= 12; x++) {
+                draw_tile_pixel(sx + x, sy + 6, 0xD97706FF);
+                draw_tile_pixel(sx + x, sy + 7, 0x92400EFF);
+                draw_tile_pixel(sx + x, sy + 11, 0xD97706FF);
+                draw_tile_pixel(sx + x, sy + 12, 0x92400EFF);
+            }
+            break;
+
+        case TILE_CRENEL_ROAD_SIGN:
+            // Placa de madeira rústica com seta esculpida indicando Monte Crenel
+            render_metatile(sx, sy, TILE_DIRT_PATH);
+            for (int y = 8; y <= 15; y++) {
+                draw_tile_pixel(sx + 7, sy + y, 0x78350FFF); // Poste
+                draw_tile_pixel(sx + 8, sy + y, 0x92400EFF);
+            }
+            for (int y = 2; y <= 8; y++) {
+                for (int x = 2; x <= 13; x++) {
+                    u32 c = (y == 2 || y == 8 || x == 2 || x == 13) ? 0x78350FFF : 0xD97706FF;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            draw_tile_pixel(sx + 5, sy + 5, 0x451A03FF);
+            draw_tile_pixel(sx + 6, sy + 4, 0x451A03FF);
+            draw_tile_pixel(sx + 6, sy + 6, 0x451A03FF);
+            draw_tile_pixel(sx + 7, sy + 5, 0x451A03FF);
+            draw_tile_pixel(sx + 8, sy + 5, 0x451A03FF);
+            break;
+
         default:
             render_metatile(sx, sy, TILE_GRASS);
             break;
@@ -1512,4 +1549,185 @@ int map_interact_bomb(Tilemap* map, float world_x, float world_y, float radius) 
         printf("[BOMB MAP] %d estruturas desmoronadas pelo impacto da explosao!\n", destroyed_count);
     }
     return destroyed_count;
+}
+
+Tilemap* map_create_south_hyrule_field(void) {
+    int w = 32;
+    int h = 24;
+    Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
+    if (!m) return NULL;
+
+    m->width  = w;
+    m->height = h;
+    m->is_authentic = false;
+    m->authentic_tex = NULL;
+    m->ground_layer  = (u8*)malloc(w * h * sizeof(u8));
+    m->overlay_layer = (u8*)malloc(w * h * sizeof(u8));
+    m->collision_map = (u8*)malloc(w * h * sizeof(u8));
+
+    for (int i = 0; i < w * h; i++) {
+        m->ground_layer[i]  = TILE_GRASS;
+        m->overlay_layer[i] = 0xFF;
+        m->collision_map[i] = 0;
+    }
+
+    // Topo (linhas 0 e 1): Barreira de árvores e muros exceto passagem para a cidade (x=14..17)
+    for (int x = 0; x < w; x++) {
+        if (x < 14 || x > 17) {
+            m->overlay_layer[0 * w + x] = TILE_STONE_WALL;
+            m->collision_map[0 * w + x] = 1;
+            m->overlay_layer[1 * w + x] = TILE_TREE_TRUNK;
+            m->collision_map[1 * w + x] = 1;
+        }
+    }
+
+    // Bordas laterais
+    for (int y = 0; y < h; y++) {
+        m->overlay_layer[y * w + 0] = TILE_TREE_TRUNK;
+        m->collision_map[y * w + 0] = 1;
+        m->overlay_layer[y * w + 1] = TILE_TREE_TRUNK;
+        m->collision_map[y * w + 1] = 1;
+
+        if (y < 10 || y > 13) {
+            m->overlay_layer[y * w + (w - 2)] = TILE_TREE_TRUNK;
+            m->collision_map[y * w + (w - 2)] = 1;
+            m->overlay_layer[y * w + (w - 1)] = TILE_TREE_TRUNK;
+            m->collision_map[y * w + (w - 1)] = 1;
+        }
+    }
+
+    // Borda sul
+    for (int x = 0; x < w; x++) {
+        if (x < 14 || x > 17) {
+            m->overlay_layer[(h - 1) * w + x] = TILE_TREE_TRUNK;
+            m->collision_map[(h - 1) * w + x] = 1;
+        }
+    }
+
+    // Caminhos de terra batida (Eixo Norte-Sul e ramificação Leste para Minish Woods)
+    for (int y = 0; y < h; y++) {
+        m->ground_layer[y * w + 15] = TILE_DIRT_PATH;
+        m->ground_layer[y * w + 16] = TILE_DIRT_PATH;
+    }
+    for (int x = 16; x < w; x++) {
+        m->ground_layer[11 * w + x] = TILE_DIRT_PATH;
+        m->ground_layer[12 * w + x] = TILE_DIRT_PATH;
+    }
+
+    // Fazenda Lon Lon no sudeste (x=19..28, y=14..21)
+    for (int x = 19; x <= 28; x++) {
+        if (x == 22 || x == 23) {
+            m->overlay_layer[14 * w + x] = TILE_FENCE_GATE;
+            m->collision_map[14 * w + x] = 0;
+        } else {
+            m->overlay_layer[14 * w + x] = TILE_WOOD_FENCE;
+            m->collision_map[14 * w + x] = 1;
+        }
+        m->overlay_layer[21 * w + x] = TILE_WOOD_FENCE;
+        m->collision_map[21 * w + x] = 1;
+    }
+    for (int y = 14; y <= 21; y++) {
+        m->overlay_layer[y * w + 19] = TILE_WOOD_FENCE;
+        m->collision_map[y * w + 19] = 1;
+        m->overlay_layer[y * w + 28] = TILE_WOOD_FENCE;
+        m->collision_map[y * w + 28] = 1;
+    }
+
+    // Arbustos e flores
+    m->overlay_layer[5 * w + 6]  = TILE_BUSH;
+    m->overlay_layer[5 * w + 7]  = TILE_BUSH;
+    m->overlay_layer[6 * w + 6]  = TILE_BUSH;
+    m->overlay_layer[16 * w + 7] = TILE_FLOWER_RED;
+    m->overlay_layer[16 * w + 8] = TILE_FLOWER_YELLOW;
+    m->overlay_layer[8 * w + 22] = TILE_FLOWER_RED;
+    m->overlay_layer[9 * w + 23] = TILE_FLOWER_YELLOW;
+
+    // Baú protegido por rocha quebradiça
+    m->overlay_layer[4 * w + 25] = TILE_CHEST_CLOSED;
+    m->collision_map[4 * w + 25] = 1;
+    m->overlay_layer[5 * w + 25] = TILE_CRUMBLED_ROCK;
+    m->collision_map[5 * w + 25] = 1;
+
+    printf("[MAP] South Hyrule Field (Campos Sul) criado com sucesso (%dx%d tiles)!\n", w, h);
+    return m;
+}
+
+Tilemap* map_create_north_hyrule_field(void) {
+    int w = 32;
+    int h = 24;
+    Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
+    if (!m) return NULL;
+
+    m->width  = w;
+    m->height = h;
+    m->is_authentic = false;
+    m->authentic_tex = NULL;
+    m->ground_layer  = (u8*)malloc(w * h * sizeof(u8));
+    m->overlay_layer = (u8*)malloc(w * h * sizeof(u8));
+    m->collision_map = (u8*)malloc(w * h * sizeof(u8));
+
+    for (int i = 0; i < w * h; i++) {
+        m->ground_layer[i]  = TILE_GRASS;
+        m->overlay_layer[i] = 0xFF;
+        m->collision_map[i] = 0;
+    }
+
+    // Topo (linhas 0 e 1): Muro norte do Castelo de Hyrule
+    for (int x = 0; x < w; x++) {
+        if (x < 14 || x > 17) {
+            m->overlay_layer[0 * w + x] = TILE_STONE_WALL;
+            m->collision_map[0 * w + x] = 1;
+            m->overlay_layer[1 * w + x] = TILE_STONE_WALL;
+            m->collision_map[1 * w + x] = 1;
+        }
+    }
+
+    // Base sul: Entrada para Hyrule Town
+    for (int x = 0; x < w; x++) {
+        if (x < 14 || x > 17) {
+            m->overlay_layer[(h - 2) * w + x] = TILE_STONE_WALL;
+            m->collision_map[(h - 2) * w + x] = 1;
+            m->overlay_layer[(h - 1) * w + x] = TILE_TREE_TRUNK;
+            m->collision_map[(h - 1) * w + x] = 1;
+        }
+    }
+
+    // Oeste: Colinas rochosas com passagem para Monte Crenel (y=9..12)
+    for (int y = 0; y < h; y++) {
+        if (y < 9 || y > 12) {
+            m->overlay_layer[y * w + 0] = TILE_STONE_WALL;
+            m->collision_map[y * w + 0] = 1;
+            m->overlay_layer[y * w + 1] = TILE_STONE_WALL;
+            m->collision_map[y * w + 1] = 1;
+        }
+    }
+    // Leste: Bosque
+    for (int y = 0; y < h; y++) {
+        m->overlay_layer[y * w + (w - 1)] = TILE_TREE_TRUNK;
+        m->collision_map[y * w + (w - 1)] = 1;
+        m->overlay_layer[y * w + (w - 2)] = TILE_TREE_TRUNK;
+        m->collision_map[y * w + (w - 2)] = 1;
+    }
+
+    // Caminho de terra: Norte-Sul
+    for (int y = 0; y < h; y++) {
+        m->ground_layer[y * w + 15] = TILE_DIRT_PATH;
+        m->ground_layer[y * w + 16] = TILE_DIRT_PATH;
+    }
+    // Ramificação oeste em direção ao Monte Crenel
+    for (int x = 0; x <= 15; x++) {
+        m->ground_layer[10 * w + x] = TILE_DIRT_PATH;
+        m->ground_layer[11 * w + x] = TILE_DIRT_PATH;
+    }
+
+    // Placa apontando para Monte Crenel
+    m->overlay_layer[9 * w + 3] = TILE_CRENEL_ROAD_SIGN;
+    m->collision_map[9 * w + 3] = 1;
+
+    // Parede rachada escondendo passagem secreta
+    m->overlay_layer[1 * w + 8] = TILE_CRACKED_WALL;
+    m->collision_map[1 * w + 8] = 1;
+
+    printf("[MAP] North Hyrule Field (Campos Norte) criado com sucesso (%dx%d tiles)!\n", w, h);
+    return m;
 }
