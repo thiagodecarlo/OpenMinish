@@ -18,6 +18,7 @@
 #include "hal/save.h"
 #include "hal/sanctuary.h"
 #include "hal/fast_travel.h"
+#include "hal/library.h"
 #include <math.h>
 
 /*
@@ -140,6 +141,8 @@ static Tilemap* s_castor_wilds_map   = NULL;
 static Tilemap* s_mole_cave_map      = NULL;
 static Tilemap* s_wind_ruins_map     = NULL;
 static Tilemap* s_armos_interior_map = NULL;
+static Tilemap* s_library_map        = NULL;
+static Tilemap* s_lake_hylia_map     = NULL;
 static bool     s_in_town            = false;
 static bool     s_in_village         = false;
 static bool     s_in_south_field     = false;
@@ -150,6 +153,8 @@ static bool     s_in_castor_wilds    = false;
 static bool     s_in_mole_cave       = false;
 static bool     s_in_wind_ruins      = false;
 static bool     s_in_armos_interior  = false;
+static bool     s_in_library         = false;
+static bool     s_in_lake_hylia      = false;
 static SelectedRegion s_current_region = REGION_USA;
 
 static void load_region_sheets(SelectedRegion region) {
@@ -772,6 +777,84 @@ static void transition_to_wind_ruins_from_armos(Player* link) {
     printf("[SCENE] Saindo do Armos e retornando a Wind Ruins!\n");
 }
 
+static void spawn_library_entities(void) {
+    entity_clear_all();
+    // 1. Bibliotecária no balcão de pesquisa
+    entity_spawn(ENTITY_NPC_TOWN_CITIZEN, 184.0f, 56.0f);
+    // 2. Portal Urna Minish no canto sudoeste da biblioteca
+    Entity* urn = entity_spawn(ENTITY_MINISH_STUMP, 48.0f, 224.0f);
+    if (urn) urn->action = 1;
+    // 3. Ancião Librari no topo da estante noroeste
+    entity_spawn(ENTITY_NPC_LIBRARI, 64.0f, 32.0f);
+    printf("[LIBRARY] Entidades da Biblioteca Real spawnadas (Bibliotecaria, Urna Minish, Anciao Librari)!\n");
+}
+
+static void transition_to_library(Player* link) {
+    s_in_town = s_in_village = s_in_south_field = s_in_north_field = false;
+    s_in_crenel_base = s_in_melari_mines = s_in_castor_wilds = s_in_mole_cave = false;
+    s_in_wind_ruins = s_in_armos_interior = s_in_lake_hylia = false;
+    s_in_library = true;
+    link->x = 184.0f; // Entrada sul da biblioteca
+    link->y = 250.0f;
+    link->dir = DIR_UP;
+    link->is_moving = false;
+    spawn_library_entities();
+    hal_audio_play_bgm(BGM_HYRULE_TOWN);
+    printf("[SCENE] Entrando na Biblioteca Real da Cidade de Hyrule!\n");
+}
+
+static void transition_to_town_from_library(Player* link) {
+    s_in_library = false;
+    s_in_town = true;
+    link->x = 240.0f; // Porta da biblioteca na praça da cidade
+    link->y = 120.0f;
+    link->dir = DIR_DOWN;
+    link->is_moving = false;
+    spawn_town_entities();
+    hal_audio_play_bgm(BGM_HYRULE_TOWN);
+    printf("[SCENE] Saindo da Biblioteca e retornando a Hyrule Town!\n");
+}
+
+static void spawn_lake_hylia_entities(void) {
+    entity_clear_all();
+    // 1. Inimigos nas águas abertas
+    entity_spawn(ENTITY_ENEMY_OCTOROK, 240.0f, 160.0f);
+    entity_spawn(ENTITY_ENEMY_OCTOROK, 380.0f, 240.0f);
+    entity_spawn(ENTITY_ENEMY_TEKTITE, 80.0f, 80.0f);
+    // 2. Toco Minish na ilhota central
+    Entity* stump = entity_spawn(ENTITY_MINISH_STUMP, 288.0f, 224.0f);
+    if (stump) stump->action = 0;
+    // 3. Prefeito Hagen em frente a cabana do lago
+    entity_spawn(ENTITY_NPC_MAYOR_HAGEN, 96.0f, 320.0f);
+    printf("[LAKE HYLIA] Entidades do Lago Hylia spawnadas (Octoroks, Tektites, Toco da Ilha, Prefeito Hagen)!\n");
+}
+
+static void transition_to_lake_hylia(Player* link) {
+    s_in_town = s_in_village = s_in_north_field = s_in_south_field = false;
+    s_in_crenel_base = s_in_melari_mines = s_in_castor_wilds = s_in_mole_cave = false;
+    s_in_wind_ruins = s_in_armos_interior = s_in_library = false;
+    s_in_lake_hylia = true;
+    link->x = 64.0f; // Cais oeste na margem
+    link->y = 120.0f;
+    link->dir = DIR_RIGHT;
+    link->is_moving = false;
+    spawn_lake_hylia_entities();
+    hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
+    printf("[SCENE] Entrando no Grande Lago Hylia (Lake Hylia)!\n");
+}
+
+static void transition_to_south_field_from_lake(Player* link) {
+    s_in_lake_hylia = false;
+    s_in_south_field = true;
+    link->x = 360.0f;
+    link->y = 200.0f;
+    link->dir = DIR_LEFT;
+    link->is_moving = false;
+    spawn_south_field_entities();
+    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    printf("[SCENE] Retornando a South Hyrule Field vindo do Lago Hylia!\n");
+}
+
 static void handle_fast_travel_transition(int new_map_id, float new_x, float new_y, Player* link, Tilemap* world_map) {
     if (dungeon_is_active() || dungeon_flames_is_active() || dungeon_fortress_is_active()) return;
     s_in_town = false;
@@ -784,6 +867,8 @@ static void handle_fast_travel_transition(int new_map_id, float new_x, float new
     s_in_mole_cave = false;
     s_in_wind_ruins = false;
     s_in_armos_interior = false;
+    s_in_library = false;
+    s_in_lake_hylia = false;
     link->is_swimming = false;
     link->is_diving = false;
     link->is_minish = false;
@@ -799,10 +884,10 @@ static void handle_fast_travel_transition(int new_map_id, float new_x, float new
     } else if (new_map_id == 0) { // Minish Woods
         spawn_overworld_entities(world_map);
         hal_audio_play_bgm(BGM_MINISH_WOODS);
-    } else if (new_map_id == 4) { // South Field / Lake Hylia
-        s_in_south_field = true;
-        spawn_south_field_entities();
-        hal_audio_play_bgm(BGM_MINISH_WOODS);
+    } else if (new_map_id == 4) { // Lake Hylia
+        s_in_lake_hylia = true;
+        spawn_lake_hylia_entities();
+        hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
     } else if (new_map_id == 6) { // Crenel Base
         s_in_crenel_base = true;
         spawn_crenel_base_entities();
@@ -1566,6 +1651,11 @@ int main(int argc, char* argv[]) {
     s_wind_ruins_map = wind_ruins_map;
     Tilemap* armos_interior_map = map_create_armos_interior();
     s_armos_interior_map = armos_interior_map;
+    Tilemap* library_map = map_create_library();
+    s_library_map = library_map;
+    Tilemap* lake_hylia_map = map_create_lake_hylia();
+    s_lake_hylia_map = lake_hylia_map;
+    library_quest_init();
     load_region_sheets(REGION_USA);
 
     // Inicialização da entidade do Link
@@ -1710,7 +1800,12 @@ int main(int argc, char* argv[]) {
                 s_in_armos_interior = true;
             } else if (save.current_map == 14) {
                 dungeon_fortress_enter(&link.x, &link.y, &link.dir);
+            } else if (save.current_map == 15) {
+                s_in_library = true;
+            } else if (save.current_map == 16) {
+                s_in_lake_hylia = true;
             }
+            library_restore_save(save.library_books_mask, save.librari_met, save.lake_temple_unlocked);
         }
     }
 
@@ -1810,6 +1905,8 @@ int main(int argc, char* argv[]) {
                                 else if (dungeon_is_active()) cur_m = 3;
                                 else if (dungeon_flames_is_active()) cur_m = 8;
                                 else if (sanctuary_is_active()) cur_m = 9;
+                                else if (s_in_library) cur_m = 15;
+                                else if (s_in_lake_hylia) cur_m = 16;
                                 else if (s_in_village) cur_m = 2;
                                 else if (s_in_town) cur_m = 1;
                                 current_save.current_map = cur_m;
@@ -1829,6 +1926,9 @@ int main(int argc, char* argv[]) {
                                 current_save.has_armos_activated = link.has_armos_activated;
                                 current_save.has_ocarina = link.has_ocarina;
                                 current_save.unlocked_wind_crests = fast_travel_get_unlocked_mask();
+                                current_save.library_books_mask = library_get_save_mask();
+                                current_save.librari_met = library_get_quest_state()->librari_met;
+                                current_save.lake_temple_unlocked = library_is_temple_unlocked();
                                 current_save.slot_a = (int)inventory_get_slot_a();
                                 current_save.slot_b = (int)inventory_get_slot_b();
                                 if (save_game(1, &current_save)) {
@@ -2070,6 +2170,24 @@ int main(int argc, char* argv[]) {
                                 fast_travel_start(link.x, link.y);
                             }
                             break;
+                        case SDLK_l:
+                            if (!dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active()) {
+                                if (s_in_library) {
+                                    transition_to_town_from_library(&link);
+                                } else {
+                                    transition_to_library(&link);
+                                }
+                            }
+                            break;
+                        case SDLK_n:
+                            if (!dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active()) {
+                                if (s_in_lake_hylia) {
+                                    transition_to_south_field_from_lake(&link);
+                                } else {
+                                    transition_to_lake_hylia(&link);
+                                }
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -2096,10 +2214,12 @@ int main(int argc, char* argv[]) {
                               (s_in_castor_wilds ? s_castor_wilds_map :
                               (s_in_melari_mines ? s_melari_mines_map :
                               (s_in_crenel_base ? s_crenel_base_map :
+                              (s_in_library ? s_library_map :
+                              (s_in_lake_hylia ? s_lake_hylia_map :
                               (s_in_village ? s_village_map :
                               (s_in_town ? s_town_map :
                               (s_in_south_field ? s_south_field_map :
-                              (s_in_north_field ? s_north_field_map : world_map)))))))));
+                              (s_in_north_field ? s_north_field_map : world_map)))))))))));
 
         if (inventory_is_paused()) {
             if (hal_input_is_pressed(KEY_UP))    inventory_cursor_move(0, -1);
@@ -2295,6 +2415,9 @@ int main(int argc, char* argv[]) {
                                 Entity* citizen = entity_find_nearby_town_citizen(link.x, link.y, 30.0f);
                                 if (citizen) {
                                     dialogue_trigger_town_citizen_talk();
+                                    if (!library_has_book(BOOK_BESTIARY)) {
+                                        library_collect_book(BOOK_BESTIARY);
+                                    }
                                 } else {
                                     link.is_attacking = true;
                                     link.attack_timer = 12;
@@ -2306,6 +2429,9 @@ int main(int argc, char* argv[]) {
                         Entity* gentari = entity_find_nearby_gentari(link.x, link.y, 30.0f);
                         if (gentari) {
                             dialogue_trigger_gentari_talk();
+                            if (!library_has_book(BOOK_MASKS_HISTORY)) {
+                                library_collect_book(BOOK_MASKS_HISTORY);
+                            }
                         } else {
                             Entity* festari = entity_find_nearby_festari(link.x, link.y, 30.0f);
                             if (festari) {
@@ -2320,6 +2446,28 @@ int main(int argc, char* argv[]) {
                                     hal_audio_play_sound(SOUND_SWORD_SLASH, 0.7f, 1.38f);
                                 }
                             }
+                        }
+                    } else if (s_in_library) {
+                        Entity* librari = entity_find_nearby_librari(link.x, link.y, 32.0f);
+                        if (librari) {
+                            library_talk_to_librari();
+                        } else if (link.y <= 68.0f) {
+                            library_return_books_to_shelf();
+                        } else {
+                            link.is_attacking = true;
+                            link.attack_timer = 12;
+                            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                        }
+                    } else if (s_in_lake_hylia) {
+                        Entity* hagen = entity_find_nearby_mayor_hagen(link.x, link.y, 32.0f);
+                        if (hagen) {
+                            library_collect_book(BOOK_PICORI_LEGEND);
+                        } else if (entity_interact_chest(link.x, link.y, &link.rupees, &link.hearts)) {
+                            // Bau do Lago aberto!
+                        } else {
+                            link.is_attacking = true;
+                            link.attack_timer = 12;
+                            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
                         }
                     } else if (s_in_south_field) {
                         Entity* malon = entity_find_nearby_malon(link.x, link.y, 32.0f);
@@ -2800,13 +2948,22 @@ int main(int argc, char* argv[]) {
                         transition_to_woods_from_village(&link, world_map);
                     }
                 } else if (s_in_town) {
+                    // Porta da Biblioteca Real de Hyrule Town (Norte da Praça, x: 230..260, y <= 130)
+                    if (link.x >= 230.0f && link.x <= 260.0f && link.y <= 130.0f && link.dir == DIR_UP) {
+                        transition_to_library(&link);
+                    }
                     // Portão Sul de Hyrule Town -> South Hyrule Field
-                    if (link.x >= 240.0f && link.x <= 320.0f && link.y >= (active_map->height * TILE_SIZE) - 36.0f && link.dir == DIR_DOWN) {
+                    else if (link.x >= 240.0f && link.x <= 320.0f && link.y >= (active_map->height * TILE_SIZE) - 36.0f && link.dir == DIR_DOWN) {
                         transition_to_south_field(&link);
                     }
                     // Portão Norte de Hyrule Town -> North Hyrule Field
                     else if (link.x >= 220.0f && link.x <= 300.0f && link.y <= 36.0f && link.dir == DIR_UP) {
                         transition_to_north_field(&link);
+                    }
+                } else if (s_in_library) {
+                    // Saída Sul da Biblioteca Real de volta para Hyrule Town
+                    if (link.y >= (active_map->height * TILE_SIZE) - 36.0f && link.dir == DIR_DOWN) {
+                        transition_to_town_from_library(&link);
                     }
                 } else if (s_in_south_field) {
                     // Portão Norte de South Field de volta para Hyrule Town
@@ -2814,12 +2971,21 @@ int main(int argc, char* argv[]) {
                         transition_to_town_from_south(&link);
                     }
                     // Estrada Leste de South Field para Minish Woods
-                    else if (link.x >= (active_map->width * TILE_SIZE) - 36.0f && link.y >= 160.0f && link.y <= 220.0f && link.dir == DIR_RIGHT) {
+                    else if (link.x >= (active_map->width * TILE_SIZE) - 36.0f && link.y >= 140.0f && link.y <= 220.0f && link.dir == DIR_RIGHT) {
                         transition_to_overworld(&link, world_map);
+                    }
+                    // Estrada Leste (inferior) de South Field para Lake Hylia
+                    else if (link.x >= (active_map->width * TILE_SIZE) - 36.0f && link.y >= 240.0f && link.dir == DIR_RIGHT) {
+                        transition_to_lake_hylia(&link);
                     }
                     // Estrada Oeste de South Field para Castor Wilds Swamp
                     else if (link.x <= 24.0f && link.y >= 180.0f && link.y <= 260.0f && link.dir == DIR_LEFT) {
                         transition_to_castor_wilds(&link);
+                    }
+                } else if (s_in_lake_hylia) {
+                    // Saída Oeste do Lago Hylia de volta para South Hyrule Field
+                    if (link.x <= 24.0f && link.dir == DIR_LEFT) {
+                        transition_to_south_field_from_lake(&link);
                     }
                 } else if (s_in_castor_wilds) {
                     // Saída Leste do Pântano de Castor Wilds:
@@ -3590,6 +3756,31 @@ int main(int argc, char* argv[]) {
             font_draw_text(cpx, cpy + 1, climb_prompt, 0xFDE047FF, true);
         }
 
+        // 10c. Prompts de Contexto: Biblioteca Real e Lake Hylia
+        if (s_in_library && !dialogue_is_active() && !inventory_is_paused()) {
+            char lib_info[64];
+            LibraryQuestState* qs = library_get_quest_state();
+            snprintf(lib_info, sizeof(lib_info), "BIBLIOTECA REAL - LIVROS: %d/3%s",
+                     qs->books_returned_count,
+                     qs->staircase_formed ? " (ESCADA PRONTA!)" : "");
+            int tw = 200;
+            int px = (ctx->render_width - tw) / 2;
+            int py = ctx->render_height - 18;
+            draw_rect(px - 4, py - 2, tw + 8, 14, 0x1E1208EE);
+            draw_rect(px - 3, py - 1, tw + 6, 12, 0xD4AF37FF);
+            draw_rect(px - 2, py, tw + 4, 10, 0x331B0CEE);
+            font_draw_text(px, py + 1, lib_info, 0xFDE047FF, true);
+        } else if (s_in_lake_hylia && !dialogue_is_active() && !inventory_is_paused() && !link.is_swimming) {
+            const char* lake_prompt = library_is_temple_unlocked() ? "LAKE HYLIA - PASSAGEM DO TEMPLO ABERTA!" : "LAKE HYLIA (TEMPLO CONGELADO)";
+            int tw = 210;
+            int px = (ctx->render_width - tw) / 2;
+            int py = ctx->render_height - 18;
+            draw_rect(px - 4, py - 2, tw + 8, 14, 0x051F3EEE);
+            draw_rect(px - 3, py - 1, tw + 6, 12, 0x38BDF8FF);
+            draw_rect(px - 2, py, tw + 4, 10, 0x0C4A6EEE);
+            font_draw_text(px, py + 1, lake_prompt, 0xE0F2FEFF, true);
+        }
+
         // 10b. Sistema de Transporte Rapido: Ocarina of Wind, Zeffa e Mapa de Cristas de Vento
         fast_travel_render(&camera, link.x, link.y);
 
@@ -3620,6 +3811,8 @@ int main(int argc, char* argv[]) {
     if (s_mole_cave_map)       map_destroy(s_mole_cave_map);
     if (s_wind_ruins_map)      map_destroy(s_wind_ruins_map);
     if (s_armos_interior_map)  map_destroy(s_armos_interior_map);
+    if (s_library_map)         map_destroy(s_library_map);
+    if (s_lake_hylia_map)      map_destroy(s_lake_hylia_map);
     map_destroy(world_map);
     hal_audio_shutdown();
     hal_input_shutdown();

@@ -55,7 +55,9 @@ typedef enum {
     ENTITY_ITEM_BOW,          // Arco e Flechas relíquia ancestral (item equipável de longo alcance)
     ENTITY_ITEM_MOLE_MITTS,   // Luvas de Toupeira (item equipável de escavação)
     ENTITY_ARMOS,             // Robô / Estátua viva Armos de pedra das Wind Ruins
-    ENTITY_ARMOS_SWITCH       // Interruptor do circuito interno do Armos (acionável por Minish Link)
+    ENTITY_ARMOS_SWITCH,      // Interruptor do circuito interno do Armos (acionável por Minish Link)
+    ENTITY_NPC_LIBRARI,       // Ancião e Guardião da Biblioteca Real (Elder Librari)
+    ENTITY_NPC_MAYOR_HAGEN    // Prefeito Hagen (Cidade de Hyrule / Cabana de Lake Hylia)
 } EntityType;
 
 // Caixa delimitadora de colisão e dano (Hitbox / Hurtbox)
@@ -308,6 +310,12 @@ void entity_set_texture(const Texture* tex);
  * Remove todas as entidades ativas da sala (usado em transição de masmorras).
  */
 void entity_clear_all(void);
+
+/*
+ * Busca entidades específicas próximas.
+ */
+Entity* entity_find_nearby_librari(float world_x, float world_y, float max_dist);
+Entity* entity_find_nearby_mayor_hagen(float world_x, float world_y, float max_dist);
 
 /*
  * Finaliza o subsistema de entidades.

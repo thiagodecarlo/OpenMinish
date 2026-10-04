@@ -521,6 +521,17 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
                     break;
 
+                case ENTITY_NPC_LIBRARI:
+                case ENTITY_NPC_MAYOR_HAGEN:
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1;
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
+                    break;
+
                 default:
                     break;
             }
@@ -1364,8 +1375,9 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
             e->animTimer++;
         }
 
-        // 12. NPCS DA VILA DOS MINISH (GENTARI, FESTARI, MORADORES PICORI)
-        else if (e->type == ENTITY_NPC_GENTARI || e->type == ENTITY_NPC_FESTARI || e->type == ENTITY_NPC_VILLAGE_MINISH) {
+        // 12. NPCS DA VILA DOS MINISH (GENTARI, FESTARI, MORADORES PICORI, LIBRARI, HAGEN)
+        else if (e->type == ENTITY_NPC_GENTARI || e->type == ENTITY_NPC_FESTARI || e->type == ENTITY_NPC_VILLAGE_MINISH ||
+                 e->type == ENTITY_NPC_LIBRARI || e->type == ENTITY_NPC_MAYOR_HAGEN) {
             e->animTimer++;
             if (e->type == ENTITY_NPC_VILLAGE_MINISH) {
                 e->bubbleBob += 0.08f;
@@ -4854,6 +4866,36 @@ void entity_manager_render(const Camera* cam) {
                 else if (spk == 1) put_pixel_safe(sx + 5, sy - 8, 0xBAE6FDFF);
             }
         }
+
+        // 33. ANCIÃO LIBRARI (BIBLIOTECA REAL DE HYRULE)
+        else if (e->type == ENTITY_NPC_LIBRARI) {
+            // Sábio Minish sentado no topo da estante com óculos dourados e livro
+            draw_filled_rect(sx - 5, sy - 8, 10, 8, 0x064E3BFF); // Manto verde sábio
+            draw_filled_rect(sx - 4, sy - 11, 8, 5, 0xFDE8CDFF); // Rosto e cabeça
+            draw_filled_rect(sx - 5, sy - 7, 10, 5, 0xFFFFFFFF); // Barba branca longa
+            // Óculos redondos de leitura dourados
+            draw_filled_rect(sx - 4, sy - 10, 3, 2, 0xF59E0BFF);
+            draw_filled_rect(sx + 1, sy - 10, 3, 2, 0xF59E0BFF);
+            put_pixel_safe(sx - 3, sy - 10, 0x38BDF8FF); // Lentes brilhantes
+            put_pixel_safe(sx + 2, sy - 10, 0x38BDF8FF);
+            // Livro aberto em seu colo
+            draw_filled_rect(sx - 6, sy - 2, 12, 4, 0x991B1BFF);
+            draw_filled_rect(sx - 5, sy - 1, 10, 2, 0xFEF08AFF);
+        }
+
+        // 34. PREFEITO HAGEN (CABANA DE LAKE HYLIA)
+        else if (e->type == ENTITY_NPC_MAYOR_HAGEN) {
+            draw_filled_rect(sx - 6, sy + 10, 12, 3, 0x05100766); // Sombra
+            // Chapéu azul com pluma vermelha
+            draw_filled_rect(sx - 6, sy - 10, 12, 4, 0x1E40AFFF);
+            draw_filled_rect(sx - 3, sy - 13, 3, 4, 0xDC2626FF); // Pluma
+            // Rosto redondo e bigode castanho
+            draw_filled_rect(sx - 5, sy - 6, 10, 6, 0xFDE8CDFF);
+            draw_filled_rect(sx - 4, sy - 2, 8, 2, 0x78350FFF); // Bigode
+            // Colete dourado e casaco azul
+            draw_filled_rect(sx - 6, sy, 12, 8, 0x1E3A8AFF);
+            draw_filled_rect(sx - 3, sy + 1, 6, 6, 0xFACC15FF); // Colete
+        }
     }
 }
 
@@ -5233,6 +5275,46 @@ Entity* entity_find_nearby_armos(float world_x, float world_y, float max_dist) {
     for (int i = 0; i < MAX_ENTITIES; i++) {
         Entity* e = &s_entities[i];
         if (!e->is_active || e->type != ENTITY_ARMOS) continue;
+
+        float dx = e->x - world_x;
+        float dy = e->y - world_y;
+        float dist_sq = dx * dx + dy * dy;
+
+        if (dist_sq <= best_dist_sq) {
+            best_dist_sq = dist_sq;
+            best = e;
+        }
+    }
+    return best;
+}
+
+Entity* entity_find_nearby_librari(float world_x, float world_y, float max_dist) {
+    float best_dist_sq = max_dist * max_dist;
+    Entity* best = NULL;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active || e->type != ENTITY_NPC_LIBRARI) continue;
+
+        float dx = e->x - world_x;
+        float dy = e->y - world_y;
+        float dist_sq = dx * dx + dy * dy;
+
+        if (dist_sq <= best_dist_sq) {
+            best_dist_sq = dist_sq;
+            best = e;
+        }
+    }
+    return best;
+}
+
+Entity* entity_find_nearby_mayor_hagen(float world_x, float world_y, float max_dist) {
+    float best_dist_sq = max_dist * max_dist;
+    Entity* best = NULL;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active || e->type != ENTITY_NPC_MAYOR_HAGEN) continue;
 
         float dx = e->x - world_x;
         float dy = e->y - world_y;
