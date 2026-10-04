@@ -61,6 +61,7 @@ typedef enum {
     SOUND_BOMB_FUSE,       // Chiado crepitante do pavio da bomba aceso
     SOUND_BOMB_EXPLODE,    // Detonação explosiva estrondosa de bomba com onda de choque
     SOUND_WALL_CRUMBLE,    // Desmoronamento de parede rachada ou rocha estilhaçada
+    SOUND_FIRE,            // Labareda e chamas ardentes da Flame Lantern
     SOUND_COUNT
 } SoundEffect;
 

@@ -12,6 +12,7 @@
 #include "hal/dungeon_flames.h"
 #include "hal/dungeon_fortress.h"
 #include "hal/fast_travel.h"
+#include "hal/lantern.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -169,6 +170,7 @@ const char* subweapon_get_name(SubweaponType item) {
         case ITEM_BOW:           return "Arco e Flechas (Bow)";
         case ITEM_MOLE_MITTS:    return "Luvas de Toupeira (Mole Mitts)";
         case ITEM_OCARINA_OF_WIND: return "Ocarina do Vento (Ocarina)";
+        case ITEM_FLAME_LANTERN:   return "Lanterna de Chamas (Flame Lantern)";
         default:                 return "Nenhum";
     }
 }
@@ -298,6 +300,8 @@ void subweapon_use_pressed(float link_x, float link_y, Direction dir) {
         hal_audio_play_sound(SOUND_SWORD_SLASH, 0.85f, 1.6f);
     } else if (s_current_item == ITEM_OCARINA_OF_WIND) {
         fast_travel_start(link_x, link_y);
+    } else if (s_current_item == ITEM_FLAME_LANTERN) {
+        lantern_use_pressed(link_x, link_y, dir);
     }
 }
 
@@ -331,10 +335,15 @@ void subweapon_use_held(float link_x, float link_y, Direction dir) {
             s_mitts.target_y = fy;
             hal_audio_play_sound(SOUND_SWORD_SLASH, 0.80f, 1.7f);
         }
+    } else if (s_current_item == ITEM_FLAME_LANTERN) {
+        lantern_use_held(link_x, link_y, dir);
     }
 }
 
 void subweapon_use_released(float link_x, float link_y, Direction dir) {
+    if (s_current_item == ITEM_FLAME_LANTERN) {
+        lantern_use_released();
+    }
     if (s_current_item == ITEM_GUST_JAR) {
         if (s_gust.is_sucking) {
             s_gust.is_sucking = false;
@@ -659,6 +668,9 @@ void subweapon_update(Tilemap* map, float link_x, float link_y, int* link_rupees
             p->is_active = false;
         }
     }
+
+    // 7. Atualização da Lanterna de Chamas (Flame Lantern)
+    lantern_update(1.0f / 60.0f, link_x, link_y, map);
 }
 
 void subweapon_render(const Camera* cam) {
@@ -922,6 +934,9 @@ void subweapon_render(const Camera* cam) {
         hal_video_put_pixel(sx + 1, sy, p->color);
         hal_video_put_pixel(sx, sy + 1, 0x3E2310FF);
     }
+
+    // 6. Renderiza a labareda e partículas da Lanterna de Chamas
+    lantern_render(cam);
 }
 
 void subweapon_render_hud_icon(int x, int y) {
@@ -1021,6 +1036,23 @@ void subweapon_render_hud_icon(int x, int y) {
         hal_video_put_pixel(x + 7, y + 5, 0x0F172AFF);
         hal_video_put_pixel(x + 9, y + 5, 0x0F172AFF);
         hal_video_put_pixel(x + 8, y + 4, 0xBAE6FDFF); // Brilho
+    } else if (s_current_item == ITEM_FLAME_LANTERN) {
+        // Mini Lanterna de Chamas no HUD (Lanterna de bronze com chama brilhante)
+        hal_video_put_pixel(x + 7, y + 3, 0xD4AF37FF); // Alça de bronze
+        hal_video_put_pixel(x + 8, y + 3, 0xD4AF37FF);
+        for (int dy = 4; dy <= 8; dy++) {
+            hal_video_put_pixel(x + 6, y + dy, 0x78350FFF); // Armação
+            hal_video_put_pixel(x + 9, y + dy, 0x78350FFF);
+        }
+        // Vidro e chama interna
+        hal_video_put_pixel(x + 7, y + 5, 0xFEF08AFF); // Núcleo amarelo
+        hal_video_put_pixel(x + 8, y + 5, 0xF97316FF); // Fogo laranja
+        hal_video_put_pixel(x + 7, y + 6, 0xEF4444FF);
+        hal_video_put_pixel(x + 8, y + 6, 0xDC2626FF);
+        // Base de bronze
+        for (int dx = 5; dx <= 10; dx++) {
+            hal_video_put_pixel(x + dx, y + 9, 0xB45309FF);
+        }
     }
 }
 

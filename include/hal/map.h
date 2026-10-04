@@ -95,6 +95,10 @@ typedef enum {
     TILE_BOOK_STACK,         // Pilha monumental de livros gigantes formando escada para Link Minish
     TILE_LIBRARY_CARPET,     // Tapete nobre aveludado vermelho com frisos dourados da Biblioteca
     TILE_ICE_CAVERN_ENTRANCE,// Portal de gelo translúcido congelado (entrada do Temple of Droplets em Lake Hylia)
+    TILE_TORCH_UNLIT,        // Pira/tocha de pedra apagada (acendível pela Flame Lantern)
+    TILE_TORCH_LIT,          // Tocha de pedra acesa com chamas incandescentes animadas
+    TILE_ICE_BLOCK,          // Bloco maciço de gelo translúcido derretível pela Flame Lantern
+    TILE_COBWEB,             // Teia de aranha espessa inflamável pela Flame Lantern
     TILE_COUNT
 } TileType;
 
@@ -351,5 +355,15 @@ Tilemap* map_create_library(void);
  * ilhotas, toco Minish e a entrada glacial para o Temple of Droplets (Masmorra 4).
  */
 Tilemap* map_create_lake_hylia(void);
+
+/*
+ * Interage com o cenário usando o fogo da Flame Lantern:
+ * - Acende tochas apagadas (TILE_TORCH_UNLIT -> TILE_TORCH_LIT, *out_type = 1).
+ * - Derrete blocos de gelo (TILE_ICE_BLOCK -> chão/ar desobstruído, *out_type = 2).
+ * - Queima teias de aranha (TILE_COBWEB -> ar desobstruído, *out_type = 3).
+ * - Queima arbustos (TILE_BUSH -> cinzas/drops, *out_type = 4).
+ * Retorna true se houve interação bem-sucedida.
+ */
+bool map_interact_lantern(Tilemap* map, float world_x, float world_y, int* out_type);
 
 #endif // HAL_MAP_H
