@@ -34,7 +34,8 @@ typedef enum {
     ENTITY_NPC_SHOPKEEPER,    // Comerciante Stockwell (Dono da loja de Hyrule com balcão de compras)
     ENTITY_NPC_TOWN_CITIZEN,  // Cidadã da Cidade de Hyrule (NPC de praça com Kinstone)
     ENTITY_NPC_TOWN_GUARD,    // Guarda Real do Castelo de Hyrule (Cavaleiro em armadura)
-    ENTITY_TOWN_FOUNTAIN      // Chafariz central com jatos d'água borbulhantes animados
+    ENTITY_TOWN_FOUNTAIN,     // Chafariz central com jatos d'água borbulhantes animados
+    ENTITY_MINISH_STUMP       // Toco de Árvore / Portal Mágico de Encolhimento Minish (Minish Stump & Urn)
 } EntityType;
 
 // Caixa delimitadora de colisão e dano (Hitbox / Hurtbox)
@@ -171,6 +172,11 @@ Entity* entity_find_nearby_town_citizen(float world_x, float world_y, float max_
  * Procura pelo Guarda Real do Castelo de Hyrule próximo ao herói.
  */
 Entity* entity_find_nearby_town_guard(float world_x, float world_y, float max_dist);
+
+/*
+ * Procura por um Toco de Árvore ou Portal Minish próximo às coordenadas fornecidas.
+ */
+Entity* entity_find_nearby_minish_stump(float world_x, float world_y, float max_dist);
 
 /*
  * Executa a compra de uma mercadoria na Loja do Stockwell:

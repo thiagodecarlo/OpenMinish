@@ -53,6 +53,12 @@ typedef struct {
     bool is_spinning;
     int  spin_timer;
     int  tiger_scroll_banner_timer;
+
+    // Mecânica Canônica de Encolhimento Minish (Minish Shrinking & Portal)
+    bool is_minish;             // Está no tamanho Minish (8x8 px, hitbox 4x4)
+    bool is_transforming;       // Em transição cinemática de transformação
+    int  transform_timer;       // Temporizador da animação de transformação (0..50 frames)
+    bool transform_to_minish;   // true = encolhendo para Minish, false = crescendo para Humano
 } Player;
 
 static const char* s_region_tags[REGION_COUNT] = { "usa", "eur", "jpn" };
@@ -123,6 +129,9 @@ static void spawn_overworld_entities(Tilemap* world_map) {
         entity_spawn(ENTITY_NPC_FOREST_MINISH, 416.0f, 636.0f);
         // Mestre Espadachim Swiftblade na ampla clareira norte de treinamento
         entity_spawn(ENTITY_NPC_SWIFTBLADE, 380.0f, 448.0f);
+        // Toco de Árvore Minish (Minish Tree Stump Portal) na clareira sul junto ao Tronco Oco
+        Entity* stump = entity_spawn(ENTITY_MINISH_STUMP, 312.0f, 760.0f);
+        if (stump) stump->action = 0;
     } else {
         entity_spawn(ENTITY_ENEMY_OCTOROK, 160.0f, 220.0f);
         entity_spawn(ENTITY_ENEMY_OCTOROK, 420.0f, 150.0f);
@@ -131,6 +140,8 @@ static void spawn_overworld_entities(Tilemap* world_map) {
         entity_spawn(ENTITY_ENEMY_CHUCHU, 320.0f, 220.0f);
         entity_spawn(ENTITY_NPC_FOREST_MINISH, 250.0f, 176.0f);
         entity_spawn(ENTITY_NPC_SWIFTBLADE, 260.0f, 220.0f);
+        Entity* stump = entity_spawn(ENTITY_MINISH_STUMP, 280.0f, 200.0f);
+        if (stump) stump->action = 0;
     }
 }
 
@@ -152,7 +163,11 @@ static void spawn_town_entities(void) {
     entity_spawn(ENTITY_NPC_TOWN_GUARD, 240.0f, 32.0f);
     entity_spawn(ENTITY_NPC_TOWN_GUARD, 320.0f, 32.0f);
 
-    printf("[TOWN] Entidades de Hyrule Town spawnadas com sucesso (Stockwell, Chafariz, Cidadaos, Guardas)!\n");
+    // 5. Portal Vaso Minish (Minish Urn Portal) a sudoeste da praça
+    Entity* urn = entity_spawn(ENTITY_MINISH_STUMP, 216.0f, 280.0f);
+    if (urn) urn->action = 1;
+
+    printf("[TOWN] Entidades de Hyrule Town spawnadas com sucesso (Stockwell, Chafariz, Cidadaos, Guardas, Vaso Minish)!\n");
 }
 
 static void transition_to_town(Player* link) {
@@ -361,6 +376,48 @@ static void draw_link_sword_effects(const Player* p, int px, int py) {
     }
 }
 
+static void draw_link_transformation_effects(const Player* p, int cx, int cy) {
+    int timer = p->transform_timer;
+
+    // 1. Anéis concêntricos pulsantes de energia mágica
+    int r1 = ((50 - timer) * 2) % 22 + 4;
+    int r2 = ((50 - timer) * 2 + 11) % 22 + 4;
+    u32 col_ring1 = (timer % 6 < 3) ? 0x00FFCCFF : 0x70FF80FF;
+    u32 col_ring2 = (timer % 6 < 3) ? 0xFFD700FF : 0xFFFFFFFF;
+
+    for (int a = 0; a < 24; a++) {
+        float ang = (float)a * (2.0f * 3.14159265f / 24.0f);
+        int rx1 = cx + (int)(cosf(ang) * (float)r1);
+        int ry1 = cy + (int)(sinf(ang) * ((float)r1 * 0.65f));
+        int rx2 = cx + (int)(cosf(-ang) * (float)r2);
+        int ry2 = cy + (int)(sinf(-ang) * ((float)r2 * 0.65f));
+        hal_video_put_pixel(rx1, ry1, col_ring1);
+        hal_video_put_pixel(rx2, ry2, col_ring2);
+    }
+
+    // 2. Partículas místicas ascendentes em espiral
+    for (int sp = 0; sp < 6; sp++) {
+        float ang = (float)sp * (3.14159265f / 3.0f) + (float)timer * 0.25f;
+        float dist = 8.0f + 4.0f * sinf((float)timer * 0.2f + sp);
+        int sx_p = cx + (int)(cosf(ang) * dist);
+        int sy_p = cy + (int)(sinf(ang) * (dist * 0.65f)) - ((50 - timer) % 14);
+        hal_video_put_pixel(sx_p, sy_p, 0xFFFFFFFF);
+        hal_video_put_pixel(sx_p, sy_p - 1, 0x00FFCCFF);
+    }
+
+    // 3. Flash no clímax da transformação (frame 25)
+    if (timer >= 22 && timer <= 28) {
+        int flash_r = (28 - timer) * 2 + 6;
+        for (int fa = 0; fa < 32; fa++) {
+            float ang = (float)fa * (2.0f * 3.14159265f / 32.0f);
+            int fx = cx + (int)(cosf(ang) * (float)flash_r);
+            int fy = cy + (int)(sinf(ang) * ((float)flash_r * 0.70f));
+            hal_video_put_pixel(fx, fy, 0xFFFFFFFF);
+            hal_video_put_pixel(fx + 1, fy, 0x00FFAAFF);
+        }
+    }
+}
+
 // Renderiza o Link no estilo clássico de Minish Cap na posição da Câmera
 static void draw_link(const Player* p, const Camera* cam) {
     // Efeito clássico de piscar ao receber dano (flicker)
@@ -371,10 +428,72 @@ static void draw_link(const Player* p, const Camera* cam) {
     int px, py;
     map_world_to_screen(cam, p->x, p->y, &px, &py);
 
+    int draw_x = px - 8;
+    int draw_y = py - 9;
+
+    // Efeitos visuais do portal mágico de transformação Minish
+    if (p->is_transforming) {
+        draw_link_transformation_effects(p, px + 8, py + 8);
+    }
+
     // ------------------------------------------------------------------------
     // RENDERIZADOR AUTÊNTICO COM SPRITES EXTRAÍDOS DA ROM
     // ------------------------------------------------------------------------
     if (s_link_tex && s_link_tex->pixels) {
+        // Se estiver no tamanho Minish (ou durante a transformação na fase Minish)
+        bool render_as_minish = p->is_minish;
+        if (p->is_transforming) {
+            if (p->transform_to_minish) {
+                render_as_minish = (p->transform_timer <= 25);
+            } else {
+                render_as_minish = (p->transform_timer > 25);
+            }
+        }
+
+        if (render_as_minish) {
+            int m_col = 0;
+            bool m_flip = false;
+            int step = (p->anim_frame / 5) % 2;
+
+            if (!p->is_moving) {
+                if (p->dir == DIR_DOWN)       m_col = 0;
+                else if (p->dir == DIR_RIGHT) m_col = 1;
+                else if (p->dir == DIR_UP)    m_col = 2;
+                else if (p->dir == DIR_LEFT)  m_col = 3;
+            } else {
+                if (p->dir == DIR_DOWN) {
+                    m_col = 4 + step;
+                } else if (p->dir == DIR_RIGHT) {
+                    m_col = 6 + step;
+                    m_flip = false;
+                } else if (p->dir == DIR_UP) {
+                    m_col = 8 + step;
+                } else if (p->dir == DIR_LEFT) {
+                    m_col = 6 + step;
+                    m_flip = true;
+                }
+            }
+
+            // 1. Desenha o corpo diminuto do Link Minish (Row 4)
+            texture_draw_ex(s_link_tex, m_col * 32, 4 * 32, 32, 32, draw_x, draw_y, m_flip);
+
+            // 2. Balão Indicador Canônico Flutuante (Speech Bubble Beacon, Row 5)
+            int b_col = 0;
+            if (p->dir == DIR_DOWN)       b_col = 0;
+            else if (p->dir == DIR_RIGHT) b_col = 1;
+            else if (p->dir == DIR_UP)    b_col = 2;
+            else if (p->dir == DIR_LEFT)  b_col = 3;
+
+            int beacon_bob = (int)(sinf((float)p->anim_timer * 0.15f) * 2.0f);
+            texture_draw_ex(s_link_tex, b_col * 32, 5 * 32, 32, 32, draw_x, draw_y - 20 + beacon_bob, false);
+
+            if (p->is_attacking) {
+                draw_link_sword_effects(p, px, py);
+            }
+            return;
+        }
+
+        // Link Tamanho Humano Normal
         int row = 0;
         int col = 0;
         bool flip_h = false;
@@ -409,9 +528,6 @@ static void draw_link(const Player* p, const Camera* cam) {
         int src_x = col * 32;
         int src_y = row * 32;
 
-        int draw_x = px - 8;
-        int draw_y = py - 9;
-
         texture_draw_ex(s_link_tex, src_x, src_y, 32, 32, draw_x, draw_y, flip_h);
         draw_link_sword_effects(p, px, py);
         return;
@@ -420,6 +536,17 @@ static void draw_link(const Player* p, const Camera* cam) {
     // ------------------------------------------------------------------------
     // FALLBACK PROCEDURAL (utilizado caso os assets não estejam extraídos)
     // ------------------------------------------------------------------------
+    if (p->is_minish) {
+        draw_rect(px + 6, py + 11, 4, 3, 0x228B22FF); // Túnica
+        draw_rect(px + 6, py + 8,  4, 3, 0x32CD32FF); // Gorro
+        hal_video_put_pixel(px + 8, py + 7, 0xFFFFFFFF); // Pom-pom
+        hal_video_put_pixel(px + 7, py + 9, 0x111111FF); // Olho
+        int b_y = py - 10 + (int)(sinf((float)p->anim_timer * 0.15f) * 2.0f);
+        draw_rect(px + 4, b_y, 8, 8, 0xFFFFFFFF);
+        draw_rect(px + 5, b_y + 1, 6, 6, 0x38BDF8FF);
+        hal_video_put_pixel(px + 8, b_y + 8, 0xFFFFFFFF);
+        return;
+    }
     u32 tunic_green = 0x228B22FF; // Verde Floresta
     u32 hat_bright   = 0x32CD32FF; // Verde Gorro
     u32 skin_tone    = 0xF5CBA7FF; // Tom de Pele
@@ -469,6 +596,22 @@ static void draw_link(const Player* p, const Camera* cam) {
     draw_link_sword_effects(p, px, py);
 }
 
+static inline bool is_world_solid_for_player(const Tilemap* map, float wx, float wy, bool is_minish) {
+    if (dungeon_is_active()) {
+        return dungeon_is_solid(wx, wy);
+    }
+    // Mecânica Minish: o interior do Tronco Oco (Hollow Log em Minish Woods) é transitável apenas quando Minish!
+    if (is_minish && map && map->is_authentic) {
+        int tx = (int)(wx / TILE_SIZE);
+        int ty = (int)(wy / TILE_SIZE);
+        // Coluna 21, linhas 45 a 48 (Tronco Oco vertical entre Y=720 e Y=768)
+        if (tx == 21 && ty >= 45 && ty <= 48) {
+            return false;
+        }
+    }
+    return map_is_solid(map, wx, wy);
+}
+
 int main(int argc, char* argv[]) {
     setvbuf(stdout, NULL, _IONBF, 0);
     printf("====================================================================\n");
@@ -479,6 +622,7 @@ int main(int argc, char* argv[]) {
     printf("  - Mover Link:     [WASD] ou [Setas do Teclado] ou [D-Pad/Analogico]\n");
     printf("  - Atacar / Acao:  [Z] ou [Espaco] ou [Botao A do Gamepad] (Atacar espada / Falar / Abrir bau!)\n");
     printf("  - Ataque Girat.:  Segurar [A] (Carregar espada -> Soltar para Spin Attack 360°!)\n");
+    printf("  - Portal Minish:  [R] ou [Botao R do Gamepad] (Encolher no Toco Minish / Crescer de volta!)\n");
     printf("  - Item Secundar.: [X] ou [Botao B do Gamepad] (Bumerangue / Pote Magico / Pegasus Boots!)\n");
     printf("  - Fusao Kinstone: [K] ou [Gatilho L no Gamepad] (Unir pedras da sorte com NPCs parceiros!)\n");
     printf("  - Ciclar Itens:   [Q] ou [Gatilho L no Gamepad] (Alternar item secundario equipado)\n");
@@ -546,6 +690,10 @@ int main(int argc, char* argv[]) {
     link.is_spinning = false;
     link.spin_timer = 0;
     link.tiger_scroll_banner_timer = 0;
+    link.is_minish = false;
+    link.is_transforming = false;
+    link.transform_timer = 0;
+    link.transform_to_minish = false;
 
     // Inicialização do Subsistema de Entidades e Spawn de Inimigos e NPCs
     entity_manager_init();
@@ -609,7 +757,31 @@ int main(int argc, char* argv[]) {
                             break;
                         case SDLK_e:
                             if (!dialogue_is_active()) {
-                                dialogue_trigger_ezlo_hint();
+                                if (link.is_minish) {
+                                    dialogue_trigger_ezlo_minish_hint();
+                                } else {
+                                    dialogue_trigger_ezlo_hint();
+                                }
+                            }
+                            break;
+                        case SDLK_r:
+                            if (!link.is_transforming && !dialogue_is_active() && !kinstone_is_active()) {
+                                Entity* stump = entity_find_nearby_minish_stump(link.x, link.y, 24.0f);
+                                if (stump) {
+                                    link.is_transforming = true;
+                                    link.transform_timer = 50;
+                                    link.transform_to_minish = !link.is_minish;
+                                    link.is_moving = false;
+                                    link.x = stump->x;
+                                    link.y = stump->y;
+                                    if (link.transform_to_minish) {
+                                        hal_audio_play_sound(SOUND_MINISH_SHRINK, 1.0f, 1.0f);
+                                        printf("[MINISH] [R] Link subiu no portal e esta ENCOLHENDO para tamanho Minish!\n");
+                                    } else {
+                                        hal_audio_play_sound(SOUND_MINISH_GROW, 1.0f, 1.0f);
+                                        printf("[MINISH] [R] Link subiu no portal e esta CRESCENDO para tamanho Humano!\n");
+                                    }
+                                }
                             }
                             break;
                         case SDLK_q:
@@ -647,7 +819,22 @@ int main(int argc, char* argv[]) {
         const HalVideoContext* ctx = hal_video_get_context();
         Tilemap* active_map = s_in_town ? s_town_map : world_map;
 
-        if (kinstone_is_active()) {
+        if (link.is_transforming) {
+            link.transform_timer--;
+            link.is_moving = false;
+
+            // Clímax da transformação (frame 25): troca de tamanho e Screen Shake
+            if (link.transform_timer == 25) {
+                link.is_minish = link.transform_to_minish;
+                entity_trigger_screen_shake(8, 2);
+            }
+
+            if (link.transform_timer <= 0) {
+                link.is_transforming = false;
+                printf("[MINISH] Transformacao concluida! Novo tamanho do Link: %s\n",
+                       link.is_minish ? "MINISH (8x8 px)" : "HUMANO (16x16 px)");
+            }
+        } else if (kinstone_is_active()) {
             kinstone_update();
 
             bool confirm = hal_input_is_pressed(KEY_A) || hal_input_is_pressed(KEY_START);
@@ -688,15 +875,30 @@ int main(int argc, char* argv[]) {
                 link.tiger_scroll_banner_timer--;
             }
 
-            // Ação com Botão A: Primeiro interage com Masmorra / Loja / Guarda / Cidadã / Baús / Swiftblade / NPCs, depois golpe de espada!
+            // Ação com Botão A: Primeiro Portal Minish, Masmorra / Loja / Guarda / Cidadã / Baús / Swiftblade / NPCs, depois golpe de espada!
             if (hal_input_is_pressed(KEY_A) && !link.is_attacking && !link.is_spinning && !link.is_charging_spin) {
-                if (dungeon_is_active()) {
+                Entity* nearby_stump = entity_find_nearby_minish_stump(link.x, link.y, 22.0f);
+                if (nearby_stump) {
+                    link.is_transforming = true;
+                    link.transform_timer = 50;
+                    link.transform_to_minish = !link.is_minish;
+                    link.is_moving = false;
+                    link.x = nearby_stump->x;
+                    link.y = nearby_stump->y;
+                    if (link.transform_to_minish) {
+                        hal_audio_play_sound(SOUND_MINISH_SHRINK, 1.0f, 1.0f);
+                        printf("[MINISH] [A] Link subiu no portal e esta ENCOLHENDO para tamanho Minish!\n");
+                    } else {
+                        hal_audio_play_sound(SOUND_MINISH_GROW, 1.0f, 1.0f);
+                        printf("[MINISH] [A] Link subiu no portal e esta CRESCENDO para tamanho Humano!\n");
+                    }
+                } else if (dungeon_is_active()) {
                     if (dungeon_interact(link.x, link.y, &link.rupees, &link.hearts)) {
                         // Abriu o baú do altar da masmorra!
                     } else {
                         link.is_attacking = true;
                         link.attack_timer = 12;
-                        hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                        hal_audio_play_sound(SOUND_SWORD_SLASH, link.is_minish ? 0.7f : 1.0f, link.is_minish ? 1.38f : 1.0f);
                     }
                 } else if (s_in_town) {
                     Entity* shopkeeper = entity_find_nearby_shopkeeper(link.x, link.y, 40.0f);
@@ -852,7 +1054,11 @@ int main(int argc, char* argv[]) {
 
             // Chamado de Orientação do Companheiro Ezlo
             if (hal_input_is_pressed(KEY_SELECT)) {
-                dialogue_trigger_ezlo_hint();
+                if (link.is_minish) {
+                    dialogue_trigger_ezlo_minish_hint();
+                } else {
+                    dialogue_trigger_ezlo_hint();
+                }
             }
             if (hal_input_is_pressed(KEY_L)) {
                 Entity* knpc = entity_find_kinstone_npc(link.x, link.y, 32.0f);
@@ -863,7 +1069,24 @@ int main(int argc, char* argv[]) {
                 }
             }
             if (hal_input_is_pressed(KEY_R)) {
-                hal_audio_cycle_bgm();
+                Entity* nearby_stump = entity_find_nearby_minish_stump(link.x, link.y, 24.0f);
+                if (nearby_stump) {
+                    link.is_transforming = true;
+                    link.transform_timer = 50;
+                    link.transform_to_minish = !link.is_minish;
+                    link.is_moving = false;
+                    link.x = nearby_stump->x;
+                    link.y = nearby_stump->y;
+                    if (link.transform_to_minish) {
+                        hal_audio_play_sound(SOUND_MINISH_SHRINK, 1.0f, 1.0f);
+                        printf("[MINISH] [KEY_R] Link subiu no portal e esta ENCOLHENDO para tamanho Minish!\n");
+                    } else {
+                        hal_audio_play_sound(SOUND_MINISH_GROW, 1.0f, 1.0f);
+                        printf("[MINISH] [KEY_R] Link subiu no portal e esta CRESCENDO para tamanho Humano!\n");
+                    }
+                } else {
+                    hal_audio_cycle_bgm();
+                }
             }
 
         // Modificador de Velocidade: Dash / Pegasus Boots (Botao B segurado) ou Carga da Espada
@@ -950,25 +1173,19 @@ int main(int argc, char* argv[]) {
             bool blocked_x = false;
             bool blocked_y = false;
 
-            if (dungeon_is_active()) {
-                blocked_x = dungeon_is_solid(new_x + 4.0f, link.y + 12.0f) ||
-                            dungeon_is_solid(new_x + 12.0f, link.y + 12.0f) ||
-                            dungeon_is_solid(new_x + 4.0f, link.y + 16.0f) ||
-                            dungeon_is_solid(new_x + 12.0f, link.y + 16.0f);
-                blocked_y = dungeon_is_solid(link.x + 4.0f, new_y + 12.0f) ||
-                            dungeon_is_solid(link.x + 12.0f, new_y + 12.0f) ||
-                            dungeon_is_solid(link.x + 4.0f, new_y + 16.0f) ||
-                            dungeon_is_solid(link.x + 12.0f, new_y + 16.0f);
-            } else {
-                blocked_x = map_is_solid(active_map, new_x + 4.0f, link.y + 12.0f) ||
-                            map_is_solid(active_map, new_x + 12.0f, link.y + 12.0f) ||
-                            map_is_solid(active_map, new_x + 4.0f, link.y + 16.0f) ||
-                            map_is_solid(active_map, new_x + 12.0f, link.y + 16.0f);
-                blocked_y = map_is_solid(active_map, link.x + 4.0f, new_y + 12.0f) ||
-                            map_is_solid(active_map, link.x + 12.0f, new_y + 12.0f) ||
-                            map_is_solid(active_map, link.x + 4.0f, new_y + 16.0f) ||
-                            map_is_solid(active_map, link.x + 12.0f, new_y + 16.0f);
-            }
+            float off_x1 = link.is_minish ? 6.0f : 4.0f;
+            float off_x2 = link.is_minish ? 10.0f : 12.0f;
+            float off_y1 = link.is_minish ? 13.0f : 12.0f;
+            float off_y2 = link.is_minish ? 15.0f : 16.0f;
+
+            blocked_x = is_world_solid_for_player(active_map, new_x + off_x1, link.y + off_y1, link.is_minish) ||
+                        is_world_solid_for_player(active_map, new_x + off_x2, link.y + off_y1, link.is_minish) ||
+                        is_world_solid_for_player(active_map, new_x + off_x1, link.y + off_y2, link.is_minish) ||
+                        is_world_solid_for_player(active_map, new_x + off_x2, link.y + off_y2, link.is_minish);
+            blocked_y = is_world_solid_for_player(active_map, link.x + off_x1, new_y + off_y1, link.is_minish) ||
+                        is_world_solid_for_player(active_map, link.x + off_x2, new_y + off_y1, link.is_minish) ||
+                        is_world_solid_for_player(active_map, link.x + off_x1, new_y + off_y2, link.is_minish) ||
+                        is_world_solid_for_player(active_map, link.x + off_x2, new_y + off_y2, link.is_minish);
 
             if (!blocked_x) {
                 link.x = new_x;
@@ -1025,17 +1242,15 @@ int main(int argc, char* argv[]) {
             bool k_blocked_x = false;
             bool k_blocked_y = false;
 
-            if (dungeon_is_active()) {
-                k_blocked_x = dungeon_is_solid(k_new_x + 4.0f, link.y + 12.0f) ||
-                              dungeon_is_solid(k_new_x + 12.0f, link.y + 12.0f);
-                k_blocked_y = dungeon_is_solid(link.x + 4.0f, k_new_y + 12.0f) ||
-                              dungeon_is_solid(link.x + 12.0f, k_new_y + 16.0f);
-            } else {
-                k_blocked_x = map_is_solid(active_map, k_new_x + 4.0f, link.y + 12.0f) ||
-                              map_is_solid(active_map, k_new_x + 12.0f, link.y + 12.0f);
-                k_blocked_y = map_is_solid(active_map, link.x + 4.0f, k_new_y + 12.0f) ||
-                              map_is_solid(active_map, link.x + 12.0f, k_new_y + 16.0f);
-            }
+            float off_x1 = link.is_minish ? 6.0f : 4.0f;
+            float off_x2 = link.is_minish ? 10.0f : 12.0f;
+            float off_y1 = link.is_minish ? 13.0f : 12.0f;
+            float off_y2 = link.is_minish ? 15.0f : 16.0f;
+
+            k_blocked_x = is_world_solid_for_player(active_map, k_new_x + off_x1, link.y + off_y1, link.is_minish) ||
+                          is_world_solid_for_player(active_map, k_new_x + off_x2, link.y + off_y1, link.is_minish);
+            k_blocked_y = is_world_solid_for_player(active_map, link.x + off_x1, k_new_y + off_y1, link.is_minish) ||
+                          is_world_solid_for_player(active_map, link.x + off_x2, k_new_y + off_y2, link.is_minish);
 
             if (!k_blocked_x) link.x = k_new_x;
             if (!k_blocked_y) link.y = k_new_y;
@@ -1098,13 +1313,15 @@ int main(int argc, char* argv[]) {
         // Atualização da animação dos passos com frequência dinâmica proporcional (Ciclo fluido de 10 quadros)
         if (link.is_moving && actual_speed > 0.0f) {
             link.anim_timer += (int)(actual_speed * 6.0f + 0.5f);
-            if (link.anim_timer >= 24) {
+            int step_thresh = link.is_minish ? 16 : 24;
+            if (link.anim_timer >= step_thresh) {
                 link.anim_frame = (link.anim_frame + 1) % 10;
                 link.anim_timer = 0;
+                float pitch_mult = link.is_minish ? 1.38f : 1.0f;
                 if (link.anim_frame == 0) {
-                    hal_audio_play_sound(SOUND_FOOTSTEP, 0.45f, 0.94f);
+                    hal_audio_play_sound(SOUND_FOOTSTEP, 0.45f, 0.94f * pitch_mult);
                 } else if (link.anim_frame == 5) {
-                    hal_audio_play_sound(SOUND_FOOTSTEP, 0.45f, 1.06f);
+                    hal_audio_play_sound(SOUND_FOOTSTEP, 0.45f, 1.06f * pitch_mult);
                 }
             }
         } else {
@@ -1253,6 +1470,30 @@ int main(int argc, char* argv[]) {
 
             font_draw_text(ban_x + 24, ban_y + 6, "PERGAMINHO DO TIGRE Nº 1!", 0xFDE047FF, true);
             font_draw_text(ban_x + 24, ban_y + 18, "ATAQUE GIRATORIO (SPIN ATTACK)!", 0x38BDF8FF, true);
+        }
+
+        // 7. Badge do Estado Minish no HUD
+        if (link.is_minish) {
+            int mx = 146;
+            int my = 2;
+            draw_rect(mx, my + 1, 8, 8, 0x064E3BFF);
+            draw_rect(mx + 2, my + 2, 4, 3, 0xEF4444FF); // Gorro bolota
+            draw_rect(mx + 1, my + 5, 6, 3, 0x10B981FF); // Túnica
+            hal_video_put_pixel(mx + 3, my + 1, 0xFFFFFFFF); // Pom-pom
+            font_draw_text(mx + 11, 3, "MINISH", 0x34D399FF, true);
+        }
+
+        // 8. Prompt de Interação do Portal / Toco Minish [R]
+        Entity* nearby_stump = entity_find_nearby_minish_stump(link.x, link.y, 22.0f);
+        if (nearby_stump && !link.is_transforming && !dialogue_is_active() && !kinstone_is_active()) {
+            const char* prompt_text = link.is_minish ? "[R] Crescer (Toco Minish)" : "[R] Encolher (Toco Minish)";
+            int text_w = 140;
+            int bpx = (ctx->render_width - text_w) / 2;
+            int bpy = ctx->render_height - 18;
+            draw_rect(bpx - 4, bpy - 2, text_w + 8, 14, 0x0A0F0CEE);
+            draw_rect(bpx - 3, bpy - 1, text_w + 6, 12, 0x10B981FF);
+            draw_rect(bpx - 2, bpy, text_w + 4, 10, 0x0A1F14EE);
+            font_draw_text(bpx, bpy + 1, prompt_text, 0x6EE7B7FF, true);
         }
 
         // --------------------------------------------------------------------
