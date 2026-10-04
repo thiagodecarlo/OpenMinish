@@ -54,6 +54,7 @@ typedef struct {
     bool  lake_temple_unlocked;
     bool  has_flame_lantern;
     bool  lantern_lit;
+    bool  has_rocs_cape;
     int   slot_a;
     int   slot_b;
     u32   unlocked_items_mask;

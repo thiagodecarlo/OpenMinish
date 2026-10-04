@@ -13,6 +13,7 @@
 #include "hal/dungeon_fortress.h"
 #include "hal/fast_travel.h"
 #include "hal/lantern.h"
+#include "hal/rocs_cape.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -171,6 +172,7 @@ const char* subweapon_get_name(SubweaponType item) {
         case ITEM_MOLE_MITTS:    return "Luvas de Toupeira (Mole Mitts)";
         case ITEM_OCARINA_OF_WIND: return "Ocarina do Vento (Ocarina)";
         case ITEM_FLAME_LANTERN:   return "Lanterna de Chamas (Flame Lantern)";
+        case ITEM_ROCS_CAPE:       return "Capa de Roc (Roc's Cape)";
         default:                 return "Nenhum";
     }
 }
@@ -1052,6 +1054,19 @@ void subweapon_render_hud_icon(int x, int y) {
         // Base de bronze
         for (int dx = 5; dx <= 10; dx++) {
             hal_video_put_pixel(x + dx, y + 9, 0xB45309FF);
+        }
+    } else if (s_current_item == ITEM_ROCS_CAPE) {
+        // Mini Capa de Roc no HUD (Manto vermelho carmesim, broche de ouro e plumas brancas)
+        hal_video_put_pixel(x + 7, y + 3, 0xF59E0BFF); // Broche de ouro
+        hal_video_put_pixel(x + 8, y + 3, 0xF59E0BFF);
+        for (int dy = 4; dy <= 7; dy++) {
+            for (int dx = 5; dx <= 10; dx++) {
+                u32 col = (dx == 5 || dx == 10) ? 0x991B1BFF : 0xDC2626FF;
+                hal_video_put_pixel(x + dx, y + dy, col);
+            }
+        }
+        for (int dx = 5; dx <= 10; dx++) {
+            hal_video_put_pixel(x + dx, y + 8, 0xF8FAFCFF); // Plumas brancas
         }
     }
 }

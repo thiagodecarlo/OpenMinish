@@ -366,4 +366,9 @@ Tilemap* map_create_lake_hylia(void);
  */
 bool map_interact_lantern(Tilemap* map, float world_x, float world_y, int* out_type);
 
+/*
+ * Retorna true se a coordenada no mundo for um abismo sem fundo (TILE_FORTRESS_PIT).
+ */
+bool map_is_pit(const Tilemap* map, float world_x, float world_y);
+
 #endif // HAL_MAP_H
