@@ -68,39 +68,35 @@ Esta skill formaliza a metodologia de engenharia reversa e desenvolvimento nativ
 
 ---
 
-### Pilar 5: Ciclo de Desenvolvimento GitFlow
-Todo desenvolvimento segue o fluxo de isolamento em branches:
+### Pilar 5: Pipeline Automatizado de Entrega Contínua (CI/CD Local da IA)
+O fluxo de desenvolvimento é **100% automatizado pelo agente**: assim que o build na branch da feature tiver sucesso (`exit code 0`) e a verificação visual for concluída, o agente deve automaticamente comitar, dar push na branch da feature, fazer o merge no `develop` e dar push de tudo para o `origin`.
 
 ```mermaid
-gitGraph
-   commit id: "base"
-   branch feature/exemplo
-   checkout feature/exemplo
-   commit id: "codigo"
-   commit id: "testes"
-   checkout develop
-   merge feature/exemplo id: "merge"
+flowchart TD
+    BuildPass["✅ Build CMake com Sucesso (0 erros)"] --> AutoCommit["1. Commit Semântico na Feature"]
+    AutoCommit --> PushFeature["2. Push feature -> origin/feature/*"]
+    PushFeature --> CheckoutDev["3. Git Checkout develop"]
+    CheckoutDev --> MergeDev["4. Git Merge --no-ff feature"]
+    MergeDev --> PushDev["5. Push develop -> origin/develop"]
 ```
 
-1. **Partir de `develop` atualizado**:
-   ```powershell
-   git checkout develop ; git pull origin develop
-   ```
-2. **Criar branch de funcionalidade**:
-   ```powershell
-   git checkout -b feature/<nome-da-feature>
-   ```
-3. **Commits Semânticos**:
-   - `feat(...)`: nova funcionalidade
-   - `fix(...)`: correção de bug gráfico, física ou áudio
-   - `refactor(...)`: melhorias de código sem alteração externa
-4. **Push e Merge com `--no-ff`**:
-   ```powershell
-   git push -u origin feature/<nome-da-feature>
-   git checkout develop
-   git merge --no-ff feature/<nome-da-feature> -m "Merge branch 'feature/<nome-da-feature>' into develop"
-   git push origin develop
-   ```
+**Sequência Obrigatória de Comandos**:
+```powershell
+# 1. Commit na branch da feature
+git add include/ src/ ; git commit -m "feat(<escopo>): <descricao>"
+
+# 2. Push da feature para o repositório remoto
+git push -u origin feature/<nome-da-feature>
+
+# 3. Troca para develop
+git checkout develop
+
+# 4. Merge da feature preservando histórico
+git merge --no-ff feature/<nome-da-feature> -m "Merge branch 'feature/<nome-da-feature>' into develop"
+
+# 5. Push final de develop para origin
+git push origin develop
+```
 
 ---
 
