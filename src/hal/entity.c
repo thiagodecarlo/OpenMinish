@@ -50,6 +50,40 @@ static void draw_filled_rect(int rx, int ry, int rw, int rh, u32 color) {
     }
 }
 
+static inline u32 blend_entity_colors(u32 dst, u32 src) {
+    u32 sa = src & 0xFF;
+    if (sa == 255) return src;
+    if (sa == 0)   return dst;
+
+    u32 sr = (src >> 24) & 0xFF;
+    u32 sg = (src >> 16) & 0xFF;
+    u32 sb = (src >> 8)  & 0xFF;
+
+    u32 dr = (dst >> 24) & 0xFF;
+    u32 dg = (dst >> 16) & 0xFF;
+    u32 db = (dst >> 8)  & 0xFF;
+
+    u32 r = (sr * sa + dr * (255 - sa)) / 255;
+    u32 g = (sg * sa + dg * (255 - sa)) / 255;
+    u32 b = (sb * sa + db * (255 - sa)) / 255;
+
+    return (r << 24) | (g << 16) | (b << 8) | 0xFF;
+}
+
+static void draw_rect_blend(int rx, int ry, int rw, int rh, u32 color) {
+    const HalVideoContext* ctx = hal_video_get_context();
+    if (!ctx || !ctx->framebuffer) return;
+
+    for (int y = ry; y < ry + rh; y++) {
+        if (y < 0 || y >= ctx->render_height) continue;
+        for (int x = rx; x < rx + rw; x++) {
+            if (x < 0 || x >= ctx->render_width) continue;
+            int idx = y * ctx->render_width + x;
+            ctx->framebuffer[idx] = blend_entity_colors(ctx->framebuffer[idx], color);
+        }
+    }
+}
+
 void entity_trigger_screen_shake(int duration_frames, int magnitude) {
     s_screen_shake_timer = duration_frames;
     s_screen_shake_magnitude = magnitude;
@@ -103,7 +137,8 @@ int entity_count_active_enemies(void) {
             s_entities[i].type == ENTITY_ENEMY_PEAHAT ||
             s_entities[i].type == ENTITY_ENEMY_TEKTITE ||
             s_entities[i].type == ENTITY_ENEMY_SPINY_BEETLE ||
-            (s_entities[i].type == ENTITY_BOSS_BIG_CHUCHU && s_entities[i].health > 0)) {
+            (s_entities[i].type == ENTITY_BOSS_BIG_CHUCHU && s_entities[i].health > 0) ||
+            (s_entities[i].type == ENTITY_BOSS_GLEEROK && s_entities[i].health > 0)) {
             count++;
         }
     }
@@ -407,6 +442,41 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     e->action        = 1; // Minerando minérios com picareta
                     e->animTimer     = rand() % 30;
                     e->hitbox        = (Hitbox){ -6.0f, -6.0f, 12.0f, 12.0f };
+                    break;
+
+                case ENTITY_BOSS_GLEEROK:
+                    e->health        = 12;
+                    e->maxHealth     = 12;
+                    e->damage        = 2;
+                    e->dir           = DIR_DOWN;
+                    e->action        = 0; // 0 = Emergindo do magma
+                    e->subAction     = 0;
+                    e->bossToppleTimer  = 0;
+                    e->bossEnraged      = false;
+                    e->bossDeathTimer   = 0;
+                    e->bossFireTimer    = 60;
+                    e->bossTargetX      = world_x;
+                    e->bossTargetY      = world_y;
+                    e->aiTimer       = 60;
+                    e->hitbox        = (Hitbox){ 4.0f, 4.0f, 56.0f, 40.0f };
+                    break;
+
+                case ENTITY_ITEM_FIRE_ELEMENT:
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->action        = 0;
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ 2.0f, 2.0f, 12.0f, 12.0f };
+                    break;
+
+                case ENTITY_PROJECTILE_FIREBALL:
+                    e->health        = 1;
+                    e->maxHealth     = 1;
+                    e->damage        = 2;
+                    e->action        = 1;
+                    e->aiTimer       = 90;
+                    e->hitbox        = (Hitbox){ 2.0f, 2.0f, 8.0f, 8.0f };
                     break;
 
                 default:
@@ -1017,6 +1087,160 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
                     printf("[BOSS DEFEATED] Big Green ChuChu explodiu em gosma verde! Recompensa liberada!\n");
                     continue;
                 }
+            }
+        }
+
+        // --------------------------------------------------------------------
+        // CHEFE GLEEROK (CAVE OF FLAMES - DRAGÃO DE LAVA VULCÂNICO)
+        // --------------------------------------------------------------------
+        else if (e->type == ENTITY_BOSS_GLEEROK) {
+            e->animTimer++;
+            if (e->invulnerableTimer > 0) e->invulnerableTimer--;
+
+            float dx = link_x - (e->x + 28.0f);
+            float dy = link_y - (e->y + 20.0f);
+            float dist = sqrtf(dx * dx + dy * dy);
+
+            // AÇÃO 0: Emergindo do Magma Vulcânico
+            if (e->action == 0) {
+                e->aiTimer--;
+                if ((e->aiTimer % 15) == 0) {
+                    entity_trigger_screen_shake(6, 3);
+                    hal_audio_play_sound(SOUND_BOSS_SLAM, 0.8f, 0.7f);
+                }
+                if (e->aiTimer <= 0) {
+                    e->action = 1; // Patrulha ativa e ataques de fogo
+                    e->aiTimer = 60;
+                    e->bossFireTimer = 90;
+                    entity_trigger_screen_shake(18, 5);
+                    hal_audio_play_sound(SOUND_BOSS_SLAM, 1.0f, 0.9f);
+                    printf("[BOSS GLEEROK] O Dragao de Fogo emergiu da lava incandescente!\n");
+                }
+            }
+
+            // AÇÃO 1: Patrulha no Lago de Lava e Ataques de Fogo
+            else if (e->action == 1) {
+                // Movimento oscilatório de nado no magma
+                float patrol_speed = e->bossEnraged ? 1.4f : 0.85f;
+                e->x += e->vx;
+                if (e->x <= 64.0f) { e->x = 64.0f; e->vx = patrol_speed; }
+                if (e->x >= 144.0f) { e->x = 144.0f; e->vx = -patrol_speed; }
+                if (e->vx == 0.0f) e->vx = patrol_speed;
+
+                // Temporizador de baforada de fogo
+                e->bossFireTimer--;
+                if (e->bossFireTimer <= 0) {
+                    e->bossFireTimer = e->bossEnraged ? 80 : 120;
+                    // Cospe bola de magma incandescente na direção de Link
+                    float spd = 2.4f;
+                    float f_dx = link_x - (e->x + 28.0f);
+                    float f_dy = link_y - (e->y + 30.0f);
+                    float f_dist = sqrtf(f_dx * f_dx + f_dy * f_dy);
+                    if (f_dist > 1.0f) {
+                        Entity* fb = entity_spawn(ENTITY_PROJECTILE_FIREBALL, e->x + 24.0f, e->y + 32.0f);
+                        if (fb) {
+                            fb->vx = (f_dx / f_dist) * spd;
+                            fb->vy = (f_dy / f_dist) * spd;
+                            hal_audio_play_sound(SOUND_SWORD_SLASH, 0.9f, 0.6f);
+                            printf("[BOSS GLEEROK] Disparo de bola de fogo contra Link!\n");
+                        }
+                    }
+                }
+
+                // Dano de colisão contra o herói se Link chegar perto demais da carapaça sem virá-la
+                if (*link_invuln_timer <= 0 && dist < 28.0f) {
+                    if (*link_hearts > 0) *link_hearts -= 2; // 1 Coração
+                    *link_invuln_timer = 60;
+                    *link_knock_x = (dx > 0.0f) ? 4.0f : -4.0f;
+                    *link_knock_y = 5.0f;
+                    hal_audio_play_sound(SOUND_HEART_BEEP, 1.0f, 0.8f);
+                }
+            }
+
+            // AÇÃO 3: Desabado na Plataforma (Ponte Vulnerável criada pelo Cajado de Pacci)
+            else if (e->action == 3) {
+                e->bossToppleTimer--;
+                if (e->bossToppleTimer <= 0) {
+                    e->action = 4; // Recuperação Enraivecida
+                    e->aiTimer = 40;
+                    hal_audio_play_sound(SOUND_BOSS_SLAM, 1.0f, 1.1f);
+                    printf("[BOSS GLEEROK] Gleerok recuperou o equilibrio e vai mergulhar de volta!\n");
+                }
+            }
+
+            // AÇÃO 4: Recuperação Enraivecida (Sacode Link e mergulha)
+            else if (e->action == 4) {
+                e->aiTimer--;
+                if (e->aiTimer == 30) {
+                    // Empurra Link para trás para a ilha
+                    *link_knock_y = 6.0f;
+                    *link_invuln_timer = 20;
+                    entity_trigger_screen_shake(12, 4);
+                }
+                if (e->aiTimer <= 0) {
+                    e->bossEnraged = true;
+                    e->action = 1; // Retorna à patrulha
+                    e->bossFireTimer = 50;
+                }
+            }
+
+            // AÇÃO 5: Derrota e Extinção do Dragão
+            else if (e->action == 5) {
+                e->bossDeathTimer++;
+                if ((e->bossDeathTimer % 8) == 0) {
+                    entity_trigger_screen_shake(8, 4);
+                    hal_audio_play_sound(SOUND_BOSS_SLAM, 0.9f, 0.8f + (float)e->bossDeathTimer * 0.005f);
+                }
+                if (e->bossDeathTimer >= 80) {
+                    e->is_active = false;
+                    s_boss_defeated = true;
+                    hal_audio_play_sound(SOUND_BOSS_DEFEAT, 1.0f, 1.0f);
+                    entity_trigger_screen_shake(24, 6);
+
+                    // Spawna Heart Container permanente e o Elemento Fogo!
+                    entity_spawn(ENTITY_ITEM_HEART_CONTAINER, e->x + 12.0f, e->y + 24.0f);
+                    entity_spawn(ENTITY_ITEM_FIRE_ELEMENT, e->x + 40.0f, e->y + 24.0f);
+                    printf("[BOSS DEFEATED] Gleerok foi destruido! Heart Container e Elemento Fogo liberados!\n");
+                    continue;
+                }
+            }
+        }
+
+        // PROJÉTIL: BOLA DE FOGO DO GLEEROK
+        else if (e->type == ENTITY_PROJECTILE_FIREBALL) {
+            e->animTimer++;
+            e->x += e->vx;
+            e->y += e->vy;
+            e->aiTimer--;
+            if (e->aiTimer <= 0) {
+                e->is_active = false;
+                continue;
+            }
+
+            // Dano de fogo em Link
+            float dx = (link_x + 8.0f) - (e->x + 4.0f);
+            float dy = (link_y + 8.0f) - (e->y + 4.0f);
+            if (*link_invuln_timer <= 0 && (dx * dx + dy * dy) < 144.0f) {
+                if (*link_hearts > 0) *link_hearts -= 2;
+                *link_invuln_timer = 50;
+                *link_knock_x = e->vx * 1.5f;
+                *link_knock_y = e->vy * 1.5f;
+                e->is_active = false;
+                hal_audio_play_sound(SOUND_HEART_BEEP, 1.0f, 0.9f);
+                continue;
+            }
+        }
+
+        // ITEM SAGRADO: ELEMENTO DO FOGO (FIRE ELEMENT)
+        else if (e->type == ENTITY_ITEM_FIRE_ELEMENT) {
+            e->animTimer++;
+            // Coleta por Link
+            float dx = (link_x + 8.0f) - (e->x + 8.0f);
+            float dy = (link_y + 8.0f) - (e->y + 8.0f);
+            if ((dx * dx + dy * dy) < 196.0f) {
+                e->is_active = false;
+                hal_audio_play_sound(SOUND_HEART_CONTAINER, 1.0f, 1.0f);
+                printf("[SACRED ELEMENT] Link obteve o sagrado Elemento Fogo (Fire Element)!\n");
             }
         }
 
@@ -1685,6 +1909,42 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
                 }
             }
         }
+        // Golpeando o Chefe Gleerok
+        else if (e->type == ENTITY_BOSS_GLEEROK) {
+            if (e->action == 3 && e->invulnerableTimer <= 0) {
+                // Núcleo de rubi / fogo exposto no dorso
+                float gx1 = e->x + 16.0f;
+                float gy1 = e->y + 8.0f;
+                float gx2 = e->x + 40.0f;
+                float gy2 = e->y + 32.0f;
+
+                if (sx1 < gx2 && sx2 > gx1 && sy1 < gy2 && sy2 > gy1) {
+                    e->health -= damage;
+                    e->invulnerableTimer = 22;
+                    hal_audio_play_sound(SOUND_BOSS_HIT, 1.0f, 1.2f);
+                    entity_trigger_screen_shake(10, 4);
+                    hit_something = true;
+                    printf("[BOSS GLEEROK] Golpe direto no nucleo de rubi! Dano: %d | HP: %d\n", damage, e->health);
+
+                    if (e->health <= 0) {
+                        e->health = 0;
+                        e->action = 5;
+                        e->bossDeathTimer = 0;
+                        hal_audio_play_sound(SOUND_BOSS_SLAM, 1.0f, 0.65f);
+                    }
+                }
+            } else if (e->action == 1) {
+                // Carapaça blindada de pedra: a espada resvala sem ferir
+                float gx1 = e->x + 8.0f;
+                float gy1 = e->y + 8.0f;
+                float gx2 = e->x + 48.0f;
+                float gy2 = e->y + 36.0f;
+                if (sx1 < gx2 && sx2 > gx1 && sy1 < gy2 && sy2 > gy1) {
+                    hal_audio_play_sound(SOUND_SWORD_HIT, 0.8f, 0.7f);
+                    hit_something = true;
+                }
+            }
+        }
     }
 
     return hit_something;
@@ -1786,6 +2046,38 @@ int entity_check_spin_attack_hit(float center_x, float center_y, float radius, i
             } else if (e->action == 1) { // Em pé
                 if (dist <= radius + 26.0f) {
                     hal_audio_play_sound(SOUND_SWORD_HIT, 0.75f, 0.70f);
+                    hit_count++;
+                }
+            }
+        }
+        // Golpe no Chefe Gleerok
+        else if (e->type == ENTITY_BOSS_GLEEROK) {
+            float gx = e->x + 28.0f;
+            float gy = e->y + 20.0f;
+            float dx = gx - center_x;
+            float dy = gy - center_y;
+            float dist = sqrtf(dx * dx + dy * dy);
+
+            if (e->action == 3 && e->invulnerableTimer <= 0) { // Toppled vulnerável!
+                if (dist <= radius + 24.0f) {
+                    e->health -= damage;
+                    e->invulnerableTimer = 24;
+                    hal_audio_play_sound(SOUND_BOSS_HIT, 1.0f, 1.25f);
+                    entity_trigger_screen_shake(12, 5);
+                    printf("[BOSS GLEEROK] SPIN ATTACK devastador no nucleo de fogo! HP restante: %d / %d\n",
+                           e->health, e->maxHealth);
+
+                    if (e->health <= 0) {
+                        e->health = 0;
+                        e->action = 5;
+                        e->bossDeathTimer = 0;
+                        hal_audio_play_sound(SOUND_BOSS_SLAM, 1.0f, 0.65f);
+                    }
+                    hit_count++;
+                }
+            } else if (e->action == 1) { // Em pé / carapaça blindada
+                if (dist <= radius + 32.0f) {
+                    hal_audio_play_sound(SOUND_SWORD_HIT, 0.8f, 0.7f);
                     hit_count++;
                 }
             }
@@ -2040,6 +2332,19 @@ bool entity_check_pacci_hit(float px, float py, float pw, float ph) {
                 hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.6f);
                 printf("[CANE OF PACCI] Spiny Beetle virado de costas! Carapaca invertida, barriga vulneravel!\n");
                 return true;
+            }
+            // 1b. Chefe Gleerok: Cajado de Pacci inverte a carapaça rochosa e derruba o pescoço!
+            else if (e->type == ENTITY_BOSS_GLEEROK) {
+                if (e->action == 1) {
+                    e->action = 3; // Toppled! Carapaça virada e pescoço estendido como ponte!
+                    e->aiTimer = 360; // 6 segundos de vulnerabilidade
+                    e->invulnerableTimer = 15;
+                    hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.4f);
+                    hal_audio_play_sound(SOUND_BOSS_SLAM, 1.0f, 0.8f);
+                    entity_trigger_screen_shake(15, 6);
+                    printf("[CANE OF PACCI] Gleerok atingido pela magia de Pacci! Carapaca virada e nucleo exposto!\n");
+                    return true;
+                }
             }
             // 2. Inimigos normais (Octorok, Keese, ChuChu, Moblin, Peahat, Tektite):
             // Sofrem forte impacto mágico de inversão e atordoamento
@@ -3801,6 +4106,187 @@ void entity_manager_render(const Camera* cam) {
                 draw_filled_rect(prompt_x - 1, prompt_y - 1, 52, 12, 0x0F172AF0);
                 draw_filled_rect(prompt_x - 1, prompt_y - 1, 52, 1, 0x38BDF8FF);
                 font_draw_text(prompt_x + 2, prompt_y + 1, "[A] Conversar", 0xE0F2FEFF, true);
+            }
+        }
+
+        // 25. PROJETIL: BOLA DE FOGO DO CHEFE GLEEROK
+        else if (e->type == ENTITY_PROJECTILE_FIREBALL) {
+            int cx = sx + 4;
+            int cy = sy + 4;
+            int pulse = (e->animTimer / 3) % 2;
+
+            draw_filled_rect(cx - 4 - pulse, cy - 4 - pulse, 9 + pulse * 2, 9 + pulse * 2, 0xDC262688);
+            draw_filled_rect(cx - 3, cy - 3, 7, 7, 0xEA580CFF);
+            draw_filled_rect(cx - 2, cy - 2, 5, 5, 0xF97316FF);
+            draw_filled_rect(cx - 1, cy - 1, 3, 3, 0xFDE047FF);
+            put_pixel_safe(cx, cy, 0xFFFFFFFF);
+        }
+
+        // 26. ITEM: SAGRADO ELEMENTO FOGO (FIRE ELEMENT)
+        else if (e->type == ENTITY_ITEM_FIRE_ELEMENT) {
+            int bob = (int)(sinf((float)e->animTimer * 0.12f) * 3.0f);
+            int ey = sy + bob;
+
+            draw_rect_blend(sx - 4, ey - 4, 24, 24, 0xF9731633);
+            draw_rect_blend(sx - 2, ey - 2, 20, 20, 0xFDE04744);
+
+            draw_filled_rect(sx + 3, ey + 1, 10, 14, 0xF59E0BFF);
+            draw_filled_rect(sx + 4, ey + 2, 8, 12, 0x78350FFF);
+
+            int flame_phase = (e->animTimer / 4) % 3;
+            u32 c_flame = (flame_phase == 0) ? 0xDC2626FF : ((flame_phase == 1) ? 0xEA580CFF : 0xF97316FF);
+            draw_filled_rect(sx + 5, ey + 4 + flame_phase, 6, 7 - flame_phase, c_flame);
+            draw_filled_rect(sx + 6, ey + 6, 4, 4, 0xFDE047FF);
+            put_pixel_safe(sx + 7, ey + 5, 0xFFFFFFFF);
+            put_pixel_safe(sx + 8, ey + 7, 0xFFFFFFFF);
+
+            int spark_y = ey - 4 - ((e->animTimer / 3) % 8);
+            put_pixel_safe(sx + 7 + ((e->animTimer / 5) % 3 - 1), spark_y, 0xFDE047CC);
+        }
+
+        // 27. CHEFE: GLEEROK - DRAGÃO DE FOGO DA CAVE OF FLAMES
+        else if (e->type == ENTITY_BOSS_GLEEROK) {
+            bool flash = (e->invulnerableTimer > 0 && (e->invulnerableTimer / 2) % 2 == 1);
+            int neck_sway = (int)(sinf((float)e->animTimer * 0.08f) * 4.0f);
+
+            u32 c_rock_base  = flash ? 0xFFFFFFFF : 0x292524FF;
+            u32 c_rock_crust = flash ? 0xFEE2E2FF : 0x44403CFF;
+            u32 c_rock_dark  = flash ? 0xE2E8F0FF : 0x1C1917FF;
+            u32 c_magma_seam = flash ? 0xFDE047FF : 0xDC2626FF;
+            u32 c_magma_glow = flash ? 0xFFFFFFFF : 0xF97316FF;
+            u32 c_ruby       = flash ? 0xFFFFFFFF : 0xEF4444FF;
+            u32 c_ruby_glow  = flash ? 0xFFFFFFFF : 0xFDE047FF;
+            u32 c_horn       = flash ? 0xFDE047FF : 0xD97706FF;
+
+            if (e->action == 3) {
+                // ESTADO TOPPLED (VULNERÁVEL): CARAPAÇA INVERTIDA & PESCOÇO COMO PONTE
+                // 1. Pescoço estendido no piso formando rampa de acesso
+                int ramp_x = sx + 20;
+                int ramp_y = sy + 28;
+                draw_filled_rect(ramp_x, ramp_y, 16, 12, c_rock_dark);
+                draw_filled_rect(ramp_x + 2, ramp_y + 2, 12, 8, c_rock_crust);
+                draw_filled_rect(ramp_x + 4, ramp_y + 4, 8, 4, 0x78350FFF); // Caminho de escamas
+
+                // Cabeça adormecida / atordoada no solo
+                int hx = ramp_x - 4;
+                int hy = ramp_y + 8;
+                draw_filled_rect(hx, hy, 14, 10, c_rock_dark);
+                draw_filled_rect(hx + 2, hy + 2, 10, 6, c_rock_base);
+                put_pixel_safe(hx + 3, hy + 4, 0x1E293BFF); // Olho fechado / em X
+                put_pixel_safe(hx + 5, hy + 4, 0x1E293BFF);
+
+                // 2. Carapaça virada ao avesso (expondo o grande Núcleo de Rubi)
+                int body_x = sx + 4;
+                int body_y = sy + 4;
+                draw_filled_rect(body_x, body_y, 48, 26, c_rock_dark);
+                draw_filled_rect(body_x + 2, body_y + 2, 44, 22, c_rock_base);
+                draw_filled_rect(body_x + 4, body_y + 4, 40, 18, c_rock_crust);
+
+                // Núcleo de Rubi pulsante
+                int core_x = body_x + 15;
+                int core_y = body_y + 5;
+                int pulse = (int)(sinf((float)e->animTimer * 0.2f) * 2.0f);
+                draw_rect_blend(core_x - 4, core_y - 4, 26, 22, 0xDC262655);
+                draw_filled_rect(core_x - pulse, core_y - pulse, 18 + pulse * 2, 14 + pulse * 2, c_ruby);
+                draw_filled_rect(core_x + 3, core_y + 2, 12, 10, c_magma_glow);
+                draw_filled_rect(core_x + 6, core_y + 4, 6, 6, c_ruby_glow);
+                put_pixel_safe(core_x + 8, core_y + 5, 0xFFFFFFFF); // Brilho de reflexo da joia
+
+                // Garras adormecidas nos lados
+                draw_filled_rect(body_x - 3, body_y + 8, 4, 8, c_horn);
+                draw_filled_rect(body_x + 47, body_y + 8, 4, 8, c_horn);
+            } else if (e->action == 5) {
+                // MORTE CLIMÁTICA: EXPLOSÕES E AFUNDAMENTO NA LAVA
+                int sink = e->bossDeathTimer / 4;
+                int body_x = sx + 4;
+                int body_y = sy + 4 + sink;
+
+                draw_filled_rect(body_x, body_y, 48, 28, c_rock_dark);
+                draw_filled_rect(body_x + 4, body_y + 2, 40, 24, c_rock_base);
+
+                // Círculos de explosão e clarões de destruição
+                int ex_phase = (e->bossDeathTimer / 6) % 4;
+                int ex_x = body_x + 6 + (ex_phase * 10);
+                int ex_y = body_y + 4 + ((ex_phase % 2) * 10);
+                draw_filled_rect(ex_x - 6, ex_y - 6, 12, 12, 0xFDE047CC);
+                draw_filled_rect(ex_x - 3, ex_y - 3, 6, 6, 0xFFFFFFFF);
+            } else {
+                // ESTADO ATIVO / PATRULHA / ATAQUE DE FOGO (Action 0, 1, 4)
+                // 1. Carapaça blindada de basalto com fissuras de magma
+                int body_x = sx + 4;
+                int body_y = sy + 8;
+                draw_filled_rect(body_x, body_y, 48, 28, c_rock_dark);
+                draw_filled_rect(body_x + 2, body_y + 2, 44, 24, c_rock_base);
+                draw_filled_rect(body_x + 4, body_y + 4, 40, 20, c_rock_crust);
+
+                // Fissuras de magma incandescente na rocha
+                for (int f = 0; f < 3; f++) {
+                    int fx = body_x + 10 + (f * 12);
+                    int fy = body_y + 6;
+                    draw_filled_rect(fx, fy, 4, 16, c_magma_seam);
+                    draw_filled_rect(fx + 1, fy + 2, 2, 12, c_magma_glow);
+                    put_pixel_safe(fx + 1, fy + 6, 0xFFFFFFFF);
+                }
+
+                // Chifres e espigões rochosos da couraça
+                draw_filled_rect(body_x + 2, body_y - 4, 6, 6, c_horn);
+                draw_filled_rect(body_x + 40, body_y - 4, 6, 6, c_horn);
+                draw_filled_rect(body_x + 21, body_y - 5, 6, 6, c_horn);
+
+                // 2. Pescoço serpentino de dragão ondulando
+                int neck_x = body_x + 18 + neck_sway;
+                int neck_y = body_y + 16;
+                draw_filled_rect(neck_x, neck_y, 12, 14, c_rock_dark);
+                draw_filled_rect(neck_x + 2, neck_y, 8, 14, c_rock_base);
+                draw_filled_rect(neck_x + 4, neck_y + 2, 4, 10, c_magma_seam);
+
+                // 3. Cabeça de Dragão com mandíbula e olhos
+                int head_x = neck_x - 3;
+                int head_y = neck_y + 10;
+                draw_filled_rect(head_x, head_y, 18, 14, c_rock_dark);
+                draw_filled_rect(head_x + 2, head_y + 2, 14, 10, c_rock_base);
+
+                // Grandes Chifres de Dragão
+                draw_filled_rect(head_x - 3, head_y + 1, 4, 5, c_horn);
+                draw_filled_rect(head_x + 17, head_y + 1, 4, 5, c_horn);
+
+                // Olhos amarelos flamejantes
+                draw_filled_rect(head_x + 3, head_y + 4, 3, 3, 0xFDE047FF);
+                draw_filled_rect(head_x + 12, head_y + 4, 3, 3, 0xFDE047FF);
+                put_pixel_safe(head_x + 4, head_y + 5, 0xDC2626FF); // Pupila rubi
+                put_pixel_safe(head_x + 13, head_y + 5, 0xDC2626FF);
+
+                // Boca / Focinho cuspindo fogo ou fumaça
+                if (e->bossFireTimer < 35) {
+                    draw_filled_rect(head_x + 5, head_y + 9, 8, 5, c_magma_glow);
+                    draw_filled_rect(head_x + 6, head_y + 10, 6, 3, 0xFDE047FF);
+                    put_pixel_safe(head_x + 8, head_y + 11, 0xFFFFFFFF);
+                } else {
+                    draw_filled_rect(head_x + 6, head_y + 10, 6, 3, c_rock_dark);
+                }
+            }
+
+            // HUD DE VIDA DO CHEFE GLEEROK (BARRA DE BOSS GBA CANÔNICA)
+            if (e->action != 5 && e->health > 0) {
+                int bar_w = 92;
+                int bar_h = 7;
+                int bar_x = (cam->viewport_w - bar_w) / 2;
+                int bar_y = 18;
+
+                draw_filled_rect(bar_x - 1, bar_y - 1, bar_w + 2, bar_h + 2, 0x0B0F19FF);
+                draw_filled_rect(bar_x, bar_y, bar_w, bar_h, 0x1C1917FF);
+
+                int pip_w = 7;
+                for (int hp = 0; hp < e->maxHealth; hp++) {
+                    int px = bar_x + 2 + (hp * 9);
+                    u32 pip_col = (hp < e->health) ? 0xEF4444FF : 0x44403CFF;
+                    draw_filled_rect(px, bar_y + 1, pip_w, bar_h - 2, pip_col);
+                    if (hp < e->health) {
+                        draw_filled_rect(px + 1, bar_y + 2, pip_w - 2, 1, 0xFDE047FF);
+                    }
+                }
+
+                font_draw_text(bar_x + 2, bar_y - 8, "GLEEROK - DRAGAO DE FOGO", 0xF97316FF, true);
             }
         }
     }

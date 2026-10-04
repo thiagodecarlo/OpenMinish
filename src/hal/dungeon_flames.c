@@ -140,6 +140,21 @@ void dungeon_flames_init(void) {
     s_flames.door_boss_locked.is_locked = true;
     s_flames.door_boss_locked.is_open = false;
 
+    // Configuração Sala 5 (Arena do Chefe Gleerok)
+    s_flames.door_boss_shutter.x = 7.0f * TILE_SIZE;
+    s_flames.door_boss_shutter.y = 9.0f * TILE_SIZE;
+    s_flames.door_boss_shutter.is_locked = false;
+    s_flames.door_boss_shutter.is_open = true;
+    s_flames.boss_chamber_entered = false;
+    s_flames.boss_cleared = false;
+    s_flames.boss_portal_spawned = false;
+    s_flames.portal_x = 7.5f * TILE_SIZE;
+    s_flames.portal_y = 6.5f * TILE_SIZE;
+    s_flames.fire_element_spawned = false;
+    s_flames.fire_element_collected = false;
+    s_flames.fire_element_x = 7.5f * TILE_SIZE;
+    s_flames.fire_element_y = 4.5f * TILE_SIZE;
+
     // Ponto seguro inicial
     s_flames.safe_x = 7.5f * TILE_SIZE;
     s_flames.safe_y = 8.0f * TILE_SIZE;
@@ -501,13 +516,91 @@ void dungeon_flames_update(float* link_x, float* link_y, Direction* link_dir, bo
                 }
             } else {
                 // Atravessar portão aberto rumo ao Chefe Gleerok
-                static int s_boss_prompt_cooldown = 0;
-                if (s_boss_prompt_cooldown > 0) s_boss_prompt_cooldown--;
-                if (s_boss_prompt_cooldown <= 0) {
-                    s_boss_prompt_cooldown = 120;
-                    hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.6f);
-                    printf("[CAVE OF FLAMES] Caminho para a Câmara do Chefe Gleerok aberto!\n");
+                trigger_room_transition(ROOM_FLAMES_BOSS_ARENA, 7.5f * TILE_SIZE, 8.0f * TILE_SIZE);
+                return;
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    // SALA 5: ARENA DE COMBATE CONTRA O CHEFE GLEEROK
+    // ------------------------------------------------------------------------
+    else if (s_flames.current_room == ROOM_FLAMES_BOSS_ARENA) {
+        // Inicialização ao entrar pela primeira vez
+        if (!s_flames.boss_chamber_entered) {
+            s_flames.boss_chamber_entered = true;
+            s_flames.door_boss_shutter.is_open = false; // Fecha a grade de ferro atrás do herói
+            entity_clear_all();
+            // Spawn do Chefe Gleerok na piscina de magma ao norte
+            entity_spawn(ENTITY_BOSS_GLEEROK, 7.0f * TILE_SIZE - 20.0f, 1.8f * TILE_SIZE);
+            hal_audio_play_bgm(BGM_BOSS_BATTLE);
+            hal_audio_play_sound(SOUND_BOSS_SLAM, 1.0f, 0.9f);
+            entity_trigger_screen_shake(20, 5);
+            printf("[CAVE OF FLAMES] GLEEROK EMERGE DAS PROFUNDEZAS DO MAGMA!\n");
+        }
+
+        // Verificação se o chefe foi derrotado
+        if (!s_flames.boss_cleared) {
+            // Se não houver inimigos ativos e já tiver entrado, chefe derrotado!
+            if (entity_count_active_enemies() == 0 && s_flames.boss_chamber_entered) {
+                s_flames.boss_cleared = true;
+                s_flames.door_boss_shutter.is_open = true; // Reabre o portão sul
+                hal_audio_play_bgm(BGM_MINISH_WOODS);
+                hal_audio_play_sound(SOUND_BOSS_DEFEAT, 1.0f, 1.0f);
+                printf("[CAVE OF FLAMES] GLEEROK DERROTADO! Cristal e Receptaculo de Coracao gerados!\n");
+
+                // Spawn do Heart Container e Elemento Fogo
+                entity_spawn(ENTITY_ITEM_HEART_CONTAINER, 5.5f * TILE_SIZE, 5.5f * TILE_SIZE);
+                entity_spawn(ENTITY_ITEM_FIRE_ELEMENT, s_flames.fire_element_x, s_flames.fire_element_y);
+                s_flames.boss_portal_spawned = true;
+            }
+        }
+
+        // Se o chefe foi derrotado:
+        if (s_flames.boss_cleared) {
+            // Checagem se Link coletou o Elemento Fogo
+            if (!s_flames.fire_element_collected) {
+                float dx = lx - s_flames.fire_element_x;
+                float dy = ly - s_flames.fire_element_y;
+                if (dx * dx + dy * dy <= 18.0f * 18.0f) {
+                    s_flames.fire_element_collected = true;
+                    hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
+                    printf("[CAVE OF FLAMES] Link recolheu o Sagrado Elemento Fogo!\n");
                 }
+            }
+
+            // Checagem se Link pisa no Portal Azul de Retorno
+            if (s_flames.boss_portal_spawned) {
+                float px = s_flames.portal_x;
+                float py = s_flames.portal_y;
+                float dist_portal = sqrtf((lx - px) * (lx - px) + (ly - py) * (ly - py));
+                if (dist_portal < 14.0f) {
+                    hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
+                    dungeon_flames_exit(link_x, link_y, link_dir);
+                    return;
+                }
+            }
+
+            // Saída sul de volta para Sala 4 (se o portão estiver aberto)
+            if (ly >= 8.8f * TILE_SIZE && lx >= 6.5f * TILE_SIZE && lx <= 9.5f * TILE_SIZE) {
+                trigger_room_transition(ROOM_FLAMES_BOSS_DOOR, 7.5f * TILE_SIZE, 2.0f * TILE_SIZE);
+                return;
+            }
+        }
+
+        // Dano de lava na Arena do Chefe:
+        // A ilha de pedra segura é colunas 2 a 13, linhas 3 a 8
+        int col = (int)(lx / TILE_SIZE);
+        int row = (int)(ly / TILE_SIZE);
+        if (col < 2 || col > 13 || row < 3 || row > 8) {
+            if (s_flames.lava_cooldown <= 0) {
+                s_flames.lava_cooldown = 40;
+                if (link_hearts && *link_hearts > 1) (*link_hearts)--;
+                *link_x = s_flames.safe_x;
+                *link_y = s_flames.safe_y;
+                hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 0.8f);
+                entity_trigger_screen_shake(12, 3);
+                printf("[LAVA ARENA] Link caiu no magma fervente ao redor da ilha!\n");
             }
         }
     }
@@ -556,6 +649,8 @@ bool dungeon_flames_is_solid(float world_x, float world_y) {
                 return !s_flames.door_crucible_shutter.is_open;
             } else if (s_flames.current_room == ROOM_FLAMES_BOSS_DOOR) {
                 return !s_flames.door_boss_locked.is_open;
+            } else if (s_flames.current_room == ROOM_FLAMES_BOSS_ARENA) {
+                return true; // Parede norte sólida na arena
             }
         }
         return true;
@@ -564,9 +659,17 @@ bool dungeon_flames_is_solid(float world_x, float world_y) {
     // Linha 9 (Fundo Sul)
     if (row >= 9) {
         if (col == 7 || col == 8) {
+            if (s_flames.current_room == ROOM_FLAMES_BOSS_ARENA) {
+                return !s_flames.door_boss_shutter.is_open;
+            }
             return false; // Portais de passagem sul
         }
         return true;
+    }
+
+    // Piscina profunda de magma do Gleerok ao norte da arena (linhas 1 e 2, col 4 a 11)
+    if (s_flames.current_room == ROOM_FLAMES_BOSS_ARENA) {
+        if (row <= 2 && col >= 4 && col <= 11) return true;
     }
 
     // Coluna 0 (Parede Oeste)
@@ -841,6 +944,56 @@ void dungeon_flames_render(const Camera* cam) {
         render_torch(ox + 3 * TILE_SIZE, oy + 2 * TILE_SIZE, s_anim_timer);
         render_torch(ox + 12 * TILE_SIZE, oy + 2 * TILE_SIZE, s_anim_timer);
     }
+
+    // Sala 5: Arena de Combate contra Gleerok
+    if (s_flames.current_room == ROOM_FLAMES_BOSS_ARENA) {
+        // Lago de lava fervente circundando a ilha de combate
+        for (int r = 0; r < FLAMES_ROOM_H; r++) {
+            for (int c = 0; c < FLAMES_ROOM_W; c++) {
+                if (c < 2 || c > 13 || r < 3 || r > 8) {
+                    int tx = ox + (c * TILE_SIZE);
+                    int ty = oy + (r * TILE_SIZE);
+                    u32 c_lava = ((s_anim_timer / 7 + c + r) % 3 == 0) ? C_FLAMES_LAVA_CORE :
+                                 (((s_anim_timer / 7 + c + r) % 3 == 1) ? C_FLAMES_LAVA_BRIGHT : C_FLAMES_LAVA_DARK);
+                    draw_filled_rect(tx, ty, TILE_SIZE, TILE_SIZE, c_lava);
+                    if ((c * 3 + r * 7 + (s_anim_timer / 12)) % 6 == 0) {
+                        draw_filled_rect(tx + 4, ty + 4, 6, 6, 0xFEF08AFF);
+                    }
+                }
+            }
+        }
+
+        // Ilha de pedra central: tochas nos 4 cantos
+        render_torch(ox + 2 * TILE_SIZE, oy + 3 * TILE_SIZE, s_anim_timer);
+        render_torch(ox + 13 * TILE_SIZE, oy + 3 * TILE_SIZE, s_anim_timer);
+        render_torch(ox + 2 * TILE_SIZE, oy + 8 * TILE_SIZE, s_anim_timer);
+        render_torch(ox + 13 * TILE_SIZE, oy + 8 * TILE_SIZE, s_anim_timer);
+
+        // Grade sul
+        int gd_x = ox + 7 * TILE_SIZE;
+        int gd_y = oy + 9 * TILE_SIZE;
+        if (!s_flames.door_boss_shutter.is_open) {
+            draw_filled_rect(gd_x, gd_y, 32, 16, C_FLAMES_IRON_GATE);
+            for (int b = 0; b < 8; b++) {
+                draw_filled_rect(gd_x + (b * 4), gd_y, 2, 16, 0x1E293BFF);
+            }
+        }
+
+        // Portal Azul de Retorno (se o chefe foi derrotado)
+        if (s_flames.boss_portal_spawned) {
+            int px = ox + (int)s_flames.portal_x;
+            int py = oy + (int)s_flames.portal_y;
+            int anim_phase = (s_anim_timer / 4) % 6;
+
+            draw_rect_blend(px - 14, py - 14, 28, 28, 0x0284C744);
+            draw_rect_blend(px - 10, py - 10, 20, 20, 0x38BDF866);
+
+            draw_filled_rect(px - 8 + (anim_phase % 2), py - 8 + (anim_phase % 2), 16 - (anim_phase % 2) * 2, 16 - (anim_phase % 2) * 2, 0x0284C7FF);
+            draw_filled_rect(px - 5, py - 5, 10, 10, 0x38BDF8FF);
+            draw_filled_rect(px - 2, py - 2, 5, 5, 0xE0F2FEFF);
+            draw_filled_rect(px, py, 2, 2, 0xFFFFFFFF);
+        }
+    }
 }
 
 void dungeon_flames_render_transition(const Camera* cam) {
@@ -873,4 +1026,12 @@ void dungeon_flames_render_hud_keys(int x, int y) {
     char buf[16];
     snprintf(buf, sizeof(buf), "x%d", s_flames.small_keys);
     font_draw_text(x + 8, y, buf, 0xFDE047FF, true);
+}
+
+bool dungeon_flames_is_boss_cleared(void) {
+    return s_flames.boss_cleared;
+}
+
+bool dungeon_flames_has_fire_element(void) {
+    return s_flames.fire_element_collected;
 }

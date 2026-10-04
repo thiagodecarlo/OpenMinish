@@ -47,7 +47,10 @@ typedef enum {
     ENTITY_NPC_BUSINESS_SCRUB,// Deku Scrub comerciante do Monte Crenel (Vendedor do Grip Ring)
     ENTITY_NPC_MELARI,        // Mestre Ferreiro Melari (Forjador da White Sword)
     ENTITY_NPC_MOUNTAIN_MINISH,// Minerador / Aprendiz das Minas de Melari
-    ENTITY_ENEMY_FIRE_KEESE   // Morcego vulcânico em chamas (Cave of Flames)
+    ENTITY_ENEMY_FIRE_KEESE,  // Morcego vulcânico em chamas (Cave of Flames)
+    ENTITY_BOSS_GLEEROK,      // Chefe da Masmorra de Fogo (Gleerok - Dragão de Lava)
+    ENTITY_ITEM_FIRE_ELEMENT, // Elemento Sagrado do Fogo (Fire Element)
+    ENTITY_PROJECTILE_FIREBALL// Bola de fogo / magma cuspida pelo Gleerok
 } EntityType;
 
 // Caixa delimitadora de colisão e dano (Hitbox / Hurtbox)
@@ -89,12 +92,15 @@ typedef struct Entity {
     bool       kinstoneFused;      // Fusão já foi completada
     float      bubbleBob;          // Oscilação do balão de Kinstone flutuante
 
-    // Campos dedicados para o Chefe Big Green ChuChu
+    // Campos dedicados para os Chefes (Big Green ChuChu & Gleerok)
     float      bossBaseScale;      // Escala da base gelatinosa (1.0 -> 0.1 sugada pelo Pote Mágico)
     int        bossSuctionTimer;   // Duração de sucção contínua recebida
-    int        bossToppleTimer;    // Temporizador do chefe desabado no chão vulnerável
-    bool       bossEnraged;        // Fase 2 (HP <= 5): olhos vermelhos e saltos furiosos
+    int        bossToppleTimer;    // Temporizador do chefe desabado no chão vulnerável (ChuChu / Gleerok)
+    bool       bossEnraged;        // Fase 2: olhos vermelhos e ataques furiosos
     int        bossDeathTimer;     // Temporizador da animação dramática de derrota
+    int        bossFireTimer;      // Temporizador de rajada de fogo / pedras vulcânicas do Gleerok
+    float      bossTargetX;        // Alvo de patrulha no lago de lava
+    float      bossTargetY;
 } Entity;
 
 /*

@@ -86,6 +86,10 @@ typedef struct {
     // Melhoria Canônica de Espada: White Sword (Espada Branca)
     bool has_white_sword;          // Possui a lendária Espada Branca forjada por Melari (Dano: 2)
     int  white_sword_banner_timer; // Temporizador do banner comemorativo de aquisição
+
+    // Elemento Canônico: Sagrado Elemento Fogo (Fire Element)
+    bool has_fire_element;          // Conquistado ao derrotar Gleerok na Cave of Flames
+    int  fire_element_banner_timer; // Temporizador do banner festivo de obtenção
 } Player;
 
 static const char* s_region_tags[REGION_COUNT] = { "usa", "eur", "jpn" };
@@ -1621,6 +1625,9 @@ int main(int argc, char* argv[]) {
             if (link.white_sword_banner_timer > 0) {
                 link.white_sword_banner_timer--;
             }
+            if (link.fire_element_banner_timer > 0) {
+                link.fire_element_banner_timer--;
+            }
 
             // Ação com Botão A: Primeiro Natação (Mergulho), Portal Minish, Masmorra / Loja / Guarda / Cidadã / Baús / Swiftblade / NPCs, depois golpe de espada!
             if (hal_input_is_pressed(KEY_A) && !link.is_attacking && !link.is_spinning && !link.is_charging_spin) {
@@ -2321,6 +2328,12 @@ int main(int argc, char* argv[]) {
         } else if (dungeon_flames_is_active()) {
             dungeon_flames_update(&link.x, &link.y, &link.dir, link.is_moving,
                                   &link.hearts, &link.rupees);
+            if (dungeon_flames_has_fire_element() && !link.has_fire_element) {
+                link.has_fire_element = true;
+                link.fire_element_banner_timer = 220;
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.2f);
+                printf("[FIRE ELEMENT] Link conquistou o segundo elemento sagrado: ELEMENTO FOGO!\n");
+            }
         }
 
         entity_manager_update(active_map, link.x, link.y,
@@ -2592,6 +2605,28 @@ int main(int argc, char* argv[]) {
 
             font_draw_text(ban_x + 26, ban_y + 6, "ESPADA BRANCA FORJADA!", 0xFFFFFFFF, true);
             font_draw_text(ban_x + 26, ban_y + 18, "Dano Dobrado (2 HP) | Melari", 0xFACC15FF, true);
+        }
+
+        // 6c. Banner Festivo de Aquisicao do Sagrado Elemento Fogo (Fire Element)
+        if (link.fire_element_banner_timer > 0) {
+            int ban_w = 216;
+            int ban_h = 32;
+            int ban_x = (ctx->render_width - ban_w) / 2;
+            int ban_y = 64;
+
+            draw_rect(ban_x - 2, ban_y - 2, ban_w + 4, ban_h + 4, 0x1A0505EE);
+            draw_rect(ban_x - 1, ban_y - 1, ban_w + 2, ban_h + 2, 0xF97316FF);
+            draw_rect(ban_x, ban_y, ban_w, ban_h, 0x2A0808FF);
+            draw_rect(ban_x + 2, ban_y + 2, ban_w - 4, ban_h - 4, 0x450A0AEE);
+
+            // Icone da Chama Sagrada / Elemento Fogo
+            draw_rect(ban_x + 9, ban_y + 7, 8, 14, 0xDC2626FF);
+            draw_rect(ban_x + 11, ban_y + 9, 4, 10, 0xF97316FF);
+            draw_rect(ban_x + 12, ban_y + 12, 2, 4, 0xFDE047FF);
+            hal_video_put_pixel(ban_x + 13, ban_y + 8, 0xFFFFFFFF);
+
+            font_draw_text(ban_x + 26, ban_y + 6, "ELEMENTO FOGO OBTIDO!", 0xFDE047FF, true);
+            font_draw_text(ban_x + 26, ban_y + 18, "Cave of Flames | Gleerok", 0xF97316FF, true);
         }
 
         // 7. Badge do Estado Minish no HUD
