@@ -95,6 +95,13 @@ typedef struct {
     // Habilidade Lendária Four Sword: Infusão de 2 Elementos & Clones
     bool has_two_elements;          // White Sword (Two Elements) infundida no Santuário
     int  two_elements_banner_timer; // Temporizador do banner da Four Sword
+
+    // Item Canônico: Arco e Flechas & Pântano de Castor Wilds
+    bool has_bow;                  // Possui o Arco e Flechas
+    int  bow_banner_timer;         // Temporizador do banner do Arco
+    int  mud_sink_timer;           // Temporizador de afundamento no lodo movediço
+    float last_safe_x;             // Posição segura para respawn caso afunde
+    float last_safe_y;
 } Player;
 
 static const char* s_region_tags[REGION_COUNT] = { "usa", "eur", "jpn" };
@@ -108,19 +115,21 @@ static Texture* s_sheet0 = NULL;
 static Texture* s_sheet1 = NULL;
 static Texture* s_link_tex = NULL;
 static Texture* s_octo_tex = NULL;
-static Tilemap* s_world_map       = NULL;
-static Tilemap* s_town_map        = NULL;
-static Tilemap* s_village_map     = NULL;
-static Tilemap* s_south_field_map = NULL;
-static Tilemap* s_north_field_map = NULL;
-static Tilemap* s_crenel_base_map = NULL;
+static Tilemap* s_world_map        = NULL;
+static Tilemap* s_town_map         = NULL;
+static Tilemap* s_village_map      = NULL;
+static Tilemap* s_south_field_map  = NULL;
+static Tilemap* s_north_field_map  = NULL;
+static Tilemap* s_crenel_base_map  = NULL;
 static Tilemap* s_melari_mines_map = NULL;
-static bool     s_in_town         = false;
-static bool     s_in_village      = false;
-static bool     s_in_south_field  = false;
-static bool     s_in_north_field  = false;
-static bool     s_in_crenel_base  = false;
-static bool     s_in_melari_mines = false;
+static Tilemap* s_castor_wilds_map = NULL;
+static bool     s_in_town          = false;
+static bool     s_in_village       = false;
+static bool     s_in_south_field   = false;
+static bool     s_in_north_field   = false;
+static bool     s_in_crenel_base   = false;
+static bool     s_in_melari_mines  = false;
+static bool     s_in_castor_wilds  = false;
 static SelectedRegion s_current_region = REGION_USA;
 
 static void load_region_sheets(SelectedRegion region) {
@@ -528,6 +537,53 @@ static void transition_to_sanctuary(Player* link) {
     sanctuary_enter(&link->x, &link->y, &link->dir);
 }
 
+static void spawn_castor_wilds_entities(void) {
+    entity_clear_all();
+    // 1. Serpentes ágeis Rope patrulhando o pântano
+    entity_spawn(ENTITY_ENEMY_ROPE, 240.0f, 160.0f);
+    entity_spawn(ENTITY_ENEMY_ROPE, 350.0f, 260.0f);
+    entity_spawn(ENTITY_ENEMY_ROPE, 140.0f, 320.0f);
+    // 2. Pedestal ancestral com o Arco e Flechas no noroeste (x=7*16=112, y=4*16=64)
+    entity_spawn(ENTITY_ITEM_BOW, 112.0f, 64.0f);
+    printf("[CASTOR WILDS] Entidades de Castor Wilds spawnadas (3 Ropes, Pedestal do Arco e Flechas)!\n");
+}
+
+static void transition_to_castor_wilds(Player* link) {
+    if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active()) return;
+    s_in_town = false;
+    s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = false;
+    s_in_crenel_base = false;
+    s_in_melari_mines = false;
+    s_in_castor_wilds = true;
+    link->x = 520.0f; // Entrada leste vindo de South Hyrule Field
+    link->y = 224.0f;
+    link->dir = DIR_LEFT;
+    link->is_moving = false;
+    spawn_castor_wilds_entities();
+    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    printf("[SCENE] Entrando no Pantano de Castor Wilds (Castor Wilds Swamp)!\n");
+}
+
+static void transition_to_south_field_from_castor(Player* link) {
+    if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active()) return;
+    s_in_town = false;
+    s_in_village = false;
+    s_in_south_field = true;
+    s_in_north_field = false;
+    s_in_crenel_base = false;
+    s_in_melari_mines = false;
+    s_in_castor_wilds = false;
+    link->x = 32.0f; // Fronteira oeste de South Hyrule Field
+    link->y = 224.0f;
+    link->dir = DIR_RIGHT;
+    link->is_moving = false;
+    spawn_south_field_entities();
+    hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
+    printf("[SCENE] Retornando a South Hyrule Field a partir de Castor Wilds!\n");
+}
+
 static void draw_rect(int rx, int ry, int rw, int rh, u32 color) {
     for (int y = ry; y < ry + rh; y++) {
         for (int x = rx; x < rx + rw; x++) {
@@ -892,6 +948,29 @@ static void draw_link_climbing_effects(const Player* p, int px, int py) {
     }
 }
 
+static void draw_link_mud_effects(const Player* p, int px, int py) {
+    if (p->mud_sink_timer <= 0) return;
+
+    int sink_pixels = p->mud_sink_timer / 12;
+    if (sink_pixels > 5) sink_pixels = 5;
+
+    u32 c_mud_dark   = 0x1C0E07FF;
+    u32 c_mud_base   = 0x2A1810FF;
+    u32 c_mud_ripple = 0x5C3E25FF;
+
+    // Lama cobrindo as botas e pernas do herói
+    draw_rect(px + 2, py + 16 - sink_pixels, 12, sink_pixels + 2, c_mud_base);
+    draw_rect(px + 1, py + 17 - sink_pixels, 14, sink_pixels + 1, c_mud_dark);
+
+    // Ondulações de lodo nos lados
+    hal_video_put_pixel(px, py + 16 - sink_pixels, c_mud_ripple);
+    hal_video_put_pixel(px + 15, py + 16 - sink_pixels, c_mud_ripple);
+    if ((p->mud_sink_timer / 6) % 2 == 0) {
+        hal_video_put_pixel(px + 4, py + 15 - sink_pixels, c_mud_ripple);
+        hal_video_put_pixel(px + 11, py + 15 - sink_pixels, c_mud_ripple);
+    }
+}
+
 // Renderiza o Link no estilo clássico de Minish Cap na posição da Câmera
 static void draw_link(const Player* p, const Camera* cam) {
     // Efeito clássico de piscar ao receber dano (flicker)
@@ -1016,6 +1095,7 @@ static void draw_link(const Player* p, const Camera* cam) {
         draw_link_sword_effects(p, px, py);
         draw_link_swimming_effects(p, px, py);
         draw_link_climbing_effects(p, px, py);
+        draw_link_mud_effects(p, px, py);
         return;
     }
 
@@ -1082,6 +1162,7 @@ static void draw_link(const Player* p, const Camera* cam) {
     draw_link_sword_effects(p, px, py);
     draw_link_swimming_effects(p, px, py);
     draw_link_climbing_effects(p, px, py);
+    draw_link_mud_effects(p, px, py);
 }
 
 static inline bool is_world_solid_for_player(const Tilemap* map, float wx, float wy, bool is_minish, bool has_flippers, bool has_grip_ring, float z) {
@@ -1140,6 +1221,8 @@ int main(int argc, char* argv[]) {
     printf("  - South Field:    [4] Entrar em South Hyrule Field (Planicies do Sul!)\n");
     printf("  - North Field:    [5] Entrar em North Hyrule Field (Planicies do Norte!)\n");
     printf("  - Monte Crenel:   [6] Entrar em Mount Crenel Base (Base do Monte Crenel!)\n");
+    printf("  - Castor Wilds:   [P] Entrar no Pantano de Castor Wilds (Lodo, Ropes e Estatuas de Olho!)\n");
+    printf("  - Arco e Flechas: [O] Equipar o Arco e Flechas e Aljava no Botao [B]\n");
     printf("  - Segredo Zelda:  [M] (Chime lendario de 8 notas!)\n");
     printf("  - Trocar Regiao:  [1] USA | [2] EUR | [3] JPN\n");
     printf("  - Widescreen:     [W] Alternar proporcao 16:9\n");
@@ -1182,6 +1265,8 @@ int main(int argc, char* argv[]) {
     s_crenel_base_map = crenel_base_map;
     Tilemap* melari_mines_map = map_create_melari_mines();
     s_melari_mines_map = melari_mines_map;
+    Tilemap* castor_wilds_map = map_create_castor_wilds();
+    s_castor_wilds_map = castor_wilds_map;
     load_region_sheets(REGION_USA);
 
     // Inicialização da entidade do Link
@@ -1234,6 +1319,11 @@ int main(int argc, char* argv[]) {
     link.is_jumping = false;
     link.has_white_sword = false;
     link.white_sword_banner_timer = 0;
+    link.has_bow = false;
+    link.bow_banner_timer = 0;
+    link.mud_sink_timer = 0;
+    link.last_safe_x = link.x;
+    link.last_safe_y = link.y;
 
     // Carregamento automático de progresso salvo (Slot 1)
     if (save_exists(1)) {
@@ -1252,6 +1342,7 @@ int main(int argc, char* argv[]) {
             link.has_cane_of_pacci = save.has_cane_of_pacci;
             link.has_white_sword = save.has_white_sword;
             link.has_two_elements = save.has_two_elements;
+            link.has_bow = save.has_bow;
             if (link.has_two_elements) {
                 sanctuary_set_two_elements(true);
             }
@@ -1263,6 +1354,9 @@ int main(int argc, char* argv[]) {
             }
             if (link.has_white_sword) {
                 inventory_set_white_sword(true);
+            }
+            if (link.has_bow) {
+                inventory_unlock_item(INV_ITEM_BOW);
             }
             if (save.bomb_count > 0) {
                 subweapon_add_bombs(save.bomb_count - subweapon_get_bomb_count());
@@ -1286,13 +1380,17 @@ int main(int argc, char* argv[]) {
                 dungeon_flames_enter(&link.x, &link.y, &link.dir);
             } else if (save.current_map == 9) {
                 sanctuary_enter(&link.x, &link.y, &link.dir);
+            } else if (save.current_map == 10) {
+                s_in_castor_wilds = true;
             }
         }
     }
 
     // Inicialização do Subsistema de Entidades e Spawn de Inimigos e NPCs
     entity_manager_init();
-    if (s_in_melari_mines) {
+    if (s_in_castor_wilds) {
+        spawn_castor_wilds_entities();
+    } else if (s_in_melari_mines) {
         spawn_melari_mines_entities();
     } else if (s_in_village) {
         spawn_minish_village_entities();
@@ -1366,7 +1464,8 @@ int main(int argc, char* argv[]) {
                                 current_save.player_y = link.y;
                                 current_save.player_dir = (int)link.dir;
                                 int cur_m = 0;
-                                if (s_in_melari_mines) cur_m = 7;
+                                if (s_in_castor_wilds) cur_m = 10;
+                                else if (s_in_melari_mines) cur_m = 7;
                                 else if (s_in_crenel_base) cur_m = 6;
                                 else if (s_in_north_field) cur_m = 5;
                                 else if (s_in_south_field) cur_m = 4;
@@ -1387,6 +1486,7 @@ int main(int argc, char* argv[]) {
                                 current_save.has_cane_of_pacci = link.has_cane_of_pacci;
                                 current_save.has_white_sword = link.has_white_sword;
                                 current_save.has_two_elements = link.has_two_elements;
+                                current_save.has_bow = link.has_bow;
                                 current_save.slot_a = (int)inventory_get_slot_a();
                                 current_save.slot_b = (int)inventory_get_slot_b();
                                 if (save_game(1, &current_save)) {
@@ -1562,6 +1662,28 @@ int main(int argc, char* argv[]) {
                                 dungeon_enter(&link.x, &link.y, &link.dir);
                             }
                             break;
+                        case SDLK_p:
+                            if (!dungeon_is_active() && !dungeon_flames_is_active() && !sanctuary_is_active()) {
+                                if (s_in_castor_wilds) {
+                                    transition_to_south_field_from_castor(&link);
+                                } else {
+                                    transition_to_castor_wilds(&link);
+                                }
+                            }
+                            break;
+                        case SDLK_o:
+                            link.has_bow = !link.has_bow;
+                            if (link.has_bow) {
+                                inventory_unlock_item(INV_ITEM_BOW);
+                                subweapon_set_current(ITEM_BOW);
+                                subweapon_add_arrows(30);
+                                link.bow_banner_timer = 200;
+                                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
+                                printf("[DEBUG] [O] Arco e Flechas EQUIPADO! (Flechas: %d)\n", subweapon_get_arrow_count());
+                            } else {
+                                printf("[DEBUG] [O] Arco e Flechas DESEQUIPADO.\n");
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -1582,12 +1704,13 @@ int main(int argc, char* argv[]) {
         // 2. ATUALIZAÇÃO DA LÓGICA DO JOGADOR (INPUT -> FÍSICA)
         // --------------------------------------------------------------------
         const HalVideoContext* ctx = hal_video_get_context();
-        Tilemap* active_map = s_in_melari_mines ? s_melari_mines_map :
+        Tilemap* active_map = s_in_castor_wilds ? s_castor_wilds_map :
+                              (s_in_melari_mines ? s_melari_mines_map :
                               (s_in_crenel_base ? s_crenel_base_map :
                               (s_in_village ? s_village_map :
                               (s_in_town ? s_town_map :
                               (s_in_south_field ? s_south_field_map :
-                              (s_in_north_field ? s_north_field_map : world_map)))));
+                              (s_in_north_field ? s_north_field_map : world_map))))));
 
         if (inventory_is_paused()) {
             if (hal_input_is_pressed(KEY_UP))    inventory_cursor_move(0, -1);
@@ -1670,6 +1793,14 @@ int main(int argc, char* argv[]) {
             }
             if (link.two_elements_banner_timer > 0) {
                 link.two_elements_banner_timer--;
+            }
+            if (subweapon_get_current() == ITEM_BOW && !link.has_bow) {
+                link.has_bow = true;
+                inventory_unlock_item(INV_ITEM_BOW);
+                link.bow_banner_timer = 200;
+            }
+            if (link.bow_banner_timer > 0) {
+                link.bow_banner_timer--;
             }
 
             // Ação com Botão A: Primeiro Natação (Mergulho), Portal Minish, Masmorra / Loja / Guarda / Cidadã / Baús / Swiftblade / NPCs, depois golpe de espada!
@@ -2081,10 +2212,49 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        // Modificador de Velocidade: Dash / Pegasus Boots (Botao B segurado), Carga da Espada, Natação ou Escalada
+        // --------------------------------------------------------------------
+        // LÓGICA DE LODO MOVEDIÇO & AFUNDAMENTO NO PÂNTANO (CASTOR WILDS MUD)
+        // --------------------------------------------------------------------
+        bool in_swamp_mud = map_is_swamp_mud(active_map, link.x + 8.0f, link.y + 12.0f);
+        bool is_dashing = hal_input_is_held(KEY_B) && subweapon_get_current() == ITEM_PEGASUS_BOOTS && !link.is_swimming && !link.is_climbing;
+
+        if (in_swamp_mud) {
+            if (is_dashing) {
+                // Com as Botas de Pegasus em disparada, Link corre velozmente sobre a superfície da lama sem afundar!
+                link.mud_sink_timer = 0;
+            } else {
+                // A pé normal: afunda gradualmente na lama espessa!
+                link.mud_sink_timer++;
+                if (link.mud_sink_timer % 24 == 0) {
+                    hal_audio_play_sound(SOUND_FOOTSTEP, 0.6f, 0.65f); // Som borbulhante de lama
+                }
+                if (link.mud_sink_timer >= 60) {
+                    // Afundou completamente! Dano de 1 coração e respawn no ponto seguro
+                    if (link.hearts > 1) link.hearts -= 1;
+                    link.invuln_timer = 45;
+                    link.x = (link.last_safe_x > 0.0f) ? link.last_safe_x : 520.0f;
+                    link.y = (link.last_safe_y > 0.0f) ? link.last_safe_y : 224.0f;
+                    link.mud_sink_timer = 0;
+                    entity_trigger_screen_shake(10, 2);
+                    hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 0.8f);
+                    printf("[SWAMP HAZARD] Link afundou no lodo movedico! Dano e respawn em solo firme!\n");
+                }
+            }
+        } else {
+            // Em solo firme, reseta o afundamento e atualiza última posição segura
+            link.mud_sink_timer = 0;
+            if (!link.is_swimming && !link.is_jumping) {
+                link.last_safe_x = link.x;
+                link.last_safe_y = link.y;
+            }
+        }
+
+        // Modificador de Velocidade: Dash / Pegasus Boots (Botao B segurado), Lodo do Pântano, Carga da Espada, Natação ou Escalada
         float dash_mult = 1.0f;
-        if (hal_input_is_held(KEY_B) && subweapon_get_current() == ITEM_PEGASUS_BOOTS && !link.is_swimming && !link.is_climbing) {
+        if (is_dashing) {
             dash_mult = 1.85f; // Arrancada veloz das Botas de Pegasus!
+        } else if (in_swamp_mud) {
+            dash_mult = 0.38f; // Lama viscosa pesada retém os passos do herói
         } else if (link.is_charging_spin) {
             dash_mult = 0.85f; // Movimentação prudente enquanto acumula energia na lâmina
         } else if (link.is_swimming) {
@@ -2226,6 +2396,15 @@ int main(int argc, char* argv[]) {
                     // Estrada Leste de South Field para Minish Woods
                     else if (link.x >= (active_map->width * TILE_SIZE) - 36.0f && link.y >= 160.0f && link.y <= 220.0f && link.dir == DIR_RIGHT) {
                         transition_to_overworld(&link, world_map);
+                    }
+                    // Estrada Oeste de South Field para Castor Wilds Swamp
+                    else if (link.x <= 24.0f && link.y >= 180.0f && link.y <= 260.0f && link.dir == DIR_LEFT) {
+                        transition_to_castor_wilds(&link);
+                    }
+                } else if (s_in_castor_wilds) {
+                    // Saída Leste do Pântano de Castor Wilds de volta para South Hyrule Field
+                    if (link.x >= (active_map->width * TILE_SIZE) - 32.0f && link.dir == DIR_RIGHT) {
+                        transition_to_south_field_from_castor(&link);
                     }
                 } else if (s_in_north_field) {
                     // Portão Sul de North Field de volta para Hyrule Town
@@ -2371,6 +2550,8 @@ int main(int argc, char* argv[]) {
                 spawn_north_field_entities();
             } else if (s_in_crenel_base) {
                 spawn_crenel_base_entities();
+            } else if (s_in_castor_wilds) {
+                spawn_castor_wilds_entities();
             } else {
                 spawn_overworld_entities(world_map);
             }
@@ -2443,6 +2624,9 @@ int main(int argc, char* argv[]) {
             } else if (s_in_north_field) {
                 link.x = 248.0f;
                 link.y = 330.0f;
+            } else if (s_in_castor_wilds) {
+                link.x = 520.0f;
+                link.y = 224.0f;
             } else {
                 link.x = (world_map && world_map->is_authentic) ? 448.0f : 296.0f;
                 link.y = (world_map && world_map->is_authentic) ? 636.0f : 176.0f;
@@ -2594,6 +2778,13 @@ int main(int argc, char* argv[]) {
             font_draw_text(104, 3, b_txt, 0xFDE047FF, true);
         }
 
+        // Contador de Flechas restantes quando o Arco estiver equipado
+        if (subweapon_get_current() == ITEM_BOW && !dungeon_is_active() && !dungeon_flames_is_active()) {
+            char a_txt[8];
+            snprintf(a_txt, sizeof(a_txt), "%d", subweapon_get_arrow_count());
+            font_draw_text(104, 3, a_txt, 0x38BDF8FF, true);
+        }
+
         // Contador de Chaves Pequenas da Masmorra (Small Keys 🔑 xN)
         if (dungeon_is_active()) {
             dungeon_render_hud_keys(106, 2);
@@ -2739,6 +2930,31 @@ int main(int argc, char* argv[]) {
             font_draw_text(ban_x + 26, ban_y + 18, "DIVISAO FOUR SWORD (2 CLONES)!", 0x38BDF8FF, true);
         }
 
+        // 6e. Banner Festivo de Aquisição do Arco e Flechas (Bow & Arrow)
+        if (link.bow_banner_timer > 0) {
+            int ban_w = 216;
+            int ban_h = 32;
+            int ban_x = (ctx->render_width - ban_w) / 2;
+            int ban_y = 64;
+
+            draw_rect(ban_x - 2, ban_y - 2, ban_w + 4, ban_h + 4, 0x061806EE);
+            draw_rect(ban_x - 1, ban_y - 1, ban_w + 2, ban_h + 2, 0x22C55EFF);
+            draw_rect(ban_x, ban_y, ban_w, ban_h, 0x0A200AFF);
+            draw_rect(ban_x + 2, ban_y + 2, ban_w - 4, ban_h - 4, 0x143514EE);
+
+            // Ícone do Arco e Flecha em pixel art
+            draw_rect(ban_x + 8, ban_y + 8, 3, 16, 0x854D0EFF);
+            hal_video_put_pixel(ban_x + 11, ban_y + 9, 0xA16207FF);
+            hal_video_put_pixel(ban_x + 11, ban_y + 22, 0xA16207FF);
+            draw_rect(ban_x + 12, ban_y + 11, 2, 10, 0xE2E8F0FF); // Corda
+            draw_rect(ban_x + 10, ban_y + 15, 10, 2, 0x94A3B8FF); // Flecha
+            hal_video_put_pixel(ban_x + 20, ban_y + 14, 0x38BDF8FF); // Ponta
+            hal_video_put_pixel(ban_x + 20, ban_y + 17, 0x38BDF8FF);
+
+            font_draw_text(ban_x + 26, ban_y + 6, "ARCO E FLECHAS OBTIDO!", 0xFDE047FF, true);
+            font_draw_text(ban_x + 26, ban_y + 18, "Disparo a Distancia | 30 Flechas", 0x34D399FF, true);
+        }
+
         // 7. Badge do Estado Minish no HUD
         if (link.is_minish) {
             int mx = 146;
@@ -2810,6 +3026,7 @@ int main(int argc, char* argv[]) {
     if (s_north_field_map) map_destroy(s_north_field_map);
     if (s_crenel_base_map) map_destroy(s_crenel_base_map);
     if (s_melari_mines_map) map_destroy(s_melari_mines_map);
+    if (s_castor_wilds_map) map_destroy(s_castor_wilds_map);
     map_destroy(world_map);
     hal_audio_shutdown();
     hal_input_shutdown();

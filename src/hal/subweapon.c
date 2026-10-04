@@ -87,15 +87,34 @@ typedef struct {
 
 static PacciState s_pacci = { 0 };
 
+#define MAX_ACTIVE_ARROWS 4
+
+typedef struct {
+    bool      is_active;
+    float     x;
+    float     y;
+    float     vx;
+    float     vy;
+    Direction dir;
+    int       life_timer;
+} ActiveArrow;
+
+static ActiveArrow s_arrows[MAX_ACTIVE_ARROWS] = { 0 };
+static int s_arrow_count = 30;
+static int s_max_arrows = 30;
+
 void subweapon_init(void) {
     s_current_item = ITEM_BOOMERANG;
     memset(&s_boomerang, 0, sizeof(s_boomerang));
     memset(&s_gust, 0, sizeof(s_gust));
     memset(s_bombs, 0, sizeof(s_bombs));
     memset(&s_pacci, 0, sizeof(s_pacci));
+    memset(s_arrows, 0, sizeof(s_arrows));
     s_bomb_count = 10;
     s_max_bombs = 10;
     s_bomb_screen_shake = 0;
+    s_arrow_count = 30;
+    s_max_arrows = 30;
 }
 
 void subweapon_cycle(void) {
@@ -121,6 +140,7 @@ const char* subweapon_get_name(SubweaponType item) {
         case ITEM_PEGASUS_BOOTS: return "Botas de Pegasus (Dash)";
         case ITEM_BOMBS:         return "Bolsa de Bombas (Bombs)";
         case ITEM_CANE_OF_PACCI: return "Cajado de Pacci (Inversao)";
+        case ITEM_BOW:           return "Arco e Flechas (Bow)";
         default:                 return "Nenhum";
     }
 }
@@ -205,6 +225,35 @@ void subweapon_use_pressed(float link_x, float link_y, Direction dir) {
 
             hal_audio_play_sound(SOUND_SECRET, 0.90f, 1.8f);
             printf("[CANE OF PACCI] Disparo de energia magica lancado!\n");
+        }
+    } else if (s_current_item == ITEM_BOW) {
+        if (s_arrow_count > 0) {
+            for (int i = 0; i < MAX_ACTIVE_ARROWS; i++) {
+                if (!s_arrows[i].is_active) {
+                    ActiveArrow* a = &s_arrows[i];
+                    a->is_active = true;
+                    a->x = link_x + 4.0f;
+                    a->y = link_y + 4.0f;
+                    a->dir = dir;
+                    a->life_timer = 45; // ~210 pixels de alcance balístico
+
+                    float speed = 4.8f;
+                    a->vx = 0.0f;
+                    a->vy = 0.0f;
+                    if (dir == DIR_DOWN)  { a->vy = speed;  a->y += 8.0f; }
+                    if (dir == DIR_UP)    { a->vy = -speed; a->y -= 4.0f; }
+                    if (dir == DIR_LEFT)  { a->vx = -speed; a->x -= 4.0f; }
+                    if (dir == DIR_RIGHT) { a->vx = speed;  a->x += 8.0f; }
+
+                    s_arrow_count--;
+                    hal_audio_play_sound(SOUND_SWORD_SLASH, 0.9f, 1.4f);
+                    printf("[BOW] Flecha disparada na direcao %d! Estoque restante: %d\n", dir, s_arrow_count);
+                    break;
+                }
+            }
+        } else {
+            hal_audio_play_sound(SOUND_SWITCH_CLICK, 0.7f, 0.8f);
+            printf("[BOW] Aljava de flechas vazia!\n");
         }
     }
 }
@@ -443,6 +492,45 @@ void subweapon_update(Tilemap* map, float link_x, float link_y, int* link_rupees
             s_pacci.is_active = false;
         }
     }
+
+    // ------------------------------------------------------------------------
+    // 5. ATUALIZAÇÃO DO ARCO E FLECHAS (ARROW BALLISTICS & EYE STATUE ACTIVATION)
+    // ------------------------------------------------------------------------
+    for (int i = 0; i < MAX_ACTIVE_ARROWS; i++) {
+        ActiveArrow* a = &s_arrows[i];
+        if (!a->is_active) continue;
+
+        a->x += a->vx;
+        a->y += a->vy;
+        a->life_timer--;
+
+        // 1. Interação com Estátua de Olho (ativação ancestral!)
+        if (map && map_hit_eye_statue(map, a->x + 4.0f, a->y + 4.0f)) {
+            a->is_active = false;
+            continue;
+        }
+
+        // 2. Colisão com obstáculos sólidos (corta arbustos, ricocheteia ou quebra na parede)
+        if (map) {
+            map_interact_slash(map, a->x + 4.0f, a->y + 4.0f);
+            if (map_is_solid(map, a->x + 4.0f, a->y + 4.0f)) {
+                a->is_active = false;
+                hal_audio_play_sound(SOUND_SWORD_HIT, 0.6f, 1.8f);
+                continue;
+            }
+        }
+
+        // 3. Colisão com entidades e monstros (causa 2 pontos de dano)
+        int dummy = 0;
+        if (entity_check_subweapon_hit(a->x, a->y, 8.0f, 8.0f, 2, &dummy)) {
+            a->is_active = false;
+            continue;
+        }
+
+        if (a->life_timer <= 0) {
+            a->is_active = false;
+        }
+    }
 }
 
 void subweapon_render(const Camera* cam) {
@@ -653,6 +741,48 @@ void subweapon_render(const Camera* cam) {
         hal_video_put_pixel(sx1, sy1, c_spark);
         hal_video_put_pixel(sx2, sy2, c_spark);
     }
+
+    // 6. Renderiza Flechas em voo
+    for (int i = 0; i < MAX_ACTIVE_ARROWS; i++) {
+        const ActiveArrow* a = &s_arrows[i];
+        if (!a->is_active) continue;
+
+        int ax, ay;
+        map_world_to_screen(cam, a->x, a->y, &ax, &ay);
+        u32 c_shaft  = 0x92400EFF; // Madeira da haste
+        u32 c_head   = 0xF8FAFCFF; // Ponta prateada
+        u32 c_fletch = 0xEF4444FF; // Penas vermelhas
+
+        if (a->dir == DIR_RIGHT) {
+            for (int dx = 0; dx < 8; dx++) hal_video_put_pixel(ax + dx, ay + 3, c_shaft);
+            hal_video_put_pixel(ax + 7, ay + 2, c_head);
+            hal_video_put_pixel(ax + 8, ay + 3, c_head);
+            hal_video_put_pixel(ax + 7, ay + 4, c_head);
+            hal_video_put_pixel(ax + 0, ay + 2, c_fletch);
+            hal_video_put_pixel(ax + 0, ay + 4, c_fletch);
+        } else if (a->dir == DIR_LEFT) {
+            for (int dx = 1; dx < 9; dx++) hal_video_put_pixel(ax + dx, ay + 3, c_shaft);
+            hal_video_put_pixel(ax + 1, ay + 2, c_head);
+            hal_video_put_pixel(ax + 0, ay + 3, c_head);
+            hal_video_put_pixel(ax + 1, ay + 4, c_head);
+            hal_video_put_pixel(ax + 8, ay + 2, c_fletch);
+            hal_video_put_pixel(ax + 8, ay + 4, c_fletch);
+        } else if (a->dir == DIR_DOWN) {
+            for (int dy = 0; dy < 8; dy++) hal_video_put_pixel(ax + 3, ay + dy, c_shaft);
+            hal_video_put_pixel(ax + 2, ay + 7, c_head);
+            hal_video_put_pixel(ax + 3, ay + 8, c_head);
+            hal_video_put_pixel(ax + 4, ay + 7, c_head);
+            hal_video_put_pixel(ax + 2, ay + 0, c_fletch);
+            hal_video_put_pixel(ax + 4, ay + 0, c_fletch);
+        } else { // DIR_UP
+            for (int dy = 1; dy < 9; dy++) hal_video_put_pixel(ax + 3, ay + dy, c_shaft);
+            hal_video_put_pixel(ax + 2, ay + 1, c_head);
+            hal_video_put_pixel(ax + 3, ay + 0, c_head);
+            hal_video_put_pixel(ax + 4, ay + 1, c_head);
+            hal_video_put_pixel(ax + 2, ay + 8, c_fletch);
+            hal_video_put_pixel(ax + 4, ay + 8, c_fletch);
+        }
+    }
 }
 
 void subweapon_render_hud_icon(int x, int y) {
@@ -712,6 +842,20 @@ void subweapon_render_hud_icon(int x, int y) {
         hal_video_put_pixel(x + 9, y + 3, 0xF59E0BFF);
         hal_video_put_pixel(x + 8, y + 3, 0x38BDF8FF); // Orbe ciano
         hal_video_put_pixel(x + 8, y + 4, 0x0284C7FF);
+    } else if (s_current_item == ITEM_BOW) {
+        // Mini Arco curvado de madeira e corda
+        hal_video_put_pixel(x + 7, y + 4, 0x92400EFF);
+        hal_video_put_pixel(x + 8, y + 3, 0x92400EFF);
+        hal_video_put_pixel(x + 9, y + 4, 0x92400EFF);
+        hal_video_put_pixel(x + 9, y + 5, 0x92400EFF);
+        hal_video_put_pixel(x + 9, y + 6, 0x92400EFF);
+        hal_video_put_pixel(x + 8, y + 7, 0x92400EFF);
+        hal_video_put_pixel(x + 7, y + 6, 0x92400EFF);
+        // Corda esticada
+        hal_video_put_pixel(x + 7, y + 5, 0xE2E8F0FF);
+        // Flecha encaixada
+        hal_video_put_pixel(x + 11, y + 5, 0xFFFFFFFF);
+        hal_video_put_pixel(x + 10, y + 5, 0x92400EFF);
     }
 }
 
@@ -737,4 +881,17 @@ void subweapon_get_screen_shake(int* out_ox, int* out_oy) {
         *out_ox = 0;
         *out_oy = 0;
     }
+}
+
+int subweapon_get_arrow_count(void) {
+    return s_arrow_count;
+}
+
+int subweapon_get_max_arrows(void) {
+    return s_max_arrows;
+}
+
+void subweapon_add_arrows(int count) {
+    s_arrow_count += count;
+    if (s_arrow_count > s_max_arrows) s_arrow_count = s_max_arrows;
 }

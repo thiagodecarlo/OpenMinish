@@ -955,6 +955,124 @@ static void render_metatile(int sx, int sy, TileType type) {
             draw_tile_pixel(sx + 14, sy + 6, 0xF97316FF);
             break;
 
+        case TILE_SWAMP_WATER: {
+            // Água escura e turva do pântano de Castor Wilds com ondas verdes/azuis
+            int anim_off = s_water_anim_frame;
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x0E3846FF; // Base escura de mangue
+                    if ((x + y * 2 + anim_off) % 7 == 0) c = 0x155E75FF;
+                    else if ((x * 2 + y + anim_off) % 11 == 0) c = 0x0891B2FF;
+                    if ((x == 4 && y == 7) || (x == 12 && y == 3)) c = 0x22D3EE88; // Reflexo de musgo
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+        }
+
+        case TILE_SWAMP_MUD: {
+            // Lodo movediço profundo e viscoso (requer Pegasus Dash para não afundar!)
+            int anim_bubble = (s_water_anim_frame * 2) % 16;
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x2A1810FF; // Terra escura turfosa
+                    if ((x ^ y) % 3 == 0) c = 0x1C0E07FF;
+                    else if ((x + y * 3) % 7 == 0) c = 0x382215FF;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            // Bolhas viscosas de gás do pântano brotando do lodo
+            int bx = 5 + (anim_bubble % 6);
+            int by = 8 + (anim_bubble % 4);
+            draw_tile_pixel(sx + bx, sy + by, 0x5C3E25FF);
+            draw_tile_pixel(sx + bx + 1, sy + by, 0x78562BFF);
+            draw_tile_pixel(sx + bx, sy + by + 1, 0x170C06FF);
+            break;
+        }
+
+        case TILE_SWAMP_GRASS:
+            // Musgo e vegetação pantanosa verde-oliva com brotos úmidos
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x3F4E24FF; // Verde-oliva pantanoso
+                    if ((x + y) % 4 == 0) c = 0x2C3717FF;
+                    else if ((x * 3 + y) % 7 == 0) c = 0x5B6D36FF;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            // Tufos de capim do brejo
+            draw_tile_pixel(sx + 3, sy + 4, 0x6F8341FF);
+            draw_tile_pixel(sx + 3, sy + 3, 0x8FA456FF);
+            draw_tile_pixel(sx + 11, sy + 11, 0x6F8341FF);
+            draw_tile_pixel(sx + 12, sy + 10, 0x8FA456FF);
+            break;
+
+        case TILE_SWAMP_LOG:
+            // Tronco de árvore caído oco no lodo (passarela / túnel de madeira envelhecida)
+            render_metatile(sx, sy, TILE_SWAMP_MUD);
+            for (int y = 2; y <= 13; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x422006FF; // Casca de madeira envelhecida
+                    if (y == 2 || y == 13) c = 0x2B1504FF; // Borda sombreada
+                    else if (y >= 5 && y <= 10) c = 0x150B02FF; // Interior oco escuro
+                    else if (x % 4 == 0) c = 0x713F12FF; // Ranhuras de madeira
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_EYE_STATUE:
+            // Estátua ancestral de pedra com olho fechado (sensível a flechadas)
+            render_metatile(sx, sy, TILE_SWAMP_GRASS);
+            // Corpo monolítico de cantaria ancestral
+            for (int y = 1; y <= 14; y++) {
+                for (int x = 2; x <= 13; x++) {
+                    u32 c = 0x475569FF; // Pedra ardósia
+                    if (x == 2 || x == 13 || y == 1 || y == 14) c = 0x1E293BFF; // Borda cinzelada
+                    else if ((x + y) % 5 == 0) c = 0x334155FF; // Musgo na rocha
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            // Olho ciclópico central fechado (pálpebra cerrada em sono ancestral)
+            for (int x = 4; x <= 11; x++) {
+                draw_tile_pixel(sx + x, sy + 7, 0x0F172AFF); // Fissura escura da pálpebra fechada
+                draw_tile_pixel(sx + x, sy + 8, 0x1E293BFF);
+            }
+            // Detalhes da íris adormecida
+            draw_tile_pixel(sx + 7, sy + 6, 0x64748BFF);
+            draw_tile_pixel(sx + 8, sy + 6, 0x64748BFF);
+            draw_tile_pixel(sx + 7, sy + 9, 0x334155FF);
+            draw_tile_pixel(sx + 8, sy + 9, 0x334155FF);
+            break;
+
+        case TILE_EYE_STATUE_OPEN: {
+            // Estátua ancestral despertada com olho místico aberto por flechada certeira!
+            render_metatile(sx, sy, TILE_SWAMP_GRASS);
+            for (int y = 1; y <= 14; y++) {
+                for (int x = 2; x <= 13; x++) {
+                    u32 c = 0x475569FF;
+                    if (x == 2 || x == 13 || y == 1 || y == 14) c = 0x1E293BFF;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            // Órbita ocular aberta em arco
+            for (int y = 4; y <= 11; y++) {
+                for (int x = 4; x <= 11; x++) {
+                    float dist = sqrtf((float)((x - 7.5f) * (x - 7.5f) + (y - 7.5f) * (y - 7.5f)));
+                    if (dist <= 3.8f) {
+                        u32 c = 0x0891B2FF; // Íris ciano mística
+                        if (dist <= 1.2f) c = 0xFFFFFFFF; // Pupila radiante brilhante
+                        else if (dist > 2.6f) c = 0xFEF08AFF; // Esclera dourada ancestral
+                        draw_tile_pixel(sx + x, sy + y, c);
+                    }
+                }
+            }
+            // Brilho cintilante emitido pelo olho aberto
+            int eye_spark = s_water_anim_frame % 4;
+            draw_tile_pixel(sx + 6 + eye_spark, sy + 4, 0x67E8F9FF);
+            break;
+        }
+
         default:
             render_metatile(sx, sy, TILE_GRASS);
             break;
@@ -1717,7 +1835,7 @@ bool map_is_water(const Tilemap* map, float world_x, float world_y) {
             return false; // Sobre a ponte de madeira ou calcamento nao e agua
         }
         u8 ground = map->ground_layer[idx];
-        return (ground == TILE_WATER || ground == TILE_VILLAGE_STREAM);
+        return (ground == TILE_WATER || ground == TILE_VILLAGE_STREAM || ground == TILE_SWAMP_WATER);
     }
 
     if (map->is_authentic && map->authentic_tex && map->authentic_tex->pixels) {
@@ -2410,5 +2528,179 @@ Tilemap* map_create_melari_mines(void) {
     m->collision_map[4 * w + 4] = 1;
 
     printf("[MAP] Melari's Mines (Minas de Melari) criado com sucesso (%dx%d tiles)!\n", w, h);
+    return m;
+}
+
+bool map_is_swamp_mud(const Tilemap* map, float world_x, float world_y) {
+    if (!map || !map->ground_layer) return false;
+    if (world_x < 0.0f || world_y < 0.0f) return false;
+
+    int tx = (int)(world_x / TILE_SIZE);
+    int ty = (int)(world_y / TILE_SIZE);
+    if (tx < 0 || tx >= map->width || ty < 0 || ty >= map->height) return false;
+
+    int idx = ty * map->width + tx;
+    if (map->overlay_layer && (map->overlay_layer[idx] == TILE_SWAMP_LOG || map->overlay_layer[idx] == TILE_VILLAGE_BRIDGE)) {
+        return false; // Tronco ou ponte protege o herói de afundar no lodo
+    }
+    return (map->ground_layer[idx] == TILE_SWAMP_MUD || (map->overlay_layer && map->overlay_layer[idx] == TILE_SWAMP_MUD));
+}
+
+bool map_is_eye_statue(const Tilemap* map, float world_x, float world_y) {
+    if (!map || !map->overlay_layer) return false;
+    if (world_x < 0.0f || world_y < 0.0f) return false;
+
+    int tx = (int)(world_x / TILE_SIZE);
+    int ty = (int)(world_y / TILE_SIZE);
+    if (tx < 0 || tx >= map->width || ty < 0 || ty >= map->height) return false;
+
+    int idx = ty * map->width + tx;
+    return (map->overlay_layer[idx] == TILE_EYE_STATUE || map->overlay_layer[idx] == TILE_EYE_STATUE_OPEN);
+}
+
+bool map_hit_eye_statue(Tilemap* map, float world_x, float world_y) {
+    if (!map || !map->overlay_layer) return false;
+    int tx = (int)(world_x / TILE_SIZE);
+    int ty = (int)(world_y / TILE_SIZE);
+
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            int cx = tx + dx;
+            int cy = ty + dy;
+            if (cx < 0 || cx >= map->width || cy < 0 || cy >= map->height) continue;
+            int idx = cy * map->width + cx;
+            if (map->overlay_layer[idx] == TILE_EYE_STATUE) {
+                map->overlay_layer[idx] = TILE_EYE_STATUE_OPEN;
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
+                printf("[EYE STATUE] Estatua ancestral de olho aberta com flecha certeira! (%d, %d)\n", cx, cy);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+Tilemap* map_create_castor_wilds(void) {
+    int w = 36;
+    int h = 28;
+    Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
+    if (!m) return NULL;
+
+    m->width  = w;
+    m->height = h;
+    m->is_authentic = false;
+    m->authentic_tex = NULL;
+    m->ground_layer  = (u8*)malloc(w * h * sizeof(u8));
+    m->overlay_layer = (u8*)malloc(w * h * sizeof(u8));
+    m->collision_map = (u8*)malloc(w * h * sizeof(u8));
+
+    // 1. Preenche o terreno inicial com vegetação pantanosa (TILE_SWAMP_GRASS)
+    for (int i = 0; i < w * h; i++) {
+        m->ground_layer[i]  = TILE_SWAMP_GRASS;
+        m->overlay_layer[i] = 0xFF;
+        m->collision_map[i] = 0;
+    }
+
+    // 2. Fronteiras densas de árvores e vinhedos do pântano
+    // Norte (y=0..1)
+    for (int x = 0; x < w; x++) {
+        m->overlay_layer[0 * w + x] = TILE_TREE_TOP;
+        m->overlay_layer[1 * w + x] = TILE_TREE_TRUNK;
+        m->collision_map[0 * w + x] = 1;
+        m->collision_map[1 * w + x] = 1;
+    }
+    // Sul (y=26..27)
+    for (int x = 0; x < w; x++) {
+        m->overlay_layer[26 * w + x] = TILE_TREE_TOP;
+        m->overlay_layer[27 * w + x] = TILE_TREE_TRUNK;
+        m->collision_map[26 * w + x] = 1;
+        m->collision_map[27 * w + x] = 1;
+    }
+    // Oeste (x=0..1)
+    for (int y = 0; y < h; y++) {
+        m->overlay_layer[y * w + 0] = TILE_TREE_TRUNK;
+        m->collision_map[y * w + 0] = 1;
+        m->overlay_layer[y * w + 1] = TILE_TREE_TRUNK;
+        m->collision_map[y * w + 1] = 1;
+    }
+    // Leste (x=34..35) com passagem aberta em y=12..16 (Conexão para South Hyrule Field)
+    for (int y = 0; y < h; y++) {
+        if (y < 12 || y > 16) {
+            m->overlay_layer[y * w + 34] = TILE_TREE_TRUNK;
+            m->collision_map[y * w + 34] = 1;
+            m->overlay_layer[y * w + 35] = TILE_TREE_TRUNK;
+            m->collision_map[y * w + 35] = 1;
+        }
+    }
+
+    // 3. Grandes charcos de lodo movediço (TILE_SWAMP_MUD)
+    // Lago de Lodo Central (x=8..26, y=6..16)
+    for (int y = 6; y <= 16; y++) {
+        for (int x = 8; x <= 26; x++) {
+            m->ground_layer[y * w + x] = TILE_SWAMP_MUD;
+        }
+    }
+    // Lago de Lodo Sudoeste (x=4..14, y=18..24)
+    for (int y = 18; y <= 24; y++) {
+        for (int x = 4; x <= 14; x++) {
+            m->ground_layer[y * w + x] = TILE_SWAMP_MUD;
+        }
+    }
+
+    // Ilhotas de musgo sólido dentro do charco de lodo
+    for (int y = 10; y <= 12; y++) {
+        for (int x = 16; x <= 18; x++) {
+            m->ground_layer[y * w + x] = TILE_SWAMP_GRASS;
+        }
+    }
+    m->overlay_layer[11 * w + 17] = TILE_BUSH;
+    m->collision_map[11 * w + 17] = 1;
+
+    // 4. Troncos caídos ocos (passarelas sobre o lodo)
+    // Tronco horizontal que corta o charco central (x=12..15, y=9)
+    for (int x = 12; x <= 15; x++) {
+        m->overlay_layer[9 * w + x] = TILE_SWAMP_LOG;
+        m->collision_map[9 * w + x] = 0; // Passável a pé!
+    }
+    // Tronco horizontal no charco sudoeste (x=7..10, y=21)
+    for (int x = 7; x <= 10; x++) {
+        m->overlay_layer[21 * w + x] = TILE_SWAMP_LOG;
+        m->collision_map[21 * w + x] = 0;
+    }
+
+    // 5. Charco de água escura do pântano no sudeste (x=21..31, y=19..24)
+    for (int y = 19; y <= 24; y++) {
+        for (int x = 21; x <= 31; x++) {
+            m->ground_layer[y * w + x] = TILE_SWAMP_WATER;
+            m->collision_map[y * w + x] = 1; // Água profunda (requer flippers para nadar)
+        }
+    }
+
+    // 6. Ruínas Ancestrais e Pedestal do Arco e Flechas no Noroeste (x=4..10, y=3..6)
+    // Pedestal sagrado guardado por estátuas de olho
+    m->overlay_layer[3 * w + 5] = TILE_EYE_STATUE;
+    m->collision_map[3 * w + 5] = 1;
+    m->overlay_layer[3 * w + 9] = TILE_EYE_STATUE;
+    m->collision_map[3 * w + 9] = 1;
+
+    // Baú contendo o Arco e Flechas no pedestal central das ruínas
+    m->overlay_layer[3 * w + 7] = TILE_CHEST_CLOSED;
+    m->collision_map[3 * w + 7] = 1;
+
+    // Estátua de olho bloqueando atalho no lodo em x=13, y=13
+    m->overlay_layer[13 * w + 13] = TILE_EYE_STATUE;
+    m->collision_map[13 * w + 13] = 1;
+
+    // Arbustos pantanosos espalhados
+    m->overlay_layer[5 * w + 14]  = TILE_BUSH;
+    m->collision_map[5 * w + 14]  = 1;
+    m->overlay_layer[5 * w + 20]  = TILE_BUSH;
+    m->collision_map[5 * w + 20]  = 1;
+    m->overlay_layer[14 * w + 28] = TILE_BUSH;
+    m->collision_map[14 * w + 28] = 1;
+    m->overlay_layer[17 * w + 18] = TILE_BUSH;
+    m->collision_map[17 * w + 18] = 1;
+
+    printf("[MAP] Castor Wilds Swamp (Pantano de Castor Wilds) criado com sucesso (%dx%d tiles)!\n", w, h);
     return m;
 }
