@@ -19,6 +19,7 @@
 #include "hal/sanctuary.h"
 #include "hal/fast_travel.h"
 #include "hal/library.h"
+#include "hal/lantern.h"
 #include <math.h>
 
 /*
@@ -117,6 +118,10 @@ typedef struct {
     // Item Canônico: Ocarina do Vento (Ocarina of Wind) & Fortaleza dos Ventos
     bool has_ocarina;              // Possui a Ocarina do Vento
     int  ocarina_banner_timer;     // Temporizador do banner da Ocarina
+
+    // Item Canônico: Lanterna de Chamas (Flame Lantern)
+    bool has_lantern;              // Possui a Lanterna de Chamas
+    int  lantern_banner_timer;     // Temporizador do banner da Lanterna
 } Player;
 
 static const char* s_region_tags[REGION_COUNT] = { "usa", "eur", "jpn" };
@@ -1656,6 +1661,7 @@ int main(int argc, char* argv[]) {
     Tilemap* lake_hylia_map = map_create_lake_hylia();
     s_lake_hylia_map = lake_hylia_map;
     library_quest_init();
+    lantern_init();
     load_region_sheets(REGION_USA);
 
     // Inicialização da entidade do Link
@@ -1719,6 +1725,8 @@ int main(int argc, char* argv[]) {
     link.armos_banner_timer = 0;
     link.has_ocarina = false;
     link.ocarina_banner_timer = 0;
+    link.has_lantern = true;
+    link.lantern_banner_timer = 0;
 
     // Carregamento automático de progresso salvo (Slot 1)
     if (save_exists(1)) {
@@ -1805,6 +1813,9 @@ int main(int argc, char* argv[]) {
             } else if (save.current_map == 16) {
                 s_in_lake_hylia = true;
             }
+            link.has_lantern = save.has_flame_lantern;
+            lantern_set_lit(save.lantern_lit);
+            if (link.has_lantern) inventory_unlock_item(INV_ITEM_LANTERN);
             library_restore_save(save.library_books_mask, save.librari_met, save.lake_temple_unlocked);
         }
     }
@@ -1929,6 +1940,8 @@ int main(int argc, char* argv[]) {
                                 current_save.library_books_mask = library_get_save_mask();
                                 current_save.librari_met = library_get_quest_state()->librari_met;
                                 current_save.lake_temple_unlocked = library_is_temple_unlocked();
+                                current_save.has_flame_lantern = link.has_lantern;
+                                current_save.lantern_lit = lantern_is_lit();
                                 current_save.slot_a = (int)inventory_get_slot_a();
                                 current_save.slot_b = (int)inventory_get_slot_b();
                                 if (save_game(1, &current_save)) {
@@ -2187,6 +2200,26 @@ int main(int argc, char* argv[]) {
                                     transition_to_lake_hylia(&link);
                                 }
                             }
+                            break;
+                        case SDLK_g:
+                            link.has_lantern = !link.has_lantern;
+                            if (link.has_lantern) {
+                                inventory_unlock_item(INV_ITEM_LANTERN);
+                                subweapon_set_current(ITEM_FLAME_LANTERN);
+                                lantern_set_lit(true);
+                                link.lantern_banner_timer = 200;
+                                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.2f);
+                                printf("[LANTERN] [G] Flame Lantern EQUIPADA no botao [B]!\n");
+                            } else {
+                                lantern_set_lit(false);
+                                printf("[LANTERN] [G] Flame Lantern DESEQUIPADA.\n");
+                            }
+                            break;
+                        case SDLK_F1:
+                            lantern_toggle_dark_room();
+                            break;
+                        case SDLK_F2:
+                            lantern_toggle_lit();
                             break;
                         default:
                             break;
@@ -3383,6 +3416,9 @@ int main(int argc, char* argv[]) {
             subweapon_render(&camera);
         }
 
+        // 2b. Máscara de Iluminação Dinâmica da Flame Lantern (Dark Rooms & Dungeons)
+        lantern_render_lighting(&camera, link.x, link.y, active_map, false);
+
         // 3. Barra Superior de HUD (Status do Jogo fixo na tela)
         draw_rect(0, 0, ctx->render_width, 14, 0x0C1C0DFF);
 
@@ -3779,6 +3815,35 @@ int main(int argc, char* argv[]) {
             draw_rect(px - 3, py - 1, tw + 6, 12, 0x38BDF8FF);
             draw_rect(px - 2, py, tw + 4, 10, 0x0C4A6EEE);
             font_draw_text(px, py + 1, lake_prompt, 0xE0F2FEFF, true);
+        }
+
+        // Prompt da Flame Lantern se equipada
+        if (subweapon_get_current() == ITEM_FLAME_LANTERN && !dialogue_is_active() && !inventory_is_paused()) {
+            char l_info[64];
+            snprintf(l_info, sizeof(l_info), "LANTERNA [%s] (F1: ESCURO | F2: FOGO)",
+                     lantern_is_lit() ? "ACESA" : "APAGADA");
+            int tw = 200;
+            int px = (ctx->render_width - tw) / 2;
+            int py = ctx->render_height - 18;
+            draw_rect(px - 4, py - 2, tw + 8, 14, 0x1E0D03EE);
+            draw_rect(px - 3, py - 1, tw + 6, 12, 0xF97316FF);
+            draw_rect(px - 2, py, tw + 4, 10, 0x451A03EE);
+            font_draw_text(px, py + 1, l_info, 0xFDE047FF, true);
+        }
+
+        // Banner comemorativo de aquisição da Flame Lantern
+        if (link.lantern_banner_timer > 0) {
+            link.lantern_banner_timer--;
+            const char* b1 = "FLAME LANTERN ADQUIRIDA!";
+            const char* b2 = "Chama Eterna: Ilumina a escuridao e derrete o gelo!";
+            int bw = 240;
+            int bx = (ctx->render_width - bw) / 2;
+            int by = 35;
+            draw_rect(bx - 6, by - 4, bw + 12, 30, 0x1E0D03EE);
+            draw_rect(bx - 5, by - 3, bw + 10, 28, 0xF97316FF);
+            draw_rect(bx - 4, by - 2, bw + 8, 26, 0x431407EE);
+            font_draw_text(bx + 35, by + 1, b1, 0xFDE047FF, true);
+            font_draw_text(bx + 4, by + 13, b2, 0xFFEDD5FF, false);
         }
 
         // 10b. Sistema de Transporte Rapido: Ocarina of Wind, Zeffa e Mapa de Cristas de Vento

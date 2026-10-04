@@ -50,6 +50,7 @@ add_executable(zelda_port
     src/hal/fast_travel.c
     src/hal/inventory.c
     src/hal/library.c
+    src/hal/lantern.c
     src/hal/save.c
     src/hal/sanctuary.c
 )

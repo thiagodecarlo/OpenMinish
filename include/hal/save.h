@@ -46,6 +46,8 @@ typedef struct {
     u8    library_books_mask;
     bool  librari_met;
     bool  lake_temple_unlocked;
+    bool  has_flame_lantern;
+    bool  lantern_lit;
     int   slot_a;
     int   slot_b;
     u32   unlocked_items_mask;

@@ -1190,6 +1190,38 @@ static void synth_generate_all_sfx(void) {
         s_precalc_sfx[SOUND_WALL_CRUMBLE].total_frames = num_frames;
         s_precalc_sfx[SOUND_WALL_CRUMBLE].is_stereo = false;
     }
+
+    // 29. SOUND_FIRE (Labareda e chamas ardentes da Flame Lantern)
+    {
+        float dur = 0.28f;
+        u32 num_frames = (u32)(AUDIO_SAMPLE_RATE * dur);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        u32 lfsr = 0xACE1u;
+        float rumble_phase = 0.0f;
+        for (u32 i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)num_frames;
+            // Envelope de rajada com fade-out gradual
+            float env = (t < 0.15f) ? (t / 0.15f) : (1.0f - (t - 0.15f) / 0.85f);
+            env = env * env;
+
+            // Ruído crepitante filtrado
+            u16 bit = ((u16)lfsr ^ ((u16)lfsr >> 2) ^ ((u16)lfsr >> 3) ^ ((u16)lfsr >> 5)) & 1u;
+            lfsr = ((u16)lfsr >> 1) | (bit << 15);
+            float noise = ((float)(lfsr % 1000) / 500.0f - 1.0f);
+
+            // Rugido grave de chama (~80Hz)
+            rumble_phase += 80.0f / (float)AUDIO_SAMPLE_RATE;
+            float flame = sinf(2.0f * PI_F * rumble_phase) * 0.45f + noise * 0.55f;
+
+            float total = flame * env * 26000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_FIRE].samples = buf;
+        s_precalc_sfx[SOUND_FIRE].total_frames = num_frames;
+        s_precalc_sfx[SOUND_FIRE].is_stereo = false;
+    }
 }
 
 // ----------------------------------------------------------------------------

@@ -1461,6 +1461,83 @@ void render_metatile(int sx, int sy, TileType type) {
             }
             break;
 
+        case TILE_TORCH_UNLIT:
+            // Pira de pedra apagada com pedestal cinzelado e brasas de carvao
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x475569FF; // Pedra ardósia
+                    if (y <= 5) {
+                        // Bacia de ferro superior com brasas apagadas
+                        if (x >= 4 && x <= 11) {
+                            c = (y == 5) ? 0x1E293BFF : 0x27272AFF; // Carvão preto/cinza
+                        } else {
+                            continue;
+                        }
+                    } else if (y <= 12) {
+                        // Pilar de suporte
+                        if (x < 6 || x > 9) continue;
+                        c = (x == 6 || x == 9) ? 0x334155FF : 0x64748BFF;
+                    } else {
+                        // Base do pedestal
+                        if (x < 3 || x > 12) continue;
+                        c = (y == 15 || x == 3 || x == 12) ? 0x1E293BFF : 0x475569FF;
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_TORCH_LIT:
+            // Pira de pedra acesa com chamas incandescentes animadas
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x475569FF;
+                    if (y <= 6) {
+                        // Fogo brilhante amarelo/laranja/vermelho com halo
+                        float d = sqrtf((float)((x - 7.5f)*(x - 7.5f) + (y - 3.5f)*(y - 3.5f)));
+                        if (d <= 2.2f) c = 0xFEF08AFF; // Núcleo incandescente
+                        else if (d <= 3.8f) c = 0xF97316FF; // Chama viva
+                        else if (d <= 5.0f) c = 0xDC2626FF; // Borda avermelhada
+                        else continue;
+                    } else if (y <= 12) {
+                        if (x < 6 || x > 9) continue;
+                        c = (x == 6 || x == 9) ? 0x334155FF : 0x64748BFF;
+                    } else {
+                        if (x < 3 || x > 12) continue;
+                        c = (y == 15 || x == 3 || x == 12) ? 0x1E293BFF : 0x475569FF;
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_ICE_BLOCK:
+            // Bloco maciço de gelo translúcido brilhante
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x7DD3FCFF; // Azul gelo cristalino
+                    if (x == 0 || y == 0) c = 0xE0F2FEFF; // Reflexo de luz na borda superior-esquerda
+                    else if (x == 15 || y == 15) c = 0x0284C7FF; // Sombra na borda inferior-direita
+                    else if (x == y || x == y - 1) c = 0xBAE6FDFF; // Friso diagonal de refração
+                    else if ((x + y) % 5 == 0) c = 0xFFFFFFFF; // Brilho de geada
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_COBWEB:
+            // Teia de aranha espessa geométrica
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    if (x == y || x == 15 - y || x == 7 || y == 7 ||
+                        (x >= 3 && x <= 12 && (y == 3 || y == 12)) ||
+                        (y >= 3 && y <= 12 && (x == 3 || x == 12))) {
+                        draw_tile_pixel(sx + x, sy + y, 0xF1F5F9CC); // Fio de seda branco
+                    }
+                }
+            }
+            break;
+
         default:
             render_metatile(sx, sy, TILE_GRASS);
             break;
@@ -3578,3 +3655,59 @@ Tilemap* map_create_lake_hylia(void) {
     printf("[MAP] Lake Hylia (Grande Lago Hylia) criado com sucesso (%dx%d tiles)!\n", w, h);
     return m;
 }
+
+bool map_interact_lantern(Tilemap* map, float world_x, float world_y, int* out_type) {
+    if (!map) return false;
+    int tx = (int)(world_x / TILE_SIZE);
+    int ty = (int)(world_y / TILE_SIZE);
+    if (tx < 0 || tx >= map->width || ty < 0 || ty >= map->height) return false;
+    int idx = ty * map->width + tx;
+
+    // 1. Checa camada de obstáculos (overlay)
+    if (map->overlay_layer) {
+        u8 ov = map->overlay_layer[idx];
+        if (ov == TILE_TORCH_UNLIT) {
+            map->overlay_layer[idx] = TILE_TORCH_LIT;
+            if (out_type) *out_type = 1;
+            return true;
+        } else if (ov == TILE_ICE_BLOCK) {
+            map->overlay_layer[idx] = 0xFF; // Removido
+            if (map->collision_map) map->collision_map[idx] = 0; // Desobstrui passagem
+            if (out_type) *out_type = 2;
+            return true;
+        } else if (ov == TILE_COBWEB) {
+            map->overlay_layer[idx] = 0xFF;
+            if (map->collision_map) map->collision_map[idx] = 0;
+            if (out_type) *out_type = 3;
+            return true;
+        } else if (ov == TILE_BUSH) {
+            map->overlay_layer[idx] = 0xFF;
+            if (map->collision_map) map->collision_map[idx] = 0;
+            if (out_type) *out_type = 4;
+            return true;
+        }
+    }
+
+    // 2. Checa camada de chão (ground)
+    if (map->ground_layer) {
+        u8 gr = map->ground_layer[idx];
+        if (gr == TILE_TORCH_UNLIT) {
+            map->ground_layer[idx] = TILE_TORCH_LIT;
+            if (out_type) *out_type = 1;
+            return true;
+        } else if (gr == TILE_ICE_BLOCK) {
+            map->ground_layer[idx] = TILE_WATER;
+            if (map->collision_map) map->collision_map[idx] = 0;
+            if (out_type) *out_type = 2;
+            return true;
+        } else if (gr == TILE_BUSH) {
+            map->ground_layer[idx] = TILE_GRASS;
+            if (map->collision_map) map->collision_map[idx] = 0;
+            if (out_type) *out_type = 4;
+            return true;
+        }
+    }
+
+    return false;
+}
+
