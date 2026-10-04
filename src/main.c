@@ -106,6 +106,10 @@ typedef struct {
     // Item Canônico: Luvas de Toupeira (Mole Mitts) & Mole Cave
     bool has_mole_mitts;           // Possui as Luvas de Toupeira
     int  mole_mitts_banner_timer;  // Temporizador do banner das Mole Mitts
+
+    // Mecânica Canônica: Wind Ruins & Robô Armos
+    bool has_armos_activated;      // Circuito do robô Armos ativado pelo Minish
+    int  armos_banner_timer;       // Temporizador do banner do Armos
 } Player;
 
 static const char* s_region_tags[REGION_COUNT] = { "usa", "eur", "jpn" };
@@ -119,23 +123,27 @@ static Texture* s_sheet0 = NULL;
 static Texture* s_sheet1 = NULL;
 static Texture* s_link_tex = NULL;
 static Texture* s_octo_tex = NULL;
-static Tilemap* s_world_map        = NULL;
-static Tilemap* s_town_map         = NULL;
-static Tilemap* s_village_map      = NULL;
-static Tilemap* s_south_field_map  = NULL;
-static Tilemap* s_north_field_map  = NULL;
-static Tilemap* s_crenel_base_map  = NULL;
-static Tilemap* s_melari_mines_map = NULL;
-static Tilemap* s_castor_wilds_map = NULL;
-static Tilemap* s_mole_cave_map    = NULL;
-static bool     s_in_town          = false;
-static bool     s_in_village       = false;
-static bool     s_in_south_field   = false;
-static bool     s_in_north_field   = false;
-static bool     s_in_crenel_base   = false;
-static bool     s_in_melari_mines  = false;
-static bool     s_in_castor_wilds  = false;
-static bool     s_in_mole_cave     = false;
+static Tilemap* s_world_map          = NULL;
+static Tilemap* s_town_map           = NULL;
+static Tilemap* s_village_map        = NULL;
+static Tilemap* s_south_field_map    = NULL;
+static Tilemap* s_north_field_map    = NULL;
+static Tilemap* s_crenel_base_map    = NULL;
+static Tilemap* s_melari_mines_map   = NULL;
+static Tilemap* s_castor_wilds_map   = NULL;
+static Tilemap* s_mole_cave_map      = NULL;
+static Tilemap* s_wind_ruins_map     = NULL;
+static Tilemap* s_armos_interior_map = NULL;
+static bool     s_in_town            = false;
+static bool     s_in_village         = false;
+static bool     s_in_south_field     = false;
+static bool     s_in_north_field     = false;
+static bool     s_in_crenel_base     = false;
+static bool     s_in_melari_mines    = false;
+static bool     s_in_castor_wilds    = false;
+static bool     s_in_mole_cave       = false;
+static bool     s_in_wind_ruins      = false;
+static bool     s_in_armos_interior  = false;
 static SelectedRegion s_current_region = REGION_USA;
 
 static void load_region_sheets(SelectedRegion region) {
@@ -636,6 +644,8 @@ static void transition_to_castor_from_cave(Player* link) {
     s_in_melari_mines = false;
     s_in_castor_wilds = true;
     s_in_mole_cave = false;
+    s_in_wind_ruins = false;
+    s_in_armos_interior = false;
     link->x = 112.0f; // Saída na caverna no noroeste de Castor Wilds
     link->y = 120.0f;
     link->dir = DIR_DOWN;
@@ -643,6 +653,117 @@ static void transition_to_castor_from_cave(Player* link) {
     spawn_castor_wilds_entities();
     hal_audio_play_bgm(BGM_MINISH_WOODS);
     printf("[SCENE] Retornando a Castor Wilds a partir da Caverna!\n");
+}
+
+static void spawn_wind_ruins_entities(bool has_circuit_active) {
+    entity_clear_all();
+    // 1. Sentinela robô Armos bloqueando a passagem central (x=17.5*16=280, y=10*16=160)
+    Entity* armos = entity_spawn(ENTITY_ARMOS, 280.0f, 160.0f);
+    if (armos && has_circuit_active) {
+        armos->action = 2; // Já desperto e movido para o lado
+        armos->x += 24.0f;
+    }
+    // 2. Toco Minish (Portal de Encolhimento) para infiltrar o robô Armos (x=10*16=160, y=15*16=240)
+    entity_spawn(ENTITY_MINISH_STUMP, 160.0f, 240.0f);
+    // 3. Inimigos patrulhando as ruínas ancestrais
+    entity_spawn(ENTITY_ENEMY_ROPE, 190.0f, 290.0f);
+    entity_spawn(ENTITY_ENEMY_SPINY_BEETLE, 380.0f, 220.0f);
+    entity_spawn(ENTITY_ENEMY_ROPE, 340.0f, 100.0f);
+    // 4. Baú com tesouro no terraço leste
+    entity_spawn(ENTITY_CHEST_GOLD, 496.0f, 48.0f);
+    printf("[WIND RUINS] Entidades das Ruinas do Vento spawnadas (Armos, Toco Minish, Ropes, Spiny Beetle)!\n");
+}
+
+static void spawn_armos_interior_entities(bool is_active) {
+    entity_clear_all();
+    // 1. Interruptor / Dínamo Central do Armos (x=7.5*16=120, y=7.5*16=120)
+    Entity* sw = entity_spawn(ENTITY_ARMOS_SWITCH, 120.0f, 120.0f);
+    if (sw && is_active) {
+        sw->action = 1;
+    }
+    printf("[ARMOS INTERIOR] Mecanismo interno do Armos spawnado (Interruptor Central)!\n");
+}
+
+static void transition_to_wind_ruins(Player* link) {
+    if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active()) return;
+    s_in_town = false;
+    s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = false;
+    s_in_crenel_base = false;
+    s_in_melari_mines = false;
+    s_in_castor_wilds = false;
+    s_in_mole_cave = false;
+    s_in_wind_ruins = true;
+    s_in_armos_interior = false;
+    link->x = 24.0f; // Entrada oeste vindo de Castor Wilds
+    link->y = 192.0f;
+    link->dir = DIR_RIGHT;
+    link->is_moving = false;
+    spawn_wind_ruins_entities(armos_circuit_is_active());
+    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    printf("[SCENE] Entrando em Wind Ruins (Ruinas do Vento)!\n");
+}
+
+static void transition_to_castor_from_ruins(Player* link) {
+    if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active()) return;
+    s_in_town = false;
+    s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = false;
+    s_in_crenel_base = false;
+    s_in_melari_mines = false;
+    s_in_castor_wilds = true;
+    s_in_mole_cave = false;
+    s_in_wind_ruins = false;
+    s_in_armos_interior = false;
+    link->x = 520.0f; // Saída leste de Castor Wilds
+    link->y = 224.0f;
+    link->dir = DIR_LEFT;
+    link->is_moving = false;
+    spawn_castor_wilds_entities();
+    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    printf("[SCENE] Retornando a Castor Wilds a partir das Ruinas do Vento!\n");
+}
+
+static void transition_to_armos_interior(Player* link) {
+    s_in_town = false;
+    s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = false;
+    s_in_crenel_base = false;
+    s_in_melari_mines = false;
+    s_in_castor_wilds = false;
+    s_in_mole_cave = false;
+    s_in_wind_ruins = false;
+    s_in_armos_interior = true;
+    link->x = 120.0f; // Entrada sul dentro do Armos
+    link->y = 216.0f;
+    link->dir = DIR_UP;
+    link->is_moving = false;
+    spawn_armos_interior_entities(armos_circuit_is_active());
+    hal_audio_play_sound(SOUND_DOOR_SHUTTER, 0.9f, 1.2f);
+    printf("[SCENE] Minish Link entrando no interior do robo Armos!\n");
+}
+
+static void transition_to_wind_ruins_from_armos(Player* link) {
+    s_in_town = false;
+    s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = false;
+    s_in_crenel_base = false;
+    s_in_melari_mines = false;
+    s_in_castor_wilds = false;
+    s_in_mole_cave = false;
+    s_in_wind_ruins = true;
+    s_in_armos_interior = false;
+    link->x = 280.0f; // Em frente à sentinela Armos nas ruínas
+    link->y = 180.0f;
+    link->dir = DIR_DOWN;
+    link->is_moving = false;
+    spawn_wind_ruins_entities(armos_circuit_is_active());
+    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    printf("[SCENE] Saindo do Armos e retornando a Wind Ruins!\n");
 }
 
 static void draw_rect(int rx, int ry, int rw, int rh, u32 color) {
@@ -1382,6 +1503,10 @@ int main(int argc, char* argv[]) {
     s_castor_wilds_map = castor_wilds_map;
     Tilemap* mole_cave_map = map_create_mole_cave();
     s_mole_cave_map = mole_cave_map;
+    Tilemap* wind_ruins_map = map_create_wind_ruins();
+    s_wind_ruins_map = wind_ruins_map;
+    Tilemap* armos_interior_map = map_create_armos_interior();
+    s_armos_interior_map = armos_interior_map;
     load_region_sheets(REGION_USA);
 
     // Inicialização da entidade do Link
@@ -1441,6 +1566,8 @@ int main(int argc, char* argv[]) {
     link.last_safe_y = link.y;
     link.has_mole_mitts = false;
     link.mole_mitts_banner_timer = 0;
+    link.has_armos_activated = false;
+    link.armos_banner_timer = 0;
 
     // Carregamento automático de progresso salvo (Slot 1)
     if (save_exists(1)) {
@@ -1479,6 +1606,10 @@ int main(int argc, char* argv[]) {
             if (link.has_mole_mitts) {
                 inventory_unlock_item(INV_ITEM_MOLE_MITTS);
             }
+            link.has_armos_activated = save.has_armos_activated;
+            if (link.has_armos_activated) {
+                armos_circuit_set_active(true);
+            }
             if (save.bomb_count > 0) {
                 subweapon_add_bombs(save.bomb_count - subweapon_get_bomb_count());
             }
@@ -1505,13 +1636,21 @@ int main(int argc, char* argv[]) {
                 s_in_castor_wilds = true;
             } else if (save.current_map == 11) {
                 s_in_mole_cave = true;
+            } else if (save.current_map == 12) {
+                s_in_wind_ruins = true;
+            } else if (save.current_map == 13) {
+                s_in_armos_interior = true;
             }
         }
     }
 
     // Inicialização do Subsistema de Entidades e Spawn de Inimigos e NPCs
     entity_manager_init();
-    if (s_in_mole_cave) {
+    if (s_in_armos_interior) {
+        spawn_armos_interior_entities(armos_circuit_is_active());
+    } else if (s_in_wind_ruins) {
+        spawn_wind_ruins_entities(armos_circuit_is_active());
+    } else if (s_in_mole_cave) {
         spawn_mole_cave_entities(link.has_mole_mitts);
     } else if (s_in_castor_wilds) {
         spawn_castor_wilds_entities();
@@ -1589,7 +1728,9 @@ int main(int argc, char* argv[]) {
                                 current_save.player_y = link.y;
                                 current_save.player_dir = (int)link.dir;
                                 int cur_m = 0;
-                                if (s_in_mole_cave) cur_m = 11;
+                                if (s_in_armos_interior) cur_m = 13;
+                                else if (s_in_wind_ruins) cur_m = 12;
+                                else if (s_in_mole_cave) cur_m = 11;
                                 else if (s_in_castor_wilds) cur_m = 10;
                                 else if (s_in_melari_mines) cur_m = 7;
                                 else if (s_in_crenel_base) cur_m = 6;
@@ -1614,6 +1755,7 @@ int main(int argc, char* argv[]) {
                                 current_save.has_two_elements = link.has_two_elements;
                                 current_save.has_bow = link.has_bow;
                                 current_save.has_mole_mitts = link.has_mole_mitts;
+                                current_save.has_armos_activated = link.has_armos_activated;
                                 current_save.slot_a = (int)inventory_get_slot_a();
                                 current_save.slot_b = (int)inventory_get_slot_b();
                                 if (save_game(1, &current_save)) {
@@ -1820,6 +1962,25 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
+                        case SDLK_u:
+                            if (!dungeon_is_active() && !dungeon_flames_is_active() && !sanctuary_is_active()) {
+                                if (s_in_wind_ruins) {
+                                    transition_to_castor_from_ruins(&link);
+                                } else {
+                                    transition_to_wind_ruins(&link);
+                                }
+                            }
+                            break;
+                        case SDLK_y:
+                            if (!dungeon_is_active() && !dungeon_flames_is_active() && !sanctuary_is_active()) {
+                                if (s_in_armos_interior) {
+                                    transition_to_wind_ruins_from_armos(&link);
+                                } else {
+                                    link.is_minish = true;
+                                    transition_to_armos_interior(&link);
+                                }
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -1840,14 +2001,16 @@ int main(int argc, char* argv[]) {
         // 2. ATUALIZAÇÃO DA LÓGICA DO JOGADOR (INPUT -> FÍSICA)
         // --------------------------------------------------------------------
         const HalVideoContext* ctx = hal_video_get_context();
-        Tilemap* active_map = s_in_mole_cave ? s_mole_cave_map :
+        Tilemap* active_map = s_in_armos_interior ? s_armos_interior_map :
+                              (s_in_wind_ruins ? s_wind_ruins_map :
+                              (s_in_mole_cave ? s_mole_cave_map :
                               (s_in_castor_wilds ? s_castor_wilds_map :
                               (s_in_melari_mines ? s_melari_mines_map :
                               (s_in_crenel_base ? s_crenel_base_map :
                               (s_in_village ? s_village_map :
                               (s_in_town ? s_town_map :
                               (s_in_south_field ? s_south_field_map :
-                              (s_in_north_field ? s_north_field_map : world_map)))))));
+                              (s_in_north_field ? s_north_field_map : world_map)))))))));
 
         if (inventory_is_paused()) {
             if (hal_input_is_pressed(KEY_UP))    inventory_cursor_move(0, -1);
@@ -1946,6 +2109,15 @@ int main(int argc, char* argv[]) {
             }
             if (link.mole_mitts_banner_timer > 0) {
                 link.mole_mitts_banner_timer--;
+            }
+            if (armos_circuit_is_active() && !link.has_armos_activated) {
+                link.has_armos_activated = true;
+                link.armos_banner_timer = 220;
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.2f);
+                printf("[ARMOS] Circuito central energizado! O robo Armos despertou e moveu-se!\n");
+            }
+            if (link.armos_banner_timer > 0) {
+                link.armos_banner_timer--;
             }
 
             // Ação com Botão A: Primeiro Natação (Mergulho), Portal Minish, Masmorra / Loja / Guarda / Cidadã / Baús / Swiftblade / NPCs, depois golpe de espada!
@@ -2547,9 +2719,15 @@ int main(int argc, char* argv[]) {
                         transition_to_castor_wilds(&link);
                     }
                 } else if (s_in_castor_wilds) {
-                    // Saída Leste do Pântano de Castor Wilds de volta para South Hyrule Field
+                    // Saída Leste do Pântano de Castor Wilds:
+                    // Se y <= 140: leva a Wind Ruins (Ruínas do Vento)
+                    // Se y > 140: leva a South Hyrule Field
                     if (link.x >= (active_map->width * TILE_SIZE) - 32.0f && link.dir == DIR_RIGHT) {
-                        transition_to_south_field_from_castor(&link);
+                        if (link.y <= 140.0f) {
+                            transition_to_wind_ruins(&link);
+                        } else {
+                            transition_to_south_field_from_castor(&link);
+                        }
                     }
                     // Entrada para a Caverna das Luvas de Toupeira no noroeste de Castor Wilds
                     else if (link.x <= 64.0f && link.y <= 64.0f && link.dir == DIR_UP) {
@@ -2559,6 +2737,23 @@ int main(int argc, char* argv[]) {
                     // Saída Sul da Caverna das Luvas de Toupeira de volta para Castor Wilds
                     if (link.y >= (active_map->height * TILE_SIZE) - 32.0f && link.dir == DIR_DOWN) {
                         transition_to_castor_from_cave(&link);
+                    }
+                } else if (s_in_wind_ruins) {
+                    // Saída Oeste de Wind Ruins de volta para Castor Wilds
+                    if (link.x <= 24.0f && link.dir == DIR_LEFT) {
+                        transition_to_castor_from_ruins(&link);
+                    }
+                    // Infiltração Minish no Robô Armos adormecido
+                    if (link.is_minish && (hal_input_is_pressed(KEY_A) || hal_input_is_pressed(KEY_R))) {
+                        Entity* armos = entity_find_nearby_armos(link.x, link.y, 28.0f);
+                        if (armos) {
+                            transition_to_armos_interior(&link);
+                        }
+                    }
+                } else if (s_in_armos_interior) {
+                    // Saída Sul do interior do Armos de volta para Wind Ruins
+                    if (link.y >= (active_map->height * TILE_SIZE) - 32.0f && link.dir == DIR_DOWN) {
+                        transition_to_wind_ruins_from_armos(&link);
                     }
                 } else if (s_in_north_field) {
                     // Portão Sul de North Field de volta para Hyrule Town
@@ -2708,6 +2903,10 @@ int main(int argc, char* argv[]) {
                 spawn_castor_wilds_entities();
             } else if (s_in_mole_cave) {
                 spawn_mole_cave_entities(link.has_mole_mitts);
+            } else if (s_in_wind_ruins) {
+                spawn_wind_ruins_entities(armos_circuit_is_active());
+            } else if (s_in_armos_interior) {
+                spawn_armos_interior_entities(armos_circuit_is_active());
             } else {
                 spawn_overworld_entities(world_map);
             }
@@ -3141,6 +3340,43 @@ int main(int argc, char* argv[]) {
             font_draw_text(ban_x + 26, ban_y + 18, "Escave Paredes de Terra e Segredos!", 0xFDE047FF, true);
         }
 
+        // 6g. Banner Festivo de Ativação do Robô Armos
+        if (link.armos_banner_timer > 0) {
+            int ban_w = 216;
+            int ban_h = 32;
+            int ban_x = (ctx->render_width - ban_w) / 2;
+            int ban_y = 64;
+
+            draw_rect(ban_x - 2, ban_y - 2, ban_w + 4, ban_h + 4, 0x0A0F14EE);
+            draw_rect(ban_x - 1, ban_y - 1, ban_w + 2, ban_h + 2, 0x38BDF8FF);
+            draw_rect(ban_x, ban_y, ban_w, ban_h, 0x0F172AFF);
+            draw_rect(ban_x + 2, ban_y + 2, ban_w - 4, ban_h - 4, 0x1E293BEE);
+
+            // Ícone do Robô Armos com sensor luminoso ciano
+            draw_rect(ban_x + 8, ban_y + 8, 12, 16, 0x64748BFF);
+            draw_rect(ban_x + 10, ban_y + 6, 8, 4, 0x475569FF);
+            draw_rect(ban_x + 12, ban_y + 12, 4, 4, 0x38BDF8FF); // Olho azul reativado
+            hal_video_put_pixel(ban_x + 13, ban_y + 13, 0xFFFFFFFF);
+
+            font_draw_text(ban_x + 26, ban_y + 6, "CIRCUITO ARMOS ATIVADO!", 0x38BDF8FF, true);
+            font_draw_text(ban_x + 26, ban_y + 18, "Mecanismo Desperto pelo Minish!", 0xFDE047FF, true);
+        }
+
+        // Prompt de Interação para Infiltrar no Robô Armos (Link Minish próximo a Armos dormente)
+        if (s_in_wind_ruins && link.is_minish && !link.is_transforming && !dialogue_is_active()) {
+            Entity* armos = entity_find_nearby_armos(link.x, link.y, 28.0f);
+            if (armos) {
+                const char* armos_prompt = "[A] Infiltrar no Armos (Minish)";
+                int text_w = 176;
+                int apx = (ctx->render_width - text_w) / 2;
+                int apy = ctx->render_height - 18;
+                draw_rect(apx - 4, apy - 2, text_w + 8, 14, 0x0F172AEE);
+                draw_rect(apx - 3, apy - 1, text_w + 6, 12, 0x38BDF8FF);
+                draw_rect(apx - 2, apy, text_w + 4, 10, 0x1E293BEE);
+                font_draw_text(apx, apy + 1, armos_prompt, 0xBAE6FDFF, true);
+            }
+        }
+
         // 7. Badge do Estado Minish no HUD
         if (link.is_minish) {
             int mx = 146;
@@ -3212,8 +3448,10 @@ int main(int argc, char* argv[]) {
     if (s_north_field_map) map_destroy(s_north_field_map);
     if (s_crenel_base_map) map_destroy(s_crenel_base_map);
     if (s_melari_mines_map) map_destroy(s_melari_mines_map);
-    if (s_castor_wilds_map) map_destroy(s_castor_wilds_map);
-    if (s_mole_cave_map)    map_destroy(s_mole_cave_map);
+    if (s_castor_wilds_map)    map_destroy(s_castor_wilds_map);
+    if (s_mole_cave_map)       map_destroy(s_mole_cave_map);
+    if (s_wind_ruins_map)      map_destroy(s_wind_ruins_map);
+    if (s_armos_interior_map)  map_destroy(s_armos_interior_map);
     map_destroy(world_map);
     hal_audio_shutdown();
     hal_input_shutdown();

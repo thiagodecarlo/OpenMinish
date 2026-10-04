@@ -1,4 +1,5 @@
 #include "hal/entity.h"
+#include "hal/map.h"
 #include "hal/dungeon.h"
 #include "hal/subweapon.h"
 #include "hal/inventory.h"
@@ -498,6 +499,24 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     e->maxHealth     = 999;
                     e->damage        = 0;
                     e->action        = 0;
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
+                    break;
+
+                case ENTITY_ARMOS:
+                    e->health        = 12;
+                    e->maxHealth     = 12;
+                    e->damage        = 1;
+                    e->action        = 0; // 0: DORMANT, 1: WAKING, 2: AWAKE
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -8.0f, -12.0f, 16.0f, 24.0f };
+                    break;
+
+                case ENTITY_ARMOS_SWITCH:
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->action        = 0; // 0: OFF, 1: ON
                     e->animTimer     = 0;
                     e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
                     break;
@@ -1990,6 +2009,42 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
                 printf("[ITEM MOLE MITTS] Link obteve as Luvas de Toupeira (Mole Mitts)! Pronto para escavar paredes e montes!\n");
             }
         }
+
+        // 24. ENTIDADE ROBÔ ARMOS (SENTINELA ANCESTRAL DAS RUÍNAS)
+        else if (e->type == ENTITY_ARMOS) {
+            if (e->invulnerableTimer > 0) e->invulnerableTimer--;
+
+            // Se o circuito do robô foi ativado e ele ainda está dormente, inicia o despertar!
+            if (armos_circuit_is_active() && e->action == 0) {
+                e->action = 1;
+                e->animTimer = 45;
+                hal_audio_play_sound(SOUND_BLOCK_PUSH, 0.9f, 1.1f);
+                printf("[ARMOS] Sentinela Armos recebendo energia do circuito! Despertando!\n");
+            }
+
+            if (e->action == 1) {
+                // Despertando: estátua treme, poeira ancestral sobe
+                e->animTimer--;
+                if (e->animTimer <= 0) {
+                    e->action = 2; // Totalmente acordado!
+                    // Desloca-se lateralmente para liberar a passagem
+                    e->x += 24.0f;
+                    hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
+                    printf("[ARMOS] Armos liberou a passagem do desfiladeiro para a Fortaleza dos Ventos!\n");
+                }
+            } else if (e->action == 2) {
+                // Ativo: respiração mecânica
+                e->animTimer++;
+            }
+        }
+
+        // 25. ENTIDADE INTERRUPTOR ARMOS (ARMOS CIRCUIT SWITCH)
+        else if (e->type == ENTITY_ARMOS_SWITCH) {
+            e->animTimer++;
+            if (e->action == 1 && !armos_circuit_is_active()) {
+                armos_circuit_set_active(true);
+            }
+        }
     }
 }
 
@@ -2005,6 +2060,48 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
     for (int i = 0; i < MAX_ENTITIES; i++) {
         Entity* e = &s_entities[i];
         if (!e->is_active) continue;
+
+        // Golpeando Interruptor interno do Armos
+        if (e->type == ENTITY_ARMOS_SWITCH && e->action == 0) {
+            float ox1 = e->x + e->hitbox.offset_x;
+            float oy1 = e->y + e->hitbox.offset_y;
+            float ox2 = ox1 + e->hitbox.width;
+            float oy2 = oy1 + e->hitbox.height;
+            if (sx1 < ox2 && sx2 > ox1 && sy1 < oy2 && sy2 > oy1) {
+                e->action = 1; // Ligado!
+                armos_circuit_set_active(true);
+                hal_audio_play_sound(SOUND_SWITCH_CLICK, 1.0f, 1.0f);
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.2f);
+                entity_trigger_screen_shake(12, 3);
+                hit_something = true;
+                printf("[ARMOS SWITCH] Circuito interno acionado por Minish Link! Armos acordando!\n");
+            }
+        }
+
+        // Golpeando sentinela Armos
+        if (e->type == ENTITY_ARMOS && e->invulnerableTimer <= 0) {
+            float ox1 = e->x + e->hitbox.offset_x;
+            float oy1 = e->y + e->hitbox.offset_y;
+            float ox2 = ox1 + e->hitbox.width;
+            float oy2 = oy1 + e->hitbox.height;
+            if (sx1 < ox2 && sx2 > ox1 && sy1 < oy2 && sy2 > oy1) {
+                if (e->action == 0) {
+                    // Estátua dormente impenetrável
+                    hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 1.0f);
+                    hit_something = true;
+                } else if (e->action >= 1) {
+                    e->health -= damage;
+                    e->invulnerableTimer = 20;
+                    hal_audio_play_sound(SOUND_BOSS_HIT, 0.8f, 1.2f);
+                    hit_something = true;
+                    if (e->health <= 0) {
+                        e->is_active = false;
+                        hal_audio_play_sound(SOUND_BOSS_DEFEAT, 0.8f, 1.2f);
+                        entity_spawn(ENTITY_ITEM_RUPEE, e->x, e->y);
+                    }
+                }
+            }
+        }
 
         // Golpeando Inimigo (Octorok, Keese, Fire Keese, ChuChu, Moblin, Peahat, Tektite ou Spiny Beetle)
         if ((e->type == ENTITY_ENEMY_OCTOROK ||
@@ -4668,6 +4765,95 @@ void entity_manager_render(const Camera* cam) {
             if (spark_tick == 0) put_pixel_safe(sx + 6, by - 3, 0xFFFFFFFF);
             else if (spark_tick == 2) put_pixel_safe(sx - 5, by + 1, 0xFFFFFFFF);
         }
+
+        // 31. ROBÔ / SENTINELA ANCESTRAL ARMOS
+        else if (e->type == ENTITY_ARMOS) {
+            int render_x = sx;
+            if (e->action == 1) {
+                // Efeito de tremer/sacudir ao despertar
+                render_x += (e->animTimer % 2 == 0) ? -1 : 1;
+            }
+
+            // Sombra oval no solo
+            draw_filled_rect(render_x - 8, sy + 10, 16, 4, 0x05100766);
+            draw_filled_rect(render_x - 6, sy + 9, 12, 6, 0x05100766);
+
+            // Cores do Armos
+            u32 c_stone_base = 0x475569FF;
+            u32 c_stone_dark = 0x1E293BFF;
+            u32 c_stone_lite = 0x94A3B8FF;
+            u32 c_bronze_horn= 0xD97706FF;
+            u32 c_bronze_lite= 0xF59E0BFF;
+            u32 c_portal     = 0x090D16FF;
+
+            // 1. Chifres / Crista de bronze no capacete
+            draw_filled_rect(render_x - 8, sy - 11, 2, 4, c_bronze_horn);
+            put_pixel_safe(render_x - 7, sy - 12, c_bronze_lite);
+            draw_filled_rect(render_x + 6, sy - 11, 2, 4, c_bronze_horn);
+            put_pixel_safe(render_x + 6, sy - 12, c_bronze_lite);
+            draw_filled_rect(render_x - 6, sy - 9, 12, 2, c_bronze_horn);
+
+            // 2. Capacete e Cabeça de Pedra
+            draw_filled_rect(render_x - 6, sy - 7, 12, 6, c_stone_base);
+            draw_filled_rect(render_x - 6, sy - 7, 12, 1, c_stone_lite);
+            draw_filled_rect(render_x - 6, sy - 2, 12, 1, c_stone_dark);
+
+            // 3. Olho Ciclópico Sensor Central
+            if (e->action == 0) {
+                // Dormente: fenda escura horizontal adormecida
+                draw_filled_rect(render_x - 3, sy - 5, 6, 2, 0x0F172AFF);
+                put_pixel_safe(render_x, sy - 5, 0x334155FF);
+            } else if (e->action == 1) {
+                // Despertando: pulsando em âmbar/rubi
+                u32 eye_pulse = ((e->animTimer / 4) % 2 == 0) ? 0xF59E0BFF : 0xEF4444FF;
+                draw_filled_rect(render_x - 4, sy - 6, 8, 4, eye_pulse);
+                draw_filled_rect(render_x - 2, sy - 5, 4, 2, 0xFFFFFFFF);
+            } else {
+                // Ativo / Desperto: Olho radiante vermelho rubi com brilho celestial
+                draw_rect_blend(render_x - 6, sy - 7, 12, 6, 0xEF444444);
+                draw_filled_rect(render_x - 3, sy - 5, 6, 3, 0xEF4444FF);
+                draw_filled_rect(render_x - 1, sy - 5, 2, 2, 0xFFFFFFFF);
+            }
+
+            // 4. Peitoral e Torso de Pedra Esculpida
+            draw_filled_rect(render_x - 7, sy, 14, 9, c_stone_base);
+            draw_filled_rect(render_x - 7, sy, 1, 9, c_stone_lite);
+            draw_filled_rect(render_x + 6, sy, 1, 9, c_stone_dark);
+            put_pixel_safe(render_x - 2, sy + 3, c_stone_dark);
+            put_pixel_safe(render_x + 1, sy + 3, c_stone_dark);
+            draw_filled_rect(render_x - 1, sy + 4, 2, 3, c_stone_lite);
+
+            // 5. Escudo de Pedra no Braço Esquerdo
+            draw_filled_rect(render_x - 9, sy - 1, 3, 8, c_stone_lite);
+            draw_filled_rect(render_x - 10, sy + 1, 1, 4, c_bronze_lite);
+            draw_filled_rect(render_x - 9, sy + 6, 3, 1, c_stone_dark);
+
+            // 6. Base / Pernas e Entrada Minish
+            draw_filled_rect(render_x - 6, sy + 9, 12, 3, c_stone_dark);
+            draw_filled_rect(render_x - 2, sy + 8, 4, 4, c_portal);
+            draw_filled_rect(render_x - 1, sy + 7, 2, 1, c_portal);
+        }
+
+        // 32. INTERRUPTOR DE CIRCUITO INTERNO DO ARMOS (ARMOS CIRCUIT SWITCH)
+        else if (e->type == ENTITY_ARMOS_SWITCH) {
+            draw_filled_rect(sx - 7, sy + 6, 14, 4, 0x05100766);
+            draw_filled_rect(sx - 6, sy - 2, 12, 8, 0x475569FF);
+            draw_filled_rect(sx - 5, sy - 3, 10, 1, 0x94A3B8FF);
+            draw_filled_rect(sx - 6, sy + 5, 12, 1, 0x1E293BFF);
+
+            if (e->action == 0) {
+                draw_filled_rect(sx - 1, sy - 8, 2, 6, 0xCBD5E1FF);
+                draw_filled_rect(sx - 2, sy - 10, 4, 3, 0xEF4444FF);
+                put_pixel_safe(sx - 1, sy - 10, 0xFFFFFFFF);
+            } else {
+                draw_rect_blend(sx - 8, sy - 8, 16, 16, 0x38BDF844);
+                draw_filled_rect(sx, sy - 5, 5, 2, 0x38BDF8FF);
+                draw_filled_rect(sx + 4, sy - 4, 3, 3, 0x22C55EFF);
+                int spk = (e->animTimer / 4) % 3;
+                if (spk == 0) put_pixel_safe(sx - 3, sy - 7, 0xFFFFFFFF);
+                else if (spk == 1) put_pixel_safe(sx + 5, sy - 8, 0xBAE6FDFF);
+            }
+        }
     }
 }
 
@@ -5038,6 +5224,26 @@ bool entity_buy_grip_ring(int* link_rupees, bool* out_has_grip_ring) {
     hal_audio_play_sound(SOUND_SWORD_HIT, 0.7f, 0.8f);
     printf("[BUSINESS SCRUB] Rupees insuficientes para comprar o Grip Ring (Custa %d Rupees)!\n", cost);
     return false;
+}
+
+Entity* entity_find_nearby_armos(float world_x, float world_y, float max_dist) {
+    float best_dist_sq = max_dist * max_dist;
+    Entity* best = NULL;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active || e->type != ENTITY_ARMOS) continue;
+
+        float dx = e->x - world_x;
+        float dy = e->y - world_y;
+        float dist_sq = dx * dx + dy * dy;
+
+        if (dist_sq <= best_dist_sq) {
+            best_dist_sq = dist_sq;
+            best = e;
+        }
+    }
+    return best;
 }
 
 void entity_manager_shutdown(void) {

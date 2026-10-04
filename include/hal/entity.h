@@ -53,7 +53,9 @@ typedef enum {
     ENTITY_PROJECTILE_FIREBALL,// Bola de fogo / magma cuspida pelo Gleerok
     ENTITY_ENEMY_ROPE,        // Serpente ágil do pântano de Castor Wilds (arrancada veloz em linha reta)
     ENTITY_ITEM_BOW,          // Arco e Flechas relíquia ancestral (item equipável de longo alcance)
-    ENTITY_ITEM_MOLE_MITTS    // Luvas de Toupeira (item equipável de escavação)
+    ENTITY_ITEM_MOLE_MITTS,   // Luvas de Toupeira (item equipável de escavação)
+    ENTITY_ARMOS,             // Robô / Estátua viva Armos de pedra das Wind Ruins
+    ENTITY_ARMOS_SWITCH       // Interruptor do circuito interno do Armos (acionável por Minish Link)
 } EntityType;
 
 // Caixa delimitadora de colisão e dano (Hitbox / Hurtbox)
@@ -240,6 +242,11 @@ Entity* entity_find_nearby_melari(float world_x, float world_y, float max_dist);
  * Procura por um minerador Mountain Minish nas Minas de Melari.
  */
 Entity* entity_find_nearby_mountain_minish(float world_x, float world_y, float max_dist);
+
+/*
+ * Procura pela estátua sentinela Armos nas ruínas próxima às coordenadas fornecidas.
+ */
+Entity* entity_find_nearby_armos(float world_x, float world_y, float max_dist);
 
 /*
  * Realiza a compra do Grip Ring com o Business Scrub por 40 Rupees.
