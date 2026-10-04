@@ -35,6 +35,11 @@ bool hal_video_init(const char* window_title, int scale_factor, bool enable_wide
 void hal_video_put_pixel(int x, int y, u32 color_rgba);
 
 /*
+ * Retorna a cor RGBA de um pixel no Framebuffer Virtual.
+ */
+u32 hal_video_get_pixel(int x, int y);
+
+/*
  * Limpa todo o Framebuffer Virtual com uma cor sólida de fundo.
  */
 void hal_video_clear(u32 color_rgba);

@@ -47,6 +47,11 @@ void subweapon_cycle(void);
 SubweaponType subweapon_get_current(void);
 
 /*
+ * Define diretamente o item equipado no botão secundário.
+ */
+void subweapon_set_current(SubweaponType item);
+
+/*
  * Retorna o nome amigável do item equipado.
  */
 const char* subweapon_get_name(SubweaponType item);
