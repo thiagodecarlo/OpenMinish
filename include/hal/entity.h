@@ -41,7 +41,10 @@ typedef enum {
     ENTITY_NPC_VILLAGE_MINISH,// Morador da Vila Minish (Picori civil com chapéu colorido)
     ENTITY_ENEMY_MOBLIN,      // Moblin com armadura de couro e lança afiada (Guardião dos campos)
     ENTITY_ENEMY_PEAHAT,      // Flor voadora helicóptero Peahat (Voa alto e aterrissa vulnerável)
-    ENTITY_NPC_MALON          // Malon da Fazenda Lon Lon (Moça do campo)
+    ENTITY_NPC_MALON,         // Malon da Fazenda Lon Lon (Moça do campo)
+    ENTITY_ENEMY_TEKTITE,     // Tektite saltitante (Aracnídeo vulcânico com 4 patas que salta alto)
+    ENTITY_ENEMY_SPINY_BEETLE,// Besouro com carapaça de pedra/arbusto que corre em investida
+    ENTITY_NPC_BUSINESS_SCRUB // Deku Scrub comerciante do Monte Crenel (Vendedor do Grip Ring)
 } EntityType;
 
 // Caixa delimitadora de colisão e dano (Hitbox / Hurtbox)
@@ -210,6 +213,16 @@ Entity* entity_find_nearby_village_minish(float world_x, float world_y, float ma
  * Procura por Malon na Fazenda Lon Lon (South Hyrule Field).
  */
 Entity* entity_find_nearby_malon(float world_x, float world_y, float max_dist);
+
+/*
+ * Procura pelo Business Scrub (Deku Scrub comerciante) no Monte Crenel.
+ */
+Entity* entity_find_nearby_business_scrub(float world_x, float world_y, float max_dist);
+
+/*
+ * Realiza a compra do Grip Ring com o Business Scrub por 40 Rupees.
+ */
+bool entity_buy_grip_ring(int* link_rupees, bool* out_has_grip_ring);
 
 /*
  * Executa a compra de uma mercadoria na Loja do Stockwell:

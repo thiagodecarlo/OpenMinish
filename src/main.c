@@ -69,6 +69,12 @@ typedef struct {
     bool is_diving;            // Mergulhado sob a água
     int  dive_timer;           // Duração do mergulho (0..45 frames)
     int  water_ripple_timer;   // Animação de ondulações na água
+
+    // Item Canônico: Anel de Escalada (Grip Ring) & Monte Crenel
+    bool has_grip_ring;         // Possui o Grip Ring (comprado do Business Scrub)
+    bool is_climbing;          // Escalando paredão rochoso ou vinha
+    int  climb_anim_timer;     // Temporizador de animação de escalada
+    bool has_mineral_water;    // Carrega Água Mineral do Monte Crenel para regar sementes
 } Player;
 
 static const char* s_region_tags[REGION_COUNT] = { "usa", "eur", "jpn" };
@@ -87,10 +93,12 @@ static Tilemap* s_town_map        = NULL;
 static Tilemap* s_village_map     = NULL;
 static Tilemap* s_south_field_map = NULL;
 static Tilemap* s_north_field_map = NULL;
+static Tilemap* s_crenel_base_map = NULL;
 static bool     s_in_town         = false;
 static bool     s_in_village      = false;
 static bool     s_in_south_field  = false;
 static bool     s_in_north_field  = false;
+static bool     s_in_crenel_base  = false;
 static SelectedRegion s_current_region = REGION_USA;
 
 static void load_region_sheets(SelectedRegion region) {
@@ -192,6 +200,7 @@ static void transition_to_town(Player* link) {
     s_in_village = false;
     s_in_south_field = false;
     s_in_north_field = false;
+    s_in_crenel_base = false;
     link->x = 280.0f; // Portão Sul (x = 17.5 * 16)
     link->y = 392.0f; // Entrada Sul (y = 24.5 * 16)
     link->dir = DIR_UP;
@@ -208,6 +217,7 @@ static void transition_to_overworld(Player* link, Tilemap* world_map) {
     s_in_village = false;
     s_in_south_field = false;
     s_in_north_field = false;
+    s_in_crenel_base = false;
     if (world_map && world_map->is_authentic) {
         link->x = 448.0f;
         link->y = 636.0f;
@@ -249,6 +259,7 @@ static void transition_to_minish_village(Player* link) {
     s_in_village = true;
     s_in_south_field = false;
     s_in_north_field = false;
+    s_in_crenel_base = false;
     link->is_minish = true; // Link sempre no tamanho Minish na Vila dos Minish!
     link->x = 248.0f; // Saída sul (x = 15.5 * 16)
     link->y = 352.0f; // Entrada sul da vila (y = 22 * 16)
@@ -265,6 +276,7 @@ static void transition_to_woods_from_village(Player* link, Tilemap* world_map) {
     s_in_village = false;
     s_in_south_field = false;
     s_in_north_field = false;
+    s_in_crenel_base = false;
     if (world_map && world_map->is_authentic) {
         link->x = 336.0f; // Topo do Tronco Oco (coluna 21 * 16 = 336)
         link->y = 720.0f; // Logo acima da boca norte do tronco oco
@@ -309,6 +321,7 @@ static void transition_to_south_field(Player* link) {
     s_in_village = false;
     s_in_south_field = true;
     s_in_north_field = false;
+    s_in_crenel_base = false;
     link->x = 248.0f; // Topo central (saída norte da planície)
     link->y = 36.0f;
     link->dir = DIR_DOWN;
@@ -324,6 +337,7 @@ static void transition_to_north_field(Player* link) {
     s_in_village = false;
     s_in_south_field = false;
     s_in_north_field = true;
+    s_in_crenel_base = false;
     link->x = 248.0f; // Base sul da planície norte
     link->y = 330.0f;
     link->dir = DIR_UP;
@@ -339,6 +353,7 @@ static void transition_to_town_from_south(Player* link) {
     s_in_village = false;
     s_in_south_field = false;
     s_in_north_field = false;
+    s_in_crenel_base = false;
     link->x = 280.0f;
     link->y = 380.0f;
     link->dir = DIR_UP;
@@ -355,6 +370,7 @@ static void transition_to_town_from_north(Player* link) {
     s_in_village = false;
     s_in_south_field = false;
     s_in_north_field = false;
+    s_in_crenel_base = false;
     link->x = 280.0f;
     link->y = 50.0f;
     link->dir = DIR_DOWN;
@@ -363,6 +379,52 @@ static void transition_to_town_from_north(Player* link) {
     hal_audio_play_bgm(BGM_HYRULE_TOWN);
     hal_audio_play_sound(SOUND_TOWN_BELL, 1.0f, 1.0f);
     printf("[SCENE] Retornando a Hyrule Town via Portao Norte!\n");
+}
+
+static void spawn_crenel_base_entities(void) {
+    entity_clear_all();
+    // 1. Tektites saltitantes nas encostas rochosas
+    entity_spawn(ENTITY_ENEMY_TEKTITE, 160.0f, 160.0f);
+    entity_spawn(ENTITY_ENEMY_TEKTITE, 320.0f, 120.0f);
+    // 2. Spiny Beetles camuflados sob pedras
+    entity_spawn(ENTITY_ENEMY_SPINY_BEETLE, 220.0f, 220.0f);
+    entity_spawn(ENTITY_ENEMY_SPINY_BEETLE, 380.0f, 260.0f);
+    // 3. Business Scrub comerciante (vendedor do Grip Ring) em sua clareira a sudeste
+    entity_spawn(ENTITY_NPC_BUSINESS_SCRUB, 416.0f, 304.0f);
+
+    printf("[CRENEL BASE] Entidades de Mount Crenel Base spawnadas (Tektites, Spiny Beetles, Business Scrub)!\n");
+}
+
+static void transition_to_crenel_base(Player* link) {
+    if (dungeon_is_active()) return;
+    s_in_town = false;
+    s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = false;
+    s_in_crenel_base = true;
+    link->x = 480.0f; // Entrada leste vindo de North Field
+    link->y = 240.0f;
+    link->dir = DIR_LEFT;
+    link->is_moving = false;
+    spawn_crenel_base_entities();
+    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    printf("[SCENE] Entrando em Mount Crenel Base (Base do Monte Crenel)!\n");
+}
+
+static void transition_to_north_field_from_crenel(Player* link) {
+    if (dungeon_is_active()) return;
+    s_in_town = false;
+    s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = true;
+    s_in_crenel_base = false;
+    link->x = 32.0f; // Estrada oeste de North Field
+    link->y = 192.0f;
+    link->dir = DIR_RIGHT;
+    link->is_moving = false;
+    spawn_north_field_entities();
+    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    printf("[SCENE] Retornando a North Hyrule Field a partir do Monte Crenel!\n");
 }
 
 static void draw_rect(int rx, int ry, int rw, int rh, u32 color) {
@@ -679,6 +741,26 @@ static void draw_link_swimming_effects(const Player* p, int px, int py) {
     }
 }
 
+static void draw_link_climbing_effects(const Player* p, int px, int py) {
+    if (!p->is_climbing) return;
+    int step = ((p->climb_anim_timer / 8) % 2 == 1) ? 1 : 0;
+    u32 c_ring = 0xFDE047FF; // Brilho dourado do Grip Ring
+    u32 c_ruby = 0xEF4444FF; // Rubi central do Grip Ring
+
+    // Mãos agarradas no paredão rochoso com o Grip Ring reluzindo
+    if (step == 0) {
+        draw_rect(px + 1, py - 2, 3, 3, c_ring);
+        hal_video_put_pixel(px + 2, py - 1, c_ruby);
+        draw_rect(px + 12, py + 1, 3, 3, c_ring);
+        hal_video_put_pixel(px + 13, py + 2, c_ruby);
+    } else {
+        draw_rect(px + 1, py + 1, 3, 3, c_ring);
+        hal_video_put_pixel(px + 2, py + 2, c_ruby);
+        draw_rect(px + 12, py - 2, 3, 3, c_ring);
+        hal_video_put_pixel(px + 13, py - 1, c_ruby);
+    }
+}
+
 // Renderiza o Link no estilo clássico de Minish Cap na posição da Câmera
 static void draw_link(const Player* p, const Camera* cam) {
     // Efeito clássico de piscar ao receber dano (flicker)
@@ -752,6 +834,7 @@ static void draw_link(const Player* p, const Camera* cam) {
                 draw_link_sword_effects(p, px, py);
             }
             draw_link_swimming_effects(p, px, py);
+            draw_link_climbing_effects(p, px, py);
             return;
         }
 
@@ -793,6 +876,7 @@ static void draw_link(const Player* p, const Camera* cam) {
         texture_draw_ex(s_link_tex, src_x, src_y, 32, 32, draw_x, draw_y, flip_h);
         draw_link_sword_effects(p, px, py);
         draw_link_swimming_effects(p, px, py);
+        draw_link_climbing_effects(p, px, py);
         return;
     }
 
@@ -855,14 +939,19 @@ static void draw_link(const Player* p, const Camera* cam) {
         draw_rect(px + 10, py + 15, 3, 3, boot_color);
     }
 
-    // 6. Efeitos de espada e Spin Attack
+    // 6. Efeitos de espada, Spin Attack e Escalada
     draw_link_sword_effects(p, px, py);
     draw_link_swimming_effects(p, px, py);
+    draw_link_climbing_effects(p, px, py);
 }
 
-static inline bool is_world_solid_for_player(const Tilemap* map, float wx, float wy, bool is_minish, bool has_flippers) {
+static inline bool is_world_solid_for_player(const Tilemap* map, float wx, float wy, bool is_minish, bool has_flippers, bool has_grip_ring) {
     if (dungeon_is_active()) {
         return dungeon_is_solid(wx, wy);
+    }
+    // Mecânica Grip Ring: paredes escaláveis e vinhas não bloqueiam se tiver o Anel de Escalada!
+    if (has_grip_ring && map_is_climbable(map, wx, wy)) {
+        return false;
     }
     // Mecânica Zora's Flippers: com as nadadeiras, a água NÃO bloqueia o movimento (permite nadar!)
     if (has_flippers && map_is_water(map, wx, wy)) {
@@ -899,6 +988,9 @@ int main(int argc, char* argv[]) {
     printf("  - Cidade Hyrule:  [H] Entrar/Sair do Hub da Cidade de Hyrule (Hyrule Town Hub!)\n");
     printf("  - Vila Minish:    [V] Entrar/Sair da Vila dos Minish (Picori Village!)\n");
     printf("  - Masmorra:       [D] Entrar/Sair de Deepwood Shrine (ou caminhar ao santuario ao norte!)\n");
+    printf("  - South Field:    [4] Entrar em South Hyrule Field (Planicies do Sul!)\n");
+    printf("  - North Field:    [5] Entrar em North Hyrule Field (Planicies do Norte!)\n");
+    printf("  - Monte Crenel:   [6] Entrar em Mount Crenel Base (Base do Monte Crenel!)\n");
     printf("  - Segredo Zelda:  [M] (Chime lendario de 8 notas!)\n");
     printf("  - Trocar Regiao:  [1] USA | [2] EUR | [3] JPN\n");
     printf("  - Widescreen:     [W] Alternar proporcao 16:9\n");
@@ -935,6 +1027,8 @@ int main(int argc, char* argv[]) {
     s_south_field_map = south_field_map;
     Tilemap* north_field_map = map_create_north_hyrule_field();
     s_north_field_map = north_field_map;
+    Tilemap* crenel_base_map = map_create_mount_crenel_base();
+    s_crenel_base_map = crenel_base_map;
     load_region_sheets(REGION_USA);
 
     // Inicialização da entidade do Link
@@ -977,6 +1071,10 @@ int main(int argc, char* argv[]) {
     link.is_diving = false;
     link.dive_timer = 0;
     link.water_ripple_timer = 0;
+    link.has_grip_ring = false;
+    link.is_climbing = false;
+    link.climb_anim_timer = 0;
+    link.has_mineral_water = false;
 
     // Carregamento automático de progresso salvo (Slot 1)
     if (save_exists(1)) {
@@ -991,6 +1089,10 @@ int main(int argc, char* argv[]) {
             link.has_flippers = save.has_flippers;
             link.has_spin_attack = save.has_spin_attack;
             link.is_minish = save.is_minish;
+            link.has_grip_ring = save.has_grip_ring;
+            if (link.has_grip_ring) {
+                inventory_unlock_item(INV_ITEM_GRIP_RING);
+            }
             if (save.bomb_count > 0) {
                 subweapon_add_bombs(save.bomb_count - subweapon_get_bomb_count());
             }
@@ -1005,6 +1107,8 @@ int main(int argc, char* argv[]) {
                 s_in_south_field = true;
             } else if (save.current_map == 5) {
                 s_in_north_field = true;
+            } else if (save.current_map == 6) {
+                s_in_crenel_base = true;
             }
         }
     }
@@ -1019,6 +1123,8 @@ int main(int argc, char* argv[]) {
         spawn_south_field_entities();
     } else if (s_in_north_field) {
         spawn_north_field_entities();
+    } else if (s_in_crenel_base) {
+        spawn_crenel_base_entities();
     } else {
         spawn_overworld_entities(world_map);
     }
@@ -1080,7 +1186,7 @@ int main(int argc, char* argv[]) {
                                 current_save.player_x = link.x;
                                 current_save.player_y = link.y;
                                 current_save.player_dir = (int)link.dir;
-                                current_save.current_map = s_in_village ? 2 : (s_in_town ? 1 : (dungeon_is_active() ? 3 : (s_in_south_field ? 4 : (s_in_north_field ? 5 : 0))));
+                                current_save.current_map = s_in_crenel_base ? 6 : (s_in_village ? 2 : (s_in_town ? 1 : (dungeon_is_active() ? 3 : (s_in_south_field ? 4 : (s_in_north_field ? 5 : 0)))));
                                 current_save.hearts = link.hearts;
                                 current_save.max_hearts = link.max_hearts;
                                 current_save.rupees = link.rupees;
@@ -1088,6 +1194,7 @@ int main(int argc, char* argv[]) {
                                 current_save.has_flippers = link.has_flippers;
                                 current_save.has_spin_attack = link.has_spin_attack;
                                 current_save.is_minish = link.is_minish;
+                                current_save.has_grip_ring = link.has_grip_ring;
                                 current_save.slot_a = (int)inventory_get_slot_a();
                                 current_save.slot_b = (int)inventory_get_slot_b();
                                 if (save_game(1, &current_save)) {
@@ -1126,6 +1233,11 @@ int main(int argc, char* argv[]) {
                         case SDLK_5:
                             if (!dungeon_is_active()) {
                                 transition_to_north_field(&link);
+                            }
+                            break;
+                        case SDLK_6:
+                            if (!dungeon_is_active()) {
+                                transition_to_crenel_base(&link);
                             }
                             break;
                         case SDLK_w:
@@ -1239,10 +1351,11 @@ int main(int argc, char* argv[]) {
         // 2. ATUALIZAÇÃO DA LÓGICA DO JOGADOR (INPUT -> FÍSICA)
         // --------------------------------------------------------------------
         const HalVideoContext* ctx = hal_video_get_context();
-        Tilemap* active_map = s_in_village ? s_village_map :
+        Tilemap* active_map = s_in_crenel_base ? s_crenel_base_map :
+                              (s_in_village ? s_village_map :
                               (s_in_town ? s_town_map :
                               (s_in_south_field ? s_south_field_map :
-                              (s_in_north_field ? s_north_field_map : world_map)));
+                              (s_in_north_field ? s_north_field_map : world_map))));
 
         if (inventory_is_paused()) {
             if (hal_input_is_pressed(KEY_UP))    inventory_cursor_move(0, -1);
@@ -1405,6 +1518,28 @@ int main(int argc, char* argv[]) {
                         float pdy = link.y - 144.0f;
                         if (pdx * pdx + pdy * pdy <= 32.0f * 32.0f) {
                             dialogue_trigger_crenel_sign_talk();
+                        } else {
+                            link.is_attacking = true;
+                            link.attack_timer = 12;
+                            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                        }
+                    } else if (s_in_crenel_base) {
+                        Entity* scrub = entity_find_nearby_business_scrub(link.x, link.y, 32.0f);
+                        if (scrub) {
+                            dialogue_trigger_business_scrub_talk(link.rupees, link.has_grip_ring);
+                            if (!link.has_grip_ring) {
+                                if (entity_buy_grip_ring(&link.rupees, &link.has_grip_ring)) {
+                                    inventory_unlock_item(INV_ITEM_GRIP_RING);
+                                }
+                            }
+                        } else if (map_is_mineral_water(active_map, link.x + 8.0f, link.y + 12.0f)) {
+                            link.has_mineral_water = true;
+                            hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.2f);
+                            printf("[CRENEL] Link coletou Agua Mineral Borbulhante do Monte Crenel!\n");
+                        } else if (link.has_mineral_water && map_interact_grow_bean(active_map, link.x + 8.0f, link.y + 8.0f)) {
+                            hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.25f);
+                            hal_audio_play_sound(SOUND_CHEST_OPEN, 1.0f, 1.0f);
+                            printf("[CRENEL] Broto de Feijao Magico regado! Cresceu um pe de feijao escalavel gigante!\n");
                         } else {
                             link.is_attacking = true;
                             link.attack_timer = 12;
@@ -1615,14 +1750,34 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        // Modificador de Velocidade: Dash / Pegasus Boots (Botao B segurado), Carga da Espada ou Natação
+        // --------------------------------------------------------------------
+        // LÓGICA DE ESCALADA EM PAREDÕES & VINHAS (GRIP RING)
+        // --------------------------------------------------------------------
+        bool on_climbable = map_is_climbable(active_map, link.x + 8.0f, link.y + 12.0f);
+        if (on_climbable && link.has_grip_ring && !dungeon_is_active()) {
+            if (!link.is_climbing) {
+                link.is_climbing = true;
+                link.climb_anim_timer = 0;
+                printf("[GRIP RING] Link comecou a escalar com o Grip Ring!\n");
+            }
+        } else {
+            if (link.is_climbing) {
+                link.is_climbing = false;
+                printf("[GRIP RING] Link alcancou terra firme!\n");
+            }
+        }
+
+        // Modificador de Velocidade: Dash / Pegasus Boots (Botao B segurado), Carga da Espada, Natação ou Escalada
         float dash_mult = 1.0f;
-        if (hal_input_is_held(KEY_B) && subweapon_get_current() == ITEM_PEGASUS_BOOTS && !link.is_swimming) {
+        if (hal_input_is_held(KEY_B) && subweapon_get_current() == ITEM_PEGASUS_BOOTS && !link.is_swimming && !link.is_climbing) {
             dash_mult = 1.85f; // Arrancada veloz das Botas de Pegasus!
         } else if (link.is_charging_spin) {
             dash_mult = 0.85f; // Movimentação prudente enquanto acumula energia na lâmina
         } else if (link.is_swimming) {
             dash_mult = link.is_diving ? 0.65f : 0.82f; // Arrasto hidro-dinâmico natural da água
+        } else if (link.is_climbing) {
+            dash_mult = 0.75f; // Velocidade de escalada vertical e lateral com firmeza
+            if (link.is_moving) link.climb_anim_timer++;
         }
 
         link.is_moving = false;
@@ -1706,14 +1861,14 @@ int main(int argc, char* argv[]) {
             float off_y1 = link.is_minish ? 13.0f : 12.0f;
             float off_y2 = link.is_minish ? 15.0f : 16.0f;
 
-            blocked_x = is_world_solid_for_player(active_map, new_x + off_x1, link.y + off_y1, link.is_minish, link.has_flippers) ||
-                        is_world_solid_for_player(active_map, new_x + off_x2, link.y + off_y1, link.is_minish, link.has_flippers) ||
-                        is_world_solid_for_player(active_map, new_x + off_x1, link.y + off_y2, link.is_minish, link.has_flippers) ||
-                        is_world_solid_for_player(active_map, new_x + off_x2, link.y + off_y2, link.is_minish, link.has_flippers);
-            blocked_y = is_world_solid_for_player(active_map, link.x + off_x1, new_y + off_y1, link.is_minish, link.has_flippers) ||
-                        is_world_solid_for_player(active_map, link.x + off_x2, new_y + off_y1, link.is_minish, link.has_flippers) ||
-                        is_world_solid_for_player(active_map, link.x + off_x1, new_y + off_y2, link.is_minish, link.has_flippers) ||
-                        is_world_solid_for_player(active_map, link.x + off_x2, new_y + off_y2, link.is_minish, link.has_flippers);
+            blocked_x = is_world_solid_for_player(active_map, new_x + off_x1, link.y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring) ||
+                        is_world_solid_for_player(active_map, new_x + off_x2, link.y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring) ||
+                        is_world_solid_for_player(active_map, new_x + off_x1, link.y + off_y2, link.is_minish, link.has_flippers, link.has_grip_ring) ||
+                        is_world_solid_for_player(active_map, new_x + off_x2, link.y + off_y2, link.is_minish, link.has_flippers, link.has_grip_ring);
+            blocked_y = is_world_solid_for_player(active_map, link.x + off_x1, new_y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring) ||
+                        is_world_solid_for_player(active_map, link.x + off_x2, new_y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring) ||
+                        is_world_solid_for_player(active_map, link.x + off_x1, new_y + off_y2, link.is_minish, link.has_flippers, link.has_grip_ring) ||
+                        is_world_solid_for_player(active_map, link.x + off_x2, new_y + off_y2, link.is_minish, link.has_flippers, link.has_grip_ring);
 
             if (!blocked_x) {
                 link.x = new_x;
@@ -1762,6 +1917,15 @@ int main(int argc, char* argv[]) {
                     // Portão Sul de North Field de volta para Hyrule Town
                     if (link.x >= 210.0f && link.x <= 290.0f && link.y >= (active_map->height * TILE_SIZE) - 36.0f && link.dir == DIR_DOWN) {
                         transition_to_town_from_north(&link);
+                    }
+                    // Estrada Oeste de North Field para Mount Crenel Base
+                    else if (link.x <= 24.0f && link.y >= 140.0f && link.y <= 240.0f && link.dir == DIR_LEFT) {
+                        transition_to_crenel_base(&link);
+                    }
+                } else if (s_in_crenel_base) {
+                    // Estrada Leste de Mount Crenel Base de volta para North Field
+                    if (link.x >= (active_map->width * TILE_SIZE) - 32.0f && link.dir == DIR_RIGHT) {
+                        transition_to_north_field_from_crenel(&link);
                     }
                 } else {
                     // Em Minish Woods: Se estiver no tamanho Minish e atravessar a ponta norte do Tronco Oco (coluna 21)
@@ -1827,10 +1991,10 @@ int main(int argc, char* argv[]) {
             float off_y1 = link.is_minish ? 13.0f : 12.0f;
             float off_y2 = link.is_minish ? 15.0f : 16.0f;
 
-            k_blocked_x = is_world_solid_for_player(active_map, k_new_x + off_x1, link.y + off_y1, link.is_minish, link.has_flippers) ||
-                          is_world_solid_for_player(active_map, k_new_x + off_x2, link.y + off_y1, link.is_minish, link.has_flippers);
-            k_blocked_y = is_world_solid_for_player(active_map, link.x + off_x1, k_new_y + off_y1, link.is_minish, link.has_flippers) ||
-                          is_world_solid_for_player(active_map, link.x + off_x2, k_new_y + off_y2, link.is_minish, link.has_flippers);
+            k_blocked_x = is_world_solid_for_player(active_map, k_new_x + off_x1, link.y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring) ||
+                          is_world_solid_for_player(active_map, k_new_x + off_x2, link.y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring);
+            k_blocked_y = is_world_solid_for_player(active_map, link.x + off_x1, k_new_y + off_y1, link.is_minish, link.has_flippers, link.has_grip_ring) ||
+                          is_world_solid_for_player(active_map, link.x + off_x2, k_new_y + off_y2, link.is_minish, link.has_flippers, link.has_grip_ring);
 
             if (!k_blocked_x) link.x = k_new_x;
             if (!k_blocked_y) link.y = k_new_y;
@@ -2044,9 +2208,19 @@ int main(int argc, char* argv[]) {
             draw_rect(fx + 1, fy + 1, 5, 2, 0xFBBF24FF);
         }
 
+        // Ícone do Anel de Escalada (Grip Ring) no HUD
+        if (link.has_grip_ring) {
+            int gx = 132;
+            int gy = 2;
+            draw_rect(gx + 1, gy + 1, 6, 6, 0xF59E0BFF);
+            draw_rect(gx + 2, gy + 2, 4, 4, 0x0C1C0DFF);
+            hal_video_put_pixel(gx + 3, gy + 1, 0xEF4444FF);
+            hal_video_put_pixel(gx + 4, gy + 1, 0xEF4444FF);
+        }
+
         // Ícone do Pergaminho do Tigre nº 1 no HUD (se Link dominou o Spin Attack)
         if (link.has_spin_attack) {
-            int sx = 132;
+            int sx = 142;
             int sy = 2;
             draw_rect(sx, sy + 1, 9, 8, 0xFEF08AFF);
             draw_rect(sx - 1, sy, 11, 2, 0xD97706FF);
@@ -2127,7 +2301,19 @@ int main(int argc, char* argv[]) {
             font_draw_text(spx, spy + 1, swim_prompt, 0xBAE6FDFF, true);
         }
 
-        // 10. Subtela de Inventario e Menu de Pausa [START / ENTER]
+        // 10. Prompt de Escalada (Grip Ring)
+        if (link.is_climbing && !dialogue_is_active() && !kinstone_is_active()) {
+            const char* climb_prompt = "ESCALANDO PAREDAO (GRIP RING)";
+            int text_w = 170;
+            int cpx = (ctx->render_width - text_w) / 2;
+            int cpy = ctx->render_height - 18;
+            draw_rect(cpx - 4, cpy - 2, text_w + 8, 14, 0x1E1208EE);
+            draw_rect(cpx - 3, cpy - 1, text_w + 6, 12, 0xD4AF37FF);
+            draw_rect(cpx - 2, cpy, text_w + 4, 10, 0x331B0CEE);
+            font_draw_text(cpx, cpy + 1, climb_prompt, 0xFDE047FF, true);
+        }
+
+        // 11. Subtela de Inventario e Menu de Pausa [START / ENTER]
         if (inventory_is_paused()) {
             inventory_render_pause_menu(ctx->render_width, ctx->render_height, link.hearts, link.max_hearts, link.rupees);
         }
@@ -2148,6 +2334,7 @@ int main(int argc, char* argv[]) {
     if (s_village_map)     map_destroy(s_village_map);
     if (s_south_field_map) map_destroy(s_south_field_map);
     if (s_north_field_map) map_destroy(s_north_field_map);
+    if (s_crenel_base_map) map_destroy(s_crenel_base_map);
     map_destroy(world_map);
     hal_audio_shutdown();
     hal_input_shutdown();

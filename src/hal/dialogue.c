@@ -752,6 +752,39 @@ static void render_portrait_malon(int px, int py, bool is_talking) {
     draw_rect_blend(px + 12, py + 23, 8, 7, c_apron);
 }
 
+static void render_portrait_business_scrub(int px, int py) {
+    draw_rect_blend(px, py, 32, 32, 0x1E1208FF);
+
+    u32 c_wood   = 0x78350FFF;
+    u32 c_bark   = 0x451A03FF;
+    u32 c_snout  = 0x9A3412FF;
+    u32 c_leaves = 0x16A34AFF;
+    u32 c_eyes   = 0xFDE047FF;
+
+    // Folhagem verde no topo da cabeça
+    for (int dy = 2; dy <= 8; dy++) {
+        draw_rect_blend(px + 8, py + dy, 16, 2, c_leaves);
+    }
+    draw_rect_blend(px + 13, py + 1, 6, 3, 0x22C55EFF);
+
+    // Corpo e cabeça de casca de madeira
+    draw_rect_blend(px + 8, py + 9, 16, 15, c_wood);
+    draw_rect_blend(px + 6, py + 12, 20, 10, c_wood);
+
+    // Olhos amarelos brilhantes
+    hal_video_put_pixel(px + 10, py + 12, c_eyes);
+    hal_video_put_pixel(px + 11, py + 12, c_eyes);
+    hal_video_put_pixel(px + 20, py + 12, c_eyes);
+    hal_video_put_pixel(px + 21, py + 12, c_eyes);
+
+    // Focinho tubular de madeira (para cuspir nozes)
+    draw_rect_blend(px + 12, py + 15, 8, 6, c_snout);
+    draw_rect_blend(px + 14, py + 17, 4, 3, c_bark);
+
+    // Colar de folhas
+    draw_rect_blend(px + 7, py + 24, 18, 5, c_leaves);
+}
+
 // ----------------------------------------------------------------------------
 // INTERFACE PÚBLICA DO SISTEMA DE DIÁLOGO
 // ----------------------------------------------------------------------------
@@ -968,6 +1001,29 @@ void dialogue_trigger_crenel_sign_talk(void) {
     dialogue_show(SPEAKER_SIGNPOST, "Placa de Estrada", sign_speech, 1);
 }
 
+void dialogue_trigger_business_scrub_talk(int link_rupees, bool has_grip_ring) {
+    hal_audio_play_sound(SOUND_TEXT_ADVANCE, 0.85f, 1.10f);
+    if (has_grip_ring) {
+        static const char* bought_speech[] = {
+            "Aproveite bem o seu Grip Ring!\nCom suas garras voce escala os paredoes\nrochosos mais ingremes da montanha!"
+        };
+        dialogue_show(SPEAKER_BUSINESS_SCRUB, "Business Scrub", bought_speech, 1);
+    } else if (link_rupees >= 40) {
+        static const char* sell_speech[] = {
+            "Psst! Viajante! Quer subir a montanha?\nAs rochas sao lisas e escarpadas demais\npara maos comuns!",
+            "Eu tenho o lendario Grip Ring!\nEle possui garras de ferro para escalar\nqualquer paredao por apenas 40 Rupees!",
+            "Aproxime-se e pressione [A] para fechar\no negocio e levar o seu Grip Ring!"
+        };
+        dialogue_show(SPEAKER_BUSINESS_SCRUB, "Business Scrub", sell_speech, 3);
+    } else {
+        static const char* poor_speech[] = {
+            "O Grip Ring de escalada custa 40 Rupees!\nVolte quando tiver economias suficientes!",
+            "Sem ele, voce jamais alcancara o topo\ndo Monte Crenel e as Minas de Melari!"
+        };
+        dialogue_show(SPEAKER_BUSINESS_SCRUB, "Business Scrub", poor_speech, 2);
+    }
+}
+
 void dialogue_update(void) {
     s_anim_counter++;
 
@@ -1098,7 +1154,8 @@ void dialogue_render(void) {
                        (s_speaker == SPEAKER_GENTARI) ? 0xFDE047FF :
                        (s_speaker == SPEAKER_FESTARI) ? 0x93C5FDFF :
                        (s_speaker == SPEAKER_VILLAGE_MINISH) ? 0x34D399FF :
-                       (s_speaker == SPEAKER_MALON) ? 0xFB923CFF : 0x77FF99FF;
+                       (s_speaker == SPEAKER_MALON) ? 0xFB923CFF :
+                       (s_speaker == SPEAKER_BUSINESS_SCRUB) ? 0xF59E0BFF : 0x77FF99FF;
         font_draw_text(badge_x + 6, badge_y + 1, s_speaker_name, name_col, true);
     }
 
@@ -1137,6 +1194,8 @@ void dialogue_render(void) {
     } else if (s_speaker == SPEAKER_MALON) {
         bool is_talking = (s_state == DIALOGUE_STATE_TYPING);
         render_portrait_malon(port_x, port_y, is_talking);
+    } else if (s_speaker == SPEAKER_BUSINESS_SCRUB) {
+        render_portrait_business_scrub(port_x, port_y);
     }
 
     // 6. Área de Texto com quebra de linhas (\n)

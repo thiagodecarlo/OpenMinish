@@ -647,6 +647,95 @@ static void render_metatile(int sx, int sy, TileType type) {
             draw_tile_pixel(sx + 8, sy + 5, 0x451A03FF);
             break;
 
+        case TILE_CRENEL_GRAVEL:
+            // Solo terroso vulcânico de Monte Crenel (marrom-avermelhado com pedregulhos)
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 col = ((x + y * 3) % 5 == 0) ? 0x78350FFF :
+                              (((x * 2 + y) % 7 == 0) ? 0x9A3412FF : 0x854D0EFF);
+                    draw_tile_pixel(sx + x, sy + y, col);
+                }
+            }
+            break;
+
+        case TILE_CRENEL_CLIFF_FACE:
+            // Paredão rochoso íngreme vulcânico de Monte Crenel
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 col = (y == 0 || x == 0) ? 0x9A3412FF :
+                              (y == 15 || x == 15) ? 0x431407FF :
+                              (((x ^ y) % 4 == 0) ? 0x78350FFF : 0x5B210CFF);
+                    draw_tile_pixel(sx + x, sy + y, col);
+                }
+            }
+            draw_tile_pixel(sx + 4, sy + 6, 0x270B04FF);
+            draw_tile_pixel(sx + 5, sy + 7, 0x270B04FF);
+            draw_tile_pixel(sx + 10, sy + 11, 0x270B04FF);
+            draw_tile_pixel(sx + 11, sy + 12, 0x270B04FF);
+            break;
+
+        case TILE_CLIMBABLE_WALL:
+            // Paredão com ranhuras e saliências escalável com o Grip Ring (GBA Authentic)
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 col = (y % 4 == 0) ? 0x431407FF : 0x7C2D12FF;
+                    draw_tile_pixel(sx + x, sy + y, col);
+                }
+            }
+            for (int y = 2; y <= 14; y += 4) {
+                int off = (y % 8 == 2) ? 3 : 7;
+                draw_tile_pixel(sx + off, sy + y, 0xC2410CFF);
+                draw_tile_pixel(sx + off + 1, sy + y, 0xC2410CFF);
+                draw_tile_pixel(sx + off + 6, sy + y, 0xC2410CFF);
+                draw_tile_pixel(sx + off + 7, sy + y, 0xC2410CFF);
+            }
+            break;
+
+        case TILE_MINERAL_WATER:
+            // Água termal mineral verde efervescente de Monte Crenel
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 col = ((x + y) % 6 == 0) ? 0x34D399FF :
+                              (((x * 3 + y) % 8 == 0) ? 0x10B981FF : 0x059669FF);
+                    draw_tile_pixel(sx + x, sy + y, col);
+                }
+            }
+            draw_tile_pixel(sx + 4, sy + 4, 0xA7F3D0FF);
+            draw_tile_pixel(sx + 11, sy + 9, 0xA7F3D0FF);
+            draw_tile_pixel(sx + 7, sy + 13, 0xA7F3D0FF);
+            break;
+
+        case TILE_MAGIC_BEAN_SPROUT:
+            // Broto de feijão mágico plantado no solo fértil
+            render_metatile(sx, sy, TILE_CRENEL_GRAVEL);
+            for (int y = 5; y <= 13; y++) {
+                for (int x = 4; x <= 11; x++) {
+                    draw_tile_pixel(sx + x, sy + y, 0x451A03FF);
+                }
+            }
+            draw_tile_pixel(sx + 7, sy + 7, 0x22C55EFF);
+            draw_tile_pixel(sx + 8, sy + 7, 0x22C55EFF);
+            draw_tile_pixel(sx + 6, sy + 8, 0x16A34AFF);
+            draw_tile_pixel(sx + 9, sy + 8, 0x16A34AFF);
+            draw_tile_pixel(sx + 7, sy + 9, 0x15803DFF);
+            draw_tile_pixel(sx + 8, sy + 9, 0x15803DFF);
+            break;
+
+        case TILE_CLIMBABLE_VINE:
+            // Videira gigante de feijão mágico escalável
+            render_metatile(sx, sy, TILE_CRENEL_CLIFF_FACE);
+            for (int y = 0; y < 16; y++) {
+                draw_tile_pixel(sx + 6, sy + y, 0x166534FF);
+                draw_tile_pixel(sx + 7, sy + y, 0x15803DFF);
+                draw_tile_pixel(sx + 8, sy + y, 0x22C55EFF);
+                draw_tile_pixel(sx + 9, sy + y, 0x15803DFF);
+            }
+            draw_tile_pixel(sx + 4, sy + 4, 0x4ADE80FF);
+            draw_tile_pixel(sx + 5, sy + 4, 0x22C55EFF);
+            draw_tile_pixel(sx + 10, sy + 10, 0x4ADE80FF);
+            draw_tile_pixel(sx + 11, sy + 10, 0x22C55EFF);
+            break;
+
         default:
             render_metatile(sx, sy, TILE_GRASS);
             break;
@@ -1429,6 +1518,68 @@ bool map_is_water(const Tilemap* map, float world_x, float world_y) {
     return false;
 }
 
+bool map_is_climbable(const Tilemap* map, float world_x, float world_y) {
+    if (!map || !map->ground_layer) return false;
+    if (world_x < 0.0f || world_y < 0.0f) return false;
+
+    int tx = (int)(world_x / TILE_SIZE);
+    int ty = (int)(world_y / TILE_SIZE);
+    if (tx < 0 || tx >= map->width || ty < 0 || ty >= map->height) return false;
+
+    int idx = ty * map->width + tx;
+    if (map->overlay_layer && (map->overlay_layer[idx] == TILE_CLIMBABLE_WALL || map->overlay_layer[idx] == TILE_CLIMBABLE_VINE)) {
+        return true;
+    }
+    if (map->ground_layer[idx] == TILE_CLIMBABLE_WALL || map->ground_layer[idx] == TILE_CLIMBABLE_VINE) {
+        return true;
+    }
+    return false;
+}
+
+bool map_is_mineral_water(const Tilemap* map, float world_x, float world_y) {
+    if (!map || !map->ground_layer) return false;
+    if (world_x < 0.0f || world_y < 0.0f) return false;
+
+    int tx = (int)(world_x / TILE_SIZE);
+    int ty = (int)(world_y / TILE_SIZE);
+    if (tx < 0 || tx >= map->width || ty < 0 || ty >= map->height) return false;
+
+    int idx = ty * map->width + tx;
+    if (map->overlay_layer && map->overlay_layer[idx] == TILE_MINERAL_WATER) return true;
+    if (map->ground_layer[idx] == TILE_MINERAL_WATER) return true;
+    return false;
+}
+
+bool map_interact_grow_bean(Tilemap* map, float world_x, float world_y) {
+    if (!map || !map->overlay_layer) return false;
+    int tx = (int)(world_x / TILE_SIZE);
+    int ty = (int)(world_y / TILE_SIZE);
+
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            int cx = tx + dx;
+            int cy = ty + dy;
+            if (cx < 0 || cx >= map->width || cy < 0 || cy >= map->height) continue;
+            int idx = cy * map->width + cx;
+            if (map->overlay_layer[idx] == TILE_MAGIC_BEAN_SPROUT) {
+                // Transforma o broto e ergue a videira por 5 tiles escaláveis para o topo da escarpa!
+                for (int h = 0; h < 6; h++) {
+                    int vy = cy - h;
+                    if (vy >= 0) {
+                        int vidx = vy * map->width + cx;
+                        map->overlay_layer[vidx] = TILE_CLIMBABLE_VINE;
+                        map->collision_map[vidx] = 0; // Escalável!
+                    }
+                }
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
+                printf("[MAGIC BEAN] Broto de feijao regado com agua mineral de Monte Crenel! Videira gigante brotou!\n");
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 bool map_interact_slash(Tilemap* map, float world_x, float world_y) {
     if (!map || !map->overlay_layer) return false;
 
@@ -1729,5 +1880,115 @@ Tilemap* map_create_north_hyrule_field(void) {
     m->collision_map[1 * w + 8] = 1;
 
     printf("[MAP] North Hyrule Field (Campos Norte) criado com sucesso (%dx%d tiles)!\n", w, h);
+    return m;
+}
+
+Tilemap* map_create_mount_crenel_base(void) {
+    int w = 32;
+    int h = 24;
+    Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
+    if (!m) return NULL;
+
+    m->width  = w;
+    m->height = h;
+    m->is_authentic = false;
+    m->authentic_tex = NULL;
+    m->ground_layer  = (u8*)malloc(w * h * sizeof(u8));
+    m->overlay_layer = (u8*)malloc(w * h * sizeof(u8));
+    m->collision_map = (u8*)malloc(w * h * sizeof(u8));
+
+    for (int i = 0; i < w * h; i++) {
+        m->ground_layer[i]  = TILE_CRENEL_GRAVEL;
+        m->overlay_layer[i] = 0xFF;
+        m->collision_map[i] = 0;
+    }
+
+    // Topo (linhas 0 a 2): Paredões inescaláveis do cume da montanha
+    for (int y = 0; y <= 2; y++) {
+        for (int x = 0; x < w; x++) {
+            m->overlay_layer[y * w + x] = TILE_CRENEL_CLIFF_FACE;
+            m->collision_map[y * w + x] = 1;
+        }
+    }
+
+    // Base sul (linhas 22 e 23): Paredões de contenção
+    for (int y = 22; y <= 23; y++) {
+        for (int x = 0; x < w; x++) {
+            m->overlay_layer[y * w + x] = TILE_CRENEL_CLIFF_FACE;
+            m->collision_map[y * w + x] = 1;
+        }
+    }
+
+    // Borda Oeste (colunas 0 e 1): Escarpas intransponíveis
+    for (int y = 0; y < h; y++) {
+        m->overlay_layer[y * w + 0] = TILE_CRENEL_CLIFF_FACE;
+        m->collision_map[y * w + 0] = 1;
+        m->overlay_layer[y * w + 1] = TILE_CRENEL_CLIFF_FACE;
+        m->collision_map[y * w + 1] = 1;
+    }
+
+    // Borda Leste: Saída para os Campos Norte de Hyrule (y=10..12)
+    for (int y = 0; y < h; y++) {
+        if (y < 10 || y > 12) {
+            m->overlay_layer[y * w + (w - 2)] = TILE_CRENEL_CLIFF_FACE;
+            m->collision_map[y * w + (w - 2)] = 1;
+            m->overlay_layer[y * w + (w - 1)] = TILE_CRENEL_CLIFF_FACE;
+            m->collision_map[y * w + (w - 1)] = 1;
+        } else {
+            m->ground_layer[y * w + (w - 2)] = TILE_DIRT_PATH;
+            m->ground_layer[y * w + (w - 1)] = TILE_DIRT_PATH;
+        }
+    }
+
+    // Paredão Divisório Central de Rocha (y=8 e y=9) separando o vale inferior do platô superior
+    for (int x = 2; x < w - 2; x++) {
+        // Seções de paredão com apoios para escalada com Grip Ring (x=7..9 e x=23..25)
+        if ((x >= 7 && x <= 9) || (x >= 23 && x <= 25)) {
+            m->overlay_layer[8 * w + x] = TILE_CLIMBABLE_WALL;
+            m->collision_map[8 * w + x] = 0; // Atravessável se tiver Grip Ring!
+            m->overlay_layer[9 * w + x] = TILE_CLIMBABLE_WALL;
+            m->collision_map[9 * w + x] = 0;
+        } else {
+            m->overlay_layer[8 * w + x] = TILE_CRENEL_CLIFF_FACE;
+            m->collision_map[8 * w + x] = 1;
+            m->overlay_layer[9 * w + x] = TILE_CRENEL_CLIFF_FACE;
+            m->collision_map[9 * w + x] = 1;
+        }
+    }
+
+    // Fonte Termal de Água Mineral Verde (y=16..19, x=5..9)
+    for (int y = 16; y <= 19; y++) {
+        for (int x = 5; x <= 9; x++) {
+            m->ground_layer[y * w + x] = TILE_MINERAL_WATER;
+            m->collision_map[y * w + x] = 1;
+        }
+    }
+
+    // Broto de Feijão Mágico no sopé do paredão (x=16, y=10)
+    m->overlay_layer[10 * w + 16] = TILE_MAGIC_BEAN_SPROUT;
+    m->collision_map[10 * w + 16] = 1;
+
+    // Caverna do Business Scrub (Deku Scrub) no sudeste (x=21..23, y=14)
+    m->overlay_layer[14 * w + 21] = TILE_CRENEL_CLIFF_FACE;
+    m->collision_map[14 * w + 21] = 1;
+    m->overlay_layer[14 * w + 22] = TILE_SECRET_ENTRANCE; // Entrada escura da caverna
+    m->collision_map[14 * w + 22] = 0;
+    m->overlay_layer[14 * w + 23] = TILE_CRENEL_CLIFF_FACE;
+    m->collision_map[14 * w + 23] = 1;
+
+    // Parede rachada na escarpa oeste
+    m->overlay_layer[9 * w + 4] = TILE_CRACKED_WALL;
+    m->collision_map[9 * w + 4] = 1;
+
+    // Platô Superior: Caminho para a forja de Melari e Caverna das Chamas
+    // Rocha quebradiça bloqueando caminho estreito no platô (x=15, y=5)
+    m->overlay_layer[5 * w + 15] = TILE_CRUMBLED_ROCK;
+    m->collision_map[5 * w + 15] = 1;
+
+    // Baú fechado no platô nordeste
+    m->overlay_layer[4 * w + 26] = TILE_CHEST_CLOSED;
+    m->collision_map[4 * w + 26] = 1;
+
+    printf("[MAP] Mount Crenel Base (Sope do Monte Crenel) criado com sucesso (%dx%d tiles)!\n", w, h);
     return m;
 }
