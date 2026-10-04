@@ -1367,6 +1367,27 @@ void render_metatile(int sx, int sy, TileType type) {
             }
             break;
 
+        case TILE_WIND_CREST:
+            // Placa e pedestal ancestral de Crista de Vento (Wind Crest para convocação de Zeffa)
+            render_metatile(sx, sy, TILE_GRASS);
+            for (int y = 1; y <= 14; y++) {
+                for (int x = 1; x <= 14; x++) {
+                    float dist = sqrtf((float)((x - 7.5f) * (x - 7.5f) + (y - 7.5f) * (y - 7.5f)));
+                    if (dist <= 6.5f) {
+                        u32 c = 0x475569FF; // Base circular de cantaria antiga
+                        if (dist <= 5.2f) c = 0x1E293BFF; // Centro rebaixado de ardósia
+                        if (dist <= 3.8f) {
+                            // Espiral ancestral de vento em ciano cintilante
+                            int spiral = (int)(dist * 3.0f + atan2f((float)(y - 7.5f), (float)(x - 7.5f)) * 2.0f + s_water_anim_frame);
+                            c = (spiral % 2 == 0) ? 0x38BDF8FF : 0x0284C7FF;
+                            if (dist <= 1.2f) c = 0xE0F2FEFF; // Núcleo radiante
+                        }
+                        draw_tile_pixel(sx + x, sy + y, c);
+                    }
+                }
+            }
+            break;
+
         default:
             render_metatile(sx, sy, TILE_GRASS);
             break;
@@ -2497,6 +2518,9 @@ Tilemap* map_create_south_hyrule_field(void) {
     // Baú protegido por rocha quebradiça
     m->overlay_layer[4 * w + 25] = TILE_CHEST_CLOSED;
     m->collision_map[4 * w + 25] = 1;
+
+    // Crista de Vento ancestral (Wind Crest) para transporte rápido com Zeffa
+    m->ground_layer[12 * w + 22] = TILE_WIND_CREST;
     m->overlay_layer[5 * w + 25] = TILE_CRUMBLED_ROCK;
     m->collision_map[5 * w + 25] = 1;
 
@@ -3253,6 +3277,9 @@ Tilemap* map_create_wind_ruins(void) {
     // Baú secreto com 100 Rupees em um pátio lateral (x=31, y=3)
     m->overlay_layer[3 * w + 31] = TILE_CHEST_CLOSED;
     m->collision_map[3 * w + 31] = 1;
+
+    // Crista de Vento ancestral (Wind Crest) para voo de Zeffa
+    m->ground_layer[20 * w + 18] = TILE_WIND_CREST;
 
     printf("[MAP] Wind Ruins (Ruinas do Vento) criadas com sucesso (%dx%d tiles)!\n", w, h);
     return m;

@@ -17,6 +17,7 @@
 #include "hal/inventory.h"
 #include "hal/save.h"
 #include "hal/sanctuary.h"
+#include "hal/fast_travel.h"
 #include <math.h>
 
 /*
@@ -771,6 +772,53 @@ static void transition_to_wind_ruins_from_armos(Player* link) {
     printf("[SCENE] Saindo do Armos e retornando a Wind Ruins!\n");
 }
 
+static void handle_fast_travel_transition(int new_map_id, float new_x, float new_y, Player* link, Tilemap* world_map) {
+    if (dungeon_is_active() || dungeon_flames_is_active() || dungeon_fortress_is_active()) return;
+    s_in_town = false;
+    s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = false;
+    s_in_crenel_base = false;
+    s_in_melari_mines = false;
+    s_in_castor_wilds = false;
+    s_in_mole_cave = false;
+    s_in_wind_ruins = false;
+    s_in_armos_interior = false;
+    link->is_swimming = false;
+    link->is_diving = false;
+    link->is_minish = false;
+    link->is_moving = false;
+    link->x = new_x;
+    link->y = new_y;
+
+    if (new_map_id == 1) { // Hyrule Town
+        s_in_town = true;
+        spawn_town_entities();
+        hal_audio_play_bgm(BGM_HYRULE_TOWN);
+        hal_audio_play_sound(SOUND_TOWN_BELL, 1.0f, 1.0f);
+    } else if (new_map_id == 0) { // Minish Woods
+        spawn_overworld_entities(world_map);
+        hal_audio_play_bgm(BGM_MINISH_WOODS);
+    } else if (new_map_id == 4) { // South Field / Lake Hylia
+        s_in_south_field = true;
+        spawn_south_field_entities();
+        hal_audio_play_bgm(BGM_MINISH_WOODS);
+    } else if (new_map_id == 6) { // Crenel Base
+        s_in_crenel_base = true;
+        spawn_crenel_base_entities();
+        hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
+    } else if (new_map_id == 10) { // Castor Wilds
+        s_in_castor_wilds = true;
+        spawn_castor_wilds_entities();
+        hal_audio_play_bgm(BGM_MINISH_WOODS);
+    } else if (new_map_id == 12) { // Wind Ruins
+        s_in_wind_ruins = true;
+        spawn_wind_ruins_entities(armos_circuit_is_active());
+        hal_audio_play_bgm(BGM_MINISH_WOODS);
+    }
+    printf("[ZEFFA] Voo concluido com sucesso! Pouso no mapa %d em (%.1f, %.1f)!\n", new_map_id, new_x, new_y);
+}
+
 static void draw_rect(int rx, int ry, int rw, int rh, u32 color) {
     for (int y = ry; y < ry + rh; y++) {
         for (int x = rx; x < rx + rw; x++) {
@@ -1210,6 +1258,10 @@ static void draw_link_digging_effects(const Player* p, int px, int py) {
 
 // Renderiza o Link no estilo clássico de Minish Cap na posição da Câmera
 static void draw_link(const Player* p, const Camera* cam) {
+    if (fast_travel_is_link_airborne()) {
+        return;
+    }
+
     // Efeito clássico de piscar ao receber dano (flicker)
     if (p->invuln_timer > 0 && ((p->invuln_timer / 3) % 2 == 0)) {
         return;
@@ -1483,6 +1535,7 @@ int main(int argc, char* argv[]) {
     dungeon_init();
     dungeon_flames_init();
     dungeon_fortress_init();
+    fast_travel_init();
     sanctuary_init();
     inventory_init();
     save_system_init();
@@ -1621,6 +1674,9 @@ int main(int argc, char* argv[]) {
             link.has_ocarina = save.has_ocarina;
             if (link.has_ocarina) {
                 inventory_unlock_item(INV_ITEM_OCARINA);
+            }
+            if (save.unlocked_wind_crests > 0) {
+                fast_travel_set_unlocked_mask(save.unlocked_wind_crests);
             }
             if (save.bomb_count > 0) {
                 subweapon_add_bombs(save.bomb_count - subweapon_get_bomb_count());
@@ -1772,6 +1828,7 @@ int main(int argc, char* argv[]) {
                                 current_save.has_mole_mitts = link.has_mole_mitts;
                                 current_save.has_armos_activated = link.has_armos_activated;
                                 current_save.has_ocarina = link.has_ocarina;
+                                current_save.unlocked_wind_crests = fast_travel_get_unlocked_mask();
                                 current_save.slot_a = (int)inventory_get_slot_a();
                                 current_save.slot_b = (int)inventory_get_slot_b();
                                 if (save_game(1, &current_save)) {
@@ -2008,6 +2065,11 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
+                        case SDLK_z:
+                            if (!dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active()) {
+                                fast_travel_start(link.x, link.y);
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -2091,7 +2153,18 @@ int main(int argc, char* argv[]) {
                 dialogue_fast_forward();
             }
             link.is_moving = false;
+        } else if (fast_travel_is_active()) {
+            int ft_map = -1;
+            float ft_x = 0.0f, ft_y = 0.0f;
+            if (fast_travel_update(&link.x, &link.y, &ft_map, &ft_x, &ft_y)) {
+                handle_fast_travel_transition(ft_map, ft_x, ft_y, &link, s_world_map);
+            }
+            link.is_moving = false;
         } else {
+            const char* crest_name = NULL;
+            if (fast_travel_check_crest_activation(link.x, link.y, &crest_name)) {
+                printf("[ZEFFA] Crista de Vento ativada: %s!\n", crest_name);
+            }
             // Recompensa do Mestre Swiftblade: Concede o Pergaminho do Tigre nº 1
             if (dialogue_is_swiftblade_reward_pending()) {
                 dialogue_clear_swiftblade_reward();
@@ -3516,6 +3589,9 @@ int main(int argc, char* argv[]) {
             draw_rect(cpx - 2, cpy, text_w + 4, 10, 0x331B0CEE);
             font_draw_text(cpx, cpy + 1, climb_prompt, 0xFDE047FF, true);
         }
+
+        // 10b. Sistema de Transporte Rapido: Ocarina of Wind, Zeffa e Mapa de Cristas de Vento
+        fast_travel_render(&camera, link.x, link.y);
 
         // 11. Subtela de Inventario e Menu de Pausa [START / ENTER]
         if (inventory_is_paused()) {
