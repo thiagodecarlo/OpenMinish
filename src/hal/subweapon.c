@@ -11,6 +11,7 @@
 #include "hal/entity.h"
 #include "hal/dungeon_flames.h"
 #include "hal/dungeon_fortress.h"
+#include "hal/fast_travel.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -296,8 +297,7 @@ void subweapon_use_pressed(float link_x, float link_y, Direction dir) {
         s_mitts.target_y = fy;
         hal_audio_play_sound(SOUND_SWORD_SLASH, 0.85f, 1.6f);
     } else if (s_current_item == ITEM_OCARINA_OF_WIND) {
-        hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.5f);
-        printf("[OCARINA] Link tocou a Cancao do Vento na Ocarina! Zeffa ouve o chamado!\n");
+        fast_travel_start(link_x, link_y);
     }
 }
 

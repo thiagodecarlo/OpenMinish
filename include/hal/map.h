@@ -90,6 +90,7 @@ typedef enum {
     TILE_FORTRESS_EYE_CLOSED,// Estátua de olho na parede da fortaleza (fechado)
     TILE_FORTRESS_EYE_OPEN,  // Estátua de olho aberta por flecha (ativa ponte ou porta)
     TILE_FORTRESS_BOSS_DOOR, // Portão dourado do Chefe Mazaal
+    TILE_WIND_CREST,         // Placa de pedra com símbolo de crista de vento (Wind Crest para Zeffa)
     TILE_COUNT
 } TileType;
 

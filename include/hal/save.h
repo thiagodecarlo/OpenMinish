@@ -42,6 +42,7 @@ typedef struct {
     bool  has_armos_activated;
     bool  has_ocarina;
     bool  dungeon_fortress_cleared;
+    u8    unlocked_wind_crests;
     int   slot_a;
     int   slot_b;
     u32   unlocked_items_mask;
