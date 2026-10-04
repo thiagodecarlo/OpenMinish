@@ -313,6 +313,43 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     e->bubbleBob     = 0.0f;
                     break;
 
+                case ENTITY_ENEMY_MOBLIN:
+                    e->health        = 4;
+                    e->maxHealth     = 4;
+                    e->damage        = 2; // 1 Coração de dano
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1; // Patrulha com lança
+                    e->aiTimer       = 70;
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
+                    break;
+
+                case ENTITY_ENEMY_PEAHAT:
+                    e->health        = 3;
+                    e->maxHealth     = 3;
+                    e->damage        = 1; // 1/2 Coração
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1; // Voo alto
+                    e->z             = 18.0f;
+                    e->aiTimer       = 140;
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -7.0f, -7.0f, 14.0f, 14.0f };
+                    break;
+
+                case ENTITY_NPC_MALON:
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1;
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
+                    e->hasKinstone   = true;
+                    e->kinstoneType  = 1; // KINSTONE_BLUE
+                    e->kinstoneFused = false;
+                    e->bubbleBob     = 0.0f;
+                    break;
+
                 default:
                     break;
             }
@@ -1020,6 +1057,187 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
                 e->dir = DIR_DOWN;
             }
         }
+
+        // 13. INIMIGO: MOBLIN (GUARDIÃO DOS CAMPOS COM LANÇA)
+        else if (e->type == ENTITY_ENEMY_MOBLIN) {
+            if (e->invulnerableTimer > 0) e->invulnerableTimer--;
+
+            // Ação 4: Recuo por dano da espada ou bomba (Knockback)
+            if (e->action == 4) {
+                float next_x = e->x + e->knockbackVx;
+                float next_y = e->y + e->knockbackVy;
+                if (!entity_is_solid(map, next_x + 8.0f, next_y + 8.0f)) {
+                    e->x = next_x;
+                    e->y = next_y;
+                }
+                e->knockbackTimer--;
+                if (e->knockbackTimer <= 0) {
+                    if (e->health <= 0) {
+                        int roll = rand() % 100;
+                        if (roll < 60) {
+                            entity_spawn(ENTITY_ITEM_RUPEE, e->x + 4.0f, e->y + 4.0f);
+                        } else {
+                            entity_spawn(ENTITY_ITEM_HEART, e->x + 4.0f, e->y + 4.0f);
+                        }
+                        e->is_active = false;
+                        continue;
+                    } else {
+                        e->action = 1;
+                        e->aiTimer = 40;
+                    }
+                }
+            }
+            // Ação 1: Patrulha e Ataque com Lança
+            else if (e->action == 1) {
+                float speed = 0.35f;
+                float move_x = 0.0f;
+                float move_y = 0.0f;
+                if (e->dir == DIR_DOWN)  move_y = speed;
+                if (e->dir == DIR_UP)    move_y = -speed;
+                if (e->dir == DIR_LEFT)  move_x = -speed;
+                if (e->dir == DIR_RIGHT) move_x = speed;
+
+                float check_x = e->x + move_x + 8.0f;
+                float check_y = e->y + move_y + 8.0f;
+
+                if (entity_is_solid(map, check_x, check_y)) {
+                    e->dir = (Direction)(rand() % 4);
+                    e->aiTimer = 50;
+                } else {
+                    e->x += move_x;
+                    e->y += move_y;
+                }
+
+                e->animTimer++;
+                if (e->animTimer > 10) {
+                    e->animFrame = (e->animFrame + 1) % 2;
+                    e->animTimer = 0;
+                }
+
+                e->aiTimer--;
+                if (e->aiTimer <= 0) {
+                    e->dir = (Direction)(rand() % 4);
+                    e->aiTimer = 60 + (rand() % 60);
+                }
+
+                // Dano por contato da lança com Link
+                if (*link_invuln_timer <= 0) {
+                    float ox1 = e->x - 6.0f;
+                    float oy1 = e->y - 6.0f;
+                    float ox2 = e->x + 14.0f;
+                    float oy2 = e->y + 14.0f;
+                    float lx1 = link_x + 2.0f;
+                    float ly1 = link_y + 4.0f;
+                    float lx2 = lx1 + 12.0f;
+                    float ly2 = ly1 + 12.0f;
+
+                    if (ox1 < lx2 && ox2 > lx1 && oy1 < ly2 && oy2 > ly1) {
+                        if (*link_hearts > 0) {
+                            *link_hearts -= e->damage;
+                            if (*link_hearts < 0) *link_hearts = 0;
+                        }
+                        *link_invuln_timer = 50;
+                        hal_audio_play_sound(SOUND_HEART_BEEP, 0.85f, 1.0f);
+
+                        float p_dx = (link_x + 8.0f) - (e->x + 8.0f);
+                        float p_dy = (link_y + 8.0f) - (e->y + 8.0f);
+                        float p_len = sqrtf(p_dx * p_dx + p_dy * p_dy);
+                        if (p_len > 0.01f) {
+                            *link_knock_x = (p_dx / p_len) * 3.8f;
+                            *link_knock_y = (p_dy / p_len) * 3.8f;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 14. INIMIGO: PEAHAT (FLOR-HELICÓPTERO VOADORA)
+        else if (e->type == ENTITY_ENEMY_PEAHAT) {
+            if (e->invulnerableTimer > 0) e->invulnerableTimer--;
+
+            // Ação 4: Knockback
+            if (e->action == 4) {
+                e->x += e->knockbackVx;
+                e->y += e->knockbackVy;
+                e->knockbackTimer--;
+                if (e->knockbackTimer <= 0) {
+                    if (e->health <= 0) {
+                        entity_spawn(ENTITY_ITEM_HEART, e->x + 3.0f, e->y + 3.0f);
+                        e->is_active = false;
+                        continue;
+                    } else {
+                        e->action = 2; // Desce no solo atordoado
+                        e->aiTimer = 60;
+                    }
+                }
+            }
+            // Ação 1: Voando alto
+            else if (e->action == 1) {
+                e->animTimer++;
+                e->z = 16.0f + sinf((float)e->animTimer * 0.1f) * 3.0f;
+
+                // Movimento suave em direção ao Link
+                float dx = (link_x + 8.0f) - (e->x + 8.0f);
+                float dy = (link_y + 8.0f) - (e->y + 8.0f);
+                float dist = sqrtf(dx * dx + dy * dy);
+                if (dist > 1.0f) {
+                    e->x += (dx / dist) * 0.4f;
+                    e->y += (dy / dist) * 0.4f;
+                }
+
+                e->aiTimer--;
+                if (e->aiTimer <= 0) {
+                    e->action = 2; // Desce para descansar no chão
+                    e->aiTimer = 90; // Fica no solo por 1.5s
+                    e->z = 0.0f;
+                }
+
+                // Dano por colisão com hélice giratória
+                if (*link_invuln_timer <= 0) {
+                    float px1 = e->x - 6.0f;
+                    float py1 = e->y - 6.0f;
+                    float px2 = e->x + 14.0f;
+                    float py2 = e->y + 14.0f;
+                    float lx1 = link_x + 2.0f;
+                    float ly1 = link_y + 4.0f;
+                    float lx2 = lx1 + 12.0f;
+                    float ly2 = ly1 + 12.0f;
+
+                    if (px1 < lx2 && px2 > lx1 && py1 < ly2 && py2 > ly1) {
+                        if (*link_hearts > 0) (*link_hearts)--;
+                        *link_invuln_timer = 50;
+                        hal_audio_play_sound(SOUND_HEART_BEEP, 0.85f, 1.0f);
+                    }
+                }
+            }
+            // Ação 2: Descansando no solo (vulnerável a ataques de espada!)
+            else if (e->action == 2) {
+                e->z = 0.0f;
+                e->animTimer++;
+                e->aiTimer--;
+                if (e->aiTimer <= 0) {
+                    e->action = 1; // Decola novamente
+                    e->aiTimer = 150;
+                }
+            }
+        }
+
+        // 15. NPC: MALON (FAZENDA LON LON)
+        else if (e->type == ENTITY_NPC_MALON) {
+            e->animTimer++;
+            e->bubbleBob += 0.08f;
+            float dx = link_x - e->x;
+            float dy = link_y - e->y;
+            if (dx * dx + dy * dy <= 48.0f * 48.0f) {
+                if (fabsf(dx) > fabsf(dy)) {
+                    e->dir = (dx > 0.0f) ? DIR_RIGHT : DIR_LEFT;
+                } else {
+                    e->dir = (dy > 0.0f) ? DIR_DOWN : DIR_UP;
+                }
+            } else {
+                e->dir = DIR_DOWN;
+            }
+        }
     }
 }
 
@@ -1036,14 +1254,16 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
         Entity* e = &s_entities[i];
         if (!e->is_active) continue;
 
-        // Golpeando Inimigo (Octorok, Keese ou ChuChu)
+        // Golpeando Inimigo (Octorok, Keese, ChuChu, Moblin ou Peahat)
         if ((e->type == ENTITY_ENEMY_OCTOROK ||
              e->type == ENTITY_ENEMY_KEESE ||
+             e->type == ENTITY_ENEMY_MOBLIN ||
+             e->type == ENTITY_ENEMY_PEAHAT ||
              (e->type == ENTITY_ENEMY_CHUCHU && e->action > 0)) &&
             e->invulnerableTimer <= 0) {
 
-            // Se o Keese estiver voando alto demais fora do alcance da lâmina
-            if (e->type == ENTITY_ENEMY_KEESE && e->z > 16.0f) {
+            // Se o Keese ou Peahat estiver voando alto demais fora do alcance da lâmina
+            if ((e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_PEAHAT) && e->z > 8.0f) {
                 continue;
             }
 
@@ -1056,9 +1276,9 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
                 e->health -= damage;
                 e->invulnerableTimer = 18; // Pisca de dano
                 e->action = 4; // Knockback
-                e->knockbackTimer = (e->type == ENTITY_ENEMY_KEESE) ? 14 : 10;
+                e->knockbackTimer = (e->type == ENTITY_ENEMY_KEESE) ? 14 : ((e->type == ENTITY_ENEMY_MOBLIN) ? 12 : 10);
 
-                float force = (e->type == ENTITY_ENEMY_KEESE) ? 4.2f : 3.0f;
+                float force = (e->type == ENTITY_ENEMY_KEESE) ? 4.2f : ((e->type == ENTITY_ENEMY_MOBLIN) ? 2.8f : 3.0f);
                 e->knockbackVx = 0.0f;
                 e->knockbackVy = 0.0f;
                 if (slash_dir == DIR_DOWN)  e->knockbackVy = force;
@@ -1133,14 +1353,16 @@ int entity_check_spin_attack_hit(float center_x, float center_y, float radius, i
         Entity* e = &s_entities[i];
         if (!e->is_active) continue;
 
-        // Inimigos: Octorok, Keese, ChuChu
+        // Inimigos: Octorok, Keese, ChuChu, Moblin, Peahat
         if ((e->type == ENTITY_ENEMY_OCTOROK ||
              e->type == ENTITY_ENEMY_KEESE ||
+             e->type == ENTITY_ENEMY_MOBLIN ||
+             e->type == ENTITY_ENEMY_PEAHAT ||
              (e->type == ENTITY_ENEMY_CHUCHU && e->action > 0)) &&
             e->invulnerableTimer <= 0) {
 
-            // Keese voando alto demais desvia do golpe circular
-            if (e->type == ENTITY_ENEMY_KEESE && e->z > 16.0f) continue;
+            // Se voando alto demais desvia do golpe circular
+            if ((e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_PEAHAT) && e->z > 8.0f) continue;
 
             float ex = e->x + e->hitbox.offset_x + (e->hitbox.width * 0.5f);
             float ey = e->y + e->hitbox.offset_y + (e->hitbox.height * 0.5f);
@@ -1228,10 +1450,12 @@ int entity_check_bomb_explosion(float center_x, float center_y, float radius, in
         Entity* e = &s_entities[i];
         if (!e->is_active) continue;
 
-        // Inimigos padrão: Octorok, Keese, ChuChu
+        // Inimigos padrão: Octorok, Keese, ChuChu, Moblin, Peahat
         if ((e->type == ENTITY_ENEMY_OCTOROK ||
              e->type == ENTITY_ENEMY_KEESE ||
-             e->type == ENTITY_ENEMY_CHUCHU) &&
+             e->type == ENTITY_ENEMY_CHUCHU ||
+             e->type == ENTITY_ENEMY_MOBLIN ||
+             e->type == ENTITY_ENEMY_PEAHAT) &&
             e->invulnerableTimer <= 0) {
 
             float ex = e->x + e->hitbox.offset_x + (e->hitbox.width * 0.5f);
@@ -1370,11 +1594,13 @@ bool entity_check_subweapon_hit(float px, float py, float pw, float ph, int dama
         // 3. Impacto e atordoamento contra Inimigos
         else if ((e->type == ENTITY_ENEMY_OCTOROK ||
                   e->type == ENTITY_ENEMY_KEESE ||
+                  e->type == ENTITY_ENEMY_MOBLIN ||
+                  e->type == ENTITY_ENEMY_PEAHAT ||
                   (e->type == ENTITY_ENEMY_CHUCHU && e->action > 0)) &&
                  e->invulnerableTimer <= 0) {
 
-            // Keese voando alto demais desvia do projétil
-            if (e->type == ENTITY_ENEMY_KEESE && e->z > 16.0f) continue;
+            // Se voando alto demais desvia do projétil
+            if ((e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_PEAHAT) && e->z > 8.0f) continue;
 
             float ex1 = e->x + e->hitbox.offset_x;
             float ey1 = e->y + e->hitbox.offset_y;
@@ -1483,6 +1709,23 @@ bool entity_apply_gust_suction(float jar_x, float jar_y, Direction dir, float ra
         else if (e->type == ENTITY_ENEMY_OCTOROK || e->type == ENTITY_ENEMY_KEESE) {
             e->x += pull_x * 0.85f;
             e->y += pull_y * 0.85f;
+        }
+        // Puxar Peahat para o chão e puxar Moblin
+        else if (e->type == ENTITY_ENEMY_PEAHAT) {
+            e->x += pull_x * 0.85f;
+            e->y += pull_y * 0.85f;
+            if (e->z > 0.0f) {
+                e->z -= 0.6f;
+                if (e->z <= 0.0f) {
+                    e->z = 0.0f;
+                    e->action = 2; // Derrubado ao solo!
+                    e->aiTimer = 60;
+                }
+            }
+        }
+        else if (e->type == ENTITY_ENEMY_MOBLIN) {
+            e->x += pull_x * 0.45f;
+            e->y += pull_y * 0.45f;
         }
         // Sucção na base / pés do Chefe Big Green ChuChu
         else if (e->type == ENTITY_BOSS_BIG_CHUCHU) {
@@ -2675,6 +2918,161 @@ void entity_manager_render(const Camera* cam) {
                 font_draw_text(prompt_x + 2, prompt_y, "[A] Falar", 0x34D399FF, true);
             }
         }
+
+        // 17. INIMIGO: MOBLIN DOS CAMPOS DE HYRULE
+        else if (e->type == ENTITY_ENEMY_MOBLIN) {
+            if (e->invulnerableTimer > 0 && (e->invulnerableTimer % 4 < 2)) {
+                draw_filled_rect(sx, sy, 16, 16, 0xFFFFFFFF);
+            } else {
+                int walk_bob = (e->animFrame == 1) ? 1 : 0;
+                int my = sy - walk_bob;
+
+                u32 c_skin  = 0xFB923CFF; // Laranja suíno
+                u32 c_armor = 0xB45309FF; // Armadura de couro
+                u32 c_snout = 0xF43F5EFF; // Focinho rosado
+                u32 c_tusk  = 0xFFFFFFFF; // Presas brancas
+                u32 c_helm  = 0x78350FFF; // Elmo de couro
+                u32 c_shaft = 0x78350FFF; // Haste da lança
+                u32 c_spear = 0xE2E8F0FF; // Ponta de ferro
+
+                // Cabeça e elmo
+                draw_filled_rect(sx + 4, my + 1, 8, 4, c_helm);
+                draw_filled_rect(sx + 3, my + 5, 10, 5, c_skin);
+
+                // Orelhas de porco pontudas
+                put_pixel_safe(sx + 2, my + 3, c_skin);
+                put_pixel_safe(sx + 13, my + 3, c_skin);
+
+                // Focinho e presas
+                draw_filled_rect(sx + 6, my + 7, 4, 3, c_snout);
+                put_pixel_safe(sx + 5, my + 9, c_tusk);
+                put_pixel_safe(sx + 10, my + 9, c_tusk);
+
+                // Olhos
+                put_pixel_safe(sx + 5, my + 6, 0x111111FF);
+                put_pixel_safe(sx + 10, my + 6, 0x111111FF);
+
+                // Tronco e armadura de couro
+                draw_filled_rect(sx + 4, my + 10, 8, 4, c_armor);
+                // Botas
+                draw_filled_rect(sx + 4, my + 14, 3, 2, 0x451A03FF);
+                draw_filled_rect(sx + 9, my + 14, 3, 2, 0x451A03FF);
+
+                // Lança afiada direcionada
+                if (e->dir == DIR_DOWN) {
+                    for (int y = 0; y < 14; y++) put_pixel_safe(sx + 13, my + 4 + y, c_shaft);
+                    draw_filled_rect(sx + 12, my + 17, 3, 3, c_spear);
+                } else if (e->dir == DIR_UP) {
+                    for (int y = 0; y < 14; y++) put_pixel_safe(sx + 2, my - 2 + y, c_shaft);
+                    draw_filled_rect(sx + 1, my - 5, 3, 3, c_spear);
+                } else if (e->dir == DIR_LEFT) {
+                    for (int x = 0; x < 14; x++) put_pixel_safe(sx - 3 + x, my + 8, c_shaft);
+                    draw_filled_rect(sx - 6, my + 7, 3, 3, c_spear);
+                } else if (e->dir == DIR_RIGHT) {
+                    for (int x = 0; x < 14; x++) put_pixel_safe(sx + 6 + x, my + 8, c_shaft);
+                    draw_filled_rect(sx + 19, my + 7, 3, 3, c_spear);
+                }
+            }
+        }
+
+        // 18. INIMIGO: PEAHAT (FLOR-HELICÓPTERO VOADORA)
+        else if (e->type == ENTITY_ENEMY_PEAHAT) {
+            // Sombra no solo se estiver voando
+            if (e->z > 0.0f) {
+                draw_filled_rect(sx + 4, sy + 12, 8, 3, 0x00000044);
+            }
+
+            int py = sy - (int)e->z;
+            u32 c_bulb  = 0xEAB308FF; // Miolo dourado
+            u32 c_petal = 0x22C55EFF; // Pétalas verdes giratórias
+            u32 c_root  = 0x78350FFF; // Raízes inferiores
+
+            // Bulbo central
+            draw_filled_rect(sx + 5, py + 5, 6, 6, c_bulb);
+            put_pixel_safe(sx + 7, py + 7, 0xFEF08AFF); // Brilho
+
+            // Hélices/Pétalas rotativas em 4 direções baseadas na animação
+            int rot = (e->animTimer / 2) % 4;
+            if (rot == 0 || rot == 2) {
+                draw_filled_rect(sx + 1, py + 7, 4, 2, c_petal); // Oeste
+                draw_filled_rect(sx + 11, py + 7, 4, 2, c_petal); // Leste
+                draw_filled_rect(sx + 7, py + 1, 2, 4, c_petal); // Norte
+                draw_filled_rect(sx + 7, py + 11, 2, 4, c_petal); // Sul
+            } else {
+                draw_filled_rect(sx + 2, py + 2, 3, 3, c_petal); // Noroeste
+                draw_filled_rect(sx + 11, py + 2, 3, 3, c_petal); // Nordeste
+                draw_filled_rect(sx + 2, py + 11, 3, 3, c_petal); // Sudoeste
+                draw_filled_rect(sx + 11, py + 11, 3, 3, c_petal); // Sudeste
+            }
+
+            // Raízes suspensas
+            put_pixel_safe(sx + 6, py + 11, c_root);
+            put_pixel_safe(sx + 7, py + 12, c_root);
+            put_pixel_safe(sx + 9, py + 11, c_root);
+        }
+
+        // 19. NPC: MALON (MOÇA DA FAZENDA LON LON)
+        else if (e->type == ENTITY_NPC_MALON) {
+            int breathe = ((e->animTimer / 16) % 2 == 1) ? 1 : 0;
+            int my = sy - breathe;
+
+            u32 c_hair    = 0xEA580CFF; // Cabelos ruivos ondulados
+            u32 c_bandana = 0xFACC15FF; // Faixa amarela no cabelo
+            u32 c_skin    = 0xFDE8CDFF; // Pele clara
+            u32 c_bodice  = 0x3B82F6FF; // Colete azul
+            u32 c_apron   = 0xFEF3C7FF; // Avental branco
+            u32 c_cheek   = 0xFB7185FF; // Bochechas coradas
+
+            // Cabelos ruivos e bandana
+            draw_filled_rect(sx + 4, my + 1, 8, 4, c_hair);
+            draw_filled_rect(sx + 3, my + 5, 10, 5, c_hair);
+            draw_filled_rect(sx + 5, my + 2, 6, 2, c_bandana);
+
+            // Rosto amigável
+            draw_filled_rect(sx + 5, my + 6, 6, 4, c_skin);
+            put_pixel_safe(sx + 6, my + 7, 0x1E293BFF); // Olho esquerdo
+            put_pixel_safe(sx + 9, my + 7, 0x1E293BFF); // Olho direito
+            put_pixel_safe(sx + 5, my + 8, c_cheek);    // Bochecha
+            put_pixel_safe(sx + 10, my + 8, c_cheek);
+
+            // Blusa, colete azul e avental de fazendeira
+            draw_filled_rect(sx + 5, my + 10, 6, 4, c_bodice);
+            draw_filled_rect(sx + 6, my + 11, 4, 3, c_apron);
+
+            // Botas
+            draw_filled_rect(sx + 5, my + 14, 2, 2, 0x78350FFF);
+            draw_filled_rect(sx + 9, my + 14, 2, 2, 0x78350FFF);
+
+            // Balão de Fusão de Kinstone Azul (se não fundida)
+            if (e->hasKinstone && !e->kinstoneFused) {
+                int bubble_y = my - 16 + (int)(sinf(e->bubbleBob) * 2.0f);
+                int bubble_x = sx + 8;
+                draw_filled_rect(bubble_x - 7, bubble_y - 6, 14, 12, 0xFFFFFFFF);
+                draw_filled_rect(bubble_x - 8, bubble_y - 4, 16, 8, 0xFFFFFFFF);
+                draw_filled_rect(bubble_x - 6, bubble_y - 7, 12, 14, 0xFFFFFFFF);
+                u32 c_kinstone = 0x3B82F6FF; // Kinstone Azul da Fazenda Lon Lon
+                u32 c_kgold = 0xD4AF37FF;
+                for (int ky = -3; ky <= 3; ky++) {
+                    for (int kx = -3; kx <= 3; kx++) {
+                        if (kx * kx + ky * ky <= 9) {
+                            u32 col = (kx == 3 || kx == -3 || ky == 3 || ky == -3) ? c_kgold : c_kinstone;
+                            put_pixel_safe(bubble_x + kx, bubble_y + ky, col);
+                        }
+                    }
+                }
+                put_pixel_safe(bubble_x - 1, bubble_y - 1, 0xFFFFFFFF);
+            }
+
+            float dx = s_last_link_x - e->x;
+            float dy = s_last_link_y - e->y;
+            if (dx * dx + dy * dy <= 28.0f * 28.0f) {
+                int bounce = ((e->animTimer / 10) % 2 == 1) ? 1 : 0;
+                int prompt_x = sx - 16;
+                int prompt_y = my - 14 + bounce;
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 48, 10, 0x0A2010EE);
+                font_draw_text(prompt_x + 2, prompt_y, "[A] Falar", 0x60A5FAFF, true);
+            }
+        }
     }
 }
 
@@ -2831,7 +3229,8 @@ Entity* entity_find_kinstone_npc(float world_x, float world_y, float max_dist) {
     for (int i = 0; i < MAX_ENTITIES; i++) {
         Entity* e = &s_entities[i];
         if (!e->is_active) continue;
-        if (e->type != ENTITY_NPC_FOREST_MINISH && e->type != ENTITY_NPC_TOWN_CITIZEN && e->type != ENTITY_NPC_VILLAGE_MINISH) continue;
+        if (e->type != ENTITY_NPC_FOREST_MINISH && e->type != ENTITY_NPC_TOWN_CITIZEN &&
+            e->type != ENTITY_NPC_VILLAGE_MINISH && e->type != ENTITY_NPC_MALON) continue;
         if (!e->hasKinstone || e->kinstoneFused) continue;
 
         float dx = e->x - world_x;
@@ -2936,6 +3335,26 @@ Entity* entity_find_nearby_village_minish(float world_x, float world_y, float ma
     for (int i = 0; i < MAX_ENTITIES; i++) {
         Entity* e = &s_entities[i];
         if (!e->is_active || e->type != ENTITY_NPC_VILLAGE_MINISH) continue;
+
+        float dx = e->x - world_x;
+        float dy = e->y - world_y;
+        float dist_sq = dx * dx + dy * dy;
+
+        if (dist_sq <= best_dist_sq) {
+            best_dist_sq = dist_sq;
+            best = e;
+        }
+    }
+    return best;
+}
+
+Entity* entity_find_nearby_malon(float world_x, float world_y, float max_dist) {
+    float best_dist_sq = max_dist * max_dist;
+    Entity* best = NULL;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active || e->type != ENTITY_NPC_MALON) continue;
 
         float dx = e->x - world_x;
         float dy = e->y - world_y;

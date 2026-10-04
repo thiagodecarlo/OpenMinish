@@ -713,6 +713,45 @@ static void render_portrait_village_minish(int px, int py) {
     draw_rect_blend(px + 10, py + 25, 13, 6, c_tunic);
 }
 
+static void render_portrait_malon(int px, int py, bool is_talking) {
+    draw_rect_blend(px, py, 32, 32, 0x0A2612FF);
+
+    u32 c_hair    = 0xEA580CFF;
+    u32 c_bandana = 0xFACC15FF;
+    u32 c_skin    = 0xFDE8CDFF;
+    u32 c_bodice  = 0x3B82F6FF;
+    u32 c_apron   = 0xFEF3C7FF;
+    u32 c_cheek   = 0xFB7185FF;
+    u32 c_eyes    = 0x1E293BFF;
+
+    // Cabelo ruivo volumoso
+    draw_rect_blend(px + 4, py + 2, 24, 10, c_hair);
+    draw_rect_blend(px + 3, py + 6, 26, 18, c_hair);
+    // Faixa amarela (bandana)
+    draw_rect_blend(px + 7, py + 4, 18, 3, c_bandana);
+
+    // Rosto
+    draw_rect_blend(px + 8, py + 9, 16, 12, c_skin);
+    // Olhos
+    hal_video_put_pixel(px + 12, py + 13, c_eyes);
+    hal_video_put_pixel(px + 19, py + 13, c_eyes);
+    // Bochechas rosadas
+    hal_video_put_pixel(px + 10, py + 16, c_cheek);
+    hal_video_put_pixel(px + 21, py + 16, c_cheek);
+
+    // Boca (animada se falando)
+    if (is_talking && ((s_char_progress / 3) % 2 == 1)) {
+        draw_rect_blend(px + 15, py + 17, 3, 2, 0x881337FF);
+    } else {
+        hal_video_put_pixel(px + 15, py + 17, 0x881337FF);
+        hal_video_put_pixel(px + 16, py + 18, 0x881337FF);
+    }
+
+    // Colete azul e avental
+    draw_rect_blend(px + 8, py + 22, 16, 8, c_bodice);
+    draw_rect_blend(px + 12, py + 23, 8, 7, c_apron);
+}
+
 // ----------------------------------------------------------------------------
 // INTERFACE PÚBLICA DO SISTEMA DE DIÁLOGO
 // ----------------------------------------------------------------------------
@@ -911,6 +950,24 @@ void dialogue_trigger_village_minish_talk(void) {
     dialogue_show(SPEAKER_VILLAGE_MINISH, "Picori", villager_speech, 3);
 }
 
+void dialogue_trigger_malon_talk(void) {
+    hal_audio_play_sound(SOUND_TEXT_ADVANCE, 0.85f, 1.25f);
+    static const char* malon_speech[] = {
+        "Ola viajante! Sou a Malon da Fazenda\nLon Lon. Que dia lindo nos campos!",
+        "Meu pai Talon perdeu a chave do nosso\nportao quando foi para a cidade...",
+        "Eu tenho uma Kinstone azul especial!\nSe voce tiver a metade compativel,\ntalvez o portao possa ser aberto!"
+    };
+    dialogue_show(SPEAKER_MALON, "Malon", malon_speech, 3);
+}
+
+void dialogue_trigger_crenel_sign_talk(void) {
+    hal_audio_play_sound(SOUND_TEXT_ADVANCE, 0.85f, 0.90f);
+    static const char* sign_speech[] = {
+        "<- Monte Crenel e Minas Melari a Oeste.\n^ Castelo Real de Hyrule ao Norte.\nv Cidade de Hyrule ao Sul."
+    };
+    dialogue_show(SPEAKER_SIGNPOST, "Placa de Estrada", sign_speech, 1);
+}
+
 void dialogue_update(void) {
     s_anim_counter++;
 
@@ -1040,7 +1097,8 @@ void dialogue_render(void) {
                        (s_speaker == SPEAKER_TOWN_GUARD) ? 0x60A5FAFF :
                        (s_speaker == SPEAKER_GENTARI) ? 0xFDE047FF :
                        (s_speaker == SPEAKER_FESTARI) ? 0x93C5FDFF :
-                       (s_speaker == SPEAKER_VILLAGE_MINISH) ? 0x34D399FF : 0x77FF99FF;
+                       (s_speaker == SPEAKER_VILLAGE_MINISH) ? 0x34D399FF :
+                       (s_speaker == SPEAKER_MALON) ? 0xFB923CFF : 0x77FF99FF;
         font_draw_text(badge_x + 6, badge_y + 1, s_speaker_name, name_col, true);
     }
 
@@ -1076,6 +1134,9 @@ void dialogue_render(void) {
         render_portrait_festari(port_x, port_y, is_talking);
     } else if (s_speaker == SPEAKER_VILLAGE_MINISH) {
         render_portrait_village_minish(port_x, port_y);
+    } else if (s_speaker == SPEAKER_MALON) {
+        bool is_talking = (s_state == DIALOGUE_STATE_TYPING);
+        render_portrait_malon(port_x, port_y, is_talking);
     }
 
     // 6. Área de Texto com quebra de linhas (\n)
