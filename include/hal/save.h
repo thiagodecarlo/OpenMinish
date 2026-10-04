@@ -23,7 +23,7 @@ typedef struct {
     float player_x;
     float player_y;
     int   player_dir;
-    int   current_map;       // 0: Woods, 1: Hyrule Town, 2: Minish Village, 3: Dungeon, 4: South Field, 5: North Field, 6: Crenel Base, 7: Melari's Mines
+    int   current_map;       // 0: Woods, 1: Hyrule Town, 2: Minish Village, 3: Dungeon, 4: South Field, 5: North Field, 6: Crenel Base, 7: Melari's Mines, 8: Cave of Flames
     int   hearts;
     int   max_hearts;
     int   rupees;

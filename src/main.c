@@ -12,6 +12,7 @@
 #include "hal/subweapon.h"
 #include "hal/kinstone.h"
 #include "hal/dungeon.h"
+#include "hal/dungeon_flames.h"
 #include "hal/inventory.h"
 #include "hal/save.h"
 #include <math.h>
@@ -492,6 +493,18 @@ static void transition_to_crenel_base_from_melari(Player* link) {
     spawn_crenel_base_entities();
     hal_audio_play_bgm(BGM_MINISH_WOODS);
     printf("[SCENE] Retornando a Mount Crenel Base a partir das Minas de Melari!\n");
+}
+
+static void transition_to_cave_of_flames(Player* link) {
+    if (dungeon_is_active() || dungeon_flames_is_active()) return;
+    s_in_town = false;
+    s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = false;
+    s_in_crenel_base = false;
+    s_in_melari_mines = false;
+    entity_clear_all();
+    dungeon_flames_enter(&link->x, &link->y, &link->dir);
 }
 
 static void draw_rect(int rx, int ry, int rw, int rh, u32 color) {
@@ -1054,6 +1067,9 @@ static inline bool is_world_solid_for_player(const Tilemap* map, float wx, float
     if (dungeon_is_active()) {
         return dungeon_is_solid(wx, wy);
     }
+    if (dungeon_flames_is_active()) {
+        return dungeon_flames_is_solid(wx, wy);
+    }
     // Mecânica Salto do Cajado de Pacci: no ar (z > 4.0f) salta por cima de buracos e escarpas
     if (z > 4.0f) {
         return false;
@@ -1119,6 +1135,7 @@ int main(int argc, char* argv[]) {
     subweapon_init();
     kinstone_init();
     dungeon_init();
+    dungeon_flames_init();
     inventory_init();
     save_system_init();
 
@@ -1236,6 +1253,8 @@ int main(int argc, char* argv[]) {
                 s_in_crenel_base = true;
             } else if (save.current_map == 7) {
                 s_in_melari_mines = true;
+            } else if (save.current_map == 8) {
+                dungeon_flames_enter(&link.x, &link.y, &link.dir);
             }
         }
     }
@@ -1315,7 +1334,16 @@ int main(int argc, char* argv[]) {
                                 current_save.player_x = link.x;
                                 current_save.player_y = link.y;
                                 current_save.player_dir = (int)link.dir;
-                                current_save.current_map = s_in_melari_mines ? 7 : (s_in_crenel_base ? 6 : (s_in_village ? 2 : (s_in_town ? 1 : (dungeon_is_active() ? 3 : (s_in_south_field ? 4 : (s_in_north_field ? 5 : 0))))));
+                                int cur_m = 0;
+                                if (s_in_melari_mines) cur_m = 7;
+                                else if (s_in_crenel_base) cur_m = 6;
+                                else if (s_in_north_field) cur_m = 5;
+                                else if (s_in_south_field) cur_m = 4;
+                                else if (dungeon_is_active()) cur_m = 3;
+                                else if (dungeon_flames_is_active()) cur_m = 8;
+                                else if (s_in_village) cur_m = 2;
+                                else if (s_in_town) cur_m = 1;
+                                current_save.current_map = cur_m;
                                 current_save.hearts = link.hearts;
                                 current_save.max_hearts = link.max_hearts;
                                 current_save.rupees = link.rupees;
@@ -1382,6 +1410,17 @@ int main(int argc, char* argv[]) {
                             if (link.has_white_sword) link.white_sword_banner_timer = 180;
                             hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
                             printf("[DEBUG] Toggle White Sword: %s\n", link.has_white_sword ? "ON (Dano: 2)" : "OFF (Dano: 1)");
+                            break;
+                        case SDLK_9:
+                            if (!dungeon_is_active()) {
+                                if (dungeon_flames_is_active()) {
+                                    dungeon_flames_exit(&link.x, &link.y, &link.dir);
+                                    s_in_melari_mines = true;
+                                    spawn_melari_mines_entities();
+                                } else {
+                                    transition_to_cave_of_flames(&link);
+                                }
+                            }
                             break;
                         case SDLK_w:
                             widescreen = !widescreen;
@@ -1616,6 +1655,14 @@ int main(int argc, char* argv[]) {
                             link.attack_timer = 12;
                             hal_audio_play_sound(SOUND_SWORD_SLASH, link.is_minish ? 0.7f : 1.0f, link.is_minish ? 1.38f : 1.0f);
                         }
+                    } else if (dungeon_flames_is_active()) {
+                        if (dungeon_flames_interact(link.x, link.y, &link.rupees, &link.hearts)) {
+                            // Interagiu com a vagoneta ou elementos da Cave of Flames!
+                        } else {
+                            link.is_attacking = true;
+                            link.attack_timer = 12;
+                            hal_audio_play_sound(SOUND_SWORD_SLASH, link.is_minish ? 0.7f : 1.0f, link.is_minish ? 1.38f : 1.0f);
+                        }
                     } else if (s_in_town) {
                         Entity* shopkeeper = entity_find_nearby_shopkeeper(link.x, link.y, 40.0f);
                         if (shopkeeper) {
@@ -1756,7 +1803,7 @@ int main(int argc, char* argv[]) {
                 entity_check_sword_hit(hit_x, hit_y, hit_w, hit_h, sword_dmg, link.dir);
 
                 // Interação da espada com o cenário (cortar arbustos ou abrir baú no overworld)
-                if (!dungeon_is_active() && map_interact_slash(active_map, hit_x + 6.0f, hit_y + 6.0f)) {
+                if (!dungeon_is_active() && !dungeon_flames_is_active() && map_interact_slash(active_map, hit_x + 6.0f, hit_y + 6.0f)) {
                     hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 1.25f);
                     link.rupees += 5; // Recompensa clássica de Zelda!
                 }
@@ -1818,7 +1865,7 @@ int main(int argc, char* argv[]) {
                 entity_check_spin_attack_hit(spin_cx, spin_cy, spin_r, spin_dmg);
 
                 // Corte simultâneo de todos os arbustos no raio de 360 graus
-                if (!dungeon_is_active()) {
+                if (!dungeon_is_active() && !dungeon_flames_is_active()) {
                     int bushes = map_interact_spin(active_map, spin_cx, spin_cy, spin_r);
                     if (bushes > 0) {
                         hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 1.30f);
@@ -1887,7 +1934,7 @@ int main(int argc, char* argv[]) {
         // --------------------------------------------------------------------
         link.water_ripple_timer++;
         bool on_water = map_is_water(active_map, link.x + 8.0f, link.y + 12.0f);
-        if (on_water && link.has_flippers && !dungeon_is_active()) {
+        if (on_water && link.has_flippers && !dungeon_is_active() && !dungeon_flames_is_active()) {
             if (!link.is_swimming) {
                 link.is_swimming = true;
                 link.swim_stroke_timer = 0;
@@ -1930,7 +1977,7 @@ int main(int argc, char* argv[]) {
         // LÓGICA DE ESCALADA EM PAREDÕES & VINHAS (GRIP RING)
         // --------------------------------------------------------------------
         bool on_climbable = map_is_climbable(active_map, link.x + 8.0f, link.y + 12.0f);
-        if (on_climbable && link.has_grip_ring && !dungeon_is_active()) {
+        if (on_climbable && link.has_grip_ring && !dungeon_is_active() && !dungeon_flames_is_active()) {
             if (!link.is_climbing) {
                 link.is_climbing = true;
                 link.climb_anim_timer = 0;
@@ -2137,6 +2184,10 @@ int main(int argc, char* argv[]) {
                     if (link.y >= (active_map->height * TILE_SIZE) - 32.0f && link.dir == DIR_DOWN) {
                         transition_to_crenel_base_from_melari(&link);
                     }
+                    // Portal em arco ao norte: Entrada da Cave of Flames (Dungeon 2)
+                    else if (link.x >= 220.0f && link.x <= 280.0f && link.y <= 36.0f && link.dir == DIR_UP) {
+                        transition_to_cave_of_flames(&link);
+                    }
                 } else {
                     // Em Minish Woods: Se estiver no tamanho Minish e atravessar a ponta norte do Tronco Oco (coluna 21)
                     if (link.is_minish && world_map && world_map->is_authentic) {
@@ -2256,9 +2307,20 @@ int main(int argc, char* argv[]) {
         }
         s_was_dungeon_active = dungeon_is_active();
 
+        static bool s_was_dungeon_flames_active = false;
+        if (s_was_dungeon_flames_active && !dungeon_flames_is_active()) {
+            s_in_melari_mines = true;
+            spawn_melari_mines_entities();
+            hal_audio_play_bgm(BGM_MINISH_WOODS);
+        }
+        s_was_dungeon_flames_active = dungeon_flames_is_active();
+
         if (dungeon_is_active()) {
             dungeon_update(&link.x, &link.y, &link.dir, link.is_moving,
                            &link.hearts, &link.rupees);
+        } else if (dungeon_flames_is_active()) {
+            dungeon_flames_update(&link.x, &link.y, &link.dir, link.is_moving,
+                                  &link.hearts, &link.rupees);
         }
 
         entity_manager_update(active_map, link.x, link.y,
@@ -2271,7 +2333,7 @@ int main(int argc, char* argv[]) {
         // Respawn de teste caso o Link zere os corações
         if (link.hearts <= 0) {
             link.hearts = link.max_hearts;
-            if (dungeon_is_active()) {
+            if (dungeon_is_active() || dungeon_flames_is_active()) {
                 link.x = 7.5f * TILE_SIZE;
                 link.y = 8.0f * TILE_SIZE;
             } else if (s_in_village) {
@@ -2317,7 +2379,7 @@ int main(int argc, char* argv[]) {
         } // Fim do bloco de gameplay (se não estiver em diálogo ativo)
 
         // Atualização da Câmera Virtual Widescreen (Segue o Link ou centraliza na Masmorra)
-        if (dungeon_is_active()) {
+        if (dungeon_is_active() || dungeon_flames_is_active()) {
             camera.viewport_w = widescreen ? 284 : 240;
             camera.viewport_h = 160;
             camera.x = (float)(256 - camera.viewport_w) / 2.0f;
@@ -2349,6 +2411,19 @@ int main(int argc, char* argv[]) {
             subweapon_render(&camera);
             // Renderiza efeito suave de transição de salas (wipe)
             dungeon_render_transition(&camera);
+        } else if (dungeon_flames_is_active()) {
+            // Renderiza Cave of Flames (lava ardente, trilhos, vagoneta, cilindro espinhoso)
+            dungeon_flames_render(&camera);
+            // Renderiza inimigos ativos da câmara (Fire Keese / Spiny Beetle)
+            entity_manager_render(&camera);
+            // Desenha Link se não estiver montado dentro da vagoneta
+            if (!dungeon_flames_is_link_riding_cart()) {
+                draw_link(&link, &camera);
+            }
+            // Renderiza subarmas ativas (Cajado de Pacci / Bumerangue / Bombas)
+            subweapon_render(&camera);
+            // Renderiza transição de salas
+            dungeon_flames_render_transition(&camera);
         } else {
             // 1. Renderiza o mapa com Frustum Culling inteligente
             map_render(active_map, &camera);
@@ -2412,14 +2487,18 @@ int main(int argc, char* argv[]) {
         subweapon_render_hud_icon(88, 1);
 
         // Contador de Bombas restantes quando a Bolsa de Bombas estiver equipada
-        if (subweapon_get_current() == ITEM_BOMBS && !dungeon_is_active()) {
+        if (subweapon_get_current() == ITEM_BOMBS && !dungeon_is_active() && !dungeon_flames_is_active()) {
             char b_txt[8];
             snprintf(b_txt, sizeof(b_txt), "%d", subweapon_get_bomb_count());
             font_draw_text(104, 3, b_txt, 0xFDE047FF, true);
         }
 
         // Contador de Chaves Pequenas da Masmorra (Small Keys 🔑 xN)
-        dungeon_render_hud_keys(106, 2);
+        if (dungeon_is_active()) {
+            dungeon_render_hud_keys(106, 2);
+        } else if (dungeon_flames_is_active()) {
+            dungeon_flames_render_hud_keys(106, 2);
+        }
 
         // Ícone das Nadadeiras de Zora (Zora's Flippers) no HUD
         if (link.has_flippers) {

@@ -9,6 +9,7 @@
 #include "hal/audio.h"
 #include "hal/font.h"
 #include "hal/entity.h"
+#include "hal/dungeon_flames.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -421,8 +422,11 @@ void subweapon_update(Tilemap* map, float link_x, float link_y, int* link_rupees
         s_pacci.life_timer--;
         s_pacci.anim_timer++;
 
-        // 1. Interação com o mapa (energiza buracos no solo e desvira carrinhos de mina)
-        if (map && map_interact_pacci(map, s_pacci.x + 4.0f, s_pacci.y + 4.0f)) {
+        // 1. Interação com o mapa ou dungeon flames (desvira carrinhos de mina)
+        if (dungeon_flames_is_active() && dungeon_flames_check_pacci_hit(s_pacci.x, s_pacci.y, 8.0f, 8.0f)) {
+            s_pacci.is_active = false;
+        }
+        else if (map && map_interact_pacci(map, s_pacci.x + 4.0f, s_pacci.y + 4.0f)) {
             s_pacci.is_active = false;
         }
         // 2. Colisão com obstáculos sólidos comuns (dissolve o projétil)
