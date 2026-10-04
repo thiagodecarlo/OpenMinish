@@ -468,5 +468,5 @@ void inventory_render_pause_menu(int screen_w, int screen_h, int hearts, int max
     }
 
     // 7. Legenda de Controles no Rodapé
-    font_draw_text(box_x + 8, box_y + box_h - 12, "[Z] Slot A   [X] Slot B   [ENTER] Voltar", 0x38BDF8FF, false);
+    font_draw_text(box_x + 8, box_y + box_h - 12, "[Z] A   [X] B   [S] Salvar   [ENTER] Voltar", 0x38BDF8FF, false);
 }
