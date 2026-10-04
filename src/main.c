@@ -13,6 +13,7 @@
 #include "hal/kinstone.h"
 #include "hal/dungeon.h"
 #include "hal/dungeon_flames.h"
+#include "hal/dungeon_fortress.h"
 #include "hal/inventory.h"
 #include "hal/save.h"
 #include "hal/sanctuary.h"
@@ -110,6 +111,10 @@ typedef struct {
     // Mecânica Canônica: Wind Ruins & Robô Armos
     bool has_armos_activated;      // Circuito do robô Armos ativado pelo Minish
     int  armos_banner_timer;       // Temporizador do banner do Armos
+
+    // Item Canônico: Ocarina do Vento (Ocarina of Wind) & Fortaleza dos Ventos
+    bool has_ocarina;              // Possui a Ocarina do Vento
+    int  ocarina_banner_timer;     // Temporizador do banner da Ocarina
 } Player;
 
 static const char* s_region_tags[REGION_COUNT] = { "usa", "eur", "jpn" };
@@ -1477,6 +1482,7 @@ int main(int argc, char* argv[]) {
     kinstone_init();
     dungeon_init();
     dungeon_flames_init();
+    dungeon_fortress_init();
     sanctuary_init();
     inventory_init();
     save_system_init();
@@ -1568,6 +1574,8 @@ int main(int argc, char* argv[]) {
     link.mole_mitts_banner_timer = 0;
     link.has_armos_activated = false;
     link.armos_banner_timer = 0;
+    link.has_ocarina = false;
+    link.ocarina_banner_timer = 0;
 
     // Carregamento automático de progresso salvo (Slot 1)
     if (save_exists(1)) {
@@ -1610,6 +1618,10 @@ int main(int argc, char* argv[]) {
             if (link.has_armos_activated) {
                 armos_circuit_set_active(true);
             }
+            link.has_ocarina = save.has_ocarina;
+            if (link.has_ocarina) {
+                inventory_unlock_item(INV_ITEM_OCARINA);
+            }
             if (save.bomb_count > 0) {
                 subweapon_add_bombs(save.bomb_count - subweapon_get_bomb_count());
             }
@@ -1640,6 +1652,8 @@ int main(int argc, char* argv[]) {
                 s_in_wind_ruins = true;
             } else if (save.current_map == 13) {
                 s_in_armos_interior = true;
+            } else if (save.current_map == 14) {
+                dungeon_fortress_enter(&link.x, &link.y, &link.dir);
             }
         }
     }
@@ -1728,7 +1742,8 @@ int main(int argc, char* argv[]) {
                                 current_save.player_y = link.y;
                                 current_save.player_dir = (int)link.dir;
                                 int cur_m = 0;
-                                if (s_in_armos_interior) cur_m = 13;
+                                if (dungeon_fortress_is_active()) cur_m = 14;
+                                else if (s_in_armos_interior) cur_m = 13;
                                 else if (s_in_wind_ruins) cur_m = 12;
                                 else if (s_in_mole_cave) cur_m = 11;
                                 else if (s_in_castor_wilds) cur_m = 10;
@@ -1756,6 +1771,7 @@ int main(int argc, char* argv[]) {
                                 current_save.has_bow = link.has_bow;
                                 current_save.has_mole_mitts = link.has_mole_mitts;
                                 current_save.has_armos_activated = link.has_armos_activated;
+                                current_save.has_ocarina = link.has_ocarina;
                                 current_save.slot_a = (int)inventory_get_slot_a();
                                 current_save.slot_b = (int)inventory_get_slot_b();
                                 if (save_game(1, &current_save)) {
@@ -1981,6 +1997,17 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
+                        case SDLK_i:
+                            if (!dungeon_is_active() && !dungeon_flames_is_active() && !sanctuary_is_active()) {
+                                if (dungeon_fortress_is_active()) {
+                                    dungeon_fortress_exit(&link.x, &link.y, &link.dir);
+                                    s_in_wind_ruins = true;
+                                    spawn_wind_ruins_entities(armos_circuit_is_active());
+                                } else {
+                                    dungeon_fortress_enter(&link.x, &link.y, &link.dir);
+                                }
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -2118,6 +2145,9 @@ int main(int argc, char* argv[]) {
             }
             if (link.armos_banner_timer > 0) {
                 link.armos_banner_timer--;
+            }
+            if (link.ocarina_banner_timer > 0) {
+                link.ocarina_banner_timer--;
             }
 
             // Ação com Botão A: Primeiro Natação (Mergulho), Portal Minish, Masmorra / Loja / Guarda / Cidadã / Baús / Swiftblade / NPCs, depois golpe de espada!
@@ -2743,6 +2773,10 @@ int main(int argc, char* argv[]) {
                     if (link.x <= 24.0f && link.dir == DIR_LEFT) {
                         transition_to_castor_from_ruins(&link);
                     }
+                    // Portão Leste monumental para Fortress of Winds (Dungeon 3)
+                    else if (link.x >= (active_map->width * TILE_SIZE) - 32.0f && link.y >= 40.0f && link.y <= 120.0f && link.dir == DIR_RIGHT) {
+                        dungeon_fortress_enter(&link.x, &link.y, &link.dir);
+                    }
                     // Infiltração Minish no Robô Armos adormecido
                     if (link.is_minish && (hal_input_is_pressed(KEY_A) || hal_input_is_pressed(KEY_R))) {
                         Entity* armos = entity_find_nearby_armos(link.x, link.y, 28.0f);
@@ -2929,6 +2963,14 @@ int main(int argc, char* argv[]) {
         }
         s_was_sanctuary_active = sanctuary_is_active();
 
+        static bool s_was_dungeon_fortress_active = false;
+        if (s_was_dungeon_fortress_active && !dungeon_fortress_is_active()) {
+            s_in_wind_ruins = true;
+            spawn_wind_ruins_entities(armos_circuit_is_active());
+            hal_audio_play_bgm(BGM_MINISH_WOODS);
+        }
+        s_was_dungeon_fortress_active = dungeon_fortress_is_active();
+
         if (dungeon_is_active()) {
             dungeon_update(&link.x, &link.y, &link.dir, link.is_moving,
                            &link.hearts, &link.rupees);
@@ -2951,6 +2993,24 @@ int main(int argc, char* argv[]) {
                 link.two_elements_banner_timer = 240;
                 hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.3f);
                 printf("[FOUR SWORD] White Sword infundida com Terra e Fogo! Divisao em 2 Clones!\n");
+            }
+        } else if (dungeon_fortress_is_active()) {
+            bool warp_to_surface = false;
+            dungeon_fortress_update(&link.x, &link.y, &link.dir, link.is_moving,
+                                    &link.hearts, &link.rupees, link.is_minish,
+                                    link.is_attacking, &warp_to_surface);
+            if (dungeon_fortress_has_ocarina() && !link.has_ocarina) {
+                link.has_ocarina = true;
+                link.ocarina_banner_timer = 220;
+                inventory_unlock_item(INV_ITEM_OCARINA);
+                subweapon_set_current(ITEM_OCARINA_OF_WIND);
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.2f);
+                printf("[OCARINA] Link obteve a lendaria Ocarina do Vento (Ocarina of Wind)!\n");
+            }
+            if (warp_to_surface) {
+                dungeon_fortress_exit(&link.x, &link.y, &link.dir);
+                s_in_wind_ruins = true;
+                spawn_wind_ruins_entities(armos_circuit_is_active());
             }
         }
 
@@ -3016,7 +3076,7 @@ int main(int argc, char* argv[]) {
         } // Fim do bloco de gameplay (se não estiver em diálogo ativo)
 
         // Atualização da Câmera Virtual Widescreen (Segue o Link ou centraliza na Masmorra)
-        if (dungeon_is_active() || dungeon_flames_is_active()) {
+        if (dungeon_is_active() || dungeon_flames_is_active() || dungeon_fortress_is_active()) {
             camera.viewport_w = widescreen ? 284 : 240;
             camera.viewport_h = 160;
             camera.x = (float)(256 - camera.viewport_w) / 2.0f;
@@ -3064,6 +3124,12 @@ int main(int argc, char* argv[]) {
         } else if (sanctuary_is_active()) {
             // Renderiza o Santuário Elemental (mármore sagrado, vitrais, altar, pisos de clones)
             sanctuary_render(&camera, link.x, link.y, link.dir);
+            entity_manager_render(&camera);
+            draw_link(&link, &camera);
+            subweapon_render(&camera);
+        } else if (dungeon_fortress_is_active()) {
+            // Renderiza Fortress of Winds (Mazaal, ponte de vento, abismo, fresta minish)
+            dungeon_fortress_render(&camera, link.is_minish, link.x, link.y);
             entity_manager_render(&camera);
             draw_link(&link, &camera);
             subweapon_render(&camera);
@@ -3148,6 +3214,8 @@ int main(int argc, char* argv[]) {
             dungeon_render_hud_keys(106, 2);
         } else if (dungeon_flames_is_active()) {
             dungeon_flames_render_hud_keys(106, 2);
+        } else if (dungeon_fortress_is_active()) {
+            dungeon_fortress_render_hud_keys(106, 2);
         }
 
         // Ícone das Nadadeiras de Zora (Zora's Flippers) no HUD
@@ -3360,6 +3428,30 @@ int main(int argc, char* argv[]) {
 
             font_draw_text(ban_x + 26, ban_y + 6, "CIRCUITO ARMOS ATIVADO!", 0x38BDF8FF, true);
             font_draw_text(ban_x + 26, ban_y + 18, "Mecanismo Desperto pelo Minish!", 0xFDE047FF, true);
+        }
+
+        // 6h. Banner Festivo de Aquisição da Ocarina do Vento (Ocarina of Wind)
+        if (link.ocarina_banner_timer > 0) {
+            int ban_w = 216;
+            int ban_h = 32;
+            int ban_x = (ctx->render_width - ban_w) / 2;
+            int ban_y = 64;
+
+            draw_rect(ban_x - 2, ban_y - 2, ban_w + 4, ban_h + 4, 0x031B2AEE);
+            draw_rect(ban_x - 1, ban_y - 1, ban_w + 2, ban_h + 2, 0x38BDF8FF);
+            draw_rect(ban_x, ban_y, ban_w, ban_h, 0x082F49FF);
+            draw_rect(ban_x + 2, ban_y + 2, ban_w - 4, ban_h - 4, 0x0C4A6EEE);
+
+            // Ícone da Ocarina do Vento
+            draw_rect(ban_x + 7, ban_y + 11, 4, 4, 0x38BDF8FF); // Bocal
+            draw_rect(ban_x + 10, ban_y + 9, 13, 8, 0x0284C7FF); // Corpo azul
+            hal_video_put_pixel(ban_x + 14, ban_y + 11, 0x0F172AFF);
+            hal_video_put_pixel(ban_x + 18, ban_y + 11, 0x0F172AFF);
+            hal_video_put_pixel(ban_x + 16, ban_y + 13, 0x0F172AFF);
+            hal_video_put_pixel(ban_x + 12, ban_y + 10, 0xFFFFFFFF); // Brilho
+
+            font_draw_text(ban_x + 28, ban_y + 6, "OCARINA DO VENTO OBTIDA!", 0x38BDF8FF, true);
+            font_draw_text(ban_x + 28, ban_y + 18, "Invoque o Passaro Zeffa | Mazaal", 0xFDE047FF, true);
         }
 
         // Prompt de Interação para Infiltrar no Robô Armos (Link Minish próximo a Armos dormente)

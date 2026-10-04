@@ -40,6 +40,8 @@ typedef struct {
     bool  has_bow;
     bool  has_mole_mitts;
     bool  has_armos_activated;
+    bool  has_ocarina;
+    bool  dungeon_fortress_cleared;
     int   slot_a;
     int   slot_b;
     u32   unlocked_items_mask;

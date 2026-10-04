@@ -46,6 +46,7 @@ add_executable(zelda_port
     src/hal/kinstone.c
     src/hal/dungeon.c
     src/hal/dungeon_flames.c
+    src/hal/dungeon_fortress.c
     src/hal/inventory.c
     src/hal/save.c
     src/hal/sanctuary.c

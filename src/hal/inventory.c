@@ -111,6 +111,7 @@ const char* inventory_get_item_name(InventoryItem item) {
         case INV_ITEM_ROCS_CAPE:     return "Capa de Roc";
         case INV_ITEM_BOW:           return "Arco e Flechas";
         case INV_ITEM_GRIP_RING:     return "Anel de Escalada (Grip Ring)";
+        case INV_ITEM_OCARINA:       return "Ocarina do Vento";
         default:                     return "---";
     }
 }
@@ -143,6 +144,8 @@ const char* inventory_get_item_desc(InventoryItem item) {
             return "Arco de precisão. Dispara flechas e aciona interruptores distantes.";
         case INV_ITEM_GRIP_RING:
             return "Anel com garras de escalada. Permite escalar escarpas e paredões de rocha.";
+        case INV_ITEM_OCARINA:
+            return "Instrumento celestial da Tribo dos Ventos. Toque para invocar o passaro Zeffa!";
         default:
             return "Slot de inventário vazio.";
     }
@@ -200,6 +203,7 @@ void inventory_assign_to_slot_b(void) {
     else if (s_slot_b == INV_ITEM_CANE_OF_PACCI)  subweapon_set_current(ITEM_CANE_OF_PACCI);
     else if (s_slot_b == INV_ITEM_BOW)            subweapon_set_current(ITEM_BOW);
     else if (s_slot_b == INV_ITEM_MOLE_MITTS)     subweapon_set_current(ITEM_MOLE_MITTS);
+    else if (s_slot_b == INV_ITEM_OCARINA)        subweapon_set_current(ITEM_OCARINA_OF_WIND);
 
     hal_audio_play_sound(SOUND_ITEM_CATCH, 0.9f, 1.2f);
     printf("[INVENTORY] Atribuido ao Botao [B]: %s\n", inventory_get_item_name(sel));
@@ -370,6 +374,27 @@ static void draw_item_icon(int x, int y, InventoryItem item) {
             hal_video_put_pixel(x + 11, y + 4, 0x94A3B8FF);
             // Rubi central
             hal_video_put_pixel(x + 7, y + 7, 0xEF4444FF);
+            break;
+
+        case INV_ITEM_OCARINA:
+            // Ocarina azul do vento com bocal e furos de notas
+            for (int dy = 5; dy <= 9; dy++) {
+                for (int dx = 3; dx <= 11; dx++) {
+                    if ((dx >= 4 && dx <= 10) || (dy >= 6 && dy <= 8))
+                        hal_video_put_pixel(x + dx, y + dy, 0x0284C7FF); // Azul real
+                }
+            }
+            // Bocal da ocarina
+            hal_video_put_pixel(x + 2, y + 6, 0x38BDF8FF);
+            hal_video_put_pixel(x + 2, y + 7, 0x38BDF8FF);
+            // Orifícios dos dedos (furos de notas)
+            hal_video_put_pixel(x + 5, y + 7, 0x0F172AFF);
+            hal_video_put_pixel(x + 7, y + 6, 0x0F172AFF);
+            hal_video_put_pixel(x + 7, y + 8, 0x0F172AFF);
+            hal_video_put_pixel(x + 9, y + 7, 0x0F172AFF);
+            // Brilho cintilante de vento
+            hal_video_put_pixel(x + 4, y + 5, 0xBAE6FDFF);
+            hal_video_put_pixel(x + 10, y + 6, 0xFFFFFFFF);
             break;
 
         default:

@@ -10,6 +10,7 @@
 #include "hal/font.h"
 #include "hal/entity.h"
 #include "hal/dungeon_flames.h"
+#include "hal/dungeon_fortress.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -166,6 +167,7 @@ const char* subweapon_get_name(SubweaponType item) {
         case ITEM_CANE_OF_PACCI: return "Cajado de Pacci (Inversao)";
         case ITEM_BOW:           return "Arco e Flechas (Bow)";
         case ITEM_MOLE_MITTS:    return "Luvas de Toupeira (Mole Mitts)";
+        case ITEM_OCARINA_OF_WIND: return "Ocarina do Vento (Ocarina)";
         default:                 return "Nenhum";
     }
 }
@@ -293,6 +295,9 @@ void subweapon_use_pressed(float link_x, float link_y, Direction dir) {
         s_mitts.target_x = fx;
         s_mitts.target_y = fy;
         hal_audio_play_sound(SOUND_SWORD_SLASH, 0.85f, 1.6f);
+    } else if (s_current_item == ITEM_OCARINA_OF_WIND) {
+        hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.5f);
+        printf("[OCARINA] Link tocou a Cancao do Vento na Ocarina! Zeffa ouve o chamado!\n");
     }
 }
 
@@ -561,6 +566,9 @@ void subweapon_update(Tilemap* map, float link_x, float link_y, int* link_rupees
         if (map && map_hit_eye_statue(map, a->x + 4.0f, a->y + 4.0f)) {
             a->is_active = false;
             continue;
+        }
+        if (dungeon_fortress_is_active()) {
+            dungeon_fortress_shoot_arrow_hit(a->x + 4.0f, a->y + 4.0f);
         }
 
         // 2. Colisão com obstáculos sólidos (corta arbustos, ricocheteia ou quebra na parede)
@@ -1001,6 +1009,18 @@ void subweapon_render_hud_icon(int x, int y) {
         hal_video_put_pixel(x + 10, y + 5, 0xFFFFFFFF);
         hal_video_put_pixel(x + 10, y + 6, 0xFFFFFFFF);
         hal_video_put_pixel(x + 9, y + 7, 0xE2E8F0FF);
+    } else if (s_current_item == ITEM_OCARINA_OF_WIND) {
+        // Mini Ocarina azul do Vento
+        hal_video_put_pixel(x + 5, y + 5, 0x38BDF8FF); // Bocal
+        for (int dx = 6; dx <= 10; dx++) {
+            hal_video_put_pixel(x + dx, y + 4, 0x0284C7FF);
+            hal_video_put_pixel(x + dx, y + 5, 0x0284C7FF);
+            hal_video_put_pixel(x + dx, y + 6, 0x0369A1FF);
+        }
+        // Furos de notas
+        hal_video_put_pixel(x + 7, y + 5, 0x0F172AFF);
+        hal_video_put_pixel(x + 9, y + 5, 0x0F172AFF);
+        hal_video_put_pixel(x + 8, y + 4, 0xBAE6FDFF); // Brilho
     }
 }
 
