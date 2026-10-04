@@ -22,6 +22,7 @@
 #include "hal/library.h"
 #include "hal/lantern.h"
 #include "hal/veil_clouds.h"
+#include "hal/rocs_cape.h"
 #include <math.h>
 
 /*
@@ -137,6 +138,10 @@ typedef struct {
     // Item Canônico: Lanterna de Chamas (Flame Lantern)
     bool has_lantern;              // Possui a Lanterna de Chamas
     int  lantern_banner_timer;     // Temporizador do banner da Lanterna
+
+    // Item Canônico: Capa de Roc (Roc's Cape) - Salto Livre, Planar e Down-Thrust
+    bool has_rocs_cape;            // Possui a Capa de Roc
+    int  rocs_banner_timer;        // Temporizador do banner comemorativo
 } Player;
 
 static const char* s_region_tags[REGION_COUNT] = { "usa", "eur", "jpn" };
@@ -1384,10 +1389,9 @@ static void draw_link(const Player* p, const Camera* cam) {
     int px, py;
     map_world_to_screen(cam, p->x, p->y, &px, &py);
 
-    // Sombra oval no solo durante o super-salto vertical
+    // Sombra dinâmica no solo durante o salto vertical e planeio com a Capa de Roc
     if (p->z > 0.0f) {
-        draw_rect_blend(px + 2, py + 12, 12, 4, 0x05100766, 0.40f);
-        draw_rect_blend(px + 4, py + 11, 8, 6, 0x05100766, 0.40f);
+        rocs_cape_render_shadow(cam, p->x, p->y, p->z);
     }
     int render_offset_y = (int)p->z;
     py -= render_offset_y;
@@ -1568,6 +1572,9 @@ static void draw_link(const Player* p, const Camera* cam) {
     draw_link_climbing_effects(p, px, py);
     draw_link_mud_effects(p, px, py);
     draw_link_digging_effects(p, px, py);
+    if (p->has_rocs_cape || subweapon_get_current() == ITEM_ROCS_CAPE) {
+        rocs_cape_render(cam, p->x, p->y, p->dir, p->z);
+    }
 }
 
 static inline bool is_world_solid_for_player(const Tilemap* map, float wx, float wy, bool is_minish, bool has_flippers, bool has_grip_ring, float z) {
@@ -1762,6 +1769,9 @@ int main(int argc, char* argv[]) {
     link.veil_banner_timer = 0;
     link.cloud_banner_timer = 0;
     veil_clouds_init();
+    link.has_rocs_cape = false;
+    link.rocs_banner_timer = 0;
+    rocs_cape_init();
 
     // Carregamento automático de progresso salvo (Slot 1)
     if (save_exists(1)) {
@@ -1866,6 +1876,10 @@ int main(int argc, char* argv[]) {
             link.golden_kinstones_fused = save.golden_kinstones_fused;
             link.cloud_tornado_active = save.cloud_tornado_active;
             veil_clouds_set_golden_kinstones(save.golden_kinstones_fused);
+            link.has_rocs_cape = save.has_rocs_cape;
+            if (link.has_rocs_cape) {
+                inventory_unlock_item(INV_ITEM_ROCS_CAPE);
+            }
         }
     }
 
@@ -2001,6 +2015,7 @@ int main(int argc, char* argv[]) {
                                 current_save.has_veil_falls_unlocked = link.has_veil_falls_unlocked;
                                 current_save.golden_kinstones_fused = veil_clouds_get_golden_kinstones();
                                 current_save.cloud_tornado_active = veil_clouds_is_tornado_active();
+                                current_save.has_rocs_cape = link.has_rocs_cape;
                                 current_save.slot_a = (int)inventory_get_slot_a();
                                 current_save.slot_b = (int)inventory_get_slot_b();
                                 if (save_game(1, &current_save)) {
@@ -2316,6 +2331,18 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
+                        case SDLK_F6:
+                            link.has_rocs_cape = !link.has_rocs_cape;
+                            if (link.has_rocs_cape) {
+                                inventory_unlock_item(INV_ITEM_ROCS_CAPE);
+                                subweapon_set_current(ITEM_ROCS_CAPE);
+                                link.rocs_banner_timer = 200;
+                                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.2f);
+                                printf("[ROCS CAPE] [F6] Capa de Roc EQUIPADA no botao [B]!\n");
+                            } else {
+                                printf("[ROCS CAPE] [F6] Capa de Roc DESEQUIPADA.\n");
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -2478,7 +2505,11 @@ int main(int argc, char* argv[]) {
 
             // Ação com Botão A: Primeiro Natação (Mergulho), Portal Minish, Masmorra / Loja / Guarda / Cidadã / Baús / Swiftblade / NPCs, depois golpe de espada!
             if (hal_input_is_pressed(KEY_A) && !link.is_attacking && !link.is_spinning && !link.is_charging_spin) {
-                if (link.is_swimming) {
+                if (link.is_jumping && (link.has_rocs_cape || subweapon_get_current() == ITEM_ROCS_CAPE)) {
+                    if (rocs_cape_try_down_thrust(&link.z, &link.vz, link.is_jumping)) {
+                        // Down-Thrust iniciado com sucesso!
+                    }
+                } else if (link.is_swimming) {
                     if (!link.is_diving) {
                         link.is_diving = true;
                         link.dive_timer = 45;
@@ -2810,13 +2841,21 @@ int main(int argc, char* argv[]) {
             if (hal_input_is_pressed(KEY_B)) {
                 if (subweapon_get_current() == ITEM_PEGASUS_BOOTS) {
                     hal_audio_play_sound(SOUND_ROLL, 0.70f, 1.0f);
+                } else if (subweapon_get_current() == ITEM_ROCS_CAPE) {
+                    rocs_cape_use_pressed(&link.x, &link.y, link.dir, &link.z, &link.vz, &link.is_jumping);
                 }
                 subweapon_use_pressed(link.x, link.y, link.dir);
             }
             if (hal_input_is_held(KEY_B)) {
+                if (subweapon_get_current() == ITEM_ROCS_CAPE) {
+                    rocs_cape_use_held(&link.z, &link.vz, link.is_jumping);
+                }
                 subweapon_use_held(link.x, link.y, link.dir);
             }
             if (hal_input_is_released(KEY_B)) {
+                if (subweapon_get_current() == ITEM_ROCS_CAPE) {
+                    rocs_cape_use_released();
+                }
                 subweapon_use_released(link.x, link.y, link.dir);
             }
 
@@ -2931,7 +2970,11 @@ int main(int argc, char* argv[]) {
             printf("[CANE OF PACCI] Link pisou no buraco energizado! Super salto vertical no ar!\n");
         }
 
-        if (link.is_jumping || link.z > 0.0f) {
+        if (subweapon_get_current() == ITEM_ROCS_CAPE || link.has_rocs_cape) {
+            rocs_cape_update(&link.x, &link.y, link.dir, link.is_moving,
+                             &link.z, &link.vz, &link.is_jumping,
+                             active_map, &link.hearts);
+        } else if (link.is_jumping || link.z > 0.0f) {
             link.z += link.vz;
             link.vz -= 0.22f; // Gravidade
             if (link.z <= 0.0f) {
@@ -2946,7 +2989,7 @@ int main(int argc, char* argv[]) {
         // --------------------------------------------------------------------
         // LÓGICA DE LODO MOVEDIÇO & AFUNDAMENTO NO PÂNTANO (CASTOR WILDS MUD)
         // --------------------------------------------------------------------
-        bool in_swamp_mud = map_is_swamp_mud(active_map, link.x + 8.0f, link.y + 12.0f);
+        bool in_swamp_mud = (link.z <= 0.0f) && map_is_swamp_mud(active_map, link.x + 8.0f, link.y + 12.0f);
         bool is_dashing = hal_input_is_held(KEY_B) && subweapon_get_current() == ITEM_PEGASUS_BOOTS && !link.is_swimming && !link.is_climbing;
 
         if (in_swamp_mud) {
@@ -2980,10 +3023,12 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        // Modificador de Velocidade: Dash / Pegasus Boots (Botao B segurado), Lodo do Pântano, Carga da Espada, Natação ou Escalada
+        // Modificador de Velocidade: Dash / Pegasus Boots (Botao B segurado), Planeio da Capa de Roc, Lodo do Pântano, Carga da Espada, Natação ou Escalada
         float dash_mult = 1.0f;
         if (is_dashing) {
             dash_mult = 1.85f; // Arrancada veloz das Botas de Pegasus!
+        } else if (rocs_cape_is_gliding()) {
+            dash_mult = 1.45f; // Planeio aerodinâmico veloz com a Capa de Roc!
         } else if (in_swamp_mud) {
             dash_mult = 0.38f; // Lama viscosa pesada retém os passos do herói
         } else if (link.is_charging_spin) {
@@ -3622,6 +3667,9 @@ int main(int argc, char* argv[]) {
             subweapon_render(&camera);
         }
 
+        // 4b. Anel de Choque do Impacto de Down-Thrust (Roc's Cape)
+        rocs_cape_render_shockwave(&camera);
+
         // 2b. Máscara de Iluminação Dinâmica da Flame Lantern (Dark Rooms & Dungeons)
         lantern_render_lighting(&camera, link.x, link.y, active_map, false);
 
@@ -4128,6 +4176,36 @@ int main(int argc, char* argv[]) {
             font_draw_text(bx + 4, by + 13, b2, 0xE0F2FEFF, false);
         }
 
+        // Prompt da Capa de Roc se equipada
+        if (subweapon_get_current() == ITEM_ROCS_CAPE && !dialogue_is_active() && !inventory_is_paused()) {
+            const char* rc_info = link.is_jumping ?
+                (rocs_cape_is_gliding() ? "PLANANDO NO AR (CAPA DE ROC) | [A] DOWN-THRUST" :
+                 (rocs_cape_is_down_thrust() ? "DOWN-THRUST EM QUEDA!" : "[B] PLANAR | [A] DOWN-THRUST")) :
+                "CAPA DE ROC [B: PULAR / PLANAR]";
+            int tw = 216;
+            int px = (ctx->render_width - tw) / 2;
+            int py = ctx->render_height - 18;
+            draw_rect(px - 4, py - 2, tw + 8, 14, 0x1E0505EE);
+            draw_rect(px - 3, py - 1, tw + 6, 12, 0xEF4444FF);
+            draw_rect(px - 2, py, tw + 4, 10, 0x380A0AEE);
+            font_draw_text(px, py + 1, rc_info, 0xFDE047FF, true);
+        }
+
+        // Banner comemorativo de aquisição da Capa de Roc
+        if (link.rocs_banner_timer > 0) {
+            link.rocs_banner_timer--;
+            const char* b1 = "CAPA DE ROC (ROC'S CAPE) ADQUIRIDA!";
+            const char* b2 = "Salto Acrobatico: Pule, plane sobre abismos e execute o Down-Thrust!";
+            int bw = 240;
+            int bx = (ctx->render_width - bw) / 2;
+            int by = 35;
+            draw_rect(bx - 6, by - 4, bw + 12, 30, 0x1E0505EE);
+            draw_rect(bx - 5, by - 3, bw + 10, 28, 0xEF4444FF);
+            draw_rect(bx - 4, by - 2, bw + 8, 26, 0x3F0A0AEE);
+            font_draw_text(bx + 15, by + 1, b1, 0xFDE047FF, true);
+            font_draw_text(bx + 4, by + 13, b2, 0xFEE2E2FF, false);
+        }
+
         // 10b. Sistema de Transporte Rapido: Ocarina of Wind, Zeffa e Mapa de Cristas de Vento
         fast_travel_render(&camera, link.x, link.y);
 
@@ -4162,6 +4240,7 @@ int main(int argc, char* argv[]) {
     if (s_lake_hylia_map)      map_destroy(s_lake_hylia_map);
     dungeon_droplets_shutdown();
     veil_clouds_shutdown();
+    rocs_cape_shutdown();
     map_destroy(world_map);
     hal_audio_shutdown();
     hal_input_shutdown();

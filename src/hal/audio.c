@@ -1222,6 +1222,59 @@ static void synth_generate_all_sfx(void) {
         s_precalc_sfx[SOUND_FIRE].total_frames = num_frames;
         s_precalc_sfx[SOUND_FIRE].is_stereo = false;
     }
+
+    // 42. SOUND_ROCS_JUMP: Salto acrobático no ar com Capa de Roc (220ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.220f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float progress = t / 0.220f;
+            float env = expf(-6.0f * t);
+
+            // Frequência ascendente de salto (280 Hz -> 920 Hz)
+            float freq = 280.0f + 640.0f * (progress * progress);
+            phase += freq / (float)AUDIO_SAMPLE_RATE;
+
+            float wave = sinf(2.0f * PI_F * phase) * 0.70f + synth_triangle_wave(phase) * 0.30f;
+            float total = wave * env * 25000.0f;
+
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_ROCS_JUMP].samples = buf;
+        s_precalc_sfx[SOUND_ROCS_JUMP].total_frames = num_frames;
+        s_precalc_sfx[SOUND_ROCS_JUMP].is_stereo = false;
+    }
+
+    // 43. SOUND_ROCS_GLIDE: Tremular e esvoaçar suave do tecido no ar (280ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.280f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float flutter_phase = 0.0f;
+        float wind_phase = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = sinf(PI_F * (t / 0.280f)); // Fade-in e Fade-out macio
+
+            flutter_phase += 14.0f / (float)AUDIO_SAMPLE_RATE; // Tremular a 14 Hz
+            float flap = 0.6f + 0.4f * sinf(2.0f * PI_F * flutter_phase);
+
+            wind_phase += 320.0f / (float)AUDIO_SAMPLE_RATE;
+            float noise = synth_noise() * 0.45f;
+            float tone = sinf(2.0f * PI_F * wind_phase) * 0.25f;
+
+            float total = (noise + tone) * flap * env * 22000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_ROCS_GLIDE].samples = buf;
+        s_precalc_sfx[SOUND_ROCS_GLIDE].total_frames = num_frames;
+        s_precalc_sfx[SOUND_ROCS_GLIDE].is_stereo = false;
+    }
 }
 
 // ----------------------------------------------------------------------------

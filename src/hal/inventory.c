@@ -204,6 +204,8 @@ void inventory_assign_to_slot_b(void) {
     else if (s_slot_b == INV_ITEM_BOW)            subweapon_set_current(ITEM_BOW);
     else if (s_slot_b == INV_ITEM_MOLE_MITTS)     subweapon_set_current(ITEM_MOLE_MITTS);
     else if (s_slot_b == INV_ITEM_OCARINA)        subweapon_set_current(ITEM_OCARINA_OF_WIND);
+    else if (s_slot_b == INV_ITEM_LANTERN)        subweapon_set_current(ITEM_FLAME_LANTERN);
+    else if (s_slot_b == INV_ITEM_ROCS_CAPE)      subweapon_set_current(ITEM_ROCS_CAPE);
 
     hal_audio_play_sound(SOUND_ITEM_CATCH, 0.9f, 1.2f);
     printf("[INVENTORY] Atribuido ao Botao [B]: %s\n", inventory_get_item_name(sel));

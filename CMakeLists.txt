@@ -55,6 +55,7 @@ add_executable(zelda_port
     src/hal/save.c
     src/hal/sanctuary.c
     src/hal/veil_clouds.c
+    src/hal/rocs_cape.c
 )
 
 # Adiciona nossas pastas de cabeçalhos (.h) para que o C encontre #include "gba/types.h"

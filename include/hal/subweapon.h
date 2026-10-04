@@ -33,6 +33,7 @@ typedef enum {
     ITEM_MOLE_MITTS,      // Luvas de Toupeira (Escavação de terra fofa e paredes)
     ITEM_OCARINA_OF_WIND, // Ocarina do Vento (Canção do Vento / Zeffa)
     ITEM_FLAME_LANTERN,   // Lanterna de Chamas (Iluminação dinâmica, acender tochas, derreter gelo)
+    ITEM_ROCS_CAPE,       // Capa de Roc (Salto acrobático, planar no ar e Down-Thrust)
     ITEM_COUNT
 } SubweaponType;
 

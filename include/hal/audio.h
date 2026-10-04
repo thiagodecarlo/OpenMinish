@@ -62,6 +62,8 @@ typedef enum {
     SOUND_BOMB_EXPLODE,    // Detonação explosiva estrondosa de bomba com onda de choque
     SOUND_WALL_CRUMBLE,    // Desmoronamento de parede rachada ou rocha estilhaçada
     SOUND_FIRE,            // Labareda e chamas ardentes da Flame Lantern
+    SOUND_ROCS_JUMP,       // Salto acrobático impulsionado pela Capa de Roc (Roc's Cape)
+    SOUND_ROCS_GLIDE,      // Tremular suave e planar no ar com a Capa de Roc
     SOUND_COUNT
 } SoundEffect;
 

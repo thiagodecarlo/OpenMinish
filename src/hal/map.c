@@ -3711,3 +3711,19 @@ bool map_interact_lantern(Tilemap* map, float world_x, float world_y, int* out_t
     return false;
 }
 
+bool map_is_pit(const Tilemap* map, float world_x, float world_y) {
+    if (!map) return false;
+    if (world_x < 0.0f || world_y < 0.0f) return false;
+
+    int tx = (int)(world_x / TILE_SIZE);
+    int ty = (int)(world_y / TILE_SIZE);
+
+    if (tx < 0 || tx >= map->width || ty < 0 || ty >= map->height) return false;
+
+    int idx = ty * map->width + tx;
+    if (map->ground_layer && map->ground_layer[idx] == TILE_FORTRESS_PIT) return true;
+    if (map->overlay_layer && map->overlay_layer[idx] == TILE_FORTRESS_PIT) return true;
+
+    return false;
+}
+
