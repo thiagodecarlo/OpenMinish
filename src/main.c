@@ -101,9 +101,11 @@ typedef struct {
     bool has_water_element;         // Conquistado ao derrotar Big Octorok no Temple of Droplets
     int  water_element_banner_timer;// Temporizador do banner festivo de obtenção
 
-    // Habilidade Lendária Four Sword: Infusão de 2 Elementos & Clones
+    // Habilidade Lendária Four Sword: Infusão de 2 e 3 Elementos & Clones
     bool has_two_elements;          // White Sword (Two Elements) infundida no Santuário
     int  two_elements_banner_timer; // Temporizador do banner da Four Sword
+    bool has_three_elements;        // White Sword (Three Elements) infundida no Santuário
+    int  three_elements_banner_timer; // Temporizador do banner dos 3 Elementos
 
     // Item Canônico: Arco e Flechas & Pântano de Castor Wilds
     bool has_bow;                  // Possui o Arco e Flechas
@@ -1735,6 +1737,8 @@ int main(int argc, char* argv[]) {
     link.lantern_banner_timer = 0;
     link.has_water_element = false;
     link.water_element_banner_timer = 0;
+    link.has_three_elements = false;
+    link.three_elements_banner_timer = 0;
 
     // Carregamento automático de progresso salvo (Slot 1)
     if (save_exists(1)) {
@@ -1753,8 +1757,11 @@ int main(int argc, char* argv[]) {
             link.has_cane_of_pacci = save.has_cane_of_pacci;
             link.has_white_sword = save.has_white_sword;
             link.has_two_elements = save.has_two_elements;
+            link.has_three_elements = save.has_three_elements;
             link.has_bow = save.has_bow;
-            if (link.has_two_elements) {
+            if (link.has_three_elements) {
+                sanctuary_set_three_elements(true);
+            } else if (link.has_two_elements) {
                 sanctuary_set_two_elements(true);
             }
             if (link.has_grip_ring) {
@@ -1945,6 +1952,7 @@ int main(int argc, char* argv[]) {
                                 current_save.has_cane_of_pacci = link.has_cane_of_pacci;
                                 current_save.has_white_sword = link.has_white_sword;
                                 current_save.has_two_elements = link.has_two_elements;
+                                current_save.has_three_elements = link.has_three_elements;
                                 current_save.has_water_element = link.has_water_element;
                                 current_save.has_bow = link.has_bow;
                                 current_save.has_mole_mitts = link.has_mole_mitts;
@@ -2245,6 +2253,16 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
+                        case SDLK_F4:
+                            if (sanctuary_is_active()) {
+                                sanctuary_set_three_elements(true);
+                                link.has_three_elements = true;
+                                link.three_elements_banner_timer = 200;
+                                printf("[DEBUG] [F4] Infusao de 3 Elementos ativada no Santuario!\n");
+                            } else if (!dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active() && !dungeon_droplets_is_active()) {
+                                transition_to_sanctuary(&link);
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -2372,6 +2390,9 @@ int main(int argc, char* argv[]) {
             if (link.two_elements_banner_timer > 0) {
                 link.two_elements_banner_timer--;
             }
+            if (link.three_elements_banner_timer > 0) {
+                link.three_elements_banner_timer--;
+            }
             if (subweapon_get_current() == ITEM_BOW && !link.has_bow) {
                 link.has_bow = true;
                 inventory_unlock_item(INV_ITEM_BOW);
@@ -2443,9 +2464,14 @@ int main(int argc, char* argv[]) {
                             hal_audio_play_sound(SOUND_SWORD_SLASH, link.is_minish ? 0.7f : 1.0f, link.is_minish ? 1.38f : 1.0f);
                         }
                     } else if (sanctuary_is_active()) {
-                        if (sanctuary_interact(link.x, link.y, link.has_white_sword, true, link.has_fire_element)) {
-                            link.has_two_elements = true;
-                            link.two_elements_banner_timer = 240;
+                        if (sanctuary_interact(link.x, link.y, link.has_white_sword, true, link.has_fire_element, link.has_water_element)) {
+                            if (link.has_water_element && !link.has_three_elements) {
+                                link.has_three_elements = true;
+                                link.three_elements_banner_timer = 240;
+                            } else {
+                                link.has_two_elements = true;
+                                link.two_elements_banner_timer = 240;
+                            }
                         } else {
                             link.is_attacking = true;
                             link.attack_timer = 12;
@@ -2621,11 +2647,16 @@ int main(int argc, char* argv[]) {
                     dungeon_droplets_check_boss_sword_hit(hit_x, hit_y, hit_w, hit_h, sword_dmg, link.dir);
                 }
 
-                // Ataque sincronizado do Clone da Four Sword
-                float c_hx, c_hy, c_hw, c_hh;
-                int c_dmg;
-                if (sanctuary_get_clone_sword_hitbox(&c_hx, &c_hy, &c_hw, &c_hh, &c_dmg)) {
-                    entity_check_sword_hit(c_hx, c_hy, c_hw, c_hh, c_dmg, sanctuary_get_clone()->dir);
+                // Ataque sincronizado dos Clones da Four Sword (até 2 clones)
+                for (int c = 0; c < MAX_SANCTUARY_CLONES; c++) {
+                    float c_hx, c_hy, c_hw, c_hh;
+                    int c_dmg;
+                    if (sanctuary_get_any_clone_sword_hitbox(c, &c_hx, &c_hy, &c_hw, &c_hh, &c_dmg)) {
+                        CloneState* cl = sanctuary_get_clone_at(c);
+                        if (cl) {
+                            entity_check_sword_hit(c_hx, c_hy, c_hw, c_hh, c_dmg, cl->dir);
+                        }
+                    }
                 }
 
                 // Interação da espada com o cenário (cortar arbustos ou abrir baú no overworld)
@@ -2689,6 +2720,12 @@ int main(int argc, char* argv[]) {
                 // 2 HP / 4 HP de dano duplicado e knockback radial centrífugo
                 int spin_dmg = link.has_white_sword ? 4 : 2;
                 entity_check_spin_attack_hit(spin_cx, spin_cy, spin_r, spin_dmg);
+                for (int c = 0; c < MAX_SANCTUARY_CLONES; c++) {
+                    CloneState* cl = sanctuary_get_clone_at(c);
+                    if (cl && cl->active) {
+                        entity_check_spin_attack_hit(cl->x + 8.0f, cl->y + 8.0f, spin_r, spin_dmg);
+                    }
+                }
                 if (dungeon_droplets_is_active()) {
                     dungeon_droplets_check_boss_sword_hit(spin_cx - spin_r, spin_cy - spin_r, spin_r * 2.0f, spin_r * 2.0f, spin_dmg, link.dir);
                 }
@@ -3301,7 +3338,12 @@ int main(int argc, char* argv[]) {
                              link.is_charging_spin, link.spin_ready,
                              link.is_attacking, link.attack_timer,
                              &link.hearts);
-            if (sanctuary_has_two_elements() && !link.has_two_elements) {
+            if (sanctuary_has_three_elements() && !link.has_three_elements) {
+                link.has_three_elements = true;
+                link.three_elements_banner_timer = 240;
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.4f);
+                printf("[FOUR SWORD] White Sword infundida com Terra, Fogo e Agua! Divisao em 3 Clones!\n");
+            } else if (sanctuary_has_two_elements() && !link.has_two_elements) {
                 link.has_two_elements = true;
                 link.two_elements_banner_timer = 240;
                 hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.3f);
@@ -3700,6 +3742,30 @@ int main(int argc, char* argv[]) {
 
             font_draw_text(ban_x + 26, ban_y + 6, "ESPADA BRANCA (2 ELEMENTOS)!", 0xFFFFFFFF, true);
             font_draw_text(ban_x + 26, ban_y + 18, "DIVISAO FOUR SWORD (2 CLONES)!", 0x38BDF8FF, true);
+        }
+
+        // 6d2. Banner Festivo da Four Sword: White Sword (Three Elements)
+        if (link.three_elements_banner_timer > 0) {
+            int ban_w = 224;
+            int ban_h = 32;
+            int ban_x = (ctx->render_width - ban_w) / 2;
+            int ban_y = 64;
+
+            draw_rect(ban_x - 2, ban_y - 2, ban_w + 4, ban_h + 4, 0x061826EE);
+            draw_rect(ban_x - 1, ban_y - 1, ban_w + 2, ban_h + 2, 0x06B6D4FF);
+            draw_rect(ban_x, ban_y, ban_w, ban_h, 0x0A2540FF);
+            draw_rect(ban_x + 2, ban_y + 2, ban_w - 4, ban_h - 4, 0x0E3A64EE);
+
+            // Icones dos 3 Clones da Four Sword (tres herois: Verde, Vermelho, Azul)
+            draw_rect(ban_x + 4, ban_y + 7, 6, 14, 0x22C55EFF);  // Link 1 (Verde)
+            draw_rect(ban_x + 11, ban_y + 7, 6, 14, 0xEF4444FF); // Link 2 (Vermelho)
+            draw_rect(ban_x + 18, ban_y + 7, 6, 14, 0x0284C7FF); // Link 3 (Azul)
+            hal_video_put_pixel(ban_x + 7, ban_y + 9, 0xFDE8CDFF);
+            hal_video_put_pixel(ban_x + 14, ban_y + 9, 0xFDE8CDFF);
+            hal_video_put_pixel(ban_x + 21, ban_y + 9, 0xFDE8CDFF);
+
+            font_draw_text(ban_x + 28, ban_y + 6, "ESPADA BRANCA (3 ELEMENTOS)!", 0xFFFFFFFF, true);
+            font_draw_text(ban_x + 28, ban_y + 18, "DIVISAO FOUR SWORD (3 CLONES)!", 0x38BDF8FF, true);
         }
 
         // 6e. Banner Festivo de Aquisição do Arco e Flechas (Bow & Arrow)
