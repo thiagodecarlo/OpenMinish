@@ -375,30 +375,44 @@ static void draw_link(const Player* p, const Camera* cam) {
     // RENDERIZADOR AUTÊNTICO COM SPRITES EXTRAÍDOS DA ROM
     // ------------------------------------------------------------------------
     if (s_link_tex && s_link_tex->pixels) {
-        int f_idx = 0;
+        int row = 0;
+        int col = 0;
         bool flip_h = false;
 
-        // Animação com alternância de passos (Down: 0/4, Right: 1/5, Up: 2/6)
-        if (p->dir == DIR_DOWN) {
-            f_idx = (p->is_moving && p->anim_frame == 1) ? 4 : 0;
-        } else if (p->dir == DIR_UP) {
-            f_idx = (p->is_moving && p->anim_frame == 1) ? 6 : 2;
-        } else if (p->dir == DIR_RIGHT) {
-            f_idx = (p->is_moving && p->anim_frame == 1) ? 5 : 1;
-        } else if (p->dir == DIR_LEFT) {
-            f_idx = (p->is_moving && p->anim_frame == 1) ? 5 : 1;
-            flip_h = true;
+        if (!p->is_moving) {
+            // Linha 0: Frames Idle (0: Down, 1: Right, 2: Up, 3: Left)
+            row = 0;
+            if (p->dir == DIR_DOWN) {
+                col = 0;
+            } else if (p->dir == DIR_RIGHT) {
+                col = 1;
+            } else if (p->dir == DIR_UP) {
+                col = 2;
+            } else if (p->dir == DIR_LEFT) {
+                col = 3;
+            }
+        } else {
+            // Ciclo de caminhada canônico fluido de 10 quadros por direção
+            col = p->anim_frame % 10;
+            if (p->dir == DIR_DOWN) {
+                row = 1;
+            } else if (p->dir == DIR_RIGHT) {
+                row = 2;
+            } else if (p->dir == DIR_UP) {
+                row = 3;
+            } else if (p->dir == DIR_LEFT) {
+                row = 2;
+                flip_h = true; // Inversão horizontal perfeita e centrada para andar para a esquerda
+            }
         }
 
-        int src_x = (f_idx % 8) * 16;
-        int src_y = (f_idx / 8) * 24;
+        int src_x = col * 32;
+        int src_y = row * 32;
 
-        int draw_y = py - 6;
-        if (p->is_moving && p->anim_frame == 1) {
-            draw_y -= 1; // Sutil bobbing de caminhada clássica
-        }
+        int draw_x = px - 8;
+        int draw_y = py - 9;
 
-        texture_draw_ex(s_link_tex, src_x, src_y, 16, 24, px, draw_y, flip_h);
+        texture_draw_ex(s_link_tex, src_x, src_y, 32, 32, draw_x, draw_y, flip_h);
         draw_link_sword_effects(p, px, py);
         return;
     }
@@ -1081,14 +1095,17 @@ int main(int argc, char* argv[]) {
             hal_audio_play_sound(SOUND_SECRET, 0.7f, 0.8f);
         }
 
-        // Atualização da animação dos passos com frequência dinâmica proporcional
+        // Atualização da animação dos passos com frequência dinâmica proporcional (Ciclo fluido de 10 quadros)
         if (link.is_moving && actual_speed > 0.0f) {
-            link.anim_timer += (int)(actual_speed * 4.0f + 0.5f);
-            if (link.anim_timer >= 32) {
-                link.anim_frame = (link.anim_frame + 1) % 2;
+            link.anim_timer += (int)(actual_speed * 6.0f + 0.5f);
+            if (link.anim_timer >= 24) {
+                link.anim_frame = (link.anim_frame + 1) % 10;
                 link.anim_timer = 0;
-                float pitch = (link.anim_frame == 0) ? 0.94f : 1.06f;
-                hal_audio_play_sound(SOUND_FOOTSTEP, 0.45f, pitch);
+                if (link.anim_frame == 0) {
+                    hal_audio_play_sound(SOUND_FOOTSTEP, 0.45f, 0.94f);
+                } else if (link.anim_frame == 5) {
+                    hal_audio_play_sound(SOUND_FOOTSTEP, 0.45f, 1.06f);
+                }
             }
         } else {
             link.anim_frame = 0;

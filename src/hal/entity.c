@@ -324,7 +324,7 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
             }
             // Ação 1: Patrulha e Rastreamento de Proximidade
             else if (e->action == 1) {
-                float speed = 0.40f;
+                float speed = 0.25f; // Velocidade suave e cadenciada autêntica do GBA Minish Cap
                 float move_x = 0.0f;
                 float move_y = 0.0f;
 
@@ -369,7 +369,7 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
 
                     if (aligned_h || aligned_v) {
                         e->action = 2; // Prepara para atirar!
-                        e->aiTimer = 22; // 22 frames de antecipação (bochechas inchando)
+                        e->aiTimer = 42; // ~700ms de antecipação visual com bochechas infladas antes do disparo
                         if (fabsf(dx) > fabsf(dy)) {
                             e->dir = (dx > 0.0f) ? DIR_RIGHT : DIR_LEFT;
                         } else {
@@ -392,7 +392,7 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
 
                     Entity* rock = entity_spawn(ENTITY_PROJECTILE_ROCK, spawn_x, spawn_y);
                     if (rock) {
-                        float rock_speed = 2.2f;
+                        float rock_speed = 1.20f; // Velocidade equilibrada do projétil, permitindo esquiva e corte com espada
                         rock->dir = e->dir;
                         if (e->dir == DIR_DOWN)  rock->vy = rock_speed;
                         if (e->dir == DIR_UP)    rock->vy = -rock_speed;
@@ -402,7 +402,7 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
                     }
 
                     e->action = 1; // Retorna à patrulha
-                    e->aiTimer = 80; // Cooldown antes de poder atirar de novo
+                    e->aiTimer = 180; // 3.0 segundos de cooldown entre disparos (ritmo autêntico)
                 }
             }
 

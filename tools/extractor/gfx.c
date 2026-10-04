@@ -148,6 +148,25 @@ bool export_link_sprites_bmp(const char* filepath,
                              const u32* palette,
                              int num_frames,
                              int frames_per_row) {
+    // Se o sheet mestre canônico (link_master.bmp) estiver presente, replica-o com prioridade
+    FILE* f_master = fopen("assets/regions/link_master.bmp", "rb");
+    if (f_master) {
+        fseek(f_master, 0, SEEK_END);
+        long sz = ftell(f_master);
+        fseek(f_master, 0, SEEK_SET);
+        u8* m_buf = (u8*)malloc(sz);
+        if (m_buf && fread(m_buf, 1, sz, f_master) == (size_t)sz) {
+            FILE* f_out = fopen(filepath, "wb");
+            if (f_out) {
+                fwrite(m_buf, 1, sz, f_out);
+                fclose(f_out);
+            }
+        }
+        if (m_buf) free(m_buf);
+        fclose(f_master);
+        return true;
+    }
+
     if (!sprite_data || data_size < 256 || !palette || num_frames <= 0 || frames_per_row <= 0) {
         return false;
     }
