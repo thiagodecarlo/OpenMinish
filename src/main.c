@@ -72,9 +72,11 @@ static Texture* s_sheet0 = NULL;
 static Texture* s_sheet1 = NULL;
 static Texture* s_link_tex = NULL;
 static Texture* s_octo_tex = NULL;
-static Tilemap* s_world_map = NULL;
-static Tilemap* s_town_map  = NULL;
-static bool     s_in_town   = false;
+static Tilemap* s_world_map   = NULL;
+static Tilemap* s_town_map    = NULL;
+static Tilemap* s_village_map = NULL;
+static bool     s_in_town     = false;
+static bool     s_in_village  = false;
 static SelectedRegion s_current_region = REGION_USA;
 
 static void load_region_sheets(SelectedRegion region) {
@@ -198,6 +200,59 @@ static void transition_to_overworld(Player* link, Tilemap* world_map) {
     spawn_overworld_entities(world_map);
     hal_audio_play_bgm(BGM_MINISH_WOODS);
     printf("[SCENE] Retornando a Minish Woods / Overworld!\n");
+}
+
+static void spawn_minish_village_entities(void) {
+    entity_clear_all();
+
+    // 1. Ancião Gentari em seu Altar Sagrado ao norte da vila
+    entity_spawn(ENTITY_NPC_GENTARI, 248.0f, 60.0f);
+
+    // 2. Sacerdote Festari guardando a ermida a noroeste (caminho para Deepwood Shrine)
+    entity_spawn(ENTITY_NPC_FESTARI, 96.0f, 108.0f);
+
+    // 3. Habitantes e Moradores Minish passeando pela vila (com fragmentos de Kinstone)
+    entity_spawn(ENTITY_NPC_VILLAGE_MINISH, 144.0f, 252.0f);
+    entity_spawn(ENTITY_NPC_VILLAGE_MINISH, 384.0f, 108.0f);
+    entity_spawn(ENTITY_NPC_VILLAGE_MINISH, 384.0f, 280.0f);
+
+    // 4. Toco Minish (Portal de Encolhimento / Crescimento) junto ao jardim
+    Entity* stump = entity_spawn(ENTITY_MINISH_STUMP, 176.0f, 288.0f);
+    if (stump) stump->action = 0;
+
+    printf("[MINISH VILLAGE] Entidades da Vila spawnadas (Gentari, Festari, Moradores, Toco)!\n");
+}
+
+static void transition_to_minish_village(Player* link) {
+    if (dungeon_is_active()) return;
+    s_in_town = false;
+    s_in_village = true;
+    link->is_minish = true; // Link sempre no tamanho Minish na Vila dos Minish!
+    link->x = 248.0f; // Saída sul (x = 15.5 * 16)
+    link->y = 352.0f; // Entrada sul da vila (y = 22 * 16)
+    link->dir = DIR_UP;
+    link->is_moving = false;
+    spawn_minish_village_entities();
+    hal_audio_play_bgm(BGM_MINISH_VILLAGE);
+    printf("[SCENE] Entrando na Vila dos Minish (Picori Village)!\n");
+}
+
+static void transition_to_woods_from_village(Player* link, Tilemap* world_map) {
+    if (dungeon_is_active()) return;
+    s_in_town = false;
+    s_in_village = false;
+    if (world_map && world_map->is_authentic) {
+        link->x = 336.0f; // Topo do Tronco Oco (coluna 21 * 16 = 336)
+        link->y = 720.0f; // Logo acima da boca norte do tronco oco
+    } else {
+        link->x = 296.0f;
+        link->y = 240.0f;
+    }
+    link->dir = DIR_DOWN;
+    link->is_moving = false;
+    spawn_overworld_entities(world_map);
+    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    printf("[SCENE] Retornando a Minish Woods a partir da Vila dos Minish!\n");
 }
 
 static void draw_rect(int rx, int ry, int rw, int rh, u32 color) {
@@ -627,8 +682,9 @@ int main(int argc, char* argv[]) {
     printf("  - Fusao Kinstone: [K] ou [Gatilho L no Gamepad] (Unir pedras da sorte com NPCs parceiros!)\n");
     printf("  - Ciclar Itens:   [Q] ou [Gatilho L no Gamepad] (Alternar item secundario equipado)\n");
     printf("  - Falar com Ezlo: [E] ou [Select no Gamepad] (Dicas e orientacoes do gorro companheiro!)\n");
-    printf("  - Trilha Sonora:  [T] ou [Gatilho R no Gamepad] (Woods / Hyrule / Dungeon / Boss / Town)\n");
+    printf("  - Trilha Sonora:  [T] ou [Gatilho R no Gamepad] (Woods / Hyrule / Dungeon / Boss / Town / Village)\n");
     printf("  - Cidade Hyrule:  [H] Entrar/Sair do Hub da Cidade de Hyrule (Hyrule Town Hub!)\n");
+    printf("  - Vila Minish:    [V] Entrar/Sair da Vila dos Minish (Picori Village!)\n");
     printf("  - Masmorra:       [D] Entrar/Sair de Deepwood Shrine (ou caminhar ao santuario ao norte!)\n");
     printf("  - Segredo Zelda:  [M] (Chime lendario de 8 notas!)\n");
     printf("  - Trocar Regiao:  [1] USA | [2] EUR | [3] JPN\n");
@@ -658,6 +714,8 @@ int main(int argc, char* argv[]) {
     s_world_map = world_map;
     Tilemap* town_map = map_create_hyrule_town();
     s_town_map = town_map;
+    Tilemap* village_map = map_create_minish_village();
+    s_village_map = village_map;
     load_region_sheets(REGION_USA);
 
     // Inicialização da entidade do Link
@@ -752,6 +810,15 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
+                        case SDLK_v:
+                            if (!dungeon_is_active()) {
+                                if (s_in_village) {
+                                    transition_to_woods_from_village(&link, world_map);
+                                } else {
+                                    transition_to_minish_village(&link);
+                                }
+                            }
+                            break;
                         case SDLK_t:
                             hal_audio_cycle_bgm();
                             break;
@@ -817,7 +884,7 @@ int main(int argc, char* argv[]) {
         // 2. ATUALIZAÇÃO DA LÓGICA DO JOGADOR (INPUT -> FÍSICA)
         // --------------------------------------------------------------------
         const HalVideoContext* ctx = hal_video_get_context();
-        Tilemap* active_map = s_in_town ? s_town_map : world_map;
+        Tilemap* active_map = s_in_village ? s_village_map : (s_in_town ? s_town_map : world_map);
 
         if (link.is_transforming) {
             link.transform_timer--;
@@ -926,6 +993,25 @@ int main(int argc, char* argv[]) {
                                 link.is_attacking = true;
                                 link.attack_timer = 12;
                                 hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                            }
+                        }
+                    }
+                } else if (s_in_village) {
+                    Entity* gentari = entity_find_nearby_gentari(link.x, link.y, 30.0f);
+                    if (gentari) {
+                        dialogue_trigger_gentari_talk();
+                    } else {
+                        Entity* festari = entity_find_nearby_festari(link.x, link.y, 30.0f);
+                        if (festari) {
+                            dialogue_trigger_festari_talk();
+                        } else {
+                            Entity* villager = entity_find_nearby_village_minish(link.x, link.y, 28.0f);
+                            if (villager) {
+                                dialogue_trigger_village_minish_talk();
+                            } else {
+                                link.is_attacking = true;
+                                link.attack_timer = 12;
+                                hal_audio_play_sound(SOUND_SWORD_SLASH, 0.7f, 1.38f);
                             }
                         }
                     }
@@ -1206,12 +1292,25 @@ int main(int argc, char* argv[]) {
                 if (link.y < 16.0f) link.y = 16.0f;
                 if (link.y > (active_map->height * TILE_SIZE) - 32.0f) link.y = (active_map->height * TILE_SIZE) - 32.0f;
 
-                // Transição no Portão Sul de Hyrule Town (x entre 256 e 304, ao sul da praça)
-                if (s_in_town) {
+                // Transições de Mapa
+                if (s_in_village) {
+                    // Saída sul da Vila dos Minish de volta ao Tronco Oco
+                    if (link.x >= 232.0f && link.x <= 264.0f && link.y >= (active_map->height * TILE_SIZE) - 36.0f && link.dir == DIR_DOWN) {
+                        transition_to_woods_from_village(&link, world_map);
+                    }
+                } else if (s_in_town) {
+                    // Portão Sul de Hyrule Town (x entre 256 e 304, ao sul da praça)
                     if (link.x >= 256.0f && link.x <= 304.0f && link.y >= (active_map->height * TILE_SIZE) - 36.0f && link.dir == DIR_DOWN) {
                         transition_to_overworld(&link, world_map);
                     }
                 } else {
+                    // Em Minish Woods: Se estiver no tamanho Minish e atravessar a ponta norte do Tronco Oco (coluna 21)
+                    if (link.is_minish && world_map && world_map->is_authentic) {
+                        if (link.x >= 324.0f && link.x <= 348.0f && link.y <= 722.0f && link.dir == DIR_UP) {
+                            transition_to_minish_village(&link);
+                        }
+                    }
+
                     // Checagem de Entrada no Deepwood Shrine pelo archway do santuário ao norte
                     bool enter_shrine = false;
                     if (world_map && world_map->is_authentic) {
@@ -1271,7 +1370,9 @@ int main(int argc, char* argv[]) {
         // --------------------------------------------------------------------
         static bool s_was_dungeon_active = false;
         if (s_was_dungeon_active && !dungeon_is_active()) {
-            if (s_in_town) {
+            if (s_in_village) {
+                spawn_minish_village_entities();
+            } else if (s_in_town) {
                 spawn_town_entities();
             } else {
                 spawn_overworld_entities(world_map);
@@ -1297,6 +1398,9 @@ int main(int argc, char* argv[]) {
             if (dungeon_is_active()) {
                 link.x = 7.5f * TILE_SIZE;
                 link.y = 8.0f * TILE_SIZE;
+            } else if (s_in_village) {
+                link.x = 248.0f;
+                link.y = 352.0f;
             } else if (s_in_town) {
                 link.x = 280.0f;
                 link.y = 392.0f;

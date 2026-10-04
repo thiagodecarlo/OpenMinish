@@ -278,6 +278,40 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
                     break;
 
+                case ENTITY_NPC_GENTARI:
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1;
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
+                    break;
+
+                case ENTITY_NPC_FESTARI:
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1;
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
+                    break;
+
+                case ENTITY_NPC_VILLAGE_MINISH:
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1;
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
+                    e->hasKinstone   = true;
+                    e->kinstoneType  = 0; // KINSTONE_GREEN
+                    e->kinstoneFused = false;
+                    e->bubbleBob     = 0.0f;
+                    break;
+
                 default:
                     break;
             }
@@ -965,6 +999,25 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
         // 11. PORTAL MINISH (TOCO OU VASO)
         else if (e->type == ENTITY_MINISH_STUMP) {
             e->animTimer++;
+        }
+
+        // 12. NPCS DA VILA DOS MINISH (GENTARI, FESTARI, MORADORES PICORI)
+        else if (e->type == ENTITY_NPC_GENTARI || e->type == ENTITY_NPC_FESTARI || e->type == ENTITY_NPC_VILLAGE_MINISH) {
+            e->animTimer++;
+            if (e->type == ENTITY_NPC_VILLAGE_MINISH) {
+                e->bubbleBob += 0.08f;
+            }
+            float dx = link_x - e->x;
+            float dy = link_y - e->y;
+            if (dx * dx + dy * dy <= 40.0f * 40.0f) {
+                if (fabsf(dx) > fabsf(dy)) {
+                    e->dir = (dx > 0.0f) ? DIR_RIGHT : DIR_LEFT;
+                } else {
+                    e->dir = (dy > 0.0f) ? DIR_DOWN : DIR_UP;
+                }
+            } else {
+                e->dir = DIR_DOWN;
+            }
         }
     }
 }
@@ -2350,6 +2403,174 @@ void entity_manager_render(const Camera* cam) {
                 put_pixel_safe(sp_x + 1, sp_y, 0x00FFCC88);
             }
         }
+
+        // 14. NPC: ANCIÃO GENTARI (ELDER GENTARI DO SANTUÁRIO)
+        else if (e->type == ENTITY_NPC_GENTARI) {
+            int breathe = ((e->animTimer / 18) % 2 == 1) ? 1 : 0;
+            int gy = sy - breathe;
+
+            u32 c_mitre    = 0xF59E0BFF; // Mitra sagrada dourada
+            u32 c_gem      = 0x10B981FF; // Joia esmeralda Picori
+            u32 c_beard    = 0xFFFFFFFF; // Longa barba branca do anciao
+            u32 c_skin     = 0xFDE8CDFF; // Pele clara
+            u32 c_robe     = 0x7C3AEDFF; // Manto violeta cerimonial
+            u32 c_gold_trim= 0xFCD34DFF; // Detalhes dourados do manto
+            u32 c_eye      = 0x1E1B4BFF; // Olhos sabios
+
+            draw_filled_rect(sx + 3, sy + 13, 10, 3, 0x05100766); // Sombra
+
+            // Mitra cerimonial do Anciao Picori
+            draw_filled_rect(sx + 6, gy - 2, 4, 3, c_mitre);
+            draw_filled_rect(sx + 5, gy + 1, 6, 3, c_mitre);
+            put_pixel_safe(sx + 7, gy - 3, c_gem);
+            put_pixel_safe(sx + 8, gy - 3, c_gem);
+
+            // Rosto e orelhas
+            draw_filled_rect(sx + 5, gy + 4, 6, 4, c_skin);
+            put_pixel_safe(sx + 4, gy + 5, c_skin);
+            put_pixel_safe(sx + 11, gy + 5, c_skin);
+
+            if (e->dir != DIR_UP) {
+                put_pixel_safe(sx + 6, gy + 5, c_eye);
+                put_pixel_safe(sx + 9, gy + 5, c_eye);
+                // Longa barba branca de Anciao
+                draw_filled_rect(sx + 6, gy + 7, 4, 6, c_beard);
+                draw_filled_rect(sx + 7, gy + 13, 2, 2, c_beard);
+            } else {
+                // De costas: capuz e manto cobrem
+                draw_filled_rect(sx + 5, gy + 4, 6, 8, c_robe);
+            }
+
+            // Manto cerimonial violeta
+            draw_filled_rect(sx + 4, gy + 8, 8, 7, c_robe);
+            draw_filled_rect(sx + 7, gy + 8, 2, 7, c_gold_trim);
+
+            // Prompt quando Link estiver perto (<= 28px)
+            float dx = s_last_link_x - e->x;
+            float dy = s_last_link_y - e->y;
+            if (dx * dx + dy * dy <= 28.0f * 28.0f) {
+                int bounce = ((e->animTimer / 10) % 2 == 1) ? 1 : 0;
+                int prompt_x = sx - 16;
+                int prompt_y = gy - 16 + bounce;
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 52, 10, 0x1A0D28F0);
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 52, 1, 0xF59E0BFF);
+                font_draw_text(prompt_x + 2, prompt_y, "[A] Gentari", 0xFDE047FF, true);
+            }
+        }
+
+        // 15. NPC: SACERDOTE FESTARI (ERMIDA / DEEPWOOD SHRINE)
+        else if (e->type == ENTITY_NPC_FESTARI) {
+            int breathe = ((e->animTimer / 18) % 2 == 1) ? 1 : 0;
+            int fy = sy - breathe;
+
+            u32 c_hood     = 0x2563EBFF; // Capuz azul de sacerdote Picori
+            u32 c_hood_trim= 0xE0E7FFFF; // Borda branca do capuz
+            u32 c_skin     = 0xFDE8CDFF; // Pele clara
+            u32 c_robe     = 0x1D4ED8FF; // Habito azul
+            u32 c_stole    = 0xF59E0BFF; // Estola dourada sacerdotal
+            u32 c_eye      = 0x0F172AFF; // Olhos
+
+            draw_filled_rect(sx + 3, sy + 13, 10, 3, 0x05100766);
+
+            // Capuz de monge
+            draw_filled_rect(sx + 5, fy + 0, 6, 3, c_hood);
+            draw_filled_rect(sx + 4, fy + 3, 8, 4, c_hood);
+            draw_filled_rect(sx + 4, fy + 3, 8, 1, c_hood_trim);
+
+            // Rosto e orelhas
+            draw_filled_rect(sx + 5, fy + 4, 6, 4, c_skin);
+            put_pixel_safe(sx + 4, fy + 5, c_skin);
+            put_pixel_safe(sx + 11, fy + 5, c_skin);
+
+            if (e->dir != DIR_UP) {
+                put_pixel_safe(sx + 6, fy + 5, c_eye);
+                put_pixel_safe(sx + 9, fy + 5, c_eye);
+            } else {
+                draw_filled_rect(sx + 5, fy + 4, 6, 4, c_hood);
+            }
+
+            // Habito azul e estola sacerdotal
+            draw_filled_rect(sx + 4, fy + 8, 8, 7, c_robe);
+            draw_filled_rect(sx + 6, fy + 8, 4, 7, c_stole);
+
+            // Prompt quando Link estiver perto (<= 28px)
+            float dx = s_last_link_x - e->x;
+            float dy = s_last_link_y - e->y;
+            if (dx * dx + dy * dy <= 28.0f * 28.0f) {
+                int bounce = ((e->animTimer / 10) % 2 == 1) ? 1 : 0;
+                int prompt_x = sx - 16;
+                int prompt_y = fy - 16 + bounce;
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 50, 10, 0x0D1F38F0);
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 50, 1, 0x3B82F6FF);
+                font_draw_text(prompt_x + 2, prompt_y, "[A] Festari", 0x93C5FDFF, true);
+            }
+        }
+
+        // 16. NPC: MORADOR DA VILA DOS MINISH (PICORI VILLAGER)
+        else if (e->type == ENTITY_NPC_VILLAGE_MINISH) {
+            int breathe = ((e->animTimer / 16) % 2 == 1) ? 1 : 0;
+            int my = sy - breathe;
+
+            u32 c_hat   = 0x10B981FF; // Chapeu verde esmeralda
+            u32 c_skin  = 0xFDE8CDFF; // Pele clara
+            u32 c_tunic = 0xD97706FF; // Tunica terracota
+            u32 c_pom   = 0xFDE047FF; // Pom-pom dourado
+            u32 c_eye   = 0x111111FF; // Olhos
+
+            // Gorro pontudo
+            draw_filled_rect(sx + 6, my + 1, 4, 3, c_hat);
+            draw_filled_rect(sx + 5, my + 4, 6, 3, c_hat);
+            put_pixel_safe(sx + 7, my, c_pom);
+            put_pixel_safe(sx + 8, my, c_pom);
+
+            // Rosto e orelhas
+            draw_filled_rect(sx + 5, my + 7, 6, 4, c_skin);
+            put_pixel_safe(sx + 4, my + 8, c_skin);
+            put_pixel_safe(sx + 11, my + 8, c_skin);
+
+            if (e->dir == DIR_DOWN) {
+                put_pixel_safe(sx + 6, my + 8, c_eye);
+                put_pixel_safe(sx + 9, my + 8, c_eye);
+            } else if (e->dir == DIR_UP) {
+                draw_filled_rect(sx + 5, my + 7, 6, 4, c_hat);
+            } else if (e->dir == DIR_LEFT) {
+                put_pixel_safe(sx + 5, my + 8, c_eye);
+            } else if (e->dir == DIR_RIGHT) {
+                put_pixel_safe(sx + 10, my + 8, c_eye);
+            }
+
+            draw_filled_rect(sx + 5, my + 11, 6, 4, c_tunic);
+
+            // Balao de Fusao de Kinstone sobre a cabeca do Minish (se ainda nao fundiu)
+            if (e->hasKinstone && !e->kinstoneFused) {
+                int bubble_y = my - 16 + (int)(sinf(e->bubbleBob) * 2.0f);
+                int bubble_x = sx + 8;
+                draw_filled_rect(bubble_x - 7, bubble_y - 6, 14, 12, 0xFFFFFFFF);
+                draw_filled_rect(bubble_x - 8, bubble_y - 4, 16, 8, 0xFFFFFFFF);
+                draw_filled_rect(bubble_x - 6, bubble_y - 7, 12, 14, 0xFFFFFFFF);
+                u32 c_kinstone = 0x22C55EFF;
+                u32 c_kgold = 0xD4AF37FF;
+                for (int ky = -3; ky <= 3; ky++) {
+                    for (int kx = -3; kx <= 3; kx++) {
+                        if (kx * kx + ky * ky <= 9) {
+                            u32 col = (kx == 3 || kx == -3 || ky == 3 || ky == -3) ? c_kgold : c_kinstone;
+                            put_pixel_safe(bubble_x + kx, bubble_y + ky, col);
+                        }
+                    }
+                }
+                put_pixel_safe(bubble_x - 1, bubble_y - 1, 0xFFFFFFFF);
+            }
+
+            float dx = s_last_link_x - e->x;
+            float dy = s_last_link_y - e->y;
+            if (dx * dx + dy * dy <= 28.0f * 28.0f) {
+                int bounce = ((e->animTimer / 10) % 2 == 1) ? 1 : 0;
+                int prompt_x = sx - 16;
+                int prompt_y = my - 14 + bounce;
+                draw_filled_rect(prompt_x - 1, prompt_y - 1, 48, 10, 0x0A2010EE);
+                font_draw_text(prompt_x + 2, prompt_y, "[A] Falar", 0x34D399FF, true);
+            }
+        }
     }
 }
 
@@ -2504,7 +2725,7 @@ Entity* entity_find_kinstone_npc(float world_x, float world_y, float max_dist) {
     for (int i = 0; i < MAX_ENTITIES; i++) {
         Entity* e = &s_entities[i];
         if (!e->is_active) continue;
-        if (e->type != ENTITY_NPC_FOREST_MINISH && e->type != ENTITY_NPC_TOWN_CITIZEN) continue;
+        if (e->type != ENTITY_NPC_FOREST_MINISH && e->type != ENTITY_NPC_TOWN_CITIZEN && e->type != ENTITY_NPC_VILLAGE_MINISH) continue;
         if (!e->hasKinstone || e->kinstoneFused) continue;
 
         float dx = e->x - world_x;
@@ -2552,6 +2773,66 @@ Entity* entity_find_nearby_minish_stump(float world_x, float world_y, float max_
 
         float dx = (e->x + 8.0f) - (world_x + 8.0f);
         float dy = (e->y + 8.0f) - (world_y + 8.0f);
+        float dist_sq = dx * dx + dy * dy;
+
+        if (dist_sq <= best_dist_sq) {
+            best_dist_sq = dist_sq;
+            best = e;
+        }
+    }
+    return best;
+}
+
+Entity* entity_find_nearby_gentari(float world_x, float world_y, float max_dist) {
+    float best_dist_sq = max_dist * max_dist;
+    Entity* best = NULL;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active || e->type != ENTITY_NPC_GENTARI) continue;
+
+        float dx = e->x - world_x;
+        float dy = e->y - world_y;
+        float dist_sq = dx * dx + dy * dy;
+
+        if (dist_sq <= best_dist_sq) {
+            best_dist_sq = dist_sq;
+            best = e;
+        }
+    }
+    return best;
+}
+
+Entity* entity_find_nearby_festari(float world_x, float world_y, float max_dist) {
+    float best_dist_sq = max_dist * max_dist;
+    Entity* best = NULL;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active || e->type != ENTITY_NPC_FESTARI) continue;
+
+        float dx = e->x - world_x;
+        float dy = e->y - world_y;
+        float dist_sq = dx * dx + dy * dy;
+
+        if (dist_sq <= best_dist_sq) {
+            best_dist_sq = dist_sq;
+            best = e;
+        }
+    }
+    return best;
+}
+
+Entity* entity_find_nearby_village_minish(float world_x, float world_y, float max_dist) {
+    float best_dist_sq = max_dist * max_dist;
+    Entity* best = NULL;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active || e->type != ENTITY_NPC_VILLAGE_MINISH) continue;
+
+        float dx = e->x - world_x;
+        float dy = e->y - world_y;
         float dist_sq = dx * dx + dy * dy;
 
         if (dist_sq <= best_dist_sq) {

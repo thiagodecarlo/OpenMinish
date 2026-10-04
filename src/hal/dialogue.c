@@ -532,6 +532,187 @@ static void render_portrait_town_guard(int px, int py) {
     hal_video_put_pixel(px + 17, py + 26, c_gold);
 }
 
+static void render_portrait_gentari(int px, int py, bool is_talking) {
+    draw_rect_blend(px, py, 32, 32, 0x160C28FF);
+
+    u32 c_mitre     = 0xF59E0BFF; // Mitra sagrada dourada
+    u32 c_mitre_dk  = 0xB45309FF; // Sombra da mitra
+    u32 c_gem       = 0x10B981FF; // Joia esmeralda
+    u32 c_skin      = 0xFDE8CDFF; // Pele clara
+    u32 c_beard     = 0xFFFFFFFF; // Longa barba branca do anciao
+    u32 c_beard_dk  = 0xE2E8F0FF; // Sombra da barba
+    u32 c_robe      = 0x7C3AEDFF; // Manto violeta
+    u32 c_robe_dk   = 0x5B21B6FF;
+    u32 c_gold      = 0xFDE047FF; // Borda dourada
+
+    int talk_offset = (is_talking && ((s_anim_counter / 5) % 2 == 1)) ? 1 : 0;
+
+    // Mitra alta ornamental
+    for (int y = 1; y <= 13; y++) {
+        int w = 4 + (y * 2) / 3;
+        if (w > 12) w = 12;
+        int sx = 16 - w / 2;
+        for (int x = sx; x <= sx + w; x++) {
+            hal_video_put_pixel(px + x, py + y, (x == sx || x == sx + w) ? c_mitre_dk : c_mitre);
+        }
+    }
+    // Gema esmeralda central na mitra
+    draw_rect_blend(px + 14, py + 4, 4, 4, c_gem);
+    hal_video_put_pixel(px + 15, py + 5, 0xFFFFFFFF);
+
+    // Orelhas pontudas Minish
+    hal_video_put_pixel(px + 6, py + 15, c_skin);
+    hal_video_put_pixel(px + 7, py + 16, c_skin);
+    hal_video_put_pixel(px + 25, py + 15, c_skin);
+    hal_video_put_pixel(px + 24, py + 16, c_skin);
+
+    // Rosto sábio do ancião
+    for (int y = 13; y <= 20; y++) {
+        for (int x = 9; x <= 22; x++) {
+            hal_video_put_pixel(px + x, py + y, c_skin);
+        }
+    }
+
+    // Olhos serenos
+    hal_video_put_pixel(px + 12, py + 16, 0x1E1B4BFF);
+    hal_video_put_pixel(px + 19, py + 16, 0x1E1B4BFF);
+    hal_video_put_pixel(px + 11, py + 15, 0xFFFFFFFF); // Sobrancelha branca esq
+    hal_video_put_pixel(px + 12, py + 15, 0xFFFFFFFF);
+    hal_video_put_pixel(px + 19, py + 15, 0xFFFFFFFF); // Sobrancelha branca dir
+    hal_video_put_pixel(px + 20, py + 15, 0xFFFFFFFF);
+
+    // Longa barba branca majestosa descendo
+    for (int y = 18; y <= 27 + talk_offset; y++) {
+        int bw = 12 - (y - 18);
+        if (bw < 4) bw = 4;
+        int bx = 16 - bw / 2;
+        for (int x = bx; x <= bx + bw; x++) {
+            hal_video_put_pixel(px + x, py + y, (y > 23 || x == bx || x == bx + bw) ? c_beard_dk : c_beard);
+        }
+    }
+
+    // Manto violeta no peito e ombros
+    draw_rect_blend(px + 6, py + 23, 7, 8, c_robe);
+    draw_rect_blend(px + 19, py + 23, 7, 8, c_robe);
+    draw_rect_blend(px + 8, py + 24, 2, 8, c_gold);
+    draw_rect_blend(px + 22, py + 24, 2, 8, c_gold);
+}
+
+static void render_portrait_festari(int px, int py, bool is_talking) {
+    draw_rect_blend(px, py, 32, 32, 0x0F172AFF);
+
+    u32 c_cowl      = 0x2563EBFF; // Capuz azul de sacerdote
+    u32 c_cowl_dk   = 0x1D4ED8FF;
+    u32 c_cowl_trim = 0xE0E7FFFF; // Borda branca do capuz
+    u32 c_skin      = 0xFDE8CDFF; // Pele clara
+    u32 c_eye       = 0x0F172AFF; // Olhos
+    u32 c_robe      = 0x1E40AFFF; // Manto monástico
+    u32 c_stole     = 0xF59E0BFF; // Estola dourada
+
+    int talk_offset = (is_talking && ((s_anim_counter / 5) % 2 == 1)) ? 1 : 0;
+
+    // Capuz monástico
+    for (int y = 2; y <= 16; y++) {
+        int w = 6 + (y * 2) / 3;
+        if (w > 16) w = 16;
+        int sx = 16 - w / 2;
+        for (int x = sx; x <= sx + w; x++) {
+            hal_video_put_pixel(px + x, py + y, (x == sx || x == sx + w || y == 2) ? c_cowl_dk : c_cowl);
+        }
+    }
+    // Borda clara do capuz ao redor da face
+    for (int x = 8; x <= 23; x++) {
+        hal_video_put_pixel(px + x, py + 12, c_cowl_trim);
+    }
+
+    // Orelhas pontudas Minish saindo do capuz
+    hal_video_put_pixel(px + 6, py + 16, c_skin);
+    hal_video_put_pixel(px + 7, py + 17, c_skin);
+    hal_video_put_pixel(px + 25, py + 16, c_skin);
+    hal_video_put_pixel(px + 24, py + 17, c_skin);
+
+    // Rosto sereno
+    for (int y = 14; y <= 23; y++) {
+        for (int x = 9; x <= 22; x++) {
+            hal_video_put_pixel(px + x, py + y, c_skin);
+        }
+    }
+
+    // Olhos
+    hal_video_put_pixel(px + 12, py + 17, c_eye);
+    hal_video_put_pixel(px + 19, py + 17, c_eye);
+
+    // Boca
+    if (talk_offset > 0) {
+        draw_rect_blend(px + 15, py + 21, 2, 2, 0x78350FFF);
+    } else {
+        hal_video_put_pixel(px + 15, py + 21, 0x8A4520FF);
+        hal_video_put_pixel(px + 16, py + 21, 0x8A4520FF);
+    }
+
+    // Manto azul e estola dourada Picori
+    draw_rect_blend(px + 6, py + 24, 20, 8, c_robe);
+    draw_rect_blend(px + 13, py + 24, 6, 8, c_stole);
+    hal_video_put_pixel(px + 15, py + 26, 0xFFFFFFFF);
+    hal_video_put_pixel(px + 16, py + 26, 0xFFFFFFFF);
+}
+
+static void render_portrait_village_minish(int px, int py) {
+    draw_rect_blend(px, py, 32, 32, 0x0A2612FF);
+
+    u32 c_hat   = 0x10B981FF; // Gorro verde esmeralda
+    u32 c_pom   = 0xFDE047FF; // Pom-pom dourado
+    u32 c_skin  = 0xFDE8CDFF; // Pele clara Minish
+    u32 c_hair  = 0xFFF2DEFF; // Cabelos felpudos
+    u32 c_blush = 0xFCA5A5FF; // Bochechas rosadas
+    u32 c_eyes  = 0x111111FF; // Olhos
+    u32 c_tunic = 0xD97706FF; // Túnica terracota
+
+    // Gorro pontudo Minish verde
+    for (int y = 3; y <= 16; y++) {
+        int w = 3 + (y - 3);
+        if (w > 14) w = 14;
+        for (int x = 16 - w / 2; x <= 16 + w / 2; x++) {
+            hal_video_put_pixel(px + x, py + y, c_hat);
+        }
+    }
+    // Pom-pom dourado no topo
+    draw_rect_blend(px + 14, py + 2, 4, 3, c_pom);
+
+    // Orelhas pontudas
+    hal_video_put_pixel(px + 6, py + 16, c_skin);
+    hal_video_put_pixel(px + 7, py + 17, c_skin);
+    hal_video_put_pixel(px + 25, py + 16, c_skin);
+    hal_video_put_pixel(px + 24, py + 17, c_skin);
+
+    // Rosto redondo Minish
+    for (int y = 14; y <= 24; y++) {
+        for (int x = 9; x <= 23; x++) {
+            hal_video_put_pixel(px + x, py + y, c_skin);
+        }
+    }
+
+    // Cabelo branco/creme ao redor do gorro
+    draw_rect_blend(px + 8, py + 14, 3, 4, c_hair);
+    draw_rect_blend(px + 21, py + 14, 3, 4, c_hair);
+
+    // Olhos pretos alegres
+    hal_video_put_pixel(px + 12, py + 18, c_eyes);
+    hal_video_put_pixel(px + 20, py + 18, c_eyes);
+
+    // Bochechas rosadas
+    hal_video_put_pixel(px + 10, py + 20, c_blush);
+    hal_video_put_pixel(px + 22, py + 20, c_blush);
+
+    // Sorriso alegre
+    hal_video_put_pixel(px + 15, py + 21, 0x8A4520FF);
+    hal_video_put_pixel(px + 16, py + 22, 0x8A4520FF);
+    hal_video_put_pixel(px + 17, py + 21, 0x8A4520FF);
+
+    // Túnica terracota
+    draw_rect_blend(px + 10, py + 25, 13, 6, c_tunic);
+}
+
 // ----------------------------------------------------------------------------
 // INTERFACE PÚBLICA DO SISTEMA DE DIÁLOGO
 // ----------------------------------------------------------------------------
@@ -698,6 +879,38 @@ void dialogue_trigger_town_guard_talk(void) {
     dialogue_show(SPEAKER_TOWN_GUARD, "Guarda Real", guard_speech, 3);
 }
 
+void dialogue_trigger_gentari_talk(void) {
+    hal_audio_play_sound(SOUND_SECRET, 0.85f, 1.25f);
+    static const char* gentari_speech[] = {
+        "Bem-vindo a Vila dos Minish,\njovem heroi da superficie!",
+        "A lendaria Espada Picori foi\npartida pelo maligno feiticeiro Vaati...",
+        "Para restaura-la ao seu poder divino,\nvoce devera reunir os Quatro Elementos!",
+        "O primeiro, o Elemento da Terra,\nrepousa no Santuario Deepwood.",
+        "Va falar com Festari na ermida a\nnoroeste para que ele abra o caminho!"
+    };
+    dialogue_show(SPEAKER_GENTARI, "Anciao Gentari", gentari_speech, 5);
+}
+
+void dialogue_trigger_festari_talk(void) {
+    hal_audio_play_sound(SOUND_TEXT_ADVANCE, 0.90f, 1.10f);
+    static const char* festari_speech[] = {
+        "Saudacoes, valoroso heroi de verde.\nEu sou Festari, guardiao do templo.",
+        "O caminho para o Deepwood Shrine\nesta liberado para a sua nobre jornada!",
+        "Va com fe e empunhe sua espada...\nO sagrado Elemento da Terra o aguarda!"
+    };
+    dialogue_show(SPEAKER_FESTARI, "Festari", festari_speech, 3);
+}
+
+void dialogue_trigger_village_minish_talk(void) {
+    hal_audio_play_sound(SOUND_TEXT_ADVANCE, 0.85f, 1.20f);
+    static const char* villager_speech[] = {
+        "Ola! E tao bom ver um humano do\nnosso tamanho passeando pela vila!",
+        "Nossas casas de cogumelo e bolota\nsao muito aconchegantes e acolhedoras.",
+        "Se encontrar fragmentos de Kinstone,\nvenha unir a sua sorte com a nossa!"
+    };
+    dialogue_show(SPEAKER_VILLAGE_MINISH, "Picori", villager_speech, 3);
+}
+
 void dialogue_update(void) {
     s_anim_counter++;
 
@@ -824,7 +1037,10 @@ void dialogue_render(void) {
                        (s_speaker == SPEAKER_SWIFTBLADE) ? 0xFF6B6BFF :
                        (s_speaker == SPEAKER_SHOPKEEPER) ? 0xFDE047FF :
                        (s_speaker == SPEAKER_TOWN_CITIZEN) ? 0xF472B6FF :
-                       (s_speaker == SPEAKER_TOWN_GUARD) ? 0x60A5FAFF : 0x77FF99FF;
+                       (s_speaker == SPEAKER_TOWN_GUARD) ? 0x60A5FAFF :
+                       (s_speaker == SPEAKER_GENTARI) ? 0xFDE047FF :
+                       (s_speaker == SPEAKER_FESTARI) ? 0x93C5FDFF :
+                       (s_speaker == SPEAKER_VILLAGE_MINISH) ? 0x34D399FF : 0x77FF99FF;
         font_draw_text(badge_x + 6, badge_y + 1, s_speaker_name, name_col, true);
     }
 
@@ -852,6 +1068,14 @@ void dialogue_render(void) {
         render_portrait_town_citizen(port_x, port_y, is_talking);
     } else if (s_speaker == SPEAKER_TOWN_GUARD) {
         render_portrait_town_guard(port_x, port_y);
+    } else if (s_speaker == SPEAKER_GENTARI) {
+        bool is_talking = (s_state == DIALOGUE_STATE_TYPING);
+        render_portrait_gentari(port_x, port_y, is_talking);
+    } else if (s_speaker == SPEAKER_FESTARI) {
+        bool is_talking = (s_state == DIALOGUE_STATE_TYPING);
+        render_portrait_festari(port_x, port_y, is_talking);
+    } else if (s_speaker == SPEAKER_VILLAGE_MINISH) {
+        render_portrait_village_minish(port_x, port_y);
     }
 
     // 6. Área de Texto com quebra de linhas (\n)

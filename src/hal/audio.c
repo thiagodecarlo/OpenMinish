@@ -2021,6 +2021,209 @@ static s16* synth_generate_hyrule_town(u32* out_total_frames) {
 }
 
 // ----------------------------------------------------------------------------
+// 6. SÍNTESE DA TRILHA DE MINISH VILLAGE (VILA DOS MINISH / PICORI)
+// ----------------------------------------------------------------------------
+static s16* synth_generate_minish_village(u32* out_total_frames) {
+    float bpm = 112.0f;
+    float beat_sec = 60.0f / bpm;
+    int total_bars = 8;
+    float total_seconds = total_bars * 4.0f * beat_sec;
+    u32 total_frames = (u32)(total_seconds * AUDIO_SAMPLE_RATE);
+
+    float* mix_l = (float*)calloc(total_frames, sizeof(float));
+    float* mix_r = (float*)calloc(total_frames, sizeof(float));
+    if (!mix_l || !mix_r) {
+        if (mix_l) free(mix_l);
+        if (mix_r) free(mix_r);
+        return NULL;
+    }
+
+    // 1. Melodia Principal Doce e Bucólica (Flauta Picori em Lá Maior)
+    static const NoteEvent s_village_melody[] = {
+        { 69, 1.0f }, { 73, 1.0f }, { 76, 1.5f }, { 78, 0.5f },
+        { 76, 1.0f }, { 73, 1.0f }, { 69, 1.5f }, { 71, 0.5f },
+        { 73, 0.5f }, { 74, 0.5f }, { 76, 1.0f }, { 78, 1.0f }, { 80, 1.0f },
+        { 81, 1.5f }, { 80, 0.5f }, { 78, 1.0f }, { 76, 1.0f },
+        { 74, 1.0f }, { 78, 1.0f }, { 81, 1.0f }, { 80, 1.0f },
+        { 78, 1.0f }, { 76, 1.0f }, { 73, 1.5f }, { 71, 0.5f },
+        { 69, 1.0f }, { 71, 1.0f }, { 73, 1.0f }, { 71, 1.0f },
+        { 69, 3.0f }, { 0, 1.0f }
+    };
+    int melody_count = (int)(sizeof(s_village_melody) / sizeof(s_village_melody[0]));
+
+    float cur_time = 0.0f;
+    for (int n = 0; n < melody_count; n++) {
+        float dur_sec = s_village_melody[n].duration * beat_sec;
+        u32 start_frame = (u32)(cur_time * AUDIO_SAMPLE_RATE);
+        u32 num_frames  = (u32)(dur_sec * AUDIO_SAMPLE_RATE);
+        float base_freq = note_to_freq(s_village_melody[n].note);
+        float phase = 0.0f;
+
+        if (base_freq > 0.0f) {
+            for (u32 i = 0; i < num_frames; i++) {
+                u32 idx = (start_frame + i) % total_frames;
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+
+                float att = (t < 0.02f) ? (t / 0.02f) : 1.0f;
+                float dec = (t > dur_sec - 0.04f) ? ((dur_sec - t) / 0.04f) : 1.0f;
+                if (dec < 0.0f) dec = 0.0f;
+
+                float vibrato = sinf(2.0f * PI_F * 5.0f * t) * (base_freq * 0.007f);
+                float cur_freq = base_freq + (t > 0.12f ? vibrato : 0.0f);
+                phase += cur_freq / (float)AUDIO_SAMPLE_RATE;
+
+                float pulse = (fmodf(phase, 1.0f) < 0.50f) ? 0.65f : -0.65f;
+                float sine = sinf(2.0f * PI_F * phase) * 0.35f;
+                float sample = (pulse * 0.7f + sine * 0.3f) * att * dec * 6200.0f;
+
+                mix_l[idx] += sample * 0.85f;
+                mix_r[idx] += sample * 0.85f;
+            }
+        }
+        cur_time += dur_sec;
+    }
+
+    // 2. Arpejos de Caixinha de Música / Harpa Picori (Stereo Ping-Pong)
+    static const int s_village_chords[8][4] = {
+        { 57, 61, 64, 69 },
+        { 57, 61, 64, 69 },
+        { 54, 57, 61, 66 },
+        { 50, 54, 57, 62 },
+        { 54, 57, 61, 66 },
+        { 52, 56, 59, 64 },
+        { 50, 54, 57, 62 },
+        { 57, 61, 64, 69 }
+    };
+
+    float note16_sec = beat_sec * 0.25f;
+    for (int bar = 0; bar < 8; bar++) {
+        for (int step = 0; step < 16; step++) {
+            int note = s_village_chords[bar][step % 4];
+            if (step % 2 == 1) note += 12;
+            float freq = note_to_freq(note);
+
+            float note_start = (float)bar * 4.0f * beat_sec + (float)step * note16_sec;
+            u32 start_frame = (u32)(note_start * AUDIO_SAMPLE_RATE);
+            u32 note_len = (u32)(note16_sec * 1.5f * AUDIO_SAMPLE_RATE);
+
+            float pan_l = 0.5f + 0.35f * sinf((float)step * 1.57f);
+            float pan_r = 1.0f - pan_l;
+            float phase_arp = 0.0f;
+
+            for (u32 i = 0; i < note_len; i++) {
+                u32 idx = (start_frame + i) % total_frames;
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-18.0f * t);
+
+                phase_arp += freq / (float)AUDIO_SAMPLE_RATE;
+                float tri = fabsf(fmodf(phase_arp * 2.0f, 2.0f) - 1.0f) * 2.0f - 1.0f;
+                float bell = sinf(2.0f * PI_F * phase_arp * 2.0f) * 0.25f;
+
+                float sample = (tri * 0.75f + bell) * env * 2800.0f;
+                mix_l[idx] += sample * pan_l;
+                mix_r[idx] += sample * pan_r;
+            }
+        }
+    }
+
+    // 3. Baixo Acústico Pizzicato (Tempos 1 e 3)
+    static const int s_village_bass[8][2] = {
+        { 45, 52 },
+        { 45, 52 },
+        { 42, 49 },
+        { 50, 45 },
+        { 42, 49 },
+        { 40, 47 },
+        { 50, 40 },
+        { 45, 57 }
+    };
+
+    for (int bar = 0; bar < 8; bar++) {
+        for (int b = 0; b < 2; b++) {
+            float bass_start = (float)bar * 4.0f * beat_sec + (float)b * 2.0f * beat_sec;
+            u32 start_frame = (u32)(bass_start * AUDIO_SAMPLE_RATE);
+            u32 num_frames = (u32)(beat_sec * 1.8f * AUDIO_SAMPLE_RATE);
+            float freq = note_to_freq(s_village_bass[bar][b]);
+            float phase_bass = 0.0f;
+
+            for (u32 i = 0; i < num_frames; i++) {
+                u32 idx = (start_frame + i) % total_frames;
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-6.5f * t);
+
+                phase_bass += freq / (float)AUDIO_SAMPLE_RATE;
+                float tri = fabsf(fmodf(phase_bass * 2.0f, 2.0f) - 1.0f) * 2.0f - 1.0f;
+                float sample = tri * env * 4800.0f;
+
+                mix_l[idx] += sample * 0.7f;
+                mix_r[idx] += sample * 0.7f;
+            }
+        }
+    }
+
+    // 4. Percussão Rústica de Madeira / Bolotas (Woodblock & Shaker)
+    for (int bar = 0; bar < 8; bar++) {
+        for (int beat = 0; beat < 4; beat++) {
+            float b_time = ((float)bar * 4.0f + (float)beat) * beat_sec;
+            u32 start_frame = (u32)(b_time * AUDIO_SAMPLE_RATE);
+
+            if (beat == 0 || beat == 2) {
+                u32 wb_len = (u32)(0.045f * AUDIO_SAMPLE_RATE);
+                float phase_wb = 0.0f;
+                float wb_base = (beat == 0) ? 920.0f : 1180.0f;
+                for (u32 i = 0; i < wb_len; i++) {
+                    u32 idx = (start_frame + i) % total_frames;
+                    float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                    float env = expf(-55.0f * t);
+                    phase_wb += (wb_base * (1.0f - t * 8.0f)) / (float)AUDIO_SAMPLE_RATE;
+                    float wb = sinf(2.0f * PI_F * phase_wb) * env * 2200.0f;
+                    mix_l[idx] += wb * 0.45f;
+                    mix_r[idx] += wb * 0.45f;
+                }
+            }
+
+            float off_time = b_time + beat_sec * 0.5f;
+            u32 off_frame = (u32)(off_time * AUDIO_SAMPLE_RATE);
+            u32 sh_len = (u32)(0.035f * AUDIO_SAMPLE_RATE);
+            for (u32 i = 0; i < sh_len; i++) {
+                u32 idx = (off_frame + i) % total_frames;
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-65.0f * t);
+                float noise = ((float)(rand() % 2000) / 1000.0f - 1.0f);
+                float sh = noise * env * 1400.0f;
+                mix_l[idx] += sh * 0.30f;
+                mix_r[idx] += sh * 0.50f;
+            }
+        }
+    }
+
+    s16* out_buf = (s16*)malloc(total_frames * 2 * sizeof(s16));
+    if (!out_buf) {
+        free(mix_l);
+        free(mix_r);
+        return NULL;
+    }
+
+    for (u32 i = 0; i < total_frames; i++) {
+        float l = mix_l[i];
+        float r = mix_r[i];
+
+        if (l > 32767.0f)  l = 32767.0f;
+        if (l < -32768.0f) l = -32768.0f;
+        if (r > 32767.0f)  r = 32767.0f;
+        if (r < -32768.0f) r = -32768.0f;
+
+        out_buf[i * 2 + 0] = (s16)l;
+        out_buf[i * 2 + 1] = (s16)r;
+    }
+
+    free(mix_l);
+    free(mix_r);
+    *out_total_frames = total_frames;
+    return out_buf;
+}
+
+// ----------------------------------------------------------------------------
 // CALLBACK DO MIXER DE BAIXA LATÊNCIA DO SDL2
 // ----------------------------------------------------------------------------
 
@@ -2258,6 +2461,7 @@ const char* hal_audio_get_bgm_name(BgmTrack track) {
         case BGM_DEEPWOOD_SHRINE:  return "Deepwood Shrine (Dungeon)";
         case BGM_BOSS_BATTLE:      return "Boss Battle (Big Green ChuChu)";
         case BGM_HYRULE_TOWN:      return "Hyrule Town (Hub Central)";
+        case BGM_MINISH_VILLAGE:   return "Minish Village (Vila dos Picori)";
         case BGM_NONE:
         default:                   return "Mudo / Silencio";
     }
@@ -2279,7 +2483,7 @@ void hal_audio_play_bgm(BgmTrack track) {
 
     // 1. Suporte a mods de audio: verifica se existe arquivo WAV customizado em assets/audio/
     char mod_path[256];
-    const char* track_tags[] = { "none", "minish_woods", "hyrule_overworld", "deepwood_shrine", "boss_battle", "hyrule_town" };
+    const char* track_tags[] = { "none", "minish_woods", "hyrule_overworld", "deepwood_shrine", "boss_battle", "hyrule_town", "minish_village" };
     snprintf(mod_path, sizeof(mod_path), "assets/audio/%s.wav", track_tags[track]);
 
     if (hal_audio_play_music(mod_path, 0.75f, true)) {
@@ -2302,6 +2506,8 @@ void hal_audio_play_bgm(BgmTrack track) {
         samples = synth_generate_boss_battle(&total_frames);
     } else if (track == BGM_HYRULE_TOWN) {
         samples = synth_generate_hyrule_town(&total_frames);
+    } else if (track == BGM_MINISH_VILLAGE) {
+        samples = synth_generate_minish_village(&total_frames);
     }
 
     if (!samples || total_frames == 0) return;

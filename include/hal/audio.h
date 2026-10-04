@@ -66,6 +66,7 @@ typedef enum {
     BGM_DEEPWOOD_SHRINE,  // A atmosfera enigmática e gótica de Deepwood Shrine
     BGM_BOSS_BATTLE,      // Batalha urgente e épica contra o Chefe (Boss Battle)
     BGM_HYRULE_TOWN,      // O tema alegre, festivo e vibrante da Cidade de Hyrule (Hyrule Town Hub)
+    BGM_MINISH_VILLAGE,   // O tema acolhedor, bucólico e mágico da Vila dos Minish (Picori Village)
     BGM_COUNT
 } BgmTrack;
 

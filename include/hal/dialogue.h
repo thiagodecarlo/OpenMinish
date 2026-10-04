@@ -27,7 +27,10 @@ typedef enum {
     SPEAKER_SIGNPOST,        // Placa de madeira / Altar sagrado
     SPEAKER_SHOPKEEPER,      // Comerciante Stockwell (Dono da Loja Geral de Hyrule)
     SPEAKER_TOWN_CITIZEN,    // Cidadã da Cidade de Hyrule
-    SPEAKER_TOWN_GUARD       // Guarda Real do Castelo de Hyrule
+    SPEAKER_TOWN_GUARD,      // Guarda Real do Castelo de Hyrule
+    SPEAKER_GENTARI,         // Ancião Gentari da Vila Minish
+    SPEAKER_FESTARI,         // Sacerdote Festari da Abadia do Santuário
+    SPEAKER_VILLAGE_MINISH   // Habitante / Morador da Vila Minish
 } DialogueSpeaker;
 
 typedef enum {
@@ -82,6 +85,21 @@ void dialogue_trigger_town_citizen_talk(void);
  * Inicia um diálogo com o Guarda Real que vigia o Portão do Castelo.
  */
 void dialogue_trigger_town_guard_talk(void);
+
+/*
+ * Inicia o diálogo sagrado com o Ancião Gentari na Vila Minish.
+ */
+void dialogue_trigger_gentari_talk(void);
+
+/*
+ * Inicia o diálogo com o Sacerdote Festari na ermida da Vila Minish.
+ */
+void dialogue_trigger_festari_talk(void);
+
+/*
+ * Inicia uma conversa amigável com um habitante da Vila Minish.
+ */
+void dialogue_trigger_village_minish_talk(void);
 
 /*
  * Retorna true se a conclusão do diálogo concede o Pergaminho do Tigre nº 1 (Spin Attack).

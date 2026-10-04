@@ -396,6 +396,162 @@ static void render_metatile(int sx, int sy, TileType type) {
             }
             break;
 
+        // --------------------------------------------------------------------
+        // TILES DA VILA DOS MINISH (PICORI VILLAGE)
+        // --------------------------------------------------------------------
+        case TILE_VILLAGE_PATH:
+            // Caminho de terra macia da floresta com musgo aveludado e pequenas pedrinhas
+            for (int y = 0; y < TILE_SIZE; y++) {
+                for (int x = 0; x < TILE_SIZE; x++) {
+                    u32 c = 0x557A3EFF;
+                    if ((x + y * 2) % 5 == 0) c = 0x486B32FF;
+                    else if ((x * 3 + y) % 7 == 0) c = 0x6E9B4EFF;
+                    if ((x == 4 && y == 7) || (x == 11 && y == 3) || (x == 8 && y == 12)) c = 0x94A3B8FF;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_MUSHROOM_CAP:
+            // Chapéu de cogumelo vermelho com bolinhas brancas (telhado das casas)
+            render_metatile(sx, sy, TILE_GRASS);
+            for (int y = 0; y < 16; y++) {
+                int r_w = (y < 4) ? (y * 2 + 8) : (y < 12) ? 16 : (16 - (y - 12) * 2);
+                if (r_w > 16) r_w = 16;
+                int start_x = (16 - r_w) / 2;
+                for (int x = start_x; x < start_x + r_w; x++) {
+                    u32 c = 0xDC2626FF;
+                    if (y < 3) c = 0xEF4444FF;
+                    else if (y > 11) c = 0x991B1BFF;
+                    if ((x >= 3 && x <= 5 && y >= 3 && y <= 5) ||
+                        (x >= 10 && x <= 12 && y >= 4 && y <= 6) ||
+                        (x >= 6 && x <= 8 && y >= 8 && y <= 10)) {
+                        c = (x == 4 && y == 4) || (x == 11 && y == 5) || (x == 7 && y == 9) ? 0xFFFFFFFF : 0xFEE2E2FF;
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_MUSHROOM_STEM:
+            // Tronco de madeira/palha com porta redonda de noz esculpida
+            render_metatile(sx, sy, TILE_VILLAGE_PATH);
+            for (int y = 0; y < 16; y++) {
+                for (int x = 2; x <= 13; x++) {
+                    u32 c = (y % 3 == 0) ? 0xE5D0BAFF : 0xF5E6D3FF;
+                    if (x == 2 || x == 13) c = 0xC4A482FF;
+                    if (y >= 5 && y <= 15 && x >= 5 && x <= 10) {
+                        c = 0x78350FFF;
+                        if (y == 5 || x == 5 || x == 10) c = 0x451A03FF;
+                        if (x == 9 && y == 10) c = 0xF59E0BFF;
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_ACORN_HOUSE:
+            // Casa feita de casca de noz/bolota esculpida com cúpula e janela iluminada
+            render_metatile(sx, sy, TILE_GRASS);
+            for (int y = 1; y < 15; y++) {
+                int a_w = (y < 6) ? (y * 2 + 4) : 14;
+                int ax_start = (16 - a_w) / 2;
+                for (int x = ax_start; x < ax_start + a_w; x++) {
+                    u32 c = 0xB45309FF;
+                    if (y <= 4) {
+                        c = ((x + y) % 2 == 0) ? 0x78350FFF : 0x522306FF;
+                    } else if (y >= 7 && y <= 11 && x >= 6 && x <= 9) {
+                        c = (x == 6 || x == 9 || y == 7 || y == 11) ? 0x451A03FF : 0xFDE047FF;
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_VILLAGE_STREAM: {
+            // Riacho de águas rasas cristalinas da vila
+            int offset = s_water_anim_frame;
+            for (int y = 0; y < TILE_SIZE; y++) {
+                for (int x = 0; x < TILE_SIZE; x++) {
+                    u32 c = 0x0284C7FF;
+                    if ((x + y + offset) % 6 == 0) c = 0x38BDF8FF;
+                    else if ((x + y + offset) % 12 == 0) c = 0xBAE6FDFF;
+                    if ((x == 3 && y == 5) || (x == 12 && y == 10)) c = 0x0C4A6EFF;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+        }
+
+        case TILE_VILLAGE_BRIDGE:
+            // Ponte de pranchas rústicas de madeira sobre o riacho cristalino
+            render_metatile(sx, sy, TILE_VILLAGE_STREAM);
+            for (int y = 0; y < 16; y++) {
+                for (int x = 1; x <= 14; x++) {
+                    u32 c = 0x92400EFF;
+                    if (y % 4 == 0) c = 0x451A03FF;
+                    else if (y % 4 == 1) c = 0xB45309FF;
+                    if ((x == 3 || x == 12) && (y % 4 == 2)) c = 0xD1D5DBFF;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_GIANT_CLOVER:
+            // Trevo gigante que serve de cobertura natural sobre a vila
+            render_metatile(sx, sy, TILE_GRASS);
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    float dist = sqrtf((float)((x - 7.5f) * (x - 7.5f) + (y - 7.5f) * (y - 7.5f)));
+                    if (dist <= 7.0f) {
+                        u32 c = 0x10B981FF;
+                        if (x == 7 || y == 7) c = 0x047857FF;
+                        else if (dist <= 3.0f) c = 0x34D399FF;
+                        if (x == 5 && y == 5) c = 0xFFFFFFFF;
+                        draw_tile_pixel(sx + x, sy + y, c);
+                    }
+                }
+            }
+            break;
+
+        case TILE_CHIMNEY_SMOKE: {
+            render_metatile(sx, sy, TILE_MUSHROOM_CAP);
+            int anim_phase = (s_water_anim_frame * 2) % 16;
+            for (int y = 8; y <= 15; y++) {
+                for (int x = 6; x <= 9; x++) {
+                    draw_tile_pixel(sx + x, sy + y, (x == 6 || x == 9 || y == 8) ? 0x374151FF : 0x6B7280FF);
+                }
+            }
+            int sm1_y = 6 - (anim_phase / 3);
+            int sm1_x = 7 + (anim_phase % 4 < 2 ? 1 : -1);
+            if (sm1_y >= 0) {
+                draw_tile_pixel(sx + sm1_x, sy + sm1_y, 0xE5E7EBEE);
+                draw_tile_pixel(sx + sm1_x + 1, sy + sm1_y, 0xE5E7EBEE);
+            }
+            int sm2_y = 2 - ((anim_phase + 8) % 16 / 4);
+            int sm2_x = 8 + ((anim_phase / 2) % 3 - 1);
+            if (sm2_y >= 0) {
+                draw_tile_pixel(sx + sm2_x, sy + sm2_y, 0xD1D5DBEE);
+            }
+            break;
+        }
+
+        case TILE_GENTARI_SANCTUM:
+            // Altar Sagrado de Gentari com pedestal ornado em ouro e brasão Picori
+            render_metatile(sx, sy, TILE_VILLAGE_PATH);
+            for (int y = 1; y < 15; y++) {
+                for (int x = 1; x < 15; x++) {
+                    u32 c = 0xD97706FF;
+                    if (x == 1 || x == 14 || y == 1 || y == 14) c = 0x92400EFF;
+                    else if (x >= 4 && x <= 11 && y >= 4 && y <= 11) {
+                        c = 0xFDE047FF;
+                        if (x == 7 || x == 8 || y == 7 || y == 8) c = 0x10B981FF;
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
         default:
             render_metatile(sx, sy, TILE_GRASS);
             break;
@@ -720,6 +876,229 @@ Tilemap* map_create_hyrule_town(void) {
     m->overlay_layer[18 * w + 24] = TILE_FLOWER_YELLOW;
 
     printf("[MAPA] Cidade de Hyrule (Hyrule Town Hub) criada: %dx%d tiles (%dx%d pixels).\n",
+           w, h, w * TILE_SIZE, h * TILE_SIZE);
+    return m;
+}
+
+// ----------------------------------------------------------------------------
+// CONSTRUÇÃO DA VILA DOS MINISH (PICORI VILLAGE - 512x384 PIXELS)
+// ----------------------------------------------------------------------------
+Tilemap* map_create_minish_village(void) {
+    int w = 32;
+    int h = 24;
+    Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
+    if (!m) return NULL;
+
+    m->width  = w;
+    m->height = h;
+    m->is_authentic = false;
+    m->authentic_tex = NULL;
+    m->ground_layer  = (u8*)malloc(w * h * sizeof(u8));
+    m->overlay_layer = (u8*)malloc(w * h * sizeof(u8));
+    m->collision_map = (u8*)malloc(w * h * sizeof(u8));
+
+    // 1. Preenche todo o solo com grama aveludada Minish
+    for (int i = 0; i < w * h; i++) {
+        m->ground_layer[i]  = TILE_GRASS;
+        m->overlay_layer[i] = 0xFF; // Livre
+        m->collision_map[i] = 0;    // Andavel
+    }
+
+    // 2. Bordas com Trevos Gigantes (Giant Clovers) formando uma barreira natural
+    for (int x = 0; x < w; x++) {
+        // Topo (linhas 0 e 1)
+        m->overlay_layer[0 * w + x] = TILE_GIANT_CLOVER;
+        m->collision_map[0 * w + x] = 1;
+        m->overlay_layer[1 * w + x] = TILE_GIANT_CLOVER;
+        m->collision_map[1 * w + x] = 1;
+
+        // Base (linhas 22 e 23) - exceto o portal/saida sul nos x = 15..16
+        if (x < 15 || x > 16) {
+            m->overlay_layer[(h - 2) * w + x] = TILE_GIANT_CLOVER;
+            m->collision_map[(h - 2) * w + x] = 1;
+            m->overlay_layer[(h - 1) * w + x] = TILE_GIANT_CLOVER;
+            m->collision_map[(h - 1) * w + x] = 1;
+        }
+    }
+    for (int y = 0; y < h; y++) {
+        // Laterais esquerda (colunas 0 e 1) e direita (colunas w-2 e w-1)
+        m->overlay_layer[y * w + 0] = TILE_GIANT_CLOVER;
+        m->collision_map[y * w + 0] = 1;
+        m->overlay_layer[y * w + 1] = TILE_GIANT_CLOVER;
+        m->collision_map[y * w + 1] = 1;
+
+        m->overlay_layer[y * w + (w - 2)] = TILE_GIANT_CLOVER;
+        m->collision_map[y * w + (w - 2)] = 1;
+        m->overlay_layer[y * w + (w - 1)] = TILE_GIANT_CLOVER;
+        m->collision_map[y * w + (w - 1)] = 1;
+    }
+
+    // 3. Riacho Cristalino cortando a vila ao meio (y = 11..12, x = 2..29)
+    for (int y = 11; y <= 12; y++) {
+        for (int x = 2; x < w - 2; x++) {
+            m->ground_layer[y * w + x] = TILE_VILLAGE_STREAM;
+            m->collision_map[y * w + x] = 1; // Barreira de agua
+        }
+    }
+
+    // 4. Pontes rusticas de madeira cruzando o riacho
+    // Ponte Oeste (x = 8..9, y = 11..12)
+    for (int y = 11; y <= 12; y++) {
+        for (int x = 8; x <= 9; x++) {
+            m->overlay_layer[y * w + x] = TILE_VILLAGE_BRIDGE;
+            m->collision_map[y * w + x] = 0; // Andavel!
+        }
+    }
+    // Ponte Leste (x = 22..23, y = 11..12)
+    for (int y = 11; y <= 12; y++) {
+        for (int x = 22; x <= 23; x++) {
+            m->overlay_layer[y * w + x] = TILE_VILLAGE_BRIDGE;
+            m->collision_map[y * w + x] = 0; // Andavel!
+        }
+    }
+
+    // 5. Trilhas e Caminhos de Terra da Vila (TILE_VILLAGE_PATH)
+    // Saida Sul conectada ao Tronco Oco (x = 15..16, y = 19..23)
+    for (int y = 19; y < h; y++) {
+        for (int x = 15; x <= 16; x++) {
+            m->ground_layer[y * w + x] = TILE_VILLAGE_PATH;
+            m->collision_map[y * w + x] = 0;
+        }
+    }
+
+    // Caminho transversal sul (y = 15..16, x = 5..26) conectando as pontes e casas do sul
+    for (int y = 15; y <= 16; y++) {
+        for (int x = 5; x <= 26; x++) {
+            m->ground_layer[y * w + x] = TILE_VILLAGE_PATH;
+        }
+    }
+
+    // Conexoes verticais sul ate as pontes
+    for (int y = 13; y <= 14; y++) {
+        m->ground_layer[y * w + 8]  = TILE_VILLAGE_PATH;
+        m->ground_layer[y * w + 9]  = TILE_VILLAGE_PATH;
+        m->ground_layer[y * w + 22] = TILE_VILLAGE_PATH;
+        m->ground_layer[y * w + 23] = TILE_VILLAGE_PATH;
+    }
+    // Conexao vertical sul do meio
+    for (int y = 17; y <= 18; y++) {
+        m->ground_layer[y * w + 15] = TILE_VILLAGE_PATH;
+        m->ground_layer[y * w + 16] = TILE_VILLAGE_PATH;
+    }
+
+    // Caminho transversal norte (y = 7..8, x = 5..26) conectando o santuario e casas do norte
+    for (int y = 7; y <= 8; y++) {
+        for (int x = 5; x <= 26; x++) {
+            m->ground_layer[y * w + x] = TILE_VILLAGE_PATH;
+        }
+    }
+
+    // Conexoes verticais norte ate as pontes
+    for (int y = 9; y <= 10; y++) {
+        m->ground_layer[y * w + 8]  = TILE_VILLAGE_PATH;
+        m->ground_layer[y * w + 9]  = TILE_VILLAGE_PATH;
+        m->ground_layer[y * w + 22] = TILE_VILLAGE_PATH;
+        m->ground_layer[y * w + 23] = TILE_VILLAGE_PATH;
+    }
+
+    // Avenida do Santuario de Gentari ao norte (x = 15..16, y = 5..6)
+    for (int y = 5; y <= 6; y++) {
+        for (int x = 15; x <= 16; x++) {
+            m->ground_layer[y * w + x] = TILE_VILLAGE_PATH;
+        }
+    }
+
+    // 6. Santuario Sagrado do Anciao Gentari (Norte central: x = 13..18, y = 2..4)
+    for (int y = 2; y <= 4; y++) {
+        for (int x = 13; x <= 18; x++) {
+            if (y == 4 && (x == 15 || x == 16)) {
+                // Entrada aberta do santuario
+                m->ground_layer[y * w + x] = TILE_VILLAGE_PATH;
+            } else {
+                m->overlay_layer[y * w + x] = TILE_GENTARI_SANCTUM;
+                m->collision_map[y * w + x] = 1;
+            }
+        }
+    }
+
+    // 7. Casas de Cogumelo (Mushroom Houses)
+    // Casa 1 - Noroeste (Ermida de Festari): x = 4..7, y = 4..6
+    m->overlay_layer[3 * w + 5] = TILE_CHIMNEY_SMOKE;
+    m->collision_map[3 * w + 5] = 1;
+    for (int y = 4; y <= 5; y++) {
+        for (int x = 4; x <= 7; x++) {
+            m->overlay_layer[y * w + x] = TILE_MUSHROOM_CAP;
+            m->collision_map[y * w + x] = 1;
+        }
+    }
+    for (int x = 4; x <= 7; x++) {
+        m->overlay_layer[6 * w + x] = TILE_MUSHROOM_STEM;
+        m->collision_map[6 * w + x] = 1;
+    }
+
+    // Casa 2 - Sudeste: x = 24..27, y = 17..19
+    m->overlay_layer[16 * w + 25] = TILE_CHIMNEY_SMOKE;
+    m->collision_map[16 * w + 25] = 1;
+    for (int y = 17; y <= 18; y++) {
+        for (int x = 24; x <= 27; x++) {
+            m->overlay_layer[y * w + x] = TILE_MUSHROOM_CAP;
+            m->collision_map[y * w + x] = 1;
+        }
+    }
+    for (int x = 24; x <= 27; x++) {
+        m->overlay_layer[19 * w + x] = TILE_MUSHROOM_STEM;
+        m->collision_map[19 * w + x] = 1;
+    }
+
+    // 8. Casas de Bolota / Noz (Acorn Houses)
+    // Casa 3 - Nordeste: x = 24..27, y = 4..6
+    for (int y = 4; y <= 6; y++) {
+        for (int x = 24; x <= 27; x++) {
+            m->overlay_layer[y * w + x] = TILE_ACORN_HOUSE;
+            m->collision_map[y * w + x] = 1;
+        }
+    }
+
+    // Casa 4 - Sudoeste: x = 4..7, y = 17..19
+    for (int y = 17; y <= 19; y++) {
+        for (int x = 4; x <= 7; x++) {
+            m->overlay_layer[y * w + x] = TILE_ACORN_HOUSE;
+            m->collision_map[y * w + x] = 1;
+        }
+    }
+
+    // 9. Jardins, Trevos Ornamentais e Flores
+    // Trevos gigantes internos decorativos
+    m->overlay_layer[8 * w + 12]  = TILE_GIANT_CLOVER;
+    m->collision_map[8 * w + 12]  = 1;
+    m->overlay_layer[8 * w + 19]  = TILE_GIANT_CLOVER;
+    m->collision_map[8 * w + 19]  = 1;
+    m->overlay_layer[15 * w + 11] = TILE_GIANT_CLOVER;
+    m->collision_map[15 * w + 11] = 1;
+    m->overlay_layer[15 * w + 20] = TILE_GIANT_CLOVER;
+    m->collision_map[15 * w + 20] = 1;
+
+    // Flores coloridas em volta das casas
+    m->overlay_layer[7 * w + 4]   = TILE_FLOWER_RED;
+    m->overlay_layer[7 * w + 7]   = TILE_FLOWER_YELLOW;
+    m->overlay_layer[7 * w + 24]  = TILE_FLOWER_YELLOW;
+    m->overlay_layer[7 * w + 27]  = TILE_FLOWER_RED;
+    m->overlay_layer[20 * w + 4]  = TILE_FLOWER_YELLOW;
+    m->overlay_layer[20 * w + 7]  = TILE_FLOWER_RED;
+    m->overlay_layer[20 * w + 24] = TILE_FLOWER_RED;
+    m->overlay_layer[20 * w + 27] = TILE_FLOWER_YELLOW;
+
+    // Arbustos cortaveis nas bordas dos jardins
+    m->overlay_layer[5 * w + 9]   = TILE_BUSH;
+    m->collision_map[5 * w + 9]   = 1;
+    m->overlay_layer[5 * w + 22]  = TILE_BUSH;
+    m->collision_map[5 * w + 22]  = 1;
+    m->overlay_layer[18 * w + 9]  = TILE_BUSH;
+    m->collision_map[18 * w + 9]  = 1;
+    m->overlay_layer[18 * w + 22] = TILE_BUSH;
+    m->collision_map[18 * w + 22] = 1;
+
+    printf("[MAPA] Vila dos Minish (Picori Village) criada: %dx%d tiles (%dx%d pixels).\n",
            w, h, w * TILE_SIZE, h * TILE_SIZE);
     return m;
 }

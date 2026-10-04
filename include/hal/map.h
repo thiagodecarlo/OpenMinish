@@ -38,6 +38,15 @@ typedef enum {
     TILE_FOUNTAIN_EDGE,  // Borda esculpida em mármore da fonte central
     TILE_MARKET_STALL,   // Toldo listrado e balcão do mercado
     TILE_BARREL_CRATE,   // Caixotes e barris de provisões do armazém
+    TILE_VILLAGE_PATH,   // Caminho de terra macia e musgo verde da Vila Minish
+    TILE_MUSHROOM_CAP,   // Chapéu de cogumelo vermelho com bolinhas brancas (telhado das casas)
+    TILE_MUSHROOM_STEM,  // Tronco/caule da casa cogumelo com porta entalhada
+    TILE_ACORN_HOUSE,    // Casa cúpula feita de noz/bolota esculpida
+    TILE_VILLAGE_STREAM, // Riacho de águas rasas cristalinas que corta a vila
+    TILE_VILLAGE_BRIDGE, // Pontinha de pranchas rústicas de madeira sobre o riacho
+    TILE_GIANT_CLOVER,   // Trevo gigante que se ergue sobre os pequeninos
+    TILE_CHIMNEY_SMOKE,  // Chaminé com fumaça animada das lareiras minish
+    TILE_GENTARI_SANCTUM,// Santuário sagrado do Ancião Gentari com runas douradas
     TILE_COUNT
 } TileType;
 
@@ -73,6 +82,13 @@ Tilemap* map_create_demo_world(void);
  * canteiros de flores e portões para o Castelo de Hyrule e Minish Woods.
  */
 Tilemap* map_create_hyrule_town(void);
+
+/*
+ * Constrói o vilarejo secreto dos Picori: A Vila dos Minish (Minish Village)
+ * Dimensões: 32x24 tiles (512x384 pixels) contendo casas em formato de cogumelo e bolota,
+ * riacho cristalino com pontes de madeira rústica, trevos gigantes e o Santuário de Gentari.
+ */
+Tilemap* map_create_minish_village(void);
 
 /*
  * Carrega o mapa de Minish Woods para a região ativa (ex: "usa", "eur", "jpn").

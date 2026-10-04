@@ -35,7 +35,10 @@ typedef enum {
     ENTITY_NPC_TOWN_CITIZEN,  // Cidadã da Cidade de Hyrule (NPC de praça com Kinstone)
     ENTITY_NPC_TOWN_GUARD,    // Guarda Real do Castelo de Hyrule (Cavaleiro em armadura)
     ENTITY_TOWN_FOUNTAIN,     // Chafariz central com jatos d'água borbulhantes animados
-    ENTITY_MINISH_STUMP       // Toco de Árvore / Portal Mágico de Encolhimento Minish (Minish Stump & Urn)
+    ENTITY_MINISH_STUMP,      // Toco de Árvore / Portal Mágico de Encolhimento Minish (Minish Stump & Urn)
+    ENTITY_NPC_GENTARI,       // Ancião da Vila Minish (Elder Gentari do Santuário)
+    ENTITY_NPC_FESTARI,       // Sacerdote Minish Festari (Guardião da ermida para Deepwood Shrine)
+    ENTITY_NPC_VILLAGE_MINISH // Morador da Vila Minish (Picori civil com chapéu colorido)
 } EntityType;
 
 // Caixa delimitadora de colisão e dano (Hitbox / Hurtbox)
@@ -177,6 +180,21 @@ Entity* entity_find_nearby_town_guard(float world_x, float world_y, float max_di
  * Procura por um Toco de Árvore ou Portal Minish próximo às coordenadas fornecidas.
  */
 Entity* entity_find_nearby_minish_stump(float world_x, float world_y, float max_dist);
+
+/*
+ * Procura pelo Ancião Gentari (Elder Gentari) na Vila Minish.
+ */
+Entity* entity_find_nearby_gentari(float world_x, float world_y, float max_dist);
+
+/*
+ * Procura pelo Sacerdote Festari na ermida da Vila Minish.
+ */
+Entity* entity_find_nearby_festari(float world_x, float world_y, float max_dist);
+
+/*
+ * Procura por um morador Picori (Village Minish) na Vila Minish.
+ */
+Entity* entity_find_nearby_village_minish(float world_x, float world_y, float max_dist);
 
 /*
  * Executa a compra de uma mercadoria na Loja do Stockwell:
