@@ -251,6 +251,14 @@ bool entity_interact_chest(float world_x, float world_y, int* link_rupees, int* 
 bool entity_check_subweapon_hit(float px, float py, float pw, float ph, int damage, int* out_carried_item);
 
 /*
+ * Disparo mágico do Cajado de Pacci interagindo com monstros:
+ * Vira o Spiny Beetle de cabeça para baixo (carapaça invertida, patinhas para cima e barriga vulnerável a 1 golpe).
+ * Atordoa Keese, Octoroks, ChuChus e Moblins.
+ * Retorna true se conectou e afetou uma entidade.
+ */
+bool entity_check_pacci_hit(float px, float py, float pw, float ph);
+
+/*
  * Aplica força de sucção gravitacional do Pote Mágico nas entidades próximas dentro do cone.
  * Desenterra ChuChus camuflados, puxa monstros, atrai itens e absorve projéteis de pedras.
  * Retorna true se um projétil ou inimigo foi engolido/absorvido pelo jarro (carregando o tiro de ar).

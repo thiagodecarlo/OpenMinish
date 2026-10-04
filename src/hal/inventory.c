@@ -34,6 +34,7 @@ void inventory_init(void) {
     s_items_unlocked[INV_ITEM_BOMBS]         = true;
     s_items_unlocked[INV_ITEM_PEGASUS_BOOTS] = true;
     s_items_unlocked[INV_ITEM_FLIPPERS]      = true;
+    s_items_unlocked[INV_ITEM_CANE_OF_PACCI] = true;
 
     s_slot_a = INV_ITEM_SWORD;
     s_slot_b = INV_ITEM_BOOMERANG;
@@ -184,6 +185,7 @@ void inventory_assign_to_slot_b(void) {
     else if (s_slot_b == INV_ITEM_GUST_JAR)      subweapon_set_current(ITEM_GUST_JAR);
     else if (s_slot_b == INV_ITEM_PEGASUS_BOOTS)  subweapon_set_current(ITEM_PEGASUS_BOOTS);
     else if (s_slot_b == INV_ITEM_BOMBS)          subweapon_set_current(ITEM_BOMBS);
+    else if (s_slot_b == INV_ITEM_CANE_OF_PACCI)  subweapon_set_current(ITEM_CANE_OF_PACCI);
 
     hal_audio_play_sound(SOUND_ITEM_CATCH, 0.9f, 1.2f);
     printf("[INVENTORY] Atribuido ao Botao [B]: %s\n", inventory_get_item_name(sel));

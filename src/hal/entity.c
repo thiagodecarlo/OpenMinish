@@ -1466,9 +1466,22 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
                     e->aiTimer = 50;
                 }
             }
+            // Ação 3: Virado de cabeça para baixo pelo Cajado de Pacci (indefeso e esperneando)
+            else if (e->action == 3) {
+                e->damage = 0; // Inofensivo enquanto virado
+                e->animTimer++;
+                e->aiTimer--;
+                if (e->aiTimer <= 0) {
+                    e->action = 1;
+                    e->damage = 1;
+                    e->aiTimer = 60;
+                    hal_audio_play_sound(SOUND_ROLL, 0.70f, 1.2f);
+                    printf("[SPINY BEETLE] Besouro conseguiu se desvirar e voltou a patrulhar!\n");
+                }
+            }
 
-            // Dano por colisão espinhosa com Link
-            if (*link_invuln_timer <= 0) {
+            // Dano por colisão espinhosa com Link (apenas se NÃO estiver virado de costas)
+            if (*link_invuln_timer <= 0 && e->action != 3) {
                 float bx1 = e->x - 6.0f;
                 float by1 = e->y - 6.0f;
                 float bx2 = e->x + 14.0f;
@@ -1546,7 +1559,12 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
             float oy2 = oy1 + e->hitbox.height;
 
             if (sx1 < ox2 && sx2 > ox1 && sy1 < oy2 && sy2 > oy1) {
-                e->health -= damage;
+                if (e->type == ENTITY_ENEMY_SPINY_BEETLE && e->action == 3) {
+                    e->health = 0; // Golpe na barriga macia exposta: derrota instantânea em 1 golpe!
+                    hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.4f);
+                } else {
+                    e->health -= damage;
+                }
                 e->invulnerableTimer = 18; // Pisca de dano
                 e->action = 4; // Knockback
                 e->knockbackTimer = (e->type == ENTITY_ENEMY_KEESE) ? 14 : ((e->type == ENTITY_ENEMY_MOBLIN) ? 12 : 10);
@@ -1647,7 +1665,12 @@ int entity_check_spin_attack_hit(float center_x, float center_y, float radius, i
             float max_reach = radius + (e->hitbox.width * 0.5f);
 
             if (dist <= max_reach) {
-                e->health -= damage;
+                if (e->type == ENTITY_ENEMY_SPINY_BEETLE && e->action == 3) {
+                    e->health = 0;
+                    hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.4f);
+                } else {
+                    e->health -= damage;
+                }
                 e->invulnerableTimer = 22; // Pisca de dano
                 e->action = 4; // Knockback
                 e->knockbackTimer = (e->type == ENTITY_ENEMY_KEESE) ? 18 : 14;
@@ -1928,6 +1951,67 @@ bool entity_check_subweapon_hit(float px, float py, float pw, float ph, int dama
                     e->bossDeathTimer = 0;
                     hal_audio_play_sound(SOUND_BOSS_DEFEAT, 1.0f, 1.0f);
                 }
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool entity_check_pacci_hit(float px, float py, float pw, float ph) {
+    float px1 = px;
+    float py1 = py;
+    float px2 = px + pw;
+    float py2 = py + ph;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active) continue;
+
+        float ex1 = e->x + e->hitbox.offset_x;
+        float ey1 = e->y + e->hitbox.offset_y;
+        float ex2 = ex1 + e->hitbox.width;
+        float ey2 = ey1 + e->hitbox.height;
+
+        if (px1 < ex2 && px2 > ex1 && py1 < ey2 && py2 > ey1) {
+            // 1. Spiny Beetle: VIRA DE CABEÇA PARA BAIXO! (Flipped / Exposed belly)
+            if (e->type == ENTITY_ENEMY_SPINY_BEETLE) {
+                e->action = 3; // Modo Flipped
+                e->aiTimer = 240; // 4 segundos inteiros imobilizado esperneando
+                e->damage = 0; // Inofensivo enquanto virado
+                e->invulnerableTimer = 15;
+                e->knockbackTimer = 0;
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.6f);
+                printf("[CANE OF PACCI] Spiny Beetle virado de costas! Carapaca invertida, barriga vulneravel!\n");
+                return true;
+            }
+            // 2. Inimigos normais (Octorok, Keese, ChuChu, Moblin, Peahat, Tektite):
+            // Sofrem forte impacto mágico de inversão e atordoamento
+            else if (e->type == ENTITY_ENEMY_OCTOROK ||
+                     e->type == ENTITY_ENEMY_KEESE ||
+                     e->type == ENTITY_ENEMY_MOBLIN ||
+                     e->type == ENTITY_ENEMY_PEAHAT ||
+                     e->type == ENTITY_ENEMY_TEKTITE ||
+                     (e->type == ENTITY_ENEMY_CHUCHU && e->action > 0)) {
+                e->invulnerableTimer = 24;
+                e->action = 4; // Knockback / Stun
+                e->knockbackTimer = 20;
+                if (e->z > 0.0f) e->z = 0.0f; // Derruba monstros voadores ao solo
+
+                float dx = e->x - px;
+                float dy = e->y - py;
+                float dist = sqrtf(dx * dx + dy * dy);
+                float force = 4.2f;
+                if (dist > 0.1f) {
+                    e->knockbackVx = (dx / dist) * force;
+                    e->knockbackVy = (dy / dist) * force;
+                } else {
+                    e->knockbackVx = force;
+                    e->knockbackVy = 0.0f;
+                }
+
+                hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 1.45f);
+                printf("[CANE OF PACCI] Inimigo atingido por rajada de energia e atordoado!\n");
                 return true;
             }
         }
@@ -3421,6 +3505,37 @@ void entity_manager_render(const Camera* cam) {
             u32 c_spike   = 0xCBD5E1FF;
             u32 c_eyes    = 0xEF4444FF;
             u32 c_leg     = 0x1E293BFF;
+
+            if (e->action == 3) {
+                // VIRADO DE CABEÇA PARA BAIXO PELO CAJADO DE PACCI!
+                // Carapaça rochosa no chão (invertida)
+                draw_filled_rect(sx + 3, sy + 7, 10, 6, c_rock);
+                draw_filled_rect(sx + 4, sy + 6, 8, 7, c_rock);
+                put_pixel_safe(sx + 3, sy + 10, c_rock_dk);
+                put_pixel_safe(sx + 12, sy + 10, c_rock_dk);
+
+                // Barriga mole e vulnerável exposta para cima
+                u32 c_belly = (e->invulnerableTimer > 0 && ((e->invulnerableTimer / 2) % 2 == 1)) ? 0xFFFFFFFF : 0xFDE68AFF;
+                draw_filled_rect(sx + 4, sy + 4, 8, 3, c_belly);
+                draw_filled_rect(sx + 5, sy + 3, 6, 2, c_belly);
+                put_pixel_safe(sx + 6, sy + 5, 0xD97706FF); // Nervura central
+                put_pixel_safe(sx + 9, sy + 5, 0xD97706FF);
+
+                // Patinhas para o ar esperneando freneticamente
+                int kick = (e->animTimer / 3) % 2;
+                put_pixel_safe(sx + 2, sy + 2 + kick, c_leg);
+                put_pixel_safe(sx + 1, sy + 1 + kick, c_leg);
+                put_pixel_safe(sx + 13, sy + 2 + (1 - kick), c_leg);
+                put_pixel_safe(sx + 14, sy + 1 + (1 - kick), c_leg);
+                put_pixel_safe(sx + 4, sy + 1 + (1 - kick), c_leg);
+                put_pixel_safe(sx + 11, sy + 1 + kick, c_leg);
+
+                // Estrelas de tontura flutuando
+                int star_x = sx + 7 + (int)(cosf((float)e->animTimer * 0.18f) * 6.0f);
+                int star_y = sy - 2 + (int)(sinf((float)e->animTimer * 0.18f) * 2.5f);
+                put_pixel_safe(star_x, star_y, 0xFDE047FF);
+                continue;
+            }
 
             // Patas de inseto scurrying
             int leg_anim = (e->animTimer / 4) % 2;

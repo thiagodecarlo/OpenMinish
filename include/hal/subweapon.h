@@ -28,6 +28,7 @@ typedef enum {
     ITEM_GUST_JAR,        // Pote Mágico / Jarro de Vento (Sucção e disparo de ar)
     ITEM_PEGASUS_BOOTS,   // Botas de Pegasus (Dash veloz de corrida)
     ITEM_BOMBS,           // Bolsa de Bombas (Colocação de bombas, pavio e explosão)
+    ITEM_CANE_OF_PACCI,   // Cajado de Pacci (Projétil mágico de inversão e super salto)
     ITEM_COUNT
 } SubweaponType;
 

@@ -73,11 +73,25 @@ static int s_bomb_count = 10;
 static int s_max_bombs = 10;
 static int s_bomb_screen_shake = 0;
 
+// Estrutura do Cajado de Pacci (Cane of Pacci)
+typedef struct {
+    bool  is_active;
+    float x;
+    float y;
+    float vx;
+    float vy;
+    int   life_timer;
+    int   anim_timer;
+} PacciState;
+
+static PacciState s_pacci = { 0 };
+
 void subweapon_init(void) {
     s_current_item = ITEM_BOOMERANG;
     memset(&s_boomerang, 0, sizeof(s_boomerang));
     memset(&s_gust, 0, sizeof(s_gust));
     memset(s_bombs, 0, sizeof(s_bombs));
+    memset(&s_pacci, 0, sizeof(s_pacci));
     s_bomb_count = 10;
     s_max_bombs = 10;
     s_bomb_screen_shake = 0;
@@ -105,6 +119,7 @@ const char* subweapon_get_name(SubweaponType item) {
         case ITEM_GUST_JAR:      return "Pote Magico (Gust Jar)";
         case ITEM_PEGASUS_BOOTS: return "Botas de Pegasus (Dash)";
         case ITEM_BOMBS:         return "Bolsa de Bombas (Bombs)";
+        case ITEM_CANE_OF_PACCI: return "Cajado de Pacci (Inversao)";
         default:                 return "Nenhum";
     }
 }
@@ -170,6 +185,25 @@ void subweapon_use_pressed(float link_x, float link_y, Direction dir) {
         } else {
             hal_audio_play_sound(SOUND_SWITCH_CLICK, 0.7f, 0.8f);
             printf("[BOMB] Bolsa de bombas vazia!\n");
+        }
+    } else if (s_current_item == ITEM_CANE_OF_PACCI) {
+        if (!s_pacci.is_active) {
+            s_pacci.is_active = true;
+            s_pacci.x = link_x + 4.0f;
+            s_pacci.y = link_y + 4.0f;
+            s_pacci.life_timer = 36; // Alcance balístico de ~115 pixels
+            s_pacci.anim_timer = 0;
+
+            float speed = 3.4f;
+            s_pacci.vx = 0.0f;
+            s_pacci.vy = 0.0f;
+            if (dir == DIR_DOWN)  { s_pacci.vy = speed;  s_pacci.y += 8.0f; }
+            if (dir == DIR_UP)    { s_pacci.vy = -speed; s_pacci.y -= 4.0f; }
+            if (dir == DIR_LEFT)  { s_pacci.vx = -speed; s_pacci.x -= 4.0f; }
+            if (dir == DIR_RIGHT) { s_pacci.vx = speed;  s_pacci.x += 8.0f; }
+
+            hal_audio_play_sound(SOUND_SECRET, 0.90f, 1.8f);
+            printf("[CANE OF PACCI] Disparo de energia magica lancado!\n");
         }
     }
 }
@@ -377,6 +411,34 @@ void subweapon_update(Tilemap* map, float link_x, float link_y, int* link_rupees
             }
         }
     }
+
+    // ------------------------------------------------------------------------
+    // 4. ATUALIZAÇÃO DO CAJADO DE PACCI (CANE OF PACCI ENERGY BOLT)
+    // ------------------------------------------------------------------------
+    if (s_pacci.is_active) {
+        s_pacci.x += s_pacci.vx;
+        s_pacci.y += s_pacci.vy;
+        s_pacci.life_timer--;
+        s_pacci.anim_timer++;
+
+        // 1. Interação com o mapa (energiza buracos no solo e desvira carrinhos de mina)
+        if (map && map_interact_pacci(map, s_pacci.x + 4.0f, s_pacci.y + 4.0f)) {
+            s_pacci.is_active = false;
+        }
+        // 2. Colisão com obstáculos sólidos comuns (dissolve o projétil)
+        else if (map && map_is_solid(map, s_pacci.x + 4.0f, s_pacci.y + 4.0f)) {
+            s_pacci.is_active = false;
+            hal_audio_play_sound(SOUND_SWORD_HIT, 0.6f, 1.6f);
+        }
+        // 3. Colisão com entidades (inversão de Spiny Beetles e atordoamento)
+        else if (entity_check_pacci_hit(s_pacci.x, s_pacci.y, 8.0f, 8.0f)) {
+            s_pacci.is_active = false;
+        }
+
+        if (s_pacci.life_timer <= 0) {
+            s_pacci.is_active = false;
+        }
+    }
 }
 
 void subweapon_render(const Camera* cam) {
@@ -551,6 +613,42 @@ void subweapon_render(const Camera* cam) {
             }
         }
     }
+
+    // 5. Renderiza o Orbe Mágico do Cajado de Pacci
+    if (s_pacci.is_active) {
+        int px, py;
+        map_world_to_screen(cam, s_pacci.x, s_pacci.y, &px, &py);
+
+        u32 c_core  = 0xFFFFFFFF; // Núcleo brilhante branco
+        u32 c_cyan1 = 0x38BDF8FF; // Azul celeste mágico
+        u32 c_cyan2 = 0x0284C7FF; // Halo azul profundo
+        u32 c_spark = 0xFDE047FF; // Faísca dourada de energia
+
+        // Orbe circular com halo estelar pulsante
+        int pulse = (s_pacci.anim_timer / 3) % 2;
+        for (int dy = -3; dy <= 3; dy++) {
+            for (int dx = -3; dx <= 3; dx++) {
+                int dist_sq = dx * dx + dy * dy;
+                if (dist_sq <= 3) {
+                    hal_video_put_pixel(px + 4 + dx, py + 4 + dy, c_core);
+                } else if (dist_sq <= 8 + pulse) {
+                    hal_video_put_pixel(px + 4 + dx, py + 4 + dy, c_cyan1);
+                } else if (dist_sq <= 12 + pulse) {
+                    hal_video_put_pixel(px + 4 + dx, py + 4 + dy, c_cyan2);
+                }
+            }
+        }
+
+        // Partículas orbitais / faíscas estelares em rotação contínua
+        int rot = s_pacci.anim_timer * 20;
+        float rad = (float)rot * (PI_F / 180.0f);
+        int sx1 = px + 4 + (int)(cosf(rad) * 6.0f);
+        int sy1 = py + 4 + (int)(sinf(rad) * 6.0f);
+        int sx2 = px + 4 - (int)(cosf(rad) * 6.0f);
+        int sy2 = py + 4 - (int)(sinf(rad) * 6.0f);
+        hal_video_put_pixel(sx1, sy1, c_spark);
+        hal_video_put_pixel(sx2, sy2, c_spark);
+    }
 }
 
 void subweapon_render_hud_icon(int x, int y) {
@@ -600,6 +698,16 @@ void subweapon_render_hud_icon(int x, int y) {
         hal_video_put_pixel(x + 8, y + 5, 0x94A3B8FF); // Brilho
         hal_video_put_pixel(x + 8, y + 3, 0xD97706FF); // Gargalo
         hal_video_put_pixel(x + 9, y + 2, 0xFDE047FF); // Faísca do pavio
+    } else if (s_current_item == ITEM_CANE_OF_PACCI) {
+        // Mini Cajado de Pacci: haste esmeralda, gancho dourado e orbe azul celeste
+        hal_video_put_pixel(x + 7, y + 8, 0x166534FF); // Haste
+        hal_video_put_pixel(x + 8, y + 7, 0x166534FF);
+        hal_video_put_pixel(x + 9, y + 6, 0x15803DFF);
+        hal_video_put_pixel(x + 10, y + 5, 0xF59E0BFF); // Gancho dourado
+        hal_video_put_pixel(x + 10, y + 4, 0xF59E0BFF);
+        hal_video_put_pixel(x + 9, y + 3, 0xF59E0BFF);
+        hal_video_put_pixel(x + 8, y + 3, 0x38BDF8FF); // Orbe ciano
+        hal_video_put_pixel(x + 8, y + 4, 0x0284C7FF);
     }
 }
 

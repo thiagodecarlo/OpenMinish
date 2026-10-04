@@ -736,6 +736,114 @@ static void render_metatile(int sx, int sy, TileType type) {
             draw_tile_pixel(sx + 11, sy + 10, 0x22C55EFF);
             break;
 
+        case TILE_PACCI_HOLE_NORMAL:
+            // Buraco/cova circular no solo para energizar com o Cajado de Pacci
+            render_metatile(sx, sy, TILE_CRENEL_GRAVEL);
+            for (int y = 2; y <= 13; y++) {
+                for (int x = 2; x <= 13; x++) {
+                    float dist = sqrtf((float)((x - 7.5f) * (x - 7.5f) + (y - 7.5f) * (y - 7.5f)));
+                    if (dist <= 5.5f) {
+                        u32 c = 0x0A0604FF; // Abismo profundo do buraco
+                        if (dist > 4.5f) c = 0x2D1B0FFF; // Borda de terra sombreada
+                        else if (dist > 3.0f) c = 0x150C08FF;
+                        draw_tile_pixel(sx + x, sy + y, c);
+                    }
+                }
+            }
+            break;
+
+        case TILE_PACCI_HOLE_CHARGED: {
+            // Buraco energizado pelo Cajado de Pacci (vórtice cintilante de super-salto)
+            render_metatile(sx, sy, TILE_CRENEL_GRAVEL);
+            int anim_rot = (s_water_anim_frame * 3) % 8;
+            for (int y = 2; y <= 13; y++) {
+                for (int x = 2; x <= 13; x++) {
+                    float dist = sqrtf((float)((x - 7.5f) * (x - 7.5f) + (y - 7.5f) * (y - 7.5f)));
+                    if (dist <= 5.8f) {
+                        u32 c = 0x0284C7FF; // Cyan profundo
+                        if (dist <= 1.8f) c = 0xFFFFFFFF; // Núcleo brilhante
+                        else if (dist <= 3.8f) {
+                            c = ((x + y + anim_rot) % 2 == 0) ? 0x7DD3FCFF : 0x38BDF8FF;
+                        } else if (dist > 4.8f) {
+                            c = 0x0369A1FF;
+                        }
+                        draw_tile_pixel(sx + x, sy + y, c);
+                    }
+                }
+            }
+            // Faíscas ascendentes de energia mágica prontas para catapultar
+            int spark_y = 6 - (s_water_anim_frame % 4);
+            draw_tile_pixel(sx + 7, sy + spark_y, 0xFDE047FF);
+            draw_tile_pixel(sx + 8, sy + spark_y, 0xFFFFFFFF);
+            break;
+        }
+
+        case TILE_MINECART_UPSIDE_DOWN:
+            // Carrinho de mina tombado / de ponta-cabeça bloqueando os trilhos
+            render_metatile(sx, sy, TILE_CRENEL_GRAVEL);
+            // Trilhos no solo
+            for (int x = 0; x < 16; x++) {
+                draw_tile_pixel(sx + x, sy + 14, 0x475569FF);
+                draw_tile_pixel(sx + x, sy + 15, 0x334155FF);
+            }
+            // Dormentes de madeira
+            for (int x = 2; x <= 14; x += 4) {
+                draw_tile_pixel(sx + x, sy + 13, 0x78350FFF);
+                draw_tile_pixel(sx + x, sy + 14, 0x78350FFF);
+            }
+            // Rodas viradas para cima
+            draw_tile_pixel(sx + 3, sy + 3, 0x94A3B8FF);
+            draw_tile_pixel(sx + 4, sy + 3, 0x94A3B8FF);
+            draw_tile_pixel(sx + 3, sy + 4, 0x334155FF);
+            draw_tile_pixel(sx + 4, sy + 4, 0x334155FF);
+            draw_tile_pixel(sx + 11, sy + 3, 0x94A3B8FF);
+            draw_tile_pixel(sx + 12, sy + 3, 0x94A3B8FF);
+            draw_tile_pixel(sx + 11, sy + 4, 0x334155FF);
+            draw_tile_pixel(sx + 12, sy + 4, 0x334155FF);
+            // Corpo de ferro do carrinho de ponta-cabeça
+            for (int y = 5; y <= 12; y++) {
+                for (int x = 2; x <= 13; x++) {
+                    u32 c = 0x64748BFF;
+                    if (y == 5 || y == 12 || x == 2 || x == 13) c = 0x334155FF;
+                    else if (x == 7 || x == 8) c = 0x475569FF; // Reforço central
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_MINECART:
+            // Carrinho de mina funcional e desvirado nos trilhos
+            render_metatile(sx, sy, TILE_CRENEL_GRAVEL);
+            // Trilhos no solo
+            for (int x = 0; x < 16; x++) {
+                draw_tile_pixel(sx + x, sy + 14, 0x475569FF);
+                draw_tile_pixel(sx + x, sy + 15, 0x334155FF);
+            }
+            // Dormentes de madeira
+            for (int x = 2; x <= 14; x += 4) {
+                draw_tile_pixel(sx + x, sy + 13, 0x78350FFF);
+                draw_tile_pixel(sx + x, sy + 14, 0x78350FFF);
+            }
+            // Corpo de ferro do carrinho funcional
+            for (int y = 4; y <= 10; y++) {
+                for (int x = 2; x <= 13; x++) {
+                    u32 c = 0x64748BFF;
+                    if (y == 4 || y == 10 || x == 2 || x == 13) c = 0x334155FF;
+                    else if (y >= 5 && y <= 7) c = 0x1E293BFF; // Interior oco da caçamba
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            // Rodas de ferro no solo sobre os trilhos
+            draw_tile_pixel(sx + 3, sy + 11, 0x94A3B8FF);
+            draw_tile_pixel(sx + 4, sy + 11, 0x94A3B8FF);
+            draw_tile_pixel(sx + 3, sy + 12, 0x334155FF);
+            draw_tile_pixel(sx + 4, sy + 12, 0x334155FF);
+            draw_tile_pixel(sx + 11, sy + 11, 0x94A3B8FF);
+            draw_tile_pixel(sx + 12, sy + 11, 0x94A3B8FF);
+            draw_tile_pixel(sx + 11, sy + 12, 0x334155FF);
+            draw_tile_pixel(sx + 12, sy + 12, 0x334155FF);
+            break;
+
         default:
             render_metatile(sx, sy, TILE_GRASS);
             break;
@@ -1702,6 +1810,76 @@ int map_interact_bomb(Tilemap* map, float world_x, float world_y, float radius) 
     return destroyed_count;
 }
 
+bool map_is_pacci_charged_hole(const Tilemap* map, float world_x, float world_y) {
+    if (!map) return false;
+    int tx = (int)(world_x / TILE_SIZE);
+    int ty = (int)(world_y / TILE_SIZE);
+    if (tx < 0 || tx >= map->width || ty < 0 || ty >= map->height) return false;
+
+    int idx = ty * map->width + tx;
+    if (map->ground_layer && map->ground_layer[idx] == TILE_PACCI_HOLE_CHARGED) return true;
+    if (map->overlay_layer && map->overlay_layer[idx] == TILE_PACCI_HOLE_CHARGED) return true;
+    return false;
+}
+
+bool map_discharge_pacci_hole(Tilemap* map, float world_x, float world_y) {
+    if (!map) return false;
+    int tx = (int)(world_x / TILE_SIZE);
+    int ty = (int)(world_y / TILE_SIZE);
+    if (tx < 0 || tx >= map->width || ty < 0 || ty >= map->height) return false;
+
+    int idx = ty * map->width + tx;
+    bool found = false;
+    if (map->ground_layer && map->ground_layer[idx] == TILE_PACCI_HOLE_CHARGED) {
+        map->ground_layer[idx] = TILE_PACCI_HOLE_NORMAL;
+        found = true;
+    }
+    if (map->overlay_layer && map->overlay_layer[idx] == TILE_PACCI_HOLE_CHARGED) {
+        map->overlay_layer[idx] = TILE_PACCI_HOLE_NORMAL;
+        found = true;
+    }
+    return found;
+}
+
+bool map_interact_pacci(Tilemap* map, float world_x, float world_y) {
+    if (!map) return false;
+    int tx = (int)(world_x / TILE_SIZE);
+    int ty = (int)(world_y / TILE_SIZE);
+
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            int cx = tx + dx;
+            int cy = ty + dy;
+            if (cx < 0 || cx >= map->width || cy < 0 || cy >= map->height) continue;
+            int idx = cy * map->width + cx;
+
+            // 1. Energizar buraco no solo
+            if ((map->ground_layer && map->ground_layer[idx] == TILE_PACCI_HOLE_NORMAL) ||
+                (map->overlay_layer && map->overlay_layer[idx] == TILE_PACCI_HOLE_NORMAL)) {
+                if (map->ground_layer && map->ground_layer[idx] == TILE_PACCI_HOLE_NORMAL) {
+                    map->ground_layer[idx] = TILE_PACCI_HOLE_CHARGED;
+                }
+                if (map->overlay_layer && map->overlay_layer[idx] == TILE_PACCI_HOLE_NORMAL) {
+                    map->overlay_layer[idx] = TILE_PACCI_HOLE_CHARGED;
+                }
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.6f);
+                printf("[CANE OF PACCI] Buraco energizado em (%d, %d)! Pronto para super-salto vertical!\n", cx, cy);
+                return true;
+            }
+
+            // 2. Desvirar carrinho de mina tombado de cabeça para baixo
+            if (map->overlay_layer && map->overlay_layer[idx] == TILE_MINECART_UPSIDE_DOWN) {
+                map->overlay_layer[idx] = TILE_MINECART;
+                map->collision_map[idx] = 0; // Desobstrui passagem / funcional
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.4f);
+                printf("[CANE OF PACCI] Carrinho de mina desvirado em (%d, %d) com sucesso!\n", cx, cy);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 Tilemap* map_create_south_hyrule_field(void) {
     int w = 32;
     int h = 24;
@@ -1988,6 +2166,15 @@ Tilemap* map_create_mount_crenel_base(void) {
     // Baú fechado no platô nordeste
     m->overlay_layer[4 * w + 26] = TILE_CHEST_CLOSED;
     m->collision_map[4 * w + 26] = 1;
+
+    // Buracos no solo para energizar com o Cajado de Pacci (Super Salto Vertical)
+    m->overlay_layer[10 * w + 12] = TILE_PACCI_HOLE_NORMAL; // Sopé do paredão
+    m->overlay_layer[11 * w + 19] = TILE_PACCI_HOLE_NORMAL; // Perto da clareira do Deku
+    m->overlay_layer[5 * w + 11]  = TILE_PACCI_HOLE_NORMAL; // Platô superior
+
+    // Carrinho de mina tombado bloqueando a ferrovia das Minas de Melari
+    m->overlay_layer[5 * w + 18] = TILE_MINECART_UPSIDE_DOWN;
+    m->collision_map[5 * w + 18] = 1; // Bloqueado até ser desvirado pelo Cajado de Pacci!
 
     printf("[MAP] Mount Crenel Base (Sope do Monte Crenel) criado com sucesso (%dx%d tiles)!\n", w, h);
     return m;

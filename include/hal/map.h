@@ -58,6 +58,10 @@ typedef enum {
     TILE_MAGIC_BEAN_SPROUT,// Broto de feijão mágico plantado na terra fofa
     TILE_CLIMBABLE_VINE,  // Caule/videira gigante de feijão escalável que alcança o platô
     TILE_CRENEL_GRAVEL,   // Solo terroso de cascalho e pedriscos vulcânicos
+    TILE_PACCI_HOLE_NORMAL,  // Buraco/cova no chão suscetível ao Cajado de Pacci
+    TILE_PACCI_HOLE_CHARGED, // Buraco energizado pelo Cajado de Pacci (catapulta Link no ar)
+    TILE_MINECART_UPSIDE_DOWN,// Carrinho de mina tombado/de cabeça para baixo
+    TILE_MINECART,           // Carrinho de mina desvirado funcional nos trilhos
     TILE_COUNT
 } TileType;
 
@@ -204,5 +208,23 @@ int map_interact_spin(Tilemap* map, float center_x, float center_y, float radius
  * Retorna a quantidade de estruturas desmoronadas.
  */
 int map_interact_bomb(Tilemap* map, float world_x, float world_y, float radius);
+
+/*
+ * Retorna true se a coordenada no mundo for um buraco energizado pelo Cajado de Pacci (TILE_PACCI_HOLE_CHARGED).
+ */
+bool map_is_pacci_charged_hole(const Tilemap* map, float world_x, float world_y);
+
+/*
+ * Descarrega a energia do buraco após o super-salto vertical do herói, revertendo para TILE_PACCI_HOLE_NORMAL.
+ */
+bool map_discharge_pacci_hole(Tilemap* map, float world_x, float world_y);
+
+/*
+ * Interage com o cenário no ponto do impacto mágico do Cajado de Pacci:
+ * - Energiza buracos normais (TILE_PACCI_HOLE_NORMAL -> TILE_PACCI_HOLE_CHARGED)
+ * - Desvira carrinhos de mina (TILE_MINECART_UPSIDE_DOWN -> TILE_MINECART)
+ * Retorna true se interagiu com um elemento do cenário.
+ */
+bool map_interact_pacci(Tilemap* map, float world_x, float world_y);
 
 #endif // HAL_MAP_H

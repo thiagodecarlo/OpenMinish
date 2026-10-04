@@ -32,6 +32,7 @@ typedef struct {
     bool  has_spin_attack;
     bool  is_minish;
     bool  has_grip_ring;
+    bool  has_cane_of_pacci;
     int   slot_a;
     int   slot_b;
     u32   unlocked_items_mask;
