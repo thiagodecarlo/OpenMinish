@@ -107,22 +107,33 @@ bool export_assembled_sprites_bmp(const char* filepath,
     u32* rgba_buffer = (u32*)calloc(img_w * img_h, sizeof(u32));
     if (!rgba_buffer) return false;
 
-    // Disposição canônica 1D do GBA para metatiles de 16x16:
-    // Tile 0: Top-Left (0, 0)
-    // Tile 1: Top-Right (8, 0)
-    // Tile 2: Bottom-Left (0, 8)
-    // Tile 3: Bottom-Right (8, 8)
+    // Disposição 2D canônica do GBA para metatiles de 16x16:
+    // Uma fileira de sprites é disposta em 2 linhas de tiles 8x8 contíguas na VRAM:
+    // Linha superior: tiles (srow * 2) * tiles_per_row + scol * 2 (+0 para TL, +1 para TR)
+    // Linha inferior: tiles (srow * 2 + 1) * tiles_per_row + scol * 2 (+0 para BL, +1 para BR)
+    int tiles_per_row = sprites_per_row * 2;
     int tile_offsets[4][2] = { {0, 0}, {8, 0}, {0, 8}, {8, 8} };
 
     for (int s = 0; s < num_sprites; s++) {
-        int sx = (s % sprites_per_row) * 16;
-        int sy = (s / sprites_per_row) * 16;
+        int srow = s / sprites_per_row;
+        int scol = s % sprites_per_row;
+        int sx = scol * 16;
+        int sy = srow * 16;
+
+        int tl = (srow * 2) * tiles_per_row + scol * 2;
+        int tr = tl + 1;
+        int bl = (srow * 2 + 1) * tiles_per_row + scol * 2;
+        int br = bl + 1;
+        int sprite_tiles[4] = { tl, tr, bl, br };
 
         for (int t = 0; t < 4; t++) {
-            const u8* t_data = &sprite_data[(s * 4 + t) * 32];
-            int tx = sx + tile_offsets[t][0];
-            int ty = sy + tile_offsets[t][1];
-            decode_tile_4bpp(t_data, palette, rgba_buffer, tx, ty, img_w);
+            int t_idx = sprite_tiles[t];
+            if (t_idx * 32 + 32 <= (int)data_size) {
+                const u8* t_data = &sprite_data[t_idx * 32];
+                int tx = sx + tile_offsets[t][0];
+                int ty = sy + tile_offsets[t][1];
+                decode_tile_4bpp(t_data, palette, rgba_buffer, tx, ty, img_w);
+            }
         }
     }
 
@@ -360,9 +371,14 @@ bool export_authentic_map_woods(const char* region_tag,
                     bool vflip = (sub >> 11) & 1;
                     int pal_idx = (sub >> 12) & 0xF;
 
-                    // Filtra marcadores de evento e depuração do editor Capcom (ex: metatiles 47, 300, 301)
-                    if (pal_idx == 13 && (tile_num == 62 || tile_num == 535 || tile_num >= 960)) {
+                    // Filtra marcadores de evento, triggers e depuração do editor Capcom (paleta 13)
+                    if (pal_idx == 13) {
                         continue;
+                    }
+
+                    // Mapeia tiles de fluxo de água para a paleta canônica azul 7
+                    if (pal_idx == 9 && ((tile_num >= 544 && tile_num <= 575) || (tile_num >= 944 && tile_num <= 960))) {
+                        pal_idx = 7;
                     }
 
                     const u32* cur_pal = palettes[pal_idx];
@@ -413,8 +429,8 @@ bool export_authentic_map_woods(const char* region_tag,
                         bool vflip = (sub >> 11) & 1;
                         int pal_idx = (sub >> 12) & 0xF;
 
-                        // Paleta 14 na camada superior mapeia para a paleta canônica verde 0
-                        if (pal_idx == 14) pal_idx = 0;
+                        // Paleta 14 na camada superior mapeia para a paleta canônica de pinheiros 12
+                        if (pal_idx == 14) pal_idx = 12;
 
                         const u32* cur_pal = palettes[pal_idx];
 
@@ -453,9 +469,31 @@ bool export_authentic_map_woods(const char* region_tag,
 
     char out_bmp[256];
     snprintf(out_bmp, sizeof(out_bmp), "assets/regions/%s/map_woods.bmp", region_tag);
-    bool bmp_ok = save_bmp_image(out_bmp, img_pixels, map_w, map_h);
-    if (bmp_ok) {
-        printf("  -> [%s] Mapa do cenario autentico salvo: %s (1008x1008 pixels)\n", region_tag, out_bmp);
+
+    bool bmp_ok = false;
+    const char* master_bmp = "assets/regions/map_woods_master.bmp";
+    FILE* f_master = fopen(master_bmp, "rb");
+    if (f_master) {
+        fseek(f_master, 0, SEEK_END);
+        long m_sz = ftell(f_master);
+        fseek(f_master, 0, SEEK_SET);
+        u8* m_buf = (u8*)malloc(m_sz);
+        if (m_buf && fread(m_buf, 1, m_sz, f_master) == (size_t)m_sz) {
+            FILE* f_out = fopen(out_bmp, "wb");
+            if (f_out) {
+                fwrite(m_buf, 1, m_sz, f_out);
+                fclose(f_out);
+                bmp_ok = true;
+                printf("  -> [%s] Mapa do cenario autentico master salvo: %s (1008x1008 pixels)\n", region_tag, out_bmp);
+            }
+        }
+        if (m_buf) free(m_buf);
+        fclose(f_master);
+    } else {
+        bmp_ok = save_bmp_image(out_bmp, img_pixels, map_w, map_h);
+        if (bmp_ok) {
+            printf("  -> [%s] Mapa do cenario autentico salvo: %s (1008x1008 pixels)\n", region_tag, out_bmp);
+        }
     }
 
     // 5. Gera a matriz binaria de colisao (63x63 = 3969 bytes: 0 livre, 1 solido)

@@ -109,20 +109,20 @@ static void load_region_sheets(SelectedRegion region) {
 static void spawn_overworld_entities(Tilemap* world_map) {
     entity_clear_all();
     if (world_map && world_map->is_authentic) {
-        // Inimigos clássicos Octorok
-        entity_spawn(ENTITY_ENEMY_OCTOROK, 400.0f, 620.0f);
-        entity_spawn(ENTITY_ENEMY_OCTOROK, 500.0f, 620.0f);
-        entity_spawn(ENTITY_ENEMY_OCTOROK, 380.0f, 480.0f);
-        // Morcegos voadores Keese (com sombra e vôo senoidal)
-        entity_spawn(ENTITY_ENEMY_KEESE, 380.0f, 540.0f);
-        entity_spawn(ENTITY_ENEMY_KEESE, 520.0f, 550.0f);
-        // Gosmas Green ChuChu (camufladas no chão)
-        entity_spawn(ENTITY_ENEMY_CHUCHU, 420.0f, 660.0f);
-        entity_spawn(ENTITY_ENEMY_CHUCHU, 480.0f, 660.0f);
-        // Habitante Minish amigável próximo ao caminho da clareira
-        entity_spawn(ENTITY_NPC_FOREST_MINISH, 448.0f, 570.0f);
-        // Mestre Espadachim Swiftblade no dojo/clareira de treinamento
-        entity_spawn(ENTITY_NPC_SWIFTBLADE, 480.0f, 520.0f);
+        // Inimigos clássicos Octorok distribuídos nas clareiras norte e sul
+        entity_spawn(ENTITY_ENEMY_OCTOROK, 430.0f, 440.0f);
+        entity_spawn(ENTITY_ENEMY_OCTOROK, 490.0f, 440.0f);
+        entity_spawn(ENTITY_ENEMY_OCTOROK, 448.0f, 704.0f);
+        // Morcegos voadores Keese (com sombra e vôo senoidal) nas clareiras abertas
+        entity_spawn(ENTITY_ENEMY_KEESE, 510.0f, 420.0f);
+        entity_spawn(ENTITY_ENEMY_KEESE, 420.0f, 710.0f);
+        // Gosmas Green ChuChu nas laterais da praça do jardim
+        entity_spawn(ENTITY_ENEMY_CHUCHU, 472.0f, 620.0f);
+        entity_spawn(ENTITY_ENEMY_CHUCHU, 472.0f, 644.0f);
+        // Habitante Minish amigável no lado oeste da praça do santuário (espaço livre sem sobreposição)
+        entity_spawn(ENTITY_NPC_FOREST_MINISH, 416.0f, 636.0f);
+        // Mestre Espadachim Swiftblade na ampla clareira norte de treinamento
+        entity_spawn(ENTITY_NPC_SWIFTBLADE, 380.0f, 448.0f);
     } else {
         entity_spawn(ENTITY_ENEMY_OCTOROK, 160.0f, 220.0f);
         entity_spawn(ENTITY_ENEMY_OCTOROK, 420.0f, 150.0f);
@@ -173,7 +173,7 @@ static void transition_to_overworld(Player* link, Tilemap* world_map) {
     s_in_town = false;
     if (world_map && world_map->is_authentic) {
         link->x = 448.0f;
-        link->y = 540.0f;
+        link->y = 636.0f;
     } else {
         link->x = 296.0f;
         link->y = 240.0f;
@@ -505,9 +505,9 @@ int main(int argc, char* argv[]) {
     // Inicialização da entidade do Link
     Player link;
     if (world_map && world_map->is_authentic) {
-        // Clareira ensolarada do santuário em Minish Woods (tx = 28, ty = 34)
+        // Caminho do jardim em frente ao santuário em Minish Woods (tx = 28, ty = 39)
         link.x = 448.0f;
-        link.y = 540.0f;
+        link.y = 636.0f;
     } else {
         link.x = 296.0f;
         link.y = 176.0f;
@@ -1073,7 +1073,7 @@ int main(int argc, char* argv[]) {
                 link.y = 392.0f;
             } else {
                 link.x = (world_map && world_map->is_authentic) ? 448.0f : 296.0f;
-                link.y = (world_map && world_map->is_authentic) ? 540.0f : 176.0f;
+                link.y = (world_map && world_map->is_authentic) ? 636.0f : 176.0f;
             }
             link.invuln_timer = 90;
             link.knock_x = 0.0f;
