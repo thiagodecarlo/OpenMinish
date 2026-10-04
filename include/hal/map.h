@@ -68,6 +68,12 @@ typedef enum {
     TILE_MELARI_ORE_VEIN,    // Veio de minério com cristais e gemas brilhantes incrustadas
     TILE_MELARI_MINING_TRACK,// Trilhos da ferrovia de mineração com dormentes de madeira
     TILE_MELARI_CAVE_ARCHWAY,// Portal de pedra em arco ao norte (entrada para Cave of Flames)
+    TILE_SWAMP_WATER,        // Água escura rasa do pântano de Castor Wilds
+    TILE_SWAMP_MUD,          // Lodo movediço profundo (requer Pegasus Dash para atravessar sem afundar!)
+    TILE_SWAMP_GRASS,        // Musgo e vegetação pantanosa verde-oliva
+    TILE_SWAMP_LOG,          // Tronco de árvore caído oco no lodo (passarela / túnel)
+    TILE_EYE_STATUE,         // Estátua ancestral de pedra com olho fechado (ativa com Flecha!)
+    TILE_EYE_STATUE_OPEN,    // Estátua de olho aberta por disparo certeiro de flecha
     TILE_COUNT
 } TileType;
 
@@ -244,5 +250,29 @@ bool map_is_lava(const Tilemap* map, float world_x, float world_y);
  * Retorna true se interagiu com um elemento do cenário.
  */
 bool map_interact_pacci(Tilemap* map, float world_x, float world_y);
+
+/*
+ * Constrói o Pântano de Castor Wilds (Castor Wilds Swamp).
+ * Dimensões: 36x28 tiles (576x448 pixels) contendo charcos de lodo movediço (TILE_SWAMP_MUD),
+ * águas escuras, troncos caídos ocos, estátuas ancestrais de olho de pedra e pedestal do Arco.
+ */
+Tilemap* map_create_castor_wilds(void);
+
+/*
+ * Retorna true se o ponto no mundo contiver lodo movediço profundo (TILE_SWAMP_MUD).
+ */
+bool map_is_swamp_mud(const Tilemap* map, float world_x, float world_y);
+
+/*
+ * Retorna true se a coordenada no mundo for uma estátua de olho ancestral (TILE_EYE_STATUE).
+ */
+bool map_is_eye_statue(const Tilemap* map, float world_x, float world_y);
+
+/*
+ * Atinge uma estátua de olho ancestral com uma flecha ou projétil certeiro,
+ * abrindo o olho (TILE_EYE_STATUE -> TILE_EYE_STATUE_OPEN) e liberando passagens.
+ * Retorna true se acertou e abriu uma estátua de olho.
+ */
+bool map_hit_eye_statue(Tilemap* map, float world_x, float world_y);
 
 #endif // HAL_MAP_H

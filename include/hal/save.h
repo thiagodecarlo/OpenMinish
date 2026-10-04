@@ -37,6 +37,7 @@ typedef struct {
     bool  has_earth_element;
     bool  has_fire_element;
     bool  has_two_elements;
+    bool  has_bow;
     int   slot_a;
     int   slot_b;
     u32   unlocked_items_mask;

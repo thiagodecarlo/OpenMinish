@@ -29,6 +29,7 @@ typedef enum {
     ITEM_PEGASUS_BOOTS,   // Botas de Pegasus (Dash veloz de corrida)
     ITEM_BOMBS,           // Bolsa de Bombas (Colocação de bombas, pavio e explosão)
     ITEM_CANE_OF_PACCI,   // Cajado de Pacci (Projétil mágico de inversão e super salto)
+    ITEM_BOW,             // Arco e Flechas (Disparo de flechas velozes e ativação de estátuas de olho)
     ITEM_COUNT
 } SubweaponType;
 
@@ -111,5 +112,20 @@ void subweapon_add_bombs(int count);
  * Retorna o deslocamento de tremor de tela (Screen Shake) causado por explosões de bombas.
  */
 void subweapon_get_screen_shake(int* out_ox, int* out_oy);
+
+/*
+ * Retorna a quantidade de flechas disponíveis na aljava.
+ */
+int subweapon_get_arrow_count(void);
+
+/*
+ * Retorna a capacidade máxima da aljava de flechas.
+ */
+int subweapon_get_max_arrows(void);
+
+/*
+ * Adiciona flechas à aljava (ex: coletando ou comprando na loja).
+ */
+void subweapon_add_arrows(int count);
 
 #endif // HAL_SUBWEAPON_H

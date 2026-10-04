@@ -137,6 +137,7 @@ int entity_count_active_enemies(void) {
             s_entities[i].type == ENTITY_ENEMY_PEAHAT ||
             s_entities[i].type == ENTITY_ENEMY_TEKTITE ||
             s_entities[i].type == ENTITY_ENEMY_SPINY_BEETLE ||
+            s_entities[i].type == ENTITY_ENEMY_ROPE ||
             (s_entities[i].type == ENTITY_BOSS_BIG_CHUCHU && s_entities[i].health > 0) ||
             (s_entities[i].type == ENTITY_BOSS_GLEEROK && s_entities[i].health > 0)) {
             count++;
@@ -477,6 +478,26 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     e->action        = 1;
                     e->aiTimer       = 90;
                     e->hitbox        = (Hitbox){ 2.0f, 2.0f, 8.0f, 8.0f };
+                    break;
+
+                case ENTITY_ENEMY_ROPE:
+                    e->health        = 2;
+                    e->maxHealth     = 2;
+                    e->damage        = 1;
+                    e->dir           = (Direction)(rand() % 4);
+                    e->action        = 1; // 1 = Patrulha/espreita, 2 = Investida (Charge)
+                    e->aiTimer       = 40 + (rand() % 40);
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -6.0f, -6.0f, 12.0f, 12.0f };
+                    break;
+
+                case ENTITY_ITEM_BOW:
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->action        = 0;
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
                     break;
 
                 default:
@@ -1798,6 +1819,160 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
                 }
             }
         }
+
+        // 21. INIMIGO: ROPE (SERPENTE ÁGIL DO PÂNTANO DE CASTOR WILDS)
+        else if (e->type == ENTITY_ENEMY_ROPE) {
+            if (e->invulnerableTimer > 0) e->invulnerableTimer--;
+
+            // Ação 4: Recuo por dano (Knockback)
+            if (e->action == 4) {
+                float next_x = e->x + e->knockbackVx;
+                float next_y = e->y + e->knockbackVy;
+                if (!entity_is_solid(map, next_x + 6.0f, next_y + 6.0f)) {
+                    e->x = next_x;
+                    e->y = next_y;
+                }
+                e->knockbackTimer--;
+                if (e->knockbackTimer <= 0) {
+                    if (e->health <= 0) {
+                        int roll = rand() % 100;
+                        if (roll < 60) {
+                            entity_spawn(ENTITY_ITEM_RUPEE, e->x + 4.0f, e->y + 4.0f);
+                        } else {
+                            entity_spawn(ENTITY_ITEM_HEART, e->x + 4.0f, e->y + 4.0f);
+                        }
+                        e->is_active = false;
+                        continue;
+                    } else {
+                        e->action = 1;
+                        e->subAction = 0;
+                        e->aiTimer = 40;
+                    }
+                }
+            }
+            // Ação 1: Rastejando devagar / espreitando (Patrulha)
+            else if (e->action == 1) {
+                e->animTimer++;
+                e->aiTimer--;
+
+                // Locomoção suave na direção atual
+                float spd = 0.65f;
+                float next_x = e->x;
+                float next_y = e->y;
+                if (e->dir == DIR_DOWN)  next_y += spd;
+                if (e->dir == DIR_UP)    next_y -= spd;
+                if (e->dir == DIR_LEFT)  next_x -= spd;
+                if (e->dir == DIR_RIGHT) next_x += spd;
+
+                if (!entity_is_solid(map, next_x + 6.0f, next_y + 6.0f)) {
+                    e->x = next_x;
+                    e->y = next_y;
+                } else {
+                    e->dir = (Direction)(rand() % 4);
+                }
+
+                if (e->aiTimer <= 0) {
+                    e->dir = (Direction)(rand() % 4);
+                    e->aiTimer = 40 + (rand() % 40);
+                }
+
+                // Verificação de Linha de Visada com Link para INVESTIDA (Charge!)
+                float ldx = link_x - e->x;
+                float ldy = link_y - e->y;
+                float dist = sqrtf(ldx * ldx + ldy * ldy);
+
+                if (dist < 110.0f) {
+                    if (fabsf(ldy) <= 12.0f) {
+                        // Alinhado horizontalmente!
+                        e->dir = (ldx > 0.0f) ? DIR_RIGHT : DIR_LEFT;
+                        e->action = 2; // Entra em modo de INVESTIDA!
+                        e->aiTimer = 45;
+                        hal_audio_play_sound(SOUND_SWORD_HIT, 0.7f, 1.6f);
+                    } else if (fabsf(ldx) <= 12.0f) {
+                        // Alinhado verticalmente!
+                        e->dir = (ldy > 0.0f) ? DIR_DOWN : DIR_UP;
+                        e->action = 2; // Entra em modo de INVESTIDA!
+                        e->aiTimer = 45;
+                        hal_audio_play_sound(SOUND_SWORD_HIT, 0.7f, 1.6f);
+                    }
+                }
+            }
+            // Ação 2: INVESTIDA RÁPIDA (Charge em linha reta na direção do Link!)
+            else if (e->action == 2) {
+                e->animTimer += 2;
+                e->aiTimer--;
+
+                float charge_spd = 2.8f;
+                float next_x = e->x;
+                float next_y = e->y;
+                if (e->dir == DIR_DOWN)  next_y += charge_spd;
+                if (e->dir == DIR_UP)    next_y -= charge_spd;
+                if (e->dir == DIR_LEFT)  next_x -= charge_spd;
+                if (e->dir == DIR_RIGHT) next_x += charge_spd;
+
+                if (!entity_is_solid(map, next_x + 6.0f, next_y + 6.0f)) {
+                    e->x = next_x;
+                    e->y = next_y;
+                } else {
+                    // Colidiu com obstáculo: encerra a investida e fica atordoado de leve
+                    e->action = 1;
+                    e->aiTimer = 35;
+                }
+
+                if (e->aiTimer <= 0) {
+                    e->action = 1;
+                    e->aiTimer = 50;
+                }
+            }
+
+            // Dano por contato com Link
+            if (*link_invuln_timer <= 0) {
+                float rx1 = e->x - 4.0f;
+                float ry1 = e->y - 4.0f;
+                float rx2 = e->x + 12.0f;
+                float ry2 = e->y + 12.0f;
+
+                float lx1 = link_x + 2.0f;
+                float ly1 = link_y + 4.0f;
+                float lx2 = link_x + 14.0f;
+                float ly2 = link_y + 16.0f;
+
+                if (rx1 < lx2 && rx2 > lx1 && ry1 < ly2 && ry2 > ly1) {
+                    if (*link_hearts > 0) {
+                        *link_hearts -= e->damage;
+                        if (*link_hearts < 0) *link_hearts = 0;
+                    }
+                    *link_invuln_timer = 40;
+                    hal_audio_play_sound(SOUND_HEART_BEEP, 1.0f, 1.0f);
+
+                    float dx = link_x - e->x;
+                    float dy = link_y - e->y;
+                    float d = sqrtf(dx * dx + dy * dy);
+                    if (d > 0.1f) {
+                        *link_knock_x = (dx / d) * 3.5f;
+                        *link_knock_y = (dy / d) * 3.5f;
+                    } else {
+                        *link_knock_x = 0.0f;
+                        *link_knock_y = 3.5f;
+                    }
+                }
+            }
+        }
+
+        // 22. ITEM: ARCO E FLECHAS (RELÍQUIA ANCESTRAL DE CASTOR WILDS)
+        else if (e->type == ENTITY_ITEM_BOW) {
+            e->animTimer++;
+            float dx = link_x - e->x;
+            float dy = link_y - e->y;
+            if (dx * dx + dy * dy <= 16.0f * 16.0f) {
+                // Link coletou o Arco e Flechas!
+                e->is_active = false;
+                subweapon_set_current(ITEM_BOW);
+                subweapon_add_arrows(30);
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.2f);
+                printf("[ITEM BOW] Link obteve o Arco e Flechas! Aljava abastecida com 30 flechas!\n");
+            }
+        }
     }
 }
 
@@ -1822,6 +1997,7 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
              e->type == ENTITY_ENEMY_PEAHAT ||
              e->type == ENTITY_ENEMY_TEKTITE ||
              e->type == ENTITY_ENEMY_SPINY_BEETLE ||
+             e->type == ENTITY_ENEMY_ROPE ||
              (e->type == ENTITY_ENEMY_CHUCHU && e->action > 0)) &&
             e->invulnerableTimer <= 0) {
 
@@ -1965,6 +2141,7 @@ int entity_check_spin_attack_hit(float center_x, float center_y, float radius, i
              e->type == ENTITY_ENEMY_PEAHAT ||
              e->type == ENTITY_ENEMY_TEKTITE ||
              e->type == ENTITY_ENEMY_SPINY_BEETLE ||
+             e->type == ENTITY_ENEMY_ROPE ||
              (e->type == ENTITY_ENEMY_CHUCHU && e->action > 0)) &&
             e->invulnerableTimer <= 0) {
 
@@ -2102,7 +2279,8 @@ int entity_check_bomb_explosion(float center_x, float center_y, float radius, in
              e->type == ENTITY_ENEMY_MOBLIN ||
              e->type == ENTITY_ENEMY_PEAHAT ||
              e->type == ENTITY_ENEMY_TEKTITE ||
-             e->type == ENTITY_ENEMY_SPINY_BEETLE) &&
+             e->type == ENTITY_ENEMY_SPINY_BEETLE ||
+             e->type == ENTITY_ENEMY_ROPE) &&
             e->invulnerableTimer <= 0) {
 
             float ex = e->x + e->hitbox.offset_x + (e->hitbox.width * 0.5f);
@@ -2246,6 +2424,7 @@ bool entity_check_subweapon_hit(float px, float py, float pw, float ph, int dama
                   e->type == ENTITY_ENEMY_PEAHAT ||
                   e->type == ENTITY_ENEMY_TEKTITE ||
                   e->type == ENTITY_ENEMY_SPINY_BEETLE ||
+                  e->type == ENTITY_ENEMY_ROPE ||
                   (e->type == ENTITY_ENEMY_CHUCHU && e->action > 0)) &&
                  e->invulnerableTimer <= 0) {
 
@@ -4288,6 +4467,137 @@ void entity_manager_render(const Camera* cam) {
 
                 font_draw_text(bar_x + 2, bar_y - 8, "GLEEROK - DRAGAO DE FOGO", 0xF97316FF, true);
             }
+        }
+
+        // 28. INIMIGO: ROPE (SERPENTE ÁGIL DO PÂNTANO)
+        else if (e->type == ENTITY_ENEMY_ROPE) {
+            // Sombra oval no chão
+            draw_filled_rect(sx + 1, sy + 10, 10, 3, 0x05100766);
+
+            // Piscar se estiver invulnerável
+            if (e->invulnerableTimer > 0 && ((e->invulnerableTimer / 3) % 2 == 0)) {
+                continue;
+            }
+
+            u32 c_skin_main = 0xD97706FF; // Pele de cobra âmbar/laranja
+            u32 c_skin_dark = 0x78350FFF; // Manchas escuras / escamas dorsais
+            u32 c_skin_hi   = 0xF59E0BFF; // Destaque dorsal
+            u32 c_belly     = 0xFEF08AFF; // Ventre amarelo claro
+            u32 c_eye       = 0xDC2626FF; // Olhos vermelhos brilhantes
+            u32 c_tongue    = 0xEF4444FF; // Língua bífida
+
+            // Se em Investida rápida (Action 2), olhos incandescentes
+            if (e->action == 2) {
+                c_eye = 0xFFFFFFFF;
+            }
+
+            int wag = ((e->animTimer / 4) % 2 == 0) ? 1 : -1;
+
+            if (e->dir == DIR_DOWN) {
+                // Cabeça triangular
+                draw_filled_rect(sx + 3, sy + 6, 6, 5, c_skin_main);
+                draw_filled_rect(sx + 4, sy + 5, 4, 1, c_skin_hi);
+                draw_filled_rect(sx + 4, sy + 9, 4, 3, c_skin_main);
+                // Olhos
+                put_pixel_safe(sx + 3, sy + 7, c_eye);
+                put_pixel_safe(sx + 8, sy + 7, c_eye);
+                // Língua bifurcada
+                if ((e->animTimer / 5) % 2 == 0) {
+                    put_pixel_safe(sx + 5, sy + 12, c_tongue);
+                    put_pixel_safe(sx + 6, sy + 12, c_tongue);
+                    put_pixel_safe(sx + 4, sy + 13, c_tongue);
+                    put_pixel_safe(sx + 7, sy + 13, c_tongue);
+                }
+                // Corpo ondulante (cauda para cima)
+                draw_filled_rect(sx + 4 + wag, sy + 2, 4, 4, c_skin_main);
+                draw_filled_rect(sx + 5 - wag, sy - 1, 3, 3, c_skin_dark);
+                put_pixel_safe(sx + 5 + wag, sy + 3, c_skin_dark);
+            } else if (e->dir == DIR_UP) {
+                // Cabeça voltada para cima
+                draw_filled_rect(sx + 3, sy + 2, 6, 5, c_skin_main);
+                draw_filled_rect(sx + 4, sy + 1, 4, 2, c_skin_main);
+                put_pixel_safe(sx + 3, sy + 3, c_eye);
+                put_pixel_safe(sx + 8, sy + 3, c_eye);
+                if ((e->animTimer / 5) % 2 == 0) {
+                    put_pixel_safe(sx + 5, sy - 1, c_tongue);
+                    put_pixel_safe(sx + 6, sy - 1, c_tongue);
+                }
+                // Corpo para baixo
+                draw_filled_rect(sx + 4 + wag, sy + 7, 4, 4, c_skin_main);
+                draw_filled_rect(sx + 5 - wag, sy + 11, 3, 3, c_skin_dark);
+            } else if (e->dir == DIR_LEFT) {
+                // Cabeça para a esquerda
+                draw_filled_rect(sx + 1, sy + 4, 5, 5, c_skin_main);
+                draw_filled_rect(sx, sy + 5, 2, 3, c_skin_main);
+                put_pixel_safe(sx + 2, sy + 4, c_eye);
+                if ((e->animTimer / 5) % 2 == 0) {
+                    put_pixel_safe(sx - 2, sy + 6, c_tongue);
+                    put_pixel_safe(sx - 1, sy + 6, c_tongue);
+                }
+                // Corpo ondulante para a direita
+                draw_filled_rect(sx + 6, sy + 4 + wag, 4, 4, c_skin_main);
+                draw_filled_rect(sx + 10, sy + 5 - wag, 4, 3, c_skin_dark);
+                put_pixel_safe(sx + 8, sy + 5 + wag, c_belly);
+            } else { // DIR_RIGHT
+                // Cabeça para a direita
+                draw_filled_rect(sx + 6, sy + 4, 5, 5, c_skin_main);
+                draw_filled_rect(sx + 10, sy + 5, 2, 3, c_skin_main);
+                put_pixel_safe(sx + 9, sy + 4, c_eye);
+                if ((e->animTimer / 5) % 2 == 0) {
+                    put_pixel_safe(sx + 12, sy + 6, c_tongue);
+                    put_pixel_safe(sx + 13, sy + 6, c_tongue);
+                }
+                // Corpo ondulante para a esquerda
+                draw_filled_rect(sx + 2, sy + 4 + wag, 4, 4, c_skin_main);
+                draw_filled_rect(sx - 2, sy + 5 - wag, 4, 3, c_skin_dark);
+                put_pixel_safe(sx + 4, sy + 5 + wag, c_belly);
+            }
+        }
+
+        // 29. ITEM: ARCO E FLECHAS (PEDESTAL EM CASTOR WILDS)
+        else if (e->type == ENTITY_ITEM_BOW) {
+            int bob = (int)(sinf((float)e->animTimer * 0.12f) * 2.5f);
+            int by = sy + bob;
+
+            // Sombra suave no chão
+            draw_filled_rect(sx - 5, sy + 10, 14, 3, 0x05100766);
+            draw_filled_rect(sx - 3, sy + 9, 10, 5, 0x05100766);
+
+            // Halo místico cintilante em volta do Arco
+            draw_rect_blend(sx - 6, by - 6, 20, 20, 0x38BDF833);
+            draw_rect_blend(sx - 4, by - 4, 16, 16, 0xFDE04744);
+
+            // Arco recurvo de madeira nobre e reforços dourados (12x12 px)
+            u32 c_wood_dark  = 0x78350FFF;
+            u32 c_wood_main  = 0x92400EFF;
+            u32 c_wood_light = 0xB45309FF;
+            u32 c_gold       = 0xF59E0BFF;
+            u32 c_string     = 0xF1F5F9FF;
+            u32 c_arrow      = 0xE2E8F0FF;
+            u32 c_fletch     = 0xEF4444FF;
+
+            // Curvatura do arco (madeira e ponteiras douradas)
+            draw_filled_rect(sx + 2, by - 5, 3, 2, c_gold); // Ponta superior
+            draw_filled_rect(sx + 4, by - 3, 2, 3, c_wood_light);
+            draw_filled_rect(sx + 5, by, 2, 4, c_wood_main); // Empunhadura
+            draw_filled_rect(sx + 4, by + 4, 2, 3, c_wood_dark);
+            draw_filled_rect(sx + 2, by + 7, 3, 2, c_gold); // Ponta inferior
+
+            // Corda esticada
+            draw_filled_rect(sx + 1, by - 4, 1, 12, c_string);
+
+            // Flecha encaixada pronta para o disparo
+            draw_filled_rect(sx - 2, by + 1, 9, 1, c_arrow);
+            put_pixel_safe(sx + 7, by, c_arrow); // Ponta da flecha
+            put_pixel_safe(sx + 8, by + 1, c_arrow);
+            put_pixel_safe(sx + 7, by + 2, c_arrow);
+            put_pixel_safe(sx - 3, by, c_fletch); // Penas traseiras
+            put_pixel_safe(sx - 3, by + 2, c_fletch);
+
+            // Partícula de brilho cintilante
+            int spark_tick = (e->animTimer / 6) % 4;
+            if (spark_tick == 0) put_pixel_safe(sx + 8, by - 2, 0xFFFFFFFF);
+            else if (spark_tick == 2) put_pixel_safe(sx - 2, by + 4, 0xFFFFFFFF);
         }
     }
 }

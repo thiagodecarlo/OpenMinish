@@ -50,7 +50,9 @@ typedef enum {
     ENTITY_ENEMY_FIRE_KEESE,  // Morcego vulcânico em chamas (Cave of Flames)
     ENTITY_BOSS_GLEEROK,      // Chefe da Masmorra de Fogo (Gleerok - Dragão de Lava)
     ENTITY_ITEM_FIRE_ELEMENT, // Elemento Sagrado do Fogo (Fire Element)
-    ENTITY_PROJECTILE_FIREBALL// Bola de fogo / magma cuspida pelo Gleerok
+    ENTITY_PROJECTILE_FIREBALL,// Bola de fogo / magma cuspida pelo Gleerok
+    ENTITY_ENEMY_ROPE,        // Serpente ágil do pântano de Castor Wilds (arrancada veloz em linha reta)
+    ENTITY_ITEM_BOW           // Arco e Flechas relíquia ancestral (item equipável de longo alcance)
 } EntityType;
 
 // Caixa delimitadora de colisão e dano (Hitbox / Hurtbox)
