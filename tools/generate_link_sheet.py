@@ -73,9 +73,10 @@ def generate_link_sheet(source_sheet_path):
 
     # Row 0: Idle
     idle_down = extract_cell(24, 31)
-    idle_right = extract_cell(60, 31)
+    # O sprite na posição (60, 31) na folha original está virado para a ESQUERDA (nariz à esquerda)
+    idle_left = extract_cell(60, 31)
+    idle_right = idle_left.transpose(Image.FLIP_LEFT_RIGHT)
     idle_up = extract_cell(88, 30)
-    idle_left = idle_right.transpose(Image.FLIP_LEFT_RIGHT)
 
     sheet.paste(idle_down, (0 * CELL_W, 0 * CELL_H))
     sheet.paste(idle_right, (1 * CELL_W, 0 * CELL_H))
@@ -89,10 +90,12 @@ def generate_link_sheet(source_sheet_path):
         sheet.paste(frame, (k * CELL_W, 1 * CELL_H))
 
     # Row 2: Walk Right (10 frames)
+    # Na folha original, os sprites estão caminhando para a ESQUERDA.
+    # Fazemos a inversão horizontal para que a Linha 2 represente a caminhada para a DIREITA.
     right_xs = [350, 380, 412, 445, 476, 510, 540, 573, 609, 636]
     for k, x in enumerate(right_xs):
         cx = x + 11
-        frame = extract_cell(cx, 99)
+        frame = extract_cell(cx, 99).transpose(Image.FLIP_LEFT_RIGHT)
         sheet.paste(frame, (k * CELL_W, 2 * CELL_H))
 
     # Row 3: Walk Up (10 frames)
