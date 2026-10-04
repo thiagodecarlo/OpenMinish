@@ -12,6 +12,7 @@
 #include "hal/subweapon.h"
 #include "hal/kinstone.h"
 #include "hal/dungeon.h"
+#include "hal/inventory.h"
 #include <math.h>
 
 /*
@@ -816,6 +817,7 @@ int main(int argc, char* argv[]) {
     subweapon_init();
     kinstone_init();
     dungeon_init();
+    inventory_init();
 
     // Inicia a trilha sonora autêntica de Minish Woods no mixer chiptune da HAL
     hal_audio_play_bgm(BGM_MINISH_WOODS);
@@ -897,6 +899,43 @@ int main(int argc, char* argv[]) {
                 hal_input_process_event(&event);
 
                 if (event.type == SDL_KEYDOWN) {
+                    if (event.key.keysym.sym == SDLK_RETURN || event.key.keysym.sym == SDLK_p) {
+                        if (!dialogue_is_active() && !kinstone_is_active()) {
+                            inventory_toggle_pause();
+                            continue;
+                        }
+                    }
+
+                    if (inventory_is_paused()) {
+                        switch (event.key.keysym.sym) {
+                            case SDLK_UP:
+                                inventory_cursor_move(0, -1);
+                                break;
+                            case SDLK_DOWN:
+                                inventory_cursor_move(0, 1);
+                                break;
+                            case SDLK_LEFT:
+                                inventory_cursor_move(-1, 0);
+                                break;
+                            case SDLK_RIGHT:
+                                inventory_cursor_move(1, 0);
+                                break;
+                            case SDLK_z:
+                            case SDLK_SPACE:
+                                inventory_assign_to_slot_a();
+                                break;
+                            case SDLK_x:
+                                inventory_assign_to_slot_b();
+                                break;
+                            case SDLK_ESCAPE:
+                                inventory_toggle_pause();
+                                break;
+                            default:
+                                break;
+                        }
+                        continue;
+                    }
+
                     switch (event.key.keysym.sym) {
                         case SDLK_ESCAPE:
                             running = false;
@@ -1011,13 +1050,27 @@ int main(int argc, char* argv[]) {
         // Atualiza os estados de transição (borda de subida/descida dos botões)
         hal_input_update();
 
+        if (hal_input_is_pressed(KEY_START)) {
+            if (!dialogue_is_active() && !kinstone_is_active()) {
+                inventory_toggle_pause();
+            }
+        }
+
         // --------------------------------------------------------------------
         // 2. ATUALIZAÇÃO DA LÓGICA DO JOGADOR (INPUT -> FÍSICA)
         // --------------------------------------------------------------------
         const HalVideoContext* ctx = hal_video_get_context();
         Tilemap* active_map = s_in_village ? s_village_map : (s_in_town ? s_town_map : world_map);
 
-        if (link.is_transforming) {
+        if (inventory_is_paused()) {
+            if (hal_input_is_pressed(KEY_UP))    inventory_cursor_move(0, -1);
+            if (hal_input_is_pressed(KEY_DOWN))  inventory_cursor_move(0, 1);
+            if (hal_input_is_pressed(KEY_LEFT))  inventory_cursor_move(-1, 0);
+            if (hal_input_is_pressed(KEY_RIGHT)) inventory_cursor_move(1, 0);
+            if (hal_input_is_pressed(KEY_A))     inventory_assign_to_slot_a();
+            if (hal_input_is_pressed(KEY_B))     inventory_assign_to_slot_b();
+        } else {
+            if (link.is_transforming) {
             link.transform_timer--;
             link.is_moving = false;
 
@@ -1658,6 +1711,7 @@ int main(int argc, char* argv[]) {
         subweapon_get_screen_shake(&b_shake_x, &b_shake_y);
         camera.x += (float)(shake_x + b_shake_x);
         camera.y += (float)(shake_y + b_shake_y);
+        } // Fim do if (!inventory_is_paused())
 
         // --------------------------------------------------------------------
         // 3. RENDERIZAÇÃO NO FRAMEBUFFER VIRTUAL
@@ -1840,6 +1894,11 @@ int main(int argc, char* argv[]) {
             draw_rect(spx - 3, spy - 1, text_w + 6, 12, 0x0284C7FF);
             draw_rect(spx - 2, spy, text_w + 4, 10, 0x0C4A6EEE);
             font_draw_text(spx, spy + 1, swim_prompt, 0xBAE6FDFF, true);
+        }
+
+        // 10. Subtela de Inventario e Menu de Pausa [START / ENTER]
+        if (inventory_is_paused()) {
+            inventory_render_pause_menu(ctx->render_width, ctx->render_height, link.hearts, link.max_hearts, link.rupees);
         }
 
         // --------------------------------------------------------------------

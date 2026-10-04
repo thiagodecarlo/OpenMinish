@@ -93,6 +93,12 @@ SubweaponType subweapon_get_current(void) {
     return s_current_item;
 }
 
+void subweapon_set_current(SubweaponType item) {
+    if (item >= 0 && item < ITEM_COUNT) {
+        s_current_item = item;
+    }
+}
+
 const char* subweapon_get_name(SubweaponType item) {
     switch (item) {
         case ITEM_BOOMERANG:     return "Bumerangue Magico";
