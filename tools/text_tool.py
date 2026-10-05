@@ -341,15 +341,16 @@ def cmd_init_template(out_path="assets/lang/template_pt_BR.json"):
     except Exception:
         es_data = []
 
-    # Se já existir um pt_BR.json existente, carrega as traduções já feitas
+    # Se já existir pt_BR_dialogues.json existente, carrega as traduções já feitas
     existing_pt = {}
-    if os.path.exists("assets/lang/pt_BR.json"):
+    if os.path.exists("assets/lang/pt_BR_dialogues.json"):
         try:
-            with open("assets/lang/pt_BR.json", "r", encoding="utf-8") as f:
+            with open("assets/lang/pt_BR_dialogues.json", "r", encoding="utf-8") as f:
                 pt_obj = json.load(f)
-                if "dialogues" in pt_obj and isinstance(pt_obj["dialogues"], dict):
-                    for k, v in pt_obj["dialogues"].items():
-                        existing_pt[k] = v
+                for g in pt_obj.get("groups", []):
+                    for m in g.get("messages", []):
+                        if m.get("text", "").strip():
+                            existing_pt[m.get("hex_id", "")] = m["text"]
         except Exception:
             pass
 
@@ -656,19 +657,13 @@ def cmd_export_game_json(template_path, out_path="assets/lang/pt_BR_dialogues.js
 
         game_doc["groups"].append(group_obj)
 
-    # 1. Salva o arquivo padronizado principal assets/lang/pt_BR_dialogues.json
+    # Salva o arquivo padronizado principal assets/lang/pt_BR_dialogues.json
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(game_doc, f, ensure_ascii=False, indent=2)
 
-    # 2. Também atualiza assets/lang/pt_BR.json com o mesmo schema padronizado
-    legacy_path = "assets/lang/pt_BR.json"
-    with open(legacy_path, "w", encoding="utf-8") as f:
-        json.dump(game_doc, f, ensure_ascii=False, indent=2)
-
-    print(f"✅ Exportados arquivos padronizados:")
+    print(f"✅ Exportado arquivo de runtime padronizado:")
     print(f"   -> '{out_path}' ({total_msgs} mensagens em {total_groups} grupos)")
-    print(f"   -> '{legacy_path}' (sincronizado no mesmo padrão)")
     print(f"   -> {translated_count} mensagens em PT-BR ativas ({translated_count*100/total_msgs:.1f}%).")
     return True
 
