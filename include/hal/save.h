@@ -40,6 +40,8 @@ typedef struct {
     bool  has_wind_element;
     bool  has_two_elements;
     bool  has_three_elements;
+    bool  has_four_sword;
+    bool  secret_exit_unlocked;
     bool  dungeon_droplets_cleared;
     bool  dungeon_palace_cleared;
     bool  has_bow;

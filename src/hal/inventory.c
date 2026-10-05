@@ -17,6 +17,7 @@ static int s_cursor_pulse = 0;
 
 static bool s_items_unlocked[INV_ITEM_COUNT] = { false };
 static bool s_has_white_sword = false;
+static bool s_has_four_sword = false;
 static InventoryItem s_slot_a = INV_ITEM_SWORD;
 static InventoryItem s_slot_b = INV_ITEM_BOOMERANG;
 
@@ -26,6 +27,14 @@ void inventory_set_white_sword(bool has_white_sword) {
 
 bool inventory_has_white_sword(void) {
     return s_has_white_sword;
+}
+
+void inventory_set_four_sword(bool has_four_sword) {
+    s_has_four_sword = has_four_sword;
+}
+
+bool inventory_has_four_sword(void) {
+    return s_has_four_sword;
 }
 
 void inventory_init(void) {
@@ -99,7 +108,9 @@ void inventory_set_slot_b(InventoryItem item) {
 
 const char* inventory_get_item_name(InventoryItem item) {
     switch (item) {
-        case INV_ITEM_SWORD:         return s_has_white_sword ? "Espada Branca" : "Espada do Smith";
+        case INV_ITEM_SWORD:
+            if (s_has_four_sword) return "Four Sword (Lamina Quadrupula)";
+            return s_has_white_sword ? "Espada Branca" : "Espada do Smith";
         case INV_ITEM_BOOMERANG:     return "Bumerangue Magico";
         case INV_ITEM_GUST_JAR:      return "Pote Magico (Gust Jar)";
         case INV_ITEM_BOMBS:         return "Bolsa de Bombas";
@@ -119,6 +130,9 @@ const char* inventory_get_item_name(InventoryItem item) {
 const char* inventory_get_item_desc(InventoryItem item) {
     switch (item) {
         case INV_ITEM_SWORD:
+            if (s_has_four_sword) {
+                return "A lendaria lamina quadrupula forjada pelos 4 Elementos! Dispara Sword Beams com HP cheio e divide Link em 4 guerreiros!";
+            }
             return s_has_white_sword ?
                 "Lamina sagrada reforjada por Mestre Melari. Dano dobrado (2 HP) e cortes radiantes!" :
                 "Lamina forjada por Mestre Smith. Desfere cortes e carrega Spin Attack.";

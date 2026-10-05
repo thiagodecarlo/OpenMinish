@@ -53,9 +53,11 @@ void inventory_set_slot_b(InventoryItem item);
 const char* inventory_get_item_name(InventoryItem item);
 const char* inventory_get_item_desc(InventoryItem item);
 
-// Melhoria de espada: White Sword (Espada Branca)
+// Melhoria de espada: White Sword (Espada Branca) e Four Sword Completa
 void inventory_set_white_sword(bool has_white_sword);
 bool inventory_has_white_sword(void);
+void inventory_set_four_sword(bool has_four_sword);
+bool inventory_has_four_sword(void);
 
 // Navegação e comandos na tela de pausa
 void inventory_cursor_move(int dx, int dy);

@@ -169,13 +169,13 @@ flowchart TD
   4. `feature/dungeon-temple-of-droplets` (Merged ✅): Dungeon 4 congelada com quebra-cabeças de reflexão de luz solar e Chefe Big Octo congelado.
   5. `feature/elemental-sanctuary-split3` (Merged ✅): Infusão do 3º Elemento: divisão em 3 Clones triangulares.
 
-### Sprint 4: Ato IV - As Nuvens & A Four Sword Forjada (4 Clones) [Em Andamento ⏳ - 75%]
+### Sprint 4: Ato IV - As Nuvens & A Four Sword Forjada (4 Clones) [Concluído ✅ - 100%]
 - **Objetivo**: Escalar as cachoeiras de Veil Falls, alcançar a Tribo dos Ventos no céu e forjar a lâmina quádrupla.
 - **Tarefas**:
   1. `feature/veil-falls-cloud-tops` (Merged ✅): Cachoeira sagrada, subida às nuvens e travessia com Gust Jar.
   2. `feature/rocs-cape` (Merged ✅): Capa de Roc para pulo livre, flutuação no ar e ataque aéreo Downthrust.
   3. `feature/dungeon-palace-of-winds` (Merged ✅): Dungeon 5 sobre as nuvens e Chefe Gyorg Pair (batalha aérea pulando entre arraias gigantes, Heart Container permanente e Wind Element).
-  4. `feature/four-sword-forged` (Próximo ⏳): Infusão do 4º Elemento sagrado no Santuário. A Four Sword completa é forjada, permitindo 4 Clones simultâneos e Sword Beams com vida cheia.
+  4. `feature/four-sword-forged` (Merged ✅): Infusão do 4º Elemento sagrado no Santuário. A Four Sword completa é forjada, permitindo 4 Clones simultâneos (Green, Red, Blue, Purple), Sword Beams com vida cheia e abertura da passagem secreta norte para o Vale Real (Royal Valley).
 
 ### Sprint 5: Ato V - O Clímax & A Derrota de Vaati
 - **Objetivo**: Resgatar o reino e derrotar o feiticeiro Vaati em sua fortaleza sombria.
