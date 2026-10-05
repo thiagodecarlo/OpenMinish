@@ -1,0 +1,2497 @@
+{
+  "batch_name": "batch_2",
+  "groups": [
+    {
+      "group_id": 5,
+      "group_hex": "0x05",
+      "name": "Mensagens de Obtenção de Itens (Fanfarras)",
+      "messages": [
+        {
+          "id": 0,
+          "hex_id": "0x0500",
+          "en": "...",
+          "es_ref": "(?)",
+          "pt": "..."
+        },
+        {
+          "id": 1,
+          "hex_id": "0x0501",
+          "en": "{04:10:0C}You got the {Color:Red}Smith's Sword{Color:White}! It's a sharp\nblade made by your grandfather.",
+          "es_ref": "{04:10:0C}¡Has conseguido la {Color:Red}espada Smith{Color:White}!\nTu abuelo forjó esta espada.",
+          "pt": "{04:10:0C}Você obteve a {Color:Red}Espada de\nSmith{Color:White}! Seu avô forjou\nesta\n\nespada afiada."
+        },
+        {
+          "id": 2,
+          "hex_id": "0x0502",
+          "en": "{04:10:0E}You got the {Color:Red}White Sword{Color:White}! Its beautiful\nwhite blade sparkles with light!\nYou can put away your {Color:Red}grandfather's\nsword{Color:White} now.",
+          "es_ref": "{04:10:0E}¡Has conseguido la {Color:Red}espada blanca{Color:White}!\n¡Es preciosa y brilla muchísimo!\nAhora, guarda la espada Smith.",
+          "pt": "{04:10:0E}Você obteve a {Color:Red}Espada\nBranca{Color:White}! Sua bela lâmina\nreluz com\n\nluz pura! Guarde a\nespada do seu avô\nagora."
+        },
+        {
+          "id": 3,
+          "hex_id": "0x0503",
+          "en": "{04:10:00}The powers of the {Color:Red}Earth{Color:White} and {Color:Red}Fire\nElements{Color:White} have infused your blade!",
+          "es_ref": "{04:10:00}¡Has atribuido el poder de los {Color:Red}elementos\nde tierra y fuego{Color:White} a la espada!",
+          "pt": "{04:10:00}O poder dos {Color:Red}Elementos\nTerra e Fogo{Color:White} infundiu\nsua lâmina!"
+        },
+        {
+          "id": 4,
+          "hex_id": "0x0504",
+          "en": "{04:10:00}The power of the {Color:Red}Water Element{Color:White}\nhas infused your blade!\nThe power of this {Color:Red}element {Color:White}allows you to\n{Color:Blue}split into three copies{Color:White}!",
+          "es_ref": "{04:10:00}¡Has atribuido el poder del {Color:Red}elemento\nde agua{Color:White} a la espada!\n¡Ahora podrás {Color:Blue}dividirte en tres{Color:White} gracias\nal poder de los {Color:Red}elementos{Color:White}!",
+          "pt": "{04:10:00}O poder do {Color:Red}Elemento da\nÁgua{Color:White} infundiu sua\nlâmina!\n\nAgora você pode se {Color:Blue}\ndividir em três cópias{Color:White}!"
+        },
+        {
+          "id": 5,
+          "hex_id": "0x0505",
+          "en": "{04:10:00}The power of the {Color:Red}Wind Element{Color:White}\nhas infused your blade!\n{07:05:06}",
+          "es_ref": "{04:10:00}¡Has atribuido el poder del {Color:Red}elemento\nde aire{Color:White} a la espada!\n{07:05:06}",
+          "pt": "{04:10:00}O poder do {Color:Red}Elemento do\nVento{Color:White} infundiu sua\nlâmina!\n\n{07:05:06}"
+        },
+        {
+          "id": 6,
+          "hex_id": "0x0506",
+          "en": "{04:10:00}With the power of the four elements,\nyour blade has become the {Color:Red}Four Sword{Color:White}!\nFocus power in your blade and release\nto fire a beam.\nUse it to break Vaati's curse and\nrestore the people of Hyrule.",
+          "es_ref": "{04:10:00}¡La espada ha absorbido el poder\nde los cuatro elementos y ha nacido\nla {Color:Red}espada cuádruple{Color:White}!\nYa te puedes {Color:Blue}dividir en cuatro{Color:White} y\ncargar de fuerza la espada y liberarla\npara lanzar un rayo capaz de devolver\nla forma a las personas que Vaati\nconvirtió en piedra.",
+          "pt": "{04:10:00}Com o poder dos quatro\nelementos, sua espada\ntornou-se a {Color:Red}\n\nFour Sword{Color:White}! Você pode\nse {Color:Blue}dividir em quatro{Color:White}\n\ne carregar poder para\ndisparar raios capazes\nde quebrar a\n\nmaldição de Vaati!"
+        },
+        {
+          "id": 7,
+          "hex_id": "0x0507",
+          "en": "{04:10:0E}You got a {Color:Red}Bomb Bag{Color:White}!\n\nAnd it has ten {Color:Red}bombs{Color:White} in it!\nNow you can blow up lots of stuff!",
+          "es_ref": "{04:10:0E}¡Has conseguido un {Color:Red}saco de bombas{Color:White}!\n\n¡Y encima tiene {Color:Red}10 bombas{Color:White} dentro!\n¡Podrás volar lo que quieras!",
+          "pt": "{04:10:0E}Você obteve a {Color:Red}Bolsa de\nBombas{Color:White}!\n\nE ela vem com {Color:Red}10 bombas{Color:White}\ndentro! Agora você pode\nexplodir\n\ntudo!"
+        },
+        {
+          "id": 8,
+          "hex_id": "0x0508",
+          "en": "{04:10:0E}You got a {Color:Red}Remote Bomb{Color:White}!\n\nPress the button to place a bomb, then\npress the button again to detonate it.",
+          "es_ref": "{04:10:0E}¡Has conseguido {Color:Red}bombas con\ncontrol remoto{Color:White}!\nColoca la bomba, vuelve a pulsar el\nbotón correspondiente y explotará.",
+          "pt": "{04:10:0E}Você obteve as {Color:Red}Bombas\ncom Controle Remoto{Color:White}!\nColoque a bomba e\n\naperte\n\no botão novamente para\ndetoná-la."
+        },
+        {
+          "id": 9,
+          "hex_id": "0x0509",
+          "en": "{04:10:0E}You got a {Color:Red}bow{Color:White}! Now you can take\nout enemies from afar!",
+          "es_ref": "{04:10:0E}¡Has conseguido un {Color:Red}arco con flechas{Color:White}!\n¡Podrás atacar desde lejos!",
+          "pt": "{04:10:0E}Você obteve o {Color:Red}Arco e\nFlechas{Color:White}! Agora você\npode atingir\n\ninimigos de longe!"
+        },
+        {
+          "id": 10,
+          "hex_id": "0x050A",
+          "en": "You got the {Color:Red}Light Arrow{Color:White}! Now, you can\nfire arrows filled with sacred light!",
+          "es_ref": "{04:10:0E}¡Has conseguido un {Color:Red}arco y\nflechas de luz{Color:White}!\n¡Dispara potentes flechas\nde luz sagrada!",
+          "pt": "Você obteve as {Color:Red}Flechas\nde Luz{Color:White}! Carregue o arco\npara\n\ndisparar flechas com o\npoder da luz sagrada!"
+        },
+        {
+          "id": 11,
+          "hex_id": "0x050B",
+          "en": "You got a {Color:Red}boomerang{Color:White}! This well-\ncrafted weapon returns when thrown!",
+          "es_ref": "¡Has conseguido un {Color:Red}bumerán{Color:White}!\n¡Lánzalo y volverá a ti!",
+          "pt": "Você obteve um {Color:Red}\nBumerangue{Color:White}! Atordoe\nmonstros e colete\n\nitens distantes com\nfacilidade!"
+        },
+        {
+          "id": 12,
+          "hex_id": "0x050C",
+          "en": "You got the {Color:Red}Magical Boomerang{Color:White}!\n\nHold the button you threw it with and\nuse {Key:Dpad} to control its path!",
+          "es_ref": "¡Has conseguido un {Color:Red}bumerán mágico{Color:White}!\n\n¡Lánzalo y, sin soltar el botón, pulsa\n{Key:Dpad} para cambiar su trayectoria!",
+          "pt": "Você obteve o {Color:Red}\nBumerangue Mágico{Color:White}!\nSegure o botão para\n\ncontrolar sua\ntrajetória pelo ar!"
+        },
+        {
+          "id": 13,
+          "hex_id": "0x050D",
+          "en": "{04:10:00}Princess Zelda gave you a {Color:Red}small shield{Color:White}!\n\nHold the button to protect yourself.\n\n...It IS a little embarrassing, though.\nIt's so tiny!",
+          "es_ref": "{04:10:00}¡Zelda te ha regalado un\n{Color:Red}escudo pequeño{Color:White}!\n¡Pulsa el botón correspondiente\npara protegerte de ataques!\nEs un detalle por parte de la princesa,\npero... un pelín pequeño ¿no?",
+          "pt": "{04:10:00}A Princesa Zelda lhe\ndeu um {Color:Red}Escudo Pequeno{Color:White}!\n\nUse-o com sabedoria\npara se proteger!"
+        },
+        {
+          "id": 14,
+          "hex_id": "0x050E",
+          "en": "{04:10:00}You got the {Color:Red}Mirror Shield{Color:White}!\n\nThis mighty shield shines like a mirror.\nUse it to reflect enemy attacks!",
+          "es_ref": "{04:10:00}¡Has conseguido el {Color:Red}escudo espejo{Color:White}!\n\n¡Un potente escudo que brilla como un\nespejo! Repele los ataques enemigos.",
+          "pt": "{04:10:00}Você obteve o {Color:Red}Escudo\nEspelho{Color:White}! Sua\nsuperfície reluzente\n\nreflete projéteis e\nfeitiços inimigos!"
+        },
+        {
+          "id": 15,
+          "hex_id": "0x050F",
+          "en": "You got the {Color:Red}Flame Lantern{Color:White}!\n\nThis handy item lights up the night!\nPress the button to turn it on or off.",
+          "es_ref": "¡Has conseguido un {Color:Red}candil{Color:White}!\n\nAlumbrará tu camino en la oscuridad.\n¡Apágalo o enciéndelo a tu antojo!",
+          "pt": "{04:10:0C}Você obteve a {Color:Red}Lanterna\nde Chamas{Color:White}! Ilumine\ncavernas escuras\n\ne queime obstáculos com\nsuas chamas!"
+        },
+        {
+          "id": 16,
+          "hex_id": "0x0510",
+          "en": "Flame Lantern (Fire)\n\nOn your Items screen, equip it to either\n{Key:A} or {Key:B} to use it!",
+          "es_ref": "Candil\n\nAsígnalo en la {Color:Blue}pantalla de objetos{Color:White}\nal Botón {Key:A} o al Botón {Key:B}.",
+          "pt": "{04:10:0C}Você obteve a {Color:Red}Lanterna\nde Chamas{Color:White}! Ilumine\ncaminhos\n\nsombrios!"
+        },
+        {
+          "id": 17,
+          "hex_id": "0x0511",
+          "en": "{04:10:0E}You got the {Color:Red}Gust Jar{Color:White}!\n\nHold the button to draw things in,\nand release it to fire them out!\nSet it to {Key:A} or {Key:B} on the {Color:Blue}Items screen{Color:White}\nto use it!",
+          "es_ref": "{04:10:0E}¡Has conseguido el {Color:Red}jarrón mágico{Color:White}!\n\nMantén pulsado el botón para recargar\nfuerza y después suéltalo.\nAsígnalo en la {Color:Blue}pantalla de objetos{Color:White}\nal Botón {Key:A} o al Botón {Key:B}.",
+          "pt": "{04:10:0C}Você obteve o {Color:Red}Jarro\nMágico{Color:White}! Suga coisas com\ntremenda\n\nforça e dispara rajadas\nde vento poderosas!"
+        },
+        {
+          "id": 18,
+          "hex_id": "0x0512",
+          "en": "{04:10:0E}You got the {Color:Red}Cane of Pacci{Color:White}!\n\nThis mystical rod has the power to\nflip things over.\nUse it to charge up energy in holes\nand then flip up on out of it!",
+          "es_ref": "{04:10:0E}¡Has conseguido el {Color:Red}bastón revés{Color:White}!\n¡Podrás darle la vuelta a objetos!\nIntenta llenar un agujero con su\nenergía y úsala para saltar.",
+          "pt": "{04:10:0C}Você obteve o {Color:Red}Cajado de\nPacci{Color:White}! Dispare\nfeitiços para\n\nvirar objetos e\nenergizar buracos no\nchão!"
+        },
+        {
+          "id": 19,
+          "hex_id": "0x0513",
+          "en": "{04:10:0E}You got the {Color:Red}Mole Mitts{Color:White}! Dig, dig,\ndig to your heart's content!",
+          "es_ref": "{04:10:0E}¡Has conseguido los {Color:Red}guantes de topo{Color:White}!\n¡Cava, cava sin parar, pequeño topo!",
+          "pt": "{04:10:0C}Você obteve as {Color:Red}Luvas de\nToupeira{Color:White}! Cave blocos\nde terra\n\nmacia e paredes\nesburacadas com\nfacilidade!"
+        },
+        {
+          "id": 20,
+          "hex_id": "0x0514",
+          "en": "{04:10:0E}You got the {Color:Red}Roc's Cape{Color:White}!\n\nJump with the greatest of ease!\nHold the button to jump farther.",
+          "es_ref": "{04:10:0E}¡Has conseguido la {Color:Red}capa Roc{Color:White}!\n\n¡Podrás volar como un pájaro Roc!\nNo dejes de pulsar el botón ¡y vuela!",
+          "pt": "{04:10:0C}Você obteve a {Color:Red}Capa de\nRoc{Color:White}! Pule no ar com\nleveza e\n\nplane suavemente pelas\ncorrentes de vento!"
+        },
+        {
+          "id": 21,
+          "hex_id": "0x0515",
+          "en": "{04:10:0E}You got the {Color:Red}Pegasus Boots{Color:White}! Hold the\nbutton to run faster than the wind!",
+          "es_ref": "{04:10:0E}¡Has conseguido las {Color:Red}botas de Pegaso{Color:White}!\n¡Corre tan rápido como el viento!",
+          "pt": "{04:10:0C}Você obteve as {Color:Red}Botas de\nPégaso{Color:White}! Segure o botão\npara\n\ndisparar em uma corrida\nveloz com sua espada à\nfrente!"
+        },
+        {
+          "id": 22,
+          "hex_id": "0x0516",
+          "en": "{04:10:0E}You got the {Color:Red}Fire Rod{Color:White}! This mystical rod\nshoots forth mighty flames.",
+          "es_ref": "{04:10:0E}¡Has conseguido el {Color:Red}cetro de fuego{Color:White}!\n¡Podrás lanzar fuertes llamas!",
+          "pt": "{04:10:0C}Você obteve o {Color:Red}Cetro de\nFogo{Color:White}! Dispare bolas de\nfogo\n\nardentes!"
+        },
+        {
+          "id": 23,
+          "hex_id": "0x0517",
+          "en": "{04:10:0E}You got the {Color:Red}Ocarina of Wind{Color:White}!\n\nNorth, south, east, and west are\nall just a breath away!",
+          "es_ref": "{04:10:0E}¡Has conseguido la {Color:Red}ocarina del viento{Color:White}!\n¡Vuela en la dirección que quieras!",
+          "pt": "{04:10:0C}Você obteve a {Color:Red}Ocarina\ndo Vento{Color:White}! Toque-a para\nchamar o\n\npássaro Zeffa e viajar\nrapidamente por\nHyrule!"
+        },
+        {
+          "id": 24,
+          "hex_id": "0x0518",
+          "en": "You got a {Color:Red}Piece of Heart{Color:White}!\n\nCollect four to make a new Heart\nContainer for even more {Color:Blue}life energy{Color:White}!",
+          "es_ref": "¡Has conseguido un {Color:Red}trozo de corazón{Color:White}!\n\n¡Con cuatro trozos, tendrás un nuevo\ncorazón! ¡{Color:Blue}Una vida adicional{Color:White}!",
+          "pt": "You got a {Color:Red}Piece of\nHeart{Color:White}!\n\nCollect four to make a\nnew Heart Container for\neven more {Color:Blue}life energy{Color:White}!"
+        },
+        {
+          "id": 25,
+          "hex_id": "0x0519",
+          "en": "You got a {Color:Red}Piece of Heart{Color:White}!\n\nNow you have two pieces. {Color:Blue}Collect two\nmore{Color:White} to increase your life energy!",
+          "es_ref": "¡Has conseguido otro {Color:Red}trozo de corazón{Color:White}!\n\nYa tienes dos trozos de corazón.\n{Color:Blue}Consigue dos más y tendrás una vida{Color:White}.",
+          "pt": "You got a {Color:Red}Piece of\nHeart{Color:White}!\n\nNow you have two\npieces. {Color:Blue}Collect two\nmore{Color:White} to increase your\n\nlife energy!"
+        },
+        {
+          "id": 26,
+          "hex_id": "0x051A",
+          "en": "You got a {Color:Red}Piece of Heart{Color:White}!\n\nYou now have three. {Color:Blue}Collect just one\nmore{Color:White} to increase your life energy!",
+          "es_ref": "¡Has conseguido otro {Color:Red}trozo de corazón{Color:White}!\n\nYa tienes tres trozos de corazón.\n{Color:Blue}Consigue uno más y tendrás una vida{Color:White}.",
+          "pt": "You got a {Color:Red}Piece of\nHeart{Color:White}!\n\nYou now have three. {Color:Blue}\nCollect just one more{Color:White}\nto increase your life\n\nenergy!"
+        },
+        {
+          "id": 27,
+          "hex_id": "0x051B",
+          "en": "You got a {Color:Red}Piece of Heart{Color:White}!\n\nYou completed a new Heart Container!\n\n{Color:Blue}Your life energy has been replenished\nand increased!",
+          "es_ref": "¡Has conseguido otro {Color:Red}trozo de corazón{Color:White}!\n\nYa tienes cuatro trozos de corazón.\n¡{Color:Blue}Obtienes una vida adicional{Color:White}!",
+          "pt": "{04:10:0E}Você obteve o {Color:Red}Bracelete\nde Força{Color:White}! Mesmo no\ntamanho Minish,\n\nvocê pode empurrar e\npuxar objetos pesados!"
+        },
+        {
+          "id": 28,
+          "hex_id": "0x051C",
+          "en": "You swapped for {Color:Red}bombs{Color:White}!",
+          "es_ref": "¡Has recuperado las {Color:Red}bombas{Color:White}!",
+          "pt": "{04:10:0E}Você encontrou um {Color:Red}Pote\nVazio{Color:White}! Guarde poções,\nleite,\n\nfadas ou outros\nlíquidos úteis nele!"
+        },
+        {
+          "id": 29,
+          "hex_id": "0x051D",
+          "en": "You bought a {Color:Red}small shield{Color:White}!",
+          "es_ref": "¡Has comprado un {Color:Red}escudo pequeño{Color:White}!",
+          "pt": "You bought a {Color:Red}small\nshield{Color:White}!"
+        },
+        {
+          "id": 32,
+          "hex_id": "0x0520",
+          "en": "You got an {Color:Red}empty bottle{Color:White}!\nUse it to store all sorts of things.",
+          "es_ref": "¡Has conseguido una {Color:Red}botella vacía{Color:White}!\n¡Te resultará muy útil!",
+          "pt": "You got an {Color:Red}empty\nbottle{Color:White}! Use it to store\nall sorts of things."
+        },
+        {
+          "id": 33,
+          "hex_id": "0x0521",
+          "en": "Your Lon Lon Milk turned into {Color:Red}butter{Color:White}!\nIt's very fresh and delicious!",
+          "es_ref": "¡Tu leche Lon Lon se ha\nconvertido en {Color:Red}mantequilla{Color:White}!\n¡Tiene una pinta estupenda!",
+          "pt": "Você comprou {Color:Red}Manteiga\nLon Lon{Color:White}! Deliciosa e\ncremosa\n\ndireto da fazenda!"
+        },
+        {
+          "id": 34,
+          "hex_id": "0x0522",
+          "en": "{04:10:0E}You got some {Color:Red}Lon Lon Milk{Color:White}!",
+          "es_ref": "{04:10:0E}¡Has conseguido {Color:Red}leche Lon Lon{Color:White}!",
+          "pt": "{04:10:00}Você comprou {Color:Red}Leite Lon\nLon{Color:White}! Beba dois goles\npara\n\nrecuperar sua vida!"
+        },
+        {
+          "id": 36,
+          "hex_id": "0x0524",
+          "en": "{04:10:0E}You got a {Color:Red}red potion{Color:White}! Drink it to\nreplenish all of your life energy!",
+          "es_ref": "{04:10:0E}¡Has conseguido una {Color:Red}poción roja{Color:White}!\nBébetela y recuperarás toda la vida.",
+          "pt": "Você obteve uma {Color:Red}Poção\nVermelha{Color:White}! Recupera\ntodos os seus\n\ncorações!"
+        },
+        {
+          "id": 37,
+          "hex_id": "0x0525",
+          "en": "{04:10:0E}You got a {Color:Red}blue potion{Color:White}! Drink it to\nreplenish your life energy.",
+          "es_ref": "{04:10:0E}¡Has conseguido una {Color:Red}poción azul{Color:White}!\n¡Recuperarás vida si te la bebes!",
+          "pt": "Você obteve uma {Color:Red}Poção\nAzul{Color:White}! Recupera\ntotalmente sua\n\nenergia!"
+        },
+        {
+          "id": 38,
+          "hex_id": "0x0526",
+          "en": "You put {Color:Red}water{Color:White} in your bottle!\nSprinkle it on different things!",
+          "es_ref": "¡Has llenado la botella de {Color:Red}agua{Color:White}!\n¡Prueba a echarla por ahí!",
+          "pt": "Você encheu a garrafa\ncom {Color:Red}Água Pura{Color:White}! Use para\nregar plantas e\n\nsementes!"
+        },
+        {
+          "id": 39,
+          "hex_id": "0x0527",
+          "en": "{04:10:0E}You put {Color:Red}Mt. Crenel Mineral Water{Color:White} in your\nbottle! It's piping hot!",
+          "es_ref": "{04:10:0E}¡Has llenado la botella de {Color:Red}agua termal\nmisteriosa del monte Gongol{Color:White}! Qué color\ntan extraño tiene... ¡y cómo quema!",
+          "pt": "Você coletou {Color:Red}Água\nMineral do Monte\nCrenel{Color:White}!\n\nEla faz brotos\nespeciais crescerem!"
+        },
+        {
+          "id": 40,
+          "hex_id": "0x0528",
+          "en": "You caught a {Color:Red}fairy{Color:White} in your bottle!\n\nThis winged friend will come to your\naid if your life energy is depleted.",
+          "es_ref": "¡Has atrapado un {Color:Red}hada{Color:White} en la botella!\nTe dará fuerzas cuando te haga falta.",
+          "pt": "Você pegou uma {Color:Red}Fada{Color:White} na\ngarrafa! Ela reviverá\nvocê se sua\n\nvida acabar!"
+        },
+        {
+          "id": 41,
+          "hex_id": "0x0529",
+          "en": "{04:10:0E}You got some {Color:Red}Red Picolyte{Color:White}! If you use\nit, you might find lots of hearts!",
+          "es_ref": "{04:10:0E}¡Has conseguido un {Color:Red}néctar rojo{Color:White}!\n¡Si te lo bebes, quizá encuentres\nmuchos corazones!",
+          "pt": "Você comprou {Color:Red}Picolyte\nVermelho{Color:White}! Aumenta a\nchance de achar\n\ncorações!"
+        },
+        {
+          "id": 42,
+          "hex_id": "0x052A",
+          "en": "{04:10:0E}You got some {Color:Red}Orange Picolyte{Color:White}! If you\nuse it, you might find lots of fairies!",
+          "es_ref": "{04:10:0E}¡Has conseguido un {Color:Red}néctar naranja{Color:White}!\nSi te lo bebes, quizá encuentres\nmuchas hadas.",
+          "pt": "Você comprou {Color:Red}Picolyte\nLaranja{Color:White}! Aumenta a\nchance de achar\n\nfadas!"
+        },
+        {
+          "id": 43,
+          "hex_id": "0x052B",
+          "en": "{04:10:0E}You got some {Color:Red}Yellow Picolyte{Color:White}! If you use\nit, you might find lots of Rupees!",
+          "es_ref": "{04:10:0E}¡Has conseguido un {Color:Red}néctar amarillo{Color:White}!\nSi te lo bebes, quizá encuentres\nmuchas rupias.",
+          "pt": "Você comprou {Color:Red}Picolyte\nAmarelo{Color:White}! Aumenta a\nchance de achar\n\nRupees!"
+        },
+        {
+          "id": 44,
+          "hex_id": "0x052C",
+          "en": "{04:10:0E}You got some {Color:Red}Green Picolyte{Color:White}! If you\nuse it, you might find lots of {Color:Red}shells{Color:White}!",
+          "es_ref": "{04:10:0E}¡Has conseguido un {Color:Red}néctar verde{Color:White}!\nSi te lo bebes, quizá encuentres\nmuchas caracolas misteriosas.",
+          "pt": "Você comprou {Color:Red}Picolyte\nVerde{Color:White}! Aumenta a chance\nde achar\n\nConchas!"
+        },
+        {
+          "id": 45,
+          "hex_id": "0x052D",
+          "en": "{04:10:0E}You got some {Color:Red}Blue Picolyte{Color:White}! If you use\nit, you might find lots of items!",
+          "es_ref": "{04:10:0E}¡Has conseguido un {Color:Red}néctar azul{Color:White}!\nSi te lo bebes, quizá encuentres\nmuchos objetos.",
+          "pt": "Você comprou {Color:Red}Picolyte\nAzul{Color:White}! Aumenta a chance\nde achar\n\nitens!"
+        },
+        {
+          "id": 46,
+          "hex_id": "0x052E",
+          "en": "{04:10:0E}You got some {Color:Red}White Picolyte{Color:White}! If you use\nit, you might find lots of {Color:Red}Kinstones{Color:White}!",
+          "es_ref": "{04:10:0E}¡Has conseguido un {Color:Red}néctar blanco{Color:White}!\nSi te lo bebes, quizá encuentres\nmuchas piedras de la suerte.",
+          "pt": "Você comprou {Color:Red}Picolyte\nBranco{Color:White}! Aumenta a\nchance de achar\n\nKinstones!"
+        },
+        {
+          "id": 47,
+          "hex_id": "0x052F",
+          "en": "{04:10:0E}You got {Color:Red}Nayru's Charm{Color:White}! Your guard\nwill be strengthened for a while!",
+          "es_ref": "{04:10:0E}¡Has conseguido el {Color:Red}zumo mágico\nde Nayru{Color:White}!\n¡Tendrás protección adicional un ratito!",
+          "pt": "Você recebeu o {Color:Red}Amuleto\nde Nayru{Color:White}! Sua defesa\naumenta\n\ntemporariamente!"
+        },
+        {
+          "id": 48,
+          "hex_id": "0x0530",
+          "en": "{04:10:0E}You got {Color:Red}Farore's Charm{Color:White}! Your power and\nguard will be boosted for a while!",
+          "es_ref": "{04:10:0E}¡Has conseguido el {Color:Red}zumo mágico\nde Farore{Color:White}!\n¡Tendrás protección adicional y más\nfuerza durante un ratito!",
+          "pt": "Você recebeu o {Color:Red}Amuleto\nde Farore{Color:White}! Seu poder\naumenta\n\ntemporariamente!"
+        },
+        {
+          "id": 49,
+          "hex_id": "0x0531",
+          "en": "{04:10:0E}You got {Color:Red}Din's Charm{Color:White}! Your strength will\nbe boosted for a while!",
+          "es_ref": "{04:10:0E}¡Has conseguido el {Color:Red}zumo mágico de Din{Color:White}!\n¡Tendrás fuerza adicional un ratito!",
+          "pt": "Você recebeu o {Color:Red}Amuleto\nde Din{Color:White}! Seu ataque\naumenta\n\ntemporariamente!"
+        },
+        {
+          "id": 52,
+          "hex_id": "0x0534",
+          "en": "{04:10:0E}You accepted the {Color:Red}Smith's Sword{Color:White}!\n\nMake sure you don't lose this extremely\nimportant delivery!",
+          "es_ref": "{04:10:0E}¡Te han entregado la {Color:Red}espada Smith{Color:White}!\n\nEs muy valiosa y tienes que entregarla\nen el castillo, así que no la pierdas.",
+          "pt": "{04:10:00}Você pegou a {Color:Red}Espada de\nSmith{Color:White}! Entregue-a ao\nministro no\n\ncastelo."
+        },
+        {
+          "id": 53,
+          "hex_id": "0x0535",
+          "en": "{04:10:0C}You accepted the {Color:Red}Broken Picori Blade{Color:White}!\n\nThis is part of the sword needed to\nreforge the sacred sword. Don't lose it!",
+          "es_ref": "{04:10:0E}¡Te han entregado la {Color:Red}espada minish\nrota{Color:White}!\nTe hace falta para reforjar una nueva\nespada minish, así que no la pierdas.",
+          "pt": "{04:10:00}Você recebeu a {Color:Red}Espada\nPicori Quebrada{Color:White}! Reúna\nos quatro\n\nelementos para que ela\nseja reforjada!"
+        },
+        {
+          "id": 54,
+          "hex_id": "0x0536",
+          "en": "{04:10:0E}You got {Color:Red}a bottle of dog food{Color:White}!\nNow, head out on your errand!",
+          "es_ref": "{04:10:0E}¡Has conseguido {Color:Red}comida para perros{Color:White}!\n¡Deberías darle ya de comer al perro!",
+          "pt": "{04:10:0E}Você pegou o pote de {Color:Red}\nRação Canina{Color:White}! Leve para\nFifi!"
+        },
+        {
+          "id": 55,
+          "hex_id": "0x0537",
+          "en": "{04:10:0E}You got the {Color:Red}Lon Lon Ranch key{Color:White}!\nNow you can open the ranch door!",
+          "es_ref": "{04:10:0E}¡Has conseguido la {Color:Red}llave\nde la granja Lon Lon{Color:White}! Ya puedes abrir.",
+          "pt": "{04:10:0E}Você achou a {Color:Red}Chave da\nFazenda{Color:White}! Agora Talon e\nMalon podem\n\nentrar!"
+        },
+        {
+          "id": 56,
+          "hex_id": "0x0538",
+          "en": "{04:10:0E}You got a {Color:Red}wake-up mushroom{Color:White}! Its nasty\nstench chases away the sleepies!",
+          "es_ref": "{04:10:0E}¡Has conseguido la {Color:Red}seta despertador{Color:White}!\n¡Su apestoso olor te abrirá los ojos!",
+          "pt": "{04:10:0E}Você comprou o {Color:Red}Cogumelo\nDespertador{Color:White}! Acorde o\nsapateiro Rem!"
+        },
+        {
+          "id": 57,
+          "hex_id": "0x0539",
+          "en": "{04:10:0E}You got a library book called\n{Color:Red}A Hyrulean Bestiary{Color:White}!",
+          "es_ref": "{04:10:0E}¡Has conseguido el\n\"{Color:Red}Libro ilustrado de los animales{Color:White}\"!",
+          "pt": "Você encontrou o livro\n\"{Color:Red}Bestiário de Hyrule{Color:White}\"!"
+        },
+        {
+          "id": 58,
+          "hex_id": "0x053A",
+          "en": "{04:10:0E}You got a library book called\n{Color:Red}Legend of the Picori{Color:White}!",
+          "es_ref": "{04:10:0E}¡Has conseguido las\n\"{Color:Red}Leyendas de los minish{Color:White}\"!",
+          "pt": "Você encontrou o livro\n\"{Color:Red}A Lenda dos Picori{Color:White}\"!"
+        },
+        {
+          "id": 59,
+          "hex_id": "0x053B",
+          "en": "{04:10:0E}You got a library book called\n{Color:Red}A History of Masks{Color:White}!",
+          "es_ref": "{04:10:0E}¡Has conseguido\n\"{Color:Red}Todo sobre las máscaras{Color:White}\"!",
+          "pt": "Você encontrou o livro\n\"{Color:Red}História das\nMáscaras{Color:White}\"!"
+        },
+        {
+          "id": 60,
+          "hex_id": "0x053C",
+          "en": "{04:10:0E}You got the {Color:Red}graveyard key{Color:White}! Now, you\ncan open the graveyard gate!",
+          "es_ref": "{04:10:0E}¡Has conseguido la {Color:Red}llave del cementerio{Color:White}!\n¡Ya puedes entrar en el cementerio!",
+          "pt": "{04:10:0E}Você obteve a {Color:Red}Chave do\nCemitério{Color:White}! O portão do\ncemitério\n\nestá agora liberado!"
+        },
+        {
+          "id": 61,
+          "hex_id": "0x053D",
+          "en": "{04:10:0E}You got the {Color:Red}graveyard key {Color:White}back! Now,\nyou can open the graveyard gate!",
+          "es_ref": "{04:10:0E}¡Has conseguido la {Color:Red}llave del cementerio{Color:White}!\n¡Ya puedes entrar en el cementerio!",
+          "pt": "Você conquistou o {Color:Red}\nTroféu do Tingle{Color:White}! Você\nfundiu todas as\n\nKinstones!"
+        },
+        {
+          "id": 62,
+          "hex_id": "0x053E",
+          "en": "You got a {Color:Red}Mysterious Shell{Color:White}! Don't know\nwhat it's for, but hang on to it anyway!",
+          "es_ref": "Has conseguido una {Color:Red}caracola\nmisteriosa{Color:White}. Puede ser muy útil...",
+          "pt": "Você ganhou a {Color:Red}Medalha\nde Carlov{Color:White}! Todas as 136\nestatuetas\n\nforam obtidas!"
+        },
+        {
+          "id": 63,
+          "hex_id": "0x053F",
+          "en": "You've got {Var:1} {Color:Red}Mysterious Shells{Color:White}!\n\nI'm not sure what they're for, but\nlet's just hold on to them for now.",
+          "es_ref": "A ver cuántas {Color:Red}caracolas misteriosas{Color:White}\nhas conseguido... ¡{Var:1}!\nPues pueden ser muy útiles...",
+          "pt": "Você pegou {Color:Red}Conchas\nMisteriosas{Color:White}! Troque\npor estatuetas na\n\nloja de Carlov!"
+        },
+        {
+          "id": 64,
+          "hex_id": "0x0540",
+          "en": "{04:10:0E}You got the {Color:Red}Earth Element{Color:White}!\n\nThe power of the earth is the\nsource of all living things.\nThe {Color:Red}Earth Element{Color:White} is the embodiment\nof that power.",
+          "es_ref": "{04:10:0E}¡Has conseguido el {Color:Red}elemento de tierra{Color:White}!\n\nEl {Color:Red}elemento de tierra{Color:White} alberga el poder\nde este elemento de la naturaleza.",
+          "pt": "{04:10:0E}Você obteve o {Color:Red}Elemento\nda Terra{Color:White}! O poder\ntelúrico da terra\n\né seu!"
+        },
+        {
+          "id": 65,
+          "hex_id": "0x0541",
+          "en": "{04:10:00}You got the{Color:Red} Fire Element{Color:White}!\n\nFlames bring light to darkness and\nwarmth to all.\nThe {Color:Red}Fire Element{Color:White} is the embodiment\nof that power.",
+          "es_ref": "{04:10:0E}¡Has conseguido el {Color:Red}elemento de fuego{Color:White}!\n\nEl {Color:Red}elemento de fuego{Color:White} alberga el poder\nde este elemento de la naturaleza.",
+          "pt": "{04:10:0E}Você obteve o {Color:Red}Elemento\ndo Fogo{Color:White}! A chama\nardente do Monte\n\nCrenel é sua!"
+        },
+        {
+          "id": 66,
+          "hex_id": "0x0542",
+          "en": "{04:10:0E}You got the{Color:Red} Water Element{Color:White}!\n\nWater quenches thirst, ends drought,\nand nourishes life.{Color:Blue}\n{Color:White}The {Color:Red}Water Element{Color:White} is the embodiment of\nthat power.",
+          "es_ref": "{04:10:0E}¡Has conseguido el {Color:Red}elemento de agua{Color:White}!\n\nEl {Color:Red}elemento de agua{Color:White} alberga el poder\nde este elemento de la naturaleza.",
+          "pt": "{04:10:0E}Você obteve o {Color:Red}Elemento\nda Água{Color:White}! A pureza\ncristalina da\n\nágua é sua!"
+        },
+        {
+          "id": 67,
+          "hex_id": "0x0543",
+          "en": "{04:10:0E}You got the{Color:Red} Wind Element{Color:White}!\n\nThe wind carries the seeds of flowers,\nscattering life across the land.\nThe {Color:Red}Wind Element{Color:White} is the embodiment of\nthat power.",
+          "es_ref": "{04:10:0E}¡Has conseguido el {Color:Red}elemento de aire{Color:White}!\n\nEl {Color:Red}elemento de aire{Color:White} alberga el poder\nde este elemento de la naturaleza.",
+          "pt": "{04:10:0E}Você obteve o {Color:Red}Elemento\ndo Vento{Color:White}! O sopro veloz\ndos céus é\n\nseu!"
+        },
+        {
+          "id": 68,
+          "hex_id": "0x0544",
+          "en": "{04:10:0E}You got the{Color:Red} Grip Ring{Color:White}!\n\nNow, you can easily climb cliffs that\nyou could not scale before.",
+          "es_ref": "{04:10:0E}¡Has conseguido el {Color:Red}anillo escalada{Color:White}!\n\nAhora podrás escalar sin esfuerzo\ntodas las paredes que quieras.",
+          "pt": "{04:10:0E}Você comprou o {Color:Red}Anel de\nEscalada{Color:White}! Com ele você\nescala\n\nparedes rochosas!"
+        },
+        {
+          "id": 69,
+          "hex_id": "0x0545",
+          "en": "{04:10:0E}You got the{Color:Red} Power Bracelets{Color:White}! You're\nfilled with strength, even while tiny!",
+          "es_ref": "{04:10:0E}¡Has conseguido la {Color:Red}muñequera{Color:White}!\n¡Tendrás la fuerza de un gigante!",
+          "pt": "{04:10:0E}Você obteve os {Color:Red}\nBraceletes de Força{Color:White}!\nVocê ganha força\n\ntitânica!"
+        },
+        {
+          "id": 70,
+          "hex_id": "0x0546",
+          "en": "You got the {Color:Red}flippers{Color:White}! Press {Key:A} to glide\nthrough the water and {Key:B} to dive!",
+          "es_ref": "{04:10:0E}¡Has conseguido las {Color:Red}aletas{Color:White}!\n\n¡Ahora podrás nadar con facilidad con\nel Botón {Key:A}, y bucear con el Botón {Key:B}!",
+          "pt": "{04:10:0E}Você obteve as {Color:Red}\nNadadeiras de Zora{Color:White}!\nAgora você pode nadar e\n\nmergulhar!"
+        },
+        {
+          "id": 71,
+          "hex_id": "0x0547",
+          "en": "{04:10:0E}You got a {Color:Red}map of Hyrule{Color:White}!\nNow, you'll never get lost!",
+          "es_ref": "{04:10:0E}¡Has conseguido el {Color:Red}mapa de Hyrule{Color:White}!\n¡Úsalo para orientarte y no perderte!",
+          "pt": "{04:10:0E}Você obteve o {Color:Red}Mapa de\nHyrule{Color:White}! Pressione [R]\npara\n\nconsultar o mapa!"
+        },
+        {
+          "id": 72,
+          "hex_id": "0x0548",
+          "en": "{04:10:0E}You learned the secret {Color:Red}Spin Attack{Color:White}\nfighting technique!\nThis is the first sword technique you've\nlearned from Master Swiftblade!",
+          "es_ref": "{04:10:0E}¡Has aprendido el {Color:Red}ataque circular{Color:White}!\n¡Es tu movimiento de espada básico!",
+          "pt": "{04:10:0E}Você aprendeu o {Color:Red}Ataque\nGiratório{Color:White}! Segure [A] e\nsolte para\n\ncortar em 360°!"
+        },
+        {
+          "id": 73,
+          "hex_id": "0x0549",
+          "en": "{04:10:0E}You learned the secret {Color:Red}Roll Attack{Color:White}\nfighting technique!\nSlay with one stroke! Aim and release!",
+          "es_ref": "{04:10:0E}¡Has aprendido la {Color:Red}estocada circular{Color:White}!\n¡Gira y ataca a tu enemigo!",
+          "pt": "{04:10:0E}Você aprendeu o {Color:Red}Ataque\nRolante{Color:White}! Role com [R] e\naperte [A]\n\npara golpear!"
+        },
+        {
+          "id": 74,
+          "hex_id": "0x054A",
+          "en": "{04:10:0E}You learned the{Color:Red} {Color:White}secret {Color:Red}Dash Attack{Color:White}\nfighting technique!\nRun like the wind and attack!",
+          "es_ref": "{04:10:0E}¡Has aprendido el {Color:Red}ataque Pegaso{Color:White}!\n¡Corre veloz como el viento y ataca!",
+          "pt": "{04:10:0E}Você aprendeu o {Color:Red}Ataque\ncom Investida{Color:White}! Dispare\nem dash com a\n\nespada em riste!"
+        },
+        {
+          "id": 75,
+          "hex_id": "0x054B",
+          "en": "{04:10:0E}You learned the secret {Color:Red}Rock Breaker{Color:White}\nfighting technique!\nShatter pots and pulverize boulders\nwith a single blow!",
+          "es_ref": "{04:10:0E}¡Has aprendido el ataque {Color:Red}romperrocas{Color:White}!\n¡Podrás destrozar rocas de un golpe!",
+          "pt": "{04:10:0E}Você aprendeu o {Color:Red}\nQuebra-Rochas{Color:White}! Destrua\nvasos e pedras\n\ncom sua espada!"
+        },
+        {
+          "id": 76,
+          "hex_id": "0x054C",
+          "en": "{04:10:0E}You learned the{Color:Red} {Color:White}secret {Color:Red}Sword Beam{Color:White}\nfighting technique!\nFire beams from the tip of your blade!\n\nYou can only do this when your life\nenergy is full.",
+          "es_ref": "{04:10:0E}¡Has aprendido el {Color:Red}ataque con rayo{Color:White}!\n¡Si tienes todos los corazones llenos,\nlanzarás un rayo con la espada!",
+          "pt": "{04:10:0E}Você aprendeu o {Color:Red}Raio de\nEspada{Color:White}! Com corações\ncheios,\n\ndispare feixes!"
+        },
+        {
+          "id": 77,
+          "hex_id": "0x054D",
+          "en": "{04:10:0E}You learned the{Color:Red} {Color:White}secret {Color:Red}Great Spin\nAttack {Color:White}fighting technique!\nThis is it! At last! The ultimate sword\ntechnique!",
+          "es_ref": "{04:10:0E}¡Has aprendido el {Color:Red}gran ataque\ncircular{Color:White}!\n¡Gira, gira y derrota a tu enemigo!",
+          "pt": "{04:10:0E}Você aprendeu o {Color:Red}Grande\nGiro{Color:White}! Gire\nrepetidamente para\n\num turbilhão!"
+        },
+        {
+          "id": 78,
+          "hex_id": "0x054E",
+          "en": "{04:10:0E}You learned the secret {Color:Red}Down Thrust{Color:White}\nfighting technique!\nThrust down with your blade from\nmidair with this mighty attack!",
+          "es_ref": "{04:10:0E}¡Has aprendido la {Color:Red}estocada inferior{Color:White}!\n¡Salta en el aire y ataca a tu enemigo!",
+          "pt": "{04:10:0E}Você aprendeu a {Color:Red}\nEstocada Aérea{Color:White}! Pule\ncom a capa e perfure\n\npara baixo!"
+        },
+        {
+          "id": 79,
+          "hex_id": "0x054F",
+          "en": "{04:10:0E}You learned the{Color:Red} {Color:White}secret {Color:Red}Peril Beam{Color:White}\nfighting technique!\nRelease a mighty beam from the tip of\nyour blade! Use it in dire moments!",
+          "es_ref": "{04:10:0E}¡Has aprendido el {Color:Red}ataque\nsupervivencia{Color:White}!\n¡Usa este poderoso rayo que sale\nde tu espada para salir victorioso!",
+          "pt": "{04:10:0E}Você aprendeu o {Color:Red}Raio do\nPerigo{Color:White}! Com 1 coração,\ndispare\n\nfeixes de luz!"
+        },
+        {
+          "id": 80,
+          "hex_id": "0x0550",
+          "en": "{04:10:0E}You found a{Color:Red} dungeon map{Color:White}!\nCheck it on your {Color:Blue}Map screen{Color:White}.\nLighter rooms are ones you've visited.\nThe blinking room is your location.\nPress Up or Down on {Key:Dpad} to\ncheck different floors.",
+          "es_ref": "{04:10:0E}¡Has conseguido el {Color:Red}mapa\nde la mazmorra{Color:White}!\nObserva la {Color:Blue}pantalla de los mapas{Color:White}.\nLas salas en azul son las que ya has\nvisitado{Symbol:16} y la que parpadea, la sala\nen la que estás en este momento.\nPulsa {Key:Dpad} arriba y abajo\npara cambiar de piso.",
+          "pt": "{04:10:0E}Você achou o {Color:Red}Mapa da\nMasmorra{Color:White}! Veja todas as\nsalas e\n\nandares!"
+        },
+        {
+          "id": 81,
+          "hex_id": "0x0551",
+          "en": "You got the {Color:Red}compass{Color:White}! Use it to find the\nlocations of hidden items.{Color:Blue}\n{Color:White}Press START and then {Key:Left} or {Key:Right} to\nview the Map screen.",
+          "es_ref": "¡Has conseguido la {Color:Red}brújula{Color:White}!\n¡Podrás localizar objetos ocultos en la\nmazmorra! Pulsa START para ver la\nbrújula y después pulsa el Botón {Key:Left} o\nel Botón {Key:Right} para moverte por el mapa.",
+          "pt": "Você achou a {Color:Red}Bússola{Color:White}!\nEla revela baús e o\ncovil do chefe!"
+        },
+        {
+          "id": 82,
+          "hex_id": "0x0552",
+          "en": "You got the {Color:Red}Big Key{Color:White}!\nUse it to open big doors!",
+          "es_ref": "¡Has conseguido una {Color:Red}llave grande{Color:White}!\nPodrás abrir una puerta grande.",
+          "pt": "Você obteve a {Color:Red}Chave\nGrande{Color:White}! Abre a porta do\nchefe da\n\nmasmorra!"
+        },
+        {
+          "id": 83,
+          "hex_id": "0x0553",
+          "en": "You got a {Color:Red}small key{Color:White}!\n\nUse it to open locked doors and blocks.\nYou can use it only in this dungeon.",
+          "es_ref": "¡Has conseguido una {Color:Red}llave pequeña{Color:White}!\n\n¡Podrás abrir una puerta pequeña,\npero sólo en esta mazmorra!",
+          "pt": "Você achou uma {Color:Red}Chave\nPequena{Color:White}! Abre portas\ntrancadas\n\nnesta masmorra!"
+        },
+        {
+          "id": 84,
+          "hex_id": "0x0554",
+          "en": "You got {Color:Red}1 Rupee{Color:White}. It's green! Don't\nspend it all in one place!",
+          "es_ref": "¡Has conseguido {Color:Red}1 rupia{Color:White}!\n¡Estarás contento!",
+          "pt": "Você pegou {Color:Red}1 Rupee\nVerde{Color:White}!"
+        },
+        {
+          "id": 85,
+          "hex_id": "0x0555",
+          "en": "You got {Color:Red}5 Rupees{Color:White}! That's kind of nice.",
+          "es_ref": "¡Has conseguido {Color:Red}5 rupias{Color:White}!\n¡Qué bien!",
+          "pt": "Você pegou {Color:Red}5 Rupees\nAzuis{Color:White}!"
+        },
+        {
+          "id": 86,
+          "hex_id": "0x0556",
+          "en": "You got {Color:Red}20 Rupees{Color:White}!\nThat's great.",
+          "es_ref": "¡Has conseguido {Color:Red}20 rupias{Color:White}!\n¡Es estupendo!",
+          "pt": "Você pegou {Color:Red}20 Rupees\nVermelhos{Color:White}!"
+        },
+        {
+          "id": 87,
+          "hex_id": "0x0557",
+          "en": "You got {Color:Red}50 Rupees{Color:White}!\nYou must be very happy!",
+          "es_ref": "¡Has conseguido {Color:Red}50 rupias{Color:White}!\n¡Qué maravilla!",
+          "pt": "Você pegou {Color:Red}50 Rupees\nAzuis Grandes{Color:White}!"
+        },
+        {
+          "id": 88,
+          "hex_id": "0x0558",
+          "en": "You got {Color:Red}100 Rupees{Color:White}!\nHow exciting!",
+          "es_ref": "¡Has conseguido {Color:Red}100 rupias{Color:White}!\n¡Estarás contentísimo!",
+          "pt": "Você pegou {Color:Red}100 Rupees\nLaranjas{Color:White}!"
+        },
+        {
+          "id": 89,
+          "hex_id": "0x0559",
+          "en": "You got {Color:Red}200 Rupees{Color:White}!\nYour face is beaming!",
+          "es_ref": "¡Has conseguido {Color:Red}200 rupias{Color:White}!\n¡Qué pasada!",
+          "pt": "Você pegou {Color:Red}200 Rupees\nDourados{Color:White}!"
+        },
+        {
+          "id": 91,
+          "hex_id": "0x055B",
+          "en": "{04:10:0E}You ate the{Color:Red} Jabber Nut{Color:White}! Now you can\nunderstand the language of the {Color:Green}Minish{Color:White}.",
+          "es_ref": "{04:10:0E}¡Has conseguido un {Color:Red}frutabel{Color:White}!\n¡Ahora podrás entender la lengua\nde los {Color:Green}minish{Color:White}!",
+          "pt": "{04:10:0E}Você pegou um {Color:Red}Pêssego\nPequeno{Color:White}! Doce e\nrefrescante!"
+        },
+        {
+          "id": 92,
+          "hex_id": "0x055C",
+          "en": "You got a {Color:Red}Kinstone piece{Color:White}! These mystic\nstones are said to bring happiness.",
+          "es_ref": "¡Has conseguido una {Color:Red}piedra de la\nsuerte{Color:White}!\n¿Te sonreirá la buena fortuna?",
+          "pt": "Você obteve um {Color:Red}\nFragmento de Kinstone{Color:White}!\nEncontre a outra metade\n\ncompatível!"
+        },
+        {
+          "id": 93,
+          "hex_id": "0x055D",
+          "en": "You got 5 {Color:Red}bombs{Color:White}! Store them in your\nbomb bag!",
+          "es_ref": "¡Has conseguido 5 {Color:Red}bombas{Color:White}!\n¡Mételas en tu saco de bombas!",
+          "pt": "Você achou {Color:Red}5 Bombas{Color:White}!"
+        },
+        {
+          "id": 94,
+          "hex_id": "0x055E",
+          "en": "You got 5 {Color:Red}arrows{Color:White}!\nStore them in your quiver.",
+          "es_ref": "¡Has conseguido 5 {Color:Red}flechas{Color:White}!\n¡Guárdalas en el carcaj!",
+          "pt": "Você achou {Color:Red}5 Flechas{Color:White}!"
+        },
+        {
+          "id": 95,
+          "hex_id": "0x055F",
+          "en": "You got a {Color:Red}heart{Color:White}! These replenish\nyour life energy a little bit.",
+          "es_ref": "¡Has conseguido un {Color:Red}corazón{Color:White}!\nRecuperarás un poco de vida.",
+          "pt": "Você recuperou um {Color:Red}\nCoração{Color:White} de vida!"
+        },
+        {
+          "id": 96,
+          "hex_id": "0x0560",
+          "en": "You found a {Color:Red}fairy{Color:White}. This reliable ally\nwill replenish your life energy!",
+          "es_ref": "¡Has encontrado un {Color:Red}hada{Color:White}!\n¡Recuperarás vida! ¡Qué bien!",
+          "pt": "Uma {Color:Red}Fada{Color:White} curou seus\nferimentos!"
+        },
+        {
+          "id": 98,
+          "hex_id": "0x0562",
+          "en": "You got a {Color:Red}Heart Container{Color:White}!\n\nYour life energy has increased and\nbeen replenished!",
+          "es_ref": "¡Has conseguido un {Color:Red}contenedor\nde corazón{Color:White}! ¡Consigues un corazón\nmás de vida y se rellenan todos!",
+          "pt": "Você obteve um {Color:Red}Pedaço\nde Coração{Color:White}! Junte\nquatro para ganhar\n\nmais vida!"
+        },
+        {
+          "id": 99,
+          "hex_id": "0x0563",
+          "en": "You got a {Color:Red}big bomb bag{Color:White}! Now you can\ncarry more bombs!",
+          "es_ref": "¡Has conseguido un {Color:Red}saco de bombas\ngrande{Color:White}!\n¡Podrás llevar más bombas contigo!",
+          "pt": "Você obteve uma {Color:Red}Bolsa\nde Bombas Maior{Color:White}! Agora\npode carregar até\n\n30 bombas!"
+        },
+        {
+          "id": 100,
+          "hex_id": "0x0564",
+          "en": "You got a {Color:Red}big wallet{Color:White}! Now, you can\ncarry more Rupees!",
+          "es_ref": "¡Has conseguido una {Color:Red}bolsa más grande{Color:White}!\n¡Podrás llevar más rupias contigo!",
+          "pt": "Você obteve uma {Color:Red}\nCarteira Maior{Color:White}!\nCapacidade expandida\n\npara Rupees!"
+        },
+        {
+          "id": 101,
+          "hex_id": "0x0565",
+          "en": "{04:10:00}You got a {Color:Red}bigger bomb bag{Color:White}!\n\nNow, you can carry more bombs!\nLet's blow up everything!",
+          "es_ref": "{04:10:00}¡Has conseguido un {Color:Red}saco de bombas{Color:White}!\n\n¡Podrás llevar encima más bombas!\n¡Vuela todo lo que quieras!",
+          "pt": "{04:10:00}Você obteve uma {Color:Red}Bolsa\nde Bombas Gigante{Color:White}!\nAgora você carrega até\n\n50\n\nbombas!"
+        },
+        {
+          "id": 102,
+          "hex_id": "0x0566",
+          "en": "You got a {Color:Red}large quiver{Color:White}! Now, you can\ncarry more arrows!",
+          "es_ref": "¡Has conseguido un {Color:Red}carcaj grande{Color:White}!\n¡Podrás llevar más flechas contigo!",
+          "pt": "Você obteve uma {Color:Red}Aljava\nMaior{Color:White}! Agora você\ncarrega muito\n\nmais flechas!"
+        },
+        {
+          "id": 103,
+          "hex_id": "0x0567",
+          "en": "{04:10:0E}You got a {Color:Red}Kinstone bag{Color:White}! You can now\ncarry {Color:Red}Kinstone pieces {Color:White}with you.\nPress START to view its contents from\nyour Quest Status screen.",
+          "es_ref": "{04:10:00}¡Has conseguido una {Color:Red}bolsa para\npiedras{Color:White}!\nLlénala de {Color:Red}piedras de la\nsuerte{Color:White}. \nDespués, pulsa START en la pantalla\nColección, para ver qué llevas\nen la bolsa.",
+          "pt": "{04:10:00}Você obteve a {Color:Red}Bolsa de\nKinstones{Color:White}! Guarde\ntodos os seus\n\nfragmentos nela!"
+        },
+        {
+          "id": 104,
+          "hex_id": "0x0568",
+          "en": "You bought a {Color:Red}brioche{Color:White}! It looks so\ncrusty and delicious!",
+          "es_ref": "¡Has comprado una {Color:Red}barra de pan{Color:White}!\n¡Qué buena pinta tiene!",
+          "pt": "Você comprou {Color:Red}Pão\nFresco{Color:White}! Recupera\nenergia deliciosa!"
+        },
+        {
+          "id": 105,
+          "hex_id": "0x0569",
+          "en": "You bought a {Color:Red}croissant{Color:White}! It looks so\nbuttery and delicious!",
+          "es_ref": "¡Has comprado un {Color:Red}lazo de pan{Color:White}!\n¡Seguro que está muy rico!",
+          "pt": "Você comprou uma {Color:Red}\nRosquinha Doce{Color:White}!"
+        },
+        {
+          "id": 106,
+          "hex_id": "0x056A",
+          "en": "You bought a {Color:Red}slice of pie{Color:White}! One bite,\nand you're in heaven!",
+          "es_ref": "¡Has comprado una {Color:Red}chapata{Color:White}!\nTiene pinta de deshacerse\nen la boca...",
+          "pt": "Você comprou um {Color:Red}Pão\nRústico{Color:White}!"
+        },
+        {
+          "id": 107,
+          "hex_id": "0x056B",
+          "en": "You bought a {Color:Red}slice of cake{Color:White}!\nTime to get your snack on!",
+          "es_ref": "¡Has comprado un {Color:Red}pan de pueblo{Color:White}!\n¡Es ideal para acompañar\ncarne y verdura!",
+          "pt": "Você comprou o {Color:Red}Bolo da\nCidade{Color:White}!"
+        },
+        {
+          "id": 108,
+          "hex_id": "0x056C",
+          "en": "You bought 10{Color:Red} bombs{Color:White}!\nStore them in your bomb bag!",
+          "es_ref": "¡Has comprado 10 {Color:Red}bombas{Color:White}!\n¡Mételas en tu saco para bombas!",
+          "pt": "Você comprou {Color:Red}10 Bombas{Color:White}!"
+        },
+        {
+          "id": 109,
+          "hex_id": "0x056D",
+          "en": "You bought 30{Color:Red} bombs{Color:White}!\nStore them in your bomb bag!",
+          "es_ref": "¡Has comprado 30 {Color:Red}bombas{Color:White}!\n¡Mételas en tu saco para bombas!",
+          "pt": "Você comprou {Color:Red}30 Bombas{Color:White}!"
+        },
+        {
+          "id": 110,
+          "hex_id": "0x056E",
+          "en": "You bought 10 {Color:Red}arrows{Color:White}!\nStore them in your quiver!",
+          "es_ref": "¡Has comprado 10 {Color:Red}flechas{Color:White}!\n¡Mételas en tu carcaj!",
+          "pt": "Você comprou {Color:Red}10\nFlechas{Color:White}!"
+        },
+        {
+          "id": 111,
+          "hex_id": "0x056F",
+          "en": "You bought 30{Color:Red} arrows{Color:White}!\nStore them in your quiver!",
+          "es_ref": "¡Has comprado 30 {Color:Red}flechas{Color:White}!\n¡Mételas en tu carcaj!",
+          "pt": "Você comprou {Color:Red}30\nFlechas{Color:White}!"
+        },
+        {
+          "id": 112,
+          "hex_id": "0x0570",
+          "en": "You caught a {Color:Red}Joy Butterfly{Color:White}! You can\nnow shoot arrows faster than before.",
+          "es_ref": "¡Has atrapado una {Color:Red}mariposa felicidad{Color:White}!\n¡Podrás disparar más lejos con el arco!",
+          "pt": "Você pegou a {Color:Red}Borboleta\nda Felicidade{Color:White}! Sua\nvelocidade ao cavar\n\naumentou!"
+        },
+        {
+          "id": 113,
+          "hex_id": "0x0571",
+          "en": "You caught a {Color:Red}Joy Butterfly{Color:White}! You can\nnow dig faster than before!",
+          "es_ref": "¡Has atrapado una {Color:Red}mariposa felicidad{Color:White}!\n¡Podrás cavar como un auténtico topo!",
+          "pt": "Você pegou a {Color:Red}Borboleta\nda Felicidade{Color:White}! Sua\nvelocidade ao nadar\n\naumentou!"
+        },
+        {
+          "id": 114,
+          "hex_id": "0x0572",
+          "en": "You caught a {Color:Red}Joy Butterfly{Color:White}! You can\nnow swim faster than before!",
+          "es_ref": "¡Has atrapado una {Color:Red}mariposa felicidad{Color:White}!\n¡Podrás nadar como un delfín!",
+          "pt": "Você pegou a {Color:Red}Borboleta\nda Felicidade{Color:White}! Seu\ndisparo de flechas\n\nficou mais rápido!"
+        },
+        {
+          "id": 115,
+          "hex_id": "0x0573",
+          "en": "This is it! You {Color:Red}sped up your\nGreat Spin Attack charge{Color:White}!\nYou won't have to hold the button\ndown as long anymore!",
+          "es_ref": "¡Tu {Color:Red}ataque circular es más rápido{Color:White}!\n¡No tendrás que pulsar tanto el botón!",
+          "pt": "Seu {Color:Red}Ataque Giratório\ncarrega mais rápido{Color:White}!"
+        },
+        {
+          "id": 116,
+          "hex_id": "0x0574",
+          "en": "This is it! Your {Color:Red}Split Gauge {Color:White}has\nbeen {Color:Red}sped up{Color:White}!\nYour sword gauge will fill with power\nmore quickly!",
+          "es_ref": "¡Podrás {Color:Red}dividirte con más rapidez{Color:White}!\n\nTardarás menos en acumular energía\nen tu espada para la división.",
+          "pt": "Você agora {Color:Red}se divide\ncom mais rapidez{Color:White}!"
+        },
+        {
+          "id": 117,
+          "hex_id": "0x0575",
+          "en": "This is it! Your {Color:Red}Great Spin Attack\nrotation time {Color:White}has {Color:Red}increased{Color:White}!\nSpin around and smash enemies to bits!",
+          "es_ref": "¡Tu {Color:Red}gran ataque circular es más rápido{Color:White}!\n¡Gira con fuerza y ataca!",
+          "pt": "Seu {Color:Red}Grande Giro dura\nmuito mais{Color:White}!"
+        },
+        {
+          "id": 118,
+          "hex_id": "0x0576",
+          "en": "You got {Var:1} {Color:Red}Mysterious Shells{Color:White}!",
+          "es_ref": "A ver cuántas {Color:Red}caracolas misteriosas{Color:White}\nhas conseguido... ¡{Var:1}!",
+          "pt": "Você pegou {Color:Red}30 Conchas\nMisteriosas{Color:White}!"
+        },
+        {
+          "id": 119,
+          "hex_id": "0x0577",
+          "en": "You got a {Color:Red}Mysterious Shell{Color:White}!",
+          "es_ref": "¡Has conseguido una {Color:Red}caracola\nmisteriosa{Color:White}!",
+          "pt": "You got a {Color:Red}Mysterious\nShell{Color:White}!"
+        },
+        {
+          "id": 120,
+          "hex_id": "0x0578",
+          "en": "Your {Color:Red}shield{Color:White} was stolen!\n",
+          "es_ref": "¡Te han quitado el {Color:Red}escudo{Color:White}!",
+          "pt": "O monstro roubou seu {Color:Red}\nEscudo{Color:White}!"
+        },
+        {
+          "id": 121,
+          "hex_id": "0x0579",
+          "en": "You recovered your {Color:Red}shield{Color:White}!\n",
+          "es_ref": "¡Has recuperado el {Color:Red}escudo{Color:White}!",
+          "pt": "Você recuperou seu {Color:Red}\nEscudo{Color:White}!"
+        },
+        {
+          "id": 123,
+          "hex_id": "0x057B",
+          "en": "{04:10:0E}Welcome to the adventurer's spring...\n\nI have need of many Rupees... Please,\nthrow all of yours into the spring.\n{Choice:05:7C}Sure  {Choice:05:7D}No way",
+          "es_ref": "{04:10:0E}Bienvenido a la fuente de los héroes...\nNecesito muchas rupias.\n¿Lanzarías tus rupias a la fuente?\n{Choice:05:7C}De acuerdo. {Choice:05:7D}No quiero.",
+          "pt": "{04:10:0E}Welcome to the\nadventurer's spring...\n\nI have need of many\nRupees... Please,\nthrow all of yours into\n\nthe spring. {Choice:05:7C}Sure {Choice:05:7D}No way"
+        },
+        {
+          "id": 124,
+          "hex_id": "0x057C",
+          "en": "{04:10:0E}{04:10:0E}Really?\n\nYou know that, if you do this, you will\nhave absolutely no Rupees left, right?\nWill you really throw them all in?\n{Choice:05:7E}Yes  {Choice:05:7D}No",
+          "es_ref": "{04:10:0E}{04:10:0E}¿En serio?\nPiensa que te quedarás sin ninguna...\n¿Me das tus rupias de verdad?\n{Choice:05:7E}Sí  {Choice:05:7D}No",
+          "pt": "{04:10:0E}{04:10:0E}Really?\n\nYou know that, if you do\nthis, you will have\nabsolutely no Rupees\n\nleft, right? Will you\nreally throw them all\nin? {Choice:05:7E}Yes {Choice:05:7D}No"
+        },
+        {
+          "id": 125,
+          "hex_id": "0x057D",
+          "en": "{04:10:0E}{04:10:0E}I see. Then I will wait for the next\nadventurer who comes my way...",
+          "es_ref": "{04:10:0E}{04:10:0E}Claro... Bueno, pues se lo pediré\nal siguiente héroe que pase por aquí...",
+          "pt": "{04:10:0E}{04:10:0E}I see. Then I will wait\nfor the next adventurer\nwho comes my way..."
+        },
+        {
+          "id": 126,
+          "hex_id": "0x057E",
+          "en": "{04:10:0E}You are most kind. I do not\nreally need your Rupees.\nBut I must reward such a kind\nadventurer with some of my power.",
+          "es_ref": "{04:10:0E}Eres realmente generoso.\nEn realidad no necesito las rupias.\nQuiero ayudarte por ser tan bueno.",
+          "pt": "{04:10:0E}You are most kind. I do\nnot really need your\nRupees. But I must\n\nreward such a kind\nadventurer with some of\nmy power."
+        },
+        {
+          "id": 127,
+          "hex_id": "0x057F",
+          "en": "{04:10:0E}May light shine on your quest...",
+          "es_ref": "{04:10:0E}Espero que tengas suerte...",
+          "pt": "{04:10:0E}May light shine on your\nquest..."
+        },
+        {
+          "id": 128,
+          "hex_id": "0x0580",
+          "en": "{04:10:0E}Welcome to the adventurer's spring...\n\nDid you throw the {Color:Red}Golden Bomb{Color:White} into\nthe spring? Or the {Color:Red}Silver Bomb{Color:White}?\n{Choice:05:81}Golden Bomb    {Choice:05:81}Silver Bomb\n{Choice:05:82}Neither",
+          "es_ref": "{04:10:0E}Bienvenido a la fuente de los héroes...\n\n¿Qué has lanzado? ¿Una {Color:Red}bomba de oro{Color:White}\no una {Color:Red}bomba de plata{Color:White}?\n{Choice:05:81}La de oro.  {Choice:05:81}La de plata.\n{Choice:05:82}Ninguna de las dos.",
+          "pt": "{04:10:0E}Welcome to the\nadventurer's spring...\n\nDid you throw the {Color:Red}\nGolden Bomb{Color:White} into the\nspring? Or the {Color:Red}Silver\n\nBomb{Color:White}? {Choice:05:81}Golden Bomb {Choice:05:81}\nSilver Bomb {Choice:05:82}Neither"
+        },
+        {
+          "id": 129,
+          "hex_id": "0x0581",
+          "en": "{04:10:0E}You're lying, aren't you?\n\nAs punishment for your lie, I will reduce\nyour number of bombs to zero.",
+          "es_ref": "{04:10:0E}Has mentido.\n\nA los mentirosos los castigo,\nquitándoles todas las bombas...",
+          "pt": "{04:10:0E}You're lying, aren't\nyou?\n\nAs punishment for your\nlie, I will reduce your\nnumber of bombs to\n\nzero."
+        },
+        {
+          "id": 130,
+          "hex_id": "0x0582",
+          "en": "{04:10:0E}You are honest.\n\nI must reward such an honest\nadventurer with some of my power.",
+          "es_ref": "{04:10:0E}Eres sincero, así que\nte ayudaré en tu aventura.",
+          "pt": "{04:10:0E}You are honest.\n\nI must reward such an\nhonest adventurer with\nsome of my power."
+        },
+        {
+          "id": 131,
+          "hex_id": "0x0583",
+          "en": "{04:10:0E}Welcome to the adventurer's spring.\n\nWould you tell me of the things you've\nseen on your adventures?\n{Choice:FF}Yes  {Choice:FF}Not now",
+          "es_ref": "{04:10:0E}Bienvenido a la fuente de los héroes...\n\n¿Te puedo hacer algunas preguntas?\n{Choice:FF}Vale  {Choice:FF}No",
+          "pt": "{04:10:0E}Welcome to the\nadventurer's spring.\n\nWould you tell me of the\nthings you've seen on\nyour adventures? {Choice:FF}Yes {Choice:FF}\n\nNot now"
+        },
+        {
+          "id": 132,
+          "hex_id": "0x0584",
+          "en": "{04:10:0E}The first element you found was the\nFire Element, was it not?\n{Choice:05:8A}Yes  {Choice:05:8C}No",
+          "es_ref": "{04:10:0E}El primer elemento que conseguiste\nfue el elemento de fuego, ¿verdad?\n{Choice:05:8A}Sí {Choice:05:8C}No",
+          "pt": "{04:10:0E}The first element you\nfound was the Fire\nElement, was it not? {Choice:05:8A}\n\nYes {Choice:05:8C}No"
+        },
+        {
+          "id": 133,
+          "hex_id": "0x0585",
+          "en": "{04:10:0E}Your grandfather's name is Smee,\nisn't it?\n{Choice:05:8A}Yes  {Choice:05:8D}No",
+          "es_ref": "{04:10:0E}Tu abuelo se llama Esmiz, ¿verdad?\n{Choice:05:8A}Sí {Choice:05:8D}No",
+          "pt": "{04:10:0E}Your grandfather's\nname is Smee, isn't it? {Choice:05:8A}\nYes {Choice:05:8D}No"
+        },
+        {
+          "id": 134,
+          "hex_id": "0x0586",
+          "en": "{04:10:0E}Melari of Mount Crenel has seven\napprentices, does he not?\n{Choice:05:8E}Yes  {Choice:05:8A}No",
+          "es_ref": "{04:10:0E}¿Vive Melta, el maestro herrero, en el\nmonte Gongol con sus 7 ayudantes?\n{Choice:05:8E}Sí {Choice:05:8A}No",
+          "pt": "{04:10:0E}Melari of Mount Crenel\nhas seven apprentices,\ndoes he not? {Choice:05:8E}Yes {Choice:05:8A}No"
+        },
+        {
+          "id": 135,
+          "hex_id": "0x0587",
+          "en": "{04:10:0E}The Blabber Nut gives one the ability\nto understand the Minish, does it not?\n{Choice:05:8A}Yes  {Choice:05:8F}No",
+          "es_ref": "{04:10:0E}Si te comes un frutipel, podrás\nentender la lengua de los minish, ¿no?\n{Choice:05:8A}Sí {Choice:05:8F}No",
+          "pt": "{04:10:0E}The Blabber Nut gives\none the ability to\nunderstand the Minish,\n\ndoes it not? {Choice:05:8A}Yes {Choice:05:8F}No"
+        },
+        {
+          "id": 136,
+          "hex_id": "0x0588",
+          "en": "{04:10:0E}The robe of the current king of Hyrule,\nDaltus, is white, is it not?\n{Choice:05:8A}Yes  {Choice:05:8B}No",
+          "es_ref": "{04:10:0E}La capa del rey de Hyrule\nes blanca, ¿verdad?\n{Choice:05:8A}Sí {Choice:05:8B}No",
+          "pt": "{04:10:0E}The robe of the current\nking of Hyrule, Daltus,\nis white, is it not? {Choice:05:8A}Yes\n\n{Choice:05:8B}No"
+        },
+        {
+          "id": 137,
+          "hex_id": "0x0589",
+          "en": "{04:10:0E}Thank you. Then please just\nanswer my questions.\n{07:05:84}",
+          "es_ref": "{04:10:0E}Gracias, pues responde a la siguiente,\npor favor.\n{07:05:84}",
+          "pt": "{04:10:0E}Thank you. Then please\njust answer my\nquestions. {07:05:84}"
+        },
+        {
+          "id": 138,
+          "hex_id": "0x058A",
+          "en": "{04:10:0E}You have lied to me.\n\nAs punishment for your lie, I will reduce\nyour number of arrows to zero.",
+          "es_ref": "{04:10:0E}Has mentido...\nPor mentir, te quedarás sin flechas.",
+          "pt": "{04:10:0E}You have lied to me.\n\nAs punishment for your\nlie, I will reduce your\nnumber of arrows to\n\nzero."
+        },
+        {
+          "id": 139,
+          "hex_id": "0x058B",
+          "en": "{04:10:0E}I see. Thank you for telling me about\nyour quest. You remember it all so well.\nSuch a faithful memory should be\nrewarded with some of my power.",
+          "es_ref": "{04:10:0E}Has prestado atención a los\ndetalles de tu aventura.\nTe ayudaré en lo que te queda.",
+          "pt": "{04:10:0E}I see. Thank you for\ntelling me about your\nquest. You remember it\n\nall so well. Such a\nfaithful memory should\nbe rewarded with some\n\nof my power."
+        },
+        {
+          "id": 140,
+          "hex_id": "0x058C",
+          "en": "{04:10:0E}Yes, I see.\nNow for the next question.\n{07:05:85}",
+          "es_ref": "{04:10:0E}Muy bien...\nSiguiente pregunta.\n{07:05:85}",
+          "pt": "{04:10:0E}Yes, I see. Now for the\nnext question. {07:05:85}"
+        },
+        {
+          "id": 141,
+          "hex_id": "0x058D",
+          "en": "{04:10:0E}Yes, I see.\nNow for the next question.\n{07:05:86}",
+          "es_ref": "{04:10:0E}Muy bien...\nSiguiente pregunta.\n{07:05:86}",
+          "pt": "{04:10:0E}Yes, I see. Now for the\nnext question. {07:05:86}"
+        },
+        {
+          "id": 142,
+          "hex_id": "0x058E",
+          "en": "{04:10:0E}Yes, I see.\nNow for the next question.\n{07:05:87}",
+          "es_ref": "{04:10:0E}Muy bien...\nSiguiente pregunta.\n{07:05:87}",
+          "pt": "{04:10:0E}Yes, I see. Now for the\nnext question. {07:05:87}"
+        },
+        {
+          "id": 143,
+          "hex_id": "0x058F",
+          "en": "{04:10:0E}Yes, I see.\nNow for the next question.\n{07:05:88}",
+          "es_ref": "{04:10:0E}Muy bien...\nSiguiente pregunta.\n{07:05:88}",
+          "pt": "{04:10:0E}Yes, I see. Now for the\nnext question. {07:05:88}"
+        },
+        {
+          "id": 144,
+          "hex_id": "0x0590",
+          "en": "{04:10:0E}Welcome to the adventurer's spring...\nLet me rest your weary body.",
+          "es_ref": "{04:10:0E}Bienvenido a la fuente de los héroes...\nDescansa antes de continuar tu viaje.",
+          "pt": "{04:10:0E}Welcome to the\nadventurer's spring...\nLet me rest your weary\n\nbody."
+        },
+        {
+          "id": 145,
+          "hex_id": "0x0591",
+          "en": "You bought 10{Color:Red} bombs{Color:White}!",
+          "es_ref": "¡Has comprado 10 {Color:Red}bombas{Color:White}!",
+          "pt": "You bought 10{Color:Red} bombs{Color:White}!"
+        },
+        {
+          "id": 146,
+          "hex_id": "0x0592",
+          "en": "You bought 30{Color:Red} bombs{Color:White}!",
+          "es_ref": "¡Has comprado 30 {Color:Red}bombas{Color:White}!",
+          "pt": "You bought 30{Color:Red} bombs{Color:White}!"
+        },
+        {
+          "id": 147,
+          "hex_id": "0x0593",
+          "en": "You bought 10 {Color:Red}arrows{Color:White}!",
+          "es_ref": "¡Has comprado 10 {Color:Red}flechas{Color:White}!",
+          "pt": "You bought 10 {Color:Red}arrows{Color:White}!"
+        },
+        {
+          "id": 148,
+          "hex_id": "0x0594",
+          "en": "You bought 30 {Color:Red}arrows{Color:White}!",
+          "es_ref": "¡Has comprado 30 {Color:Red}flechas{Color:White}!",
+          "pt": "You bought 30 {Color:Red}arrows{Color:White}!"
+        },
+        {
+          "id": 149,
+          "hex_id": "0x0595",
+          "en": "You got the {Color:Red}Tingle Trophy{Color:White}!",
+          "es_ref": "¡Has conseguido el {Color:Red}trofeo Tingle{Color:White}!",
+          "pt": "You got the {Color:Red}Tingle\nTrophy{Color:White}!"
+        },
+        {
+          "id": 150,
+          "hex_id": "0x0596",
+          "en": "You got the {Color:Red}Carlov Medal{Color:White}!",
+          "es_ref": "¡Has conseguido la {Color:Red}medalla\ndel Club Minitendo{Color:White}!",
+          "pt": "You got the {Color:Red}Carlov\nMedal{Color:White}!"
+        }
+      ]
+    },
+    {
+      "group_id": 6,
+      "group_hex": "0x06",
+      "name": "Descrições de Itens do Inventário",
+      "messages": [
+        {
+          "id": 1,
+          "hex_id": "0x0601",
+          "en": "{Symbol:07}  Hyrule Castle",
+          "es_ref": "{Symbol:07}  Castillo de Hyrule",
+          "pt": "{Symbol:07}  Castelo de Hyrule"
+        },
+        {
+          "id": 2,
+          "hex_id": "0x0602",
+          "en": "{Symbol:07}  Hyrule Castle\n{Symbol:09}  Hyrule Town     {Symbol:0A}  Minish Woods",
+          "es_ref": "{Symbol:07}  Castillo de Hyrule\n{Symbol:09}  Ciudadela     Bosque minish  {Symbol:0A}",
+          "pt": "{Symbol:07} Castelo de Hyrule {Symbol:09}\nCidade de Hyrule {Symbol:0A}\nFloresta Minish"
+        },
+        {
+          "id": 3,
+          "hex_id": "0x0603",
+          "en": "Crenel Wall\n(Watch out for falling rocks)",
+          "es_ref": "Terraplén de Gongol\n¡Peligro de desprendimientos!",
+          "pt": "Paredão de Crenel\n(Cuidado com pedras\ncaindo!)"
+        },
+        {
+          "id": 4,
+          "hex_id": "0x0604",
+          "en": "Dangerous - No Climbing",
+          "es_ref": "¡Peligro!\nProhibida la escalada.",
+          "pt": "Perigo - Proibido\nEscalar!"
+        },
+        {
+          "id": 5,
+          "hex_id": "0x0605",
+          "en": "Syrup the Witch's Hut",
+          "es_ref": "Tienda de magia de Sirope",
+          "pt": "Cabana da Bruxa Syrup"
+        },
+        {
+          "id": 6,
+          "hex_id": "0x0606",
+          "en": "No bomb throwing!",
+          "es_ref": "¡Probihido detonar bombas!",
+          "pt": "Proibido arremessar\nbombas!"
+        },
+        {
+          "id": 7,
+          "hex_id": "0x0607",
+          "en": "{Symbol:07}  Hyrule Town\n{Symbol:09}  Castor Wilds  {Symbol:0A}  Minish Woods",
+          "es_ref": "{Symbol:07}  Ciudadela de Hyrule\n{Symbol:09}  Región Tabanta     Bosque minish  {Symbol:0A}",
+          "pt": "{Symbol:07} Cidade de Hyrule {Symbol:09}\nPântano de Castor {Symbol:0A}\nFloresta Minish"
+        },
+        {
+          "id": 8,
+          "hex_id": "0x0608",
+          "en": "Hyrule Town",
+          "es_ref": "Ciudadela",
+          "pt": "Cidade de Hyrule"
+        },
+        {
+          "id": 9,
+          "hex_id": "0x0609",
+          "en": "{Symbol:07}  Royal Valley\n{Symbol:09}  Mount Crenel",
+          "es_ref": "{Symbol:07}  Valle real\n{Symbol:09}  Monte Gongol",
+          "pt": "{Symbol:07} Vale Real {Symbol:09} Monte Crenel"
+        },
+        {
+          "id": 10,
+          "hex_id": "0x060A",
+          "en": "{Symbol:07}  Castor Wilds             Danger!\nDon't forget your Pegasus Boots!",
+          "es_ref": "{Symbol:07} Región inexplorada de Tabanta\n¡Pantano peligroso!\n¡No olvides las botas de Pegaso!",
+          "pt": "{Symbol:07} Pântano de Castor\nPerigo! Não esqueça as\nBotas de\n\nPégaso!"
+        },
+        {
+          "id": 11,
+          "hex_id": "0x060B",
+          "en": "{Symbol:07}  Veil Falls\n{Symbol:08}  Minish Woods     {Symbol:0A}  Lake Hylia",
+          "es_ref": "{Symbol:07}  Cascada Xera\n{Symbol:08}  Bosque minish    Lago Hylia  {Symbol:0A}",
+          "pt": "{Symbol:07} Quedas do Véu {Symbol:08} Floresta\nMinish {Symbol:0A} Lago Hylia"
+        },
+        {
+          "id": 12,
+          "hex_id": "0x060C",
+          "en": "{Symbol:07}  Crenel Wall\n{Symbol:0A}  Crenel Mines",
+          "es_ref": "{Symbol:07}  Terraplén de Gongol\nMinas de Gongol  {Symbol:0A}",
+          "pt": "{Symbol:07} Paredão de Crenel {Symbol:0A}\nMinas de Melari"
+        },
+        {
+          "id": 13,
+          "hex_id": "0x060D",
+          "en": "{Symbol:07}  Crenel Mines\n{Symbol:09}  Crenel Wall",
+          "es_ref": "{Symbol:07}  Minas de Gongol\n{Symbol:09}  Terraplén de Gongol",
+          "pt": "{Symbol:07} Minas de Melari {Symbol:09}\nParedão de Crenel"
+        },
+        {
+          "id": 14,
+          "hex_id": "0x060E",
+          "en": "{Symbol:07}  Hyrule Castle    {Symbol:08}  Hyrule Town\n{Symbol:09}  Mount Crenel     {Symbol:0A}  Lake Hylia",
+          "es_ref": "{Symbol:07}  Castillo de Hyrule    {Symbol:08}  Ciudadela\n{Symbol:09}  Monte Gongol    Lago Hylia  {Symbol:0A}",
+          "pt": "{Symbol:07} Castelo de Hyrule {Symbol:08}\nCidade {Symbol:09} Monte Crenel {Symbol:0A}\nLago Hylia"
+        },
+        {
+          "id": 15,
+          "hex_id": "0x060F",
+          "en": "Lon Lon Ranch",
+          "es_ref": "Granja Lon Lon",
+          "pt": "Fazenda Lon Lon"
+        },
+        {
+          "id": 16,
+          "hex_id": "0x0610",
+          "en": "{Symbol:07}  Crenel Mines\n{Symbol:0A}  Shortcut to bottom",
+          "es_ref": "{Symbol:07}  Monte Gongol\nAtajo de la falda del monte  {Symbol:0A}",
+          "pt": "{Symbol:08}  Casa do Prefeito Hagen"
+        },
+        {
+          "id": 17,
+          "hex_id": "0x0611",
+          "en": "{Symbol:08}  Shortcut to bottom",
+          "es_ref": "{Symbol:08}  Atajo de la falda del monte",
+          "pt": "{Symbol:07} Cabana da Bruxa Syrup {Symbol:08}\nMinas de Melari"
+        },
+        {
+          "id": 18,
+          "hex_id": "0x0612",
+          "en": "{Symbol:09}  Mount Crenel",
+          "es_ref": "{Symbol:09}  Monte Gongol",
+          "pt": "{Symbol:07} Lago Hylia {Symbol:0A} Fazenda Lon\nLon"
+        },
+        {
+          "id": 19,
+          "hex_id": "0x0613",
+          "en": "{Symbol:0A}  Lake Hylia\n{Symbol:08}  Syrup the Witch's Hut",
+          "es_ref": "Lago Hylia  {Symbol:0A}\n{Symbol:08}  Tienda de magia de Sirope",
+          "pt": "Entrada Proibida sem\nPermissão"
+        },
+        {
+          "id": 20,
+          "hex_id": "0x0614",
+          "en": "Percy's House",
+          "es_ref": "Casa de Poemun",
+          "pt": "{Symbol:09} Cidade de Hyrule {Symbol:0A}\nCastelo Real"
+        },
+        {
+          "id": 21,
+          "hex_id": "0x0615",
+          "en": "{Symbol:09}  Royal Valley",
+          "es_ref": "{Symbol:09}  Valle real",
+          "pt": "Trilha das Terras Altas\nde Trilby"
+        },
+        {
+          "id": 22,
+          "hex_id": "0x0616",
+          "en": "{Symbol:08}  This way to Mayor Hagen's\n        Lakeside Cabin",
+          "es_ref": "{Symbol:08}  Cabaña del lago del alcalde",
+          "pt": "Entrada do Santuário\nDeepwood"
+        },
+        {
+          "id": 23,
+          "hex_id": "0x0617",
+          "en": "{Symbol:07}  Syrup the Witch's Hut\n{Symbol:0A}  Mayor Hagen's Lakeside Cabin",
+          "es_ref": "{Symbol:07}  Tienda de magia de Sirope\nCabaña del lago del alcalde  {Symbol:0A}",
+          "pt": "Caminho do Bosque do\nOeste"
+        },
+        {
+          "id": 27,
+          "hex_id": "0x061B",
+          "en": "Dear Mom,\nI'll be next door if you need me.",
+          "es_ref": "Mamá:\nEstoy en la casa de al lado.",
+          "pt": "Loja de Stockwell"
+        },
+        {
+          "id": 28,
+          "hex_id": "0x061C",
+          "en": "This week's top titles:\n\n{Symbol:10}3   Learn to Like Your Like Like:\n     A Good Guide to a Bad Pet\n{Symbol:10}2   Gorman's Guide to Good Grub\n\n{Symbol:10}1   Married to the Moblin",
+          "es_ref": "Libros más populares:\n\nNúm. 3 \"Historia de Hyrule\"\n\nNúm. 2 \"Zelda: una princesa angelical\"\n\nNúm. 1 \"Vaati, enemigo de Hyrule\"",
+          "pt": "Padaria da Cidade"
+        },
+        {
+          "id": 29,
+          "hex_id": "0x061D",
+          "en": "Hagen's Words of Wisdom\n\nIf you can't solve a problem, just ram\nheadlong into it. BAM!",
+          "es_ref": "Sabio consejo de Hagar:\n\n\"Para resolver los problemas,\nhay que usar la cabeza. ¡PUMBA!\"",
+          "pt": "Cafeteria da Mama"
+        },
+        {
+          "id": 31,
+          "hex_id": "0x061F",
+          "en": "{Symbol:0A}  Mayor Hagen's Lakeside Cabin\nAll digging absolutely prohibited!",
+          "es_ref": "",
+          "pt": "Correios de Hyrule"
+        },
+        {
+          "id": 32,
+          "hex_id": "0x0620",
+          "en": "Under construction.\nAll digging strictly prohibited!",
+          "es_ref": "",
+          "pt": "Dojo de Swiftblade"
+        },
+        {
+          "id": 33,
+          "hex_id": "0x0621",
+          "en": "Beware crumbling walls!\nBlasting strictly prohibited.",
+          "es_ref": "",
+          "pt": "Escola de Hyrule"
+        },
+        {
+          "id": 61,
+          "hex_id": "0x063D",
+          "en": "Up",
+          "es_ref": "Arriba",
+          "pt": "Up"
+        },
+        {
+          "id": 62,
+          "hex_id": "0x063E",
+          "en": "Left",
+          "es_ref": "Izquierda",
+          "pt": "Left"
+        },
+        {
+          "id": 63,
+          "hex_id": "0x063F",
+          "en": "Same as before",
+          "es_ref": "Igual que el anterior",
+          "pt": "Same as before"
+        },
+        {
+          "id": 64,
+          "hex_id": "0x0640",
+          "en": "Same as the beginning",
+          "es_ref": "Igual que el primero",
+          "pt": "Same as the beginning"
+        },
+        {
+          "id": 65,
+          "hex_id": "0x0641",
+          "en": "Right",
+          "es_ref": "Derecha",
+          "pt": "Right"
+        },
+        {
+          "id": 66,
+          "hex_id": "0x0642",
+          "en": "Same as two before",
+          "es_ref": "Igual que dos antes",
+          "pt": "Same as two before"
+        },
+        {
+          "id": 67,
+          "hex_id": "0x0643",
+          "en": "Down",
+          "es_ref": "Abajo",
+          "pt": "Down"
+        },
+        {
+          "id": 71,
+          "hex_id": "0x0647",
+          "en": "The truth about the {Color:Red}light force{Color:White} within{Color:Red}\n{Color:Green}Princess Zelda{Color:White} is depicted here.",
+          "es_ref": "",
+          "pt": "The truth about the {Color:Red}\nlight force{Color:White} within{Color:Red} {Color:Green}\nPrincess Zelda{Color:White} is\n\ndepicted here."
+        },
+        {
+          "id": 87,
+          "hex_id": "0x0657",
+          "en": "The way forward is hidden\nin the bottom of the pot.",
+          "es_ref": "Encontrarás el camino\nen el fondo de un jarrón.",
+          "pt": "The way forward is\nhidden in the bottom of\nthe pot."
+        }
+      ]
+    },
+    {
+      "group_id": 7,
+      "group_hex": "0x07",
+      "name": "Descrições de Kinstones",
+      "messages": [
+        {
+          "id": 1,
+          "hex_id": "0x0701",
+          "en": "You've finally fused all of the {Color:Red}Kinstone\npieces{Color:White}! Go speak to {Color:Green}Grandpa Smith{Color:White}!",
+          "es_ref": "¡Has conseguido la felicidad máxima!\n¡Ve a casa y habla con tu {Color:Green}abuelo Smith{Color:White}!",
+          "pt": "Você finalmente fundiu\ntodas as {Color:Red}Kinstones{Color:White} de\nHyrule!\n\nFale com o {Color:Green}Vovô Smith{Color:White}!"
+        },
+        {
+          "id": 2,
+          "hex_id": "0x0702",
+          "en": "The two {Color:Red}Kinstone pieces {Color:White}fit perfectly!\nMaybe something good will happen!",
+          "es_ref": "¡Las dos {Color:Red}piedras de la suerte{Color:White}\nencajan muy bien! ¿Qué ocurrirá?",
+          "pt": "As duas {Color:Red}Kinstones{Color:White} se\nuniram em perfeita\nharmonia!\n\nAlgo bom aconteceu no\nreino!"
+        },
+        {
+          "id": 4,
+          "hex_id": "0x0704",
+          "en": "{04:13}Travel to this Wind Crest?\n{04:13}{Choice:FF}Yes     {Choice:FF}No{08:FF}",
+          "es_ref": "{04:13}¿Quieres transportarte?\n{04:13}{Choice:FF} Sí   {Choice:FF} No{08:FF}",
+          "pt": "{04:13}Viajar para este Ponto\ndo Vento? {04:13}{Choice:FF}Sim {Choice:FF}Não{08:FF}"
+        },
+        {
+          "id": 11,
+          "hex_id": "0x070B",
+          "en": "Mt. Crenel",
+          "es_ref": "Monte Gongol",
+          "pt": "Monte Crenel"
+        },
+        {
+          "id": 12,
+          "hex_id": "0x070C",
+          "en": "Mt. Crenel's Base",
+          "es_ref": "Falda del monte Gongol",
+          "pt": "Base do Monte Crenel"
+        },
+        {
+          "id": 13,
+          "hex_id": "0x070D",
+          "en": "Castor Wilds",
+          "es_ref": "Región inexplorada de Tabanta",
+          "pt": "Pântano de Castor"
+        },
+        {
+          "id": 14,
+          "hex_id": "0x070E",
+          "en": "Wind Ruins",
+          "es_ref": "Ruinas de los vientos",
+          "pt": "Ruínas do Vento"
+        },
+        {
+          "id": 15,
+          "hex_id": "0x070F",
+          "en": "Royal Valley",
+          "es_ref": "Valle real",
+          "pt": "Vale Real"
+        },
+        {
+          "id": 16,
+          "hex_id": "0x0710",
+          "en": "Trilby Highlands",
+          "es_ref": "Meseta Beele",
+          "pt": "Terras Altas de Trilby"
+        },
+        {
+          "id": 17,
+          "hex_id": "0x0711",
+          "en": "Western Wood",
+          "es_ref": "Bosque del oeste",
+          "pt": "Bosque do Oeste"
+        },
+        {
+          "id": 18,
+          "hex_id": "0x0712",
+          "en": "Hyrule Castle Garden",
+          "es_ref": "Jardines del castillo de Hyrule",
+          "pt": "Jardins do Castelo de\nHyrule"
+        },
+        {
+          "id": 19,
+          "hex_id": "0x0713",
+          "en": "North Hyrule Field",
+          "es_ref": "Pradera al norte de Hyrule",
+          "pt": "Campos ao Norte de\nHyrule"
+        },
+        {
+          "id": 20,
+          "hex_id": "0x0714",
+          "en": "Hyrule Town",
+          "es_ref": "Ciudadela de Hyrule",
+          "pt": "Cidade de Hyrule"
+        },
+        {
+          "id": 21,
+          "hex_id": "0x0715",
+          "en": "South Hyrule Field",
+          "es_ref": "Pradera al sur de Hyrule",
+          "pt": "Campos ao Sul de Hyrule"
+        },
+        {
+          "id": 22,
+          "hex_id": "0x0716",
+          "en": "Veil Springs",
+          "es_ref": "Manantial Xera",
+          "pt": "Fontes do Véu"
+        },
+        {
+          "id": 23,
+          "hex_id": "0x0717",
+          "en": "Veil Falls",
+          "es_ref": "Cascada Xera",
+          "pt": "Quedas do Véu"
+        },
+        {
+          "id": 24,
+          "hex_id": "0x0718",
+          "en": "Lon Lon Ranch",
+          "es_ref": "Granja Lon Lon",
+          "pt": "Fazenda Lon Lon"
+        },
+        {
+          "id": 25,
+          "hex_id": "0x0719",
+          "en": "Eastern Hills",
+          "es_ref": "Colina del este",
+          "pt": "Colinas do Leste"
+        },
+        {
+          "id": 26,
+          "hex_id": "0x071A",
+          "en": "Cloud Tops",
+          "es_ref": "Sobre las nubes",
+          "pt": "Topo das Nuvens"
+        },
+        {
+          "id": 27,
+          "hex_id": "0x071B",
+          "en": "Lake Hylia",
+          "es_ref": "Lago Hylia",
+          "pt": "Lago Hylia"
+        },
+        {
+          "id": 28,
+          "hex_id": "0x071C",
+          "en": "Minish Woods",
+          "es_ref": "Bosque minish",
+          "pt": "Floresta Minish"
+        },
+        {
+          "id": 29,
+          "hex_id": "0x071D",
+          "en": "Elemental Sanctuary",
+          "es_ref": "Santuario",
+          "pt": "Santuário Elemental"
+        },
+        {
+          "id": 30,
+          "hex_id": "0x071E",
+          "en": "Minish Village",
+          "es_ref": "Comunidad minish del bosque",
+          "pt": "Vila dos Minish"
+        },
+        {
+          "id": 31,
+          "hex_id": "0x071F",
+          "en": "Melari's Mines",
+          "es_ref": "Mina de Melta",
+          "pt": "Minas de Melari"
+        },
+        {
+          "id": 32,
+          "hex_id": "0x0720",
+          "en": "Deepwood Shrine",
+          "es_ref": "Sepulcro del bosque",
+          "pt": "Santuário Deepwood"
+        },
+        {
+          "id": 33,
+          "hex_id": "0x0721",
+          "en": "Cave of Flames",
+          "es_ref": "Cueva de las llamas",
+          "pt": "Caverna das Chamas"
+        },
+        {
+          "id": 34,
+          "hex_id": "0x0722",
+          "en": "Fortress of Winds",
+          "es_ref": "Arco de los vientos",
+          "pt": "Fortaleza dos Ventos"
+        },
+        {
+          "id": 35,
+          "hex_id": "0x0723",
+          "en": "Temple of Droplets",
+          "es_ref": "Templo de las aguas",
+          "pt": "Templo das Gotas"
+        },
+        {
+          "id": 36,
+          "hex_id": "0x0724",
+          "en": "Royal Crypt",
+          "es_ref": "Mausoleo real",
+          "pt": "Cripta Real"
+        },
+        {
+          "id": 37,
+          "hex_id": "0x0725",
+          "en": "Palace of Winds",
+          "es_ref": "Palacio de los vientos",
+          "pt": "Palácio dos Ventos"
+        },
+        {
+          "id": 38,
+          "hex_id": "0x0726",
+          "en": "Hyrule Castle",
+          "es_ref": "Castillo de Hyrule",
+          "pt": "Castelo de Hyrule"
+        },
+        {
+          "id": 39,
+          "hex_id": "0x0727",
+          "en": "Dark Hyrule Castle",
+          "es_ref": "Castillo de Hyrule tenebroso",
+          "pt": "Castelo Sombrio de\nHyrule"
+        },
+        {
+          "id": 40,
+          "hex_id": "0x0728",
+          "en": "Biggoron's Dungeon",
+          "es_ref": "Mazmorra Biggoron",
+          "pt": "Masmorra de Biggoron"
+        }
+      ]
+    },
+    {
+      "group_id": 8,
+      "group_hex": "0x08",
+      "name": "Galeria de Estatuetas do Carlov (Figurines 1-136)",
+      "messages": [
+        {
+          "id": 0,
+          "hex_id": "0x0800",
+          "en": "{04:15}{Var:1}{04:14}:{07:08:00}",
+          "es_ref": "{04:15}{Var:1}{04:14}:{07:08:00}",
+          "pt": "{04:15}{Var:1}{04:14}:{07:08:00}"
+        },
+        {
+          "id": 1,
+          "hex_id": "0x0801",
+          "en": "Capless {Player}",
+          "es_ref": "{Player} sin gorro",
+          "pt": "{Player} sem Chapéu"
+        },
+        {
+          "id": 2,
+          "hex_id": "0x0802",
+          "en": "Ezlo and {Player}",
+          "es_ref": "{Player} con gorro",
+          "pt": "Ezlo e {Player}"
+        },
+        {
+          "id": 3,
+          "hex_id": "0x0803",
+          "en": "Princess Zelda",
+          "es_ref": "Princesa Zelda",
+          "pt": "Princesa Zelda"
+        },
+        {
+          "id": 4,
+          "hex_id": "0x0804",
+          "en": "Ezlo (Cap)",
+          "es_ref": "Ezero, el gorro",
+          "pt": "Ezlo (Gorro)"
+        },
+        {
+          "id": 5,
+          "hex_id": "0x0805",
+          "en": "Sorcerer Vaati",
+          "es_ref": "Vaati brujo",
+          "pt": "Feiticeiro Vaati"
+        },
+        {
+          "id": 6,
+          "hex_id": "0x0806",
+          "en": "King Daltus",
+          "es_ref": "Rey Daphness",
+          "pt": "Rei Daltus"
+        },
+        {
+          "id": 7,
+          "hex_id": "0x0807",
+          "en": "Minister Potho",
+          "es_ref": "Impa, el secretario",
+          "pt": "Ministro Potho"
+        },
+        {
+          "id": 8,
+          "hex_id": "0x0808",
+          "en": "Smith",
+          "es_ref": "Smith",
+          "pt": "Mestre Smith"
+        },
+        {
+          "id": 9,
+          "hex_id": "0x0809",
+          "en": "Mayor Hagen",
+          "es_ref": "Alcalde Hagar",
+          "pt": "Prefeito Hagen"
+        },
+        {
+          "id": 10,
+          "hex_id": "0x080A",
+          "en": "Marcy",
+          "es_ref": "Sobre",
+          "pt": "Marcy"
+        },
+        {
+          "id": 11,
+          "hex_id": "0x080B",
+          "en": "Stamp",
+          "es_ref": "Sello",
+          "pt": "Stamp"
+        },
+        {
+          "id": 12,
+          "hex_id": "0x080C",
+          "en": "Rem",
+          "es_ref": "Lem",
+          "pt": "Rem"
+        },
+        {
+          "id": 13,
+          "hex_id": "0x080D",
+          "en": "Dr. Left",
+          "es_ref": "Dr. Left",
+          "pt": "Dr. Left"
+        },
+        {
+          "id": 14,
+          "hex_id": "0x080E",
+          "en": "Carlov",
+          "es_ref": "Escultor Minitendo",
+          "pt": "Carlov"
+        },
+        {
+          "id": 15,
+          "hex_id": "0x080F",
+          "en": "Borlov",
+          "es_ref": "Encargado sala",
+          "pt": "Borlov"
+        },
+        {
+          "id": 16,
+          "hex_id": "0x0810",
+          "en": "Stockwell",
+          "es_ref": "Aiyer",
+          "pt": "Stockwell"
+        },
+        {
+          "id": 17,
+          "hex_id": "0x0811",
+          "en": "Simon",
+          "es_ref": "Vesga",
+          "pt": "Simon"
+        },
+        {
+          "id": 18,
+          "hex_id": "0x0812",
+          "en": "Gorman",
+          "es_ref": "Gorman",
+          "pt": "Gorman"
+        },
+        {
+          "id": 19,
+          "hex_id": "0x0813",
+          "en": "Anju",
+          "es_ref": "Anju",
+          "pt": "Anju"
+        },
+        {
+          "id": 20,
+          "hex_id": "0x0814",
+          "en": "Brocco",
+          "es_ref": "Broco Lee",
+          "pt": "Brocco"
+        },
+        {
+          "id": 21,
+          "hex_id": "0x0815",
+          "en": "Pina",
+          "es_ref": "Frutón",
+          "pt": "Pina"
+        },
+        {
+          "id": 22,
+          "hex_id": "0x0816",
+          "en": "Beedle",
+          "es_ref": "Terry",
+          "pt": "Beedle"
+        },
+        {
+          "id": 23,
+          "hex_id": "0x0817",
+          "en": "Postman",
+          "es_ref": "Cartero",
+          "pt": "Carteiro"
+        },
+        {
+          "id": 24,
+          "hex_id": "0x0818",
+          "en": "Crenel Hermit",
+          "es_ref": "Ermitaño de Gongol",
+          "pt": "Ermitão de Crenel"
+        },
+        {
+          "id": 25,
+          "hex_id": "0x0819",
+          "en": "Monster Lady",
+          "es_ref": "Abuela estropajo",
+          "pt": "Senhora dos Monstros"
+        },
+        {
+          "id": 26,
+          "hex_id": "0x081A",
+          "en": "Dampé",
+          "es_ref": "Dumper",
+          "pt": "Dampé"
+        },
+        {
+          "id": 27,
+          "hex_id": "0x081B",
+          "en": "Gustaf, Royal Spirit",
+          "es_ref": "Rey Gustaf",
+          "pt": "Gustaf, Espírito Real"
+        },
+        {
+          "id": 28,
+          "hex_id": "0x081C",
+          "en": "Syrup",
+          "es_ref": "Sirope",
+          "pt": "Bruxa Syrup"
+        },
+        {
+          "id": 29,
+          "hex_id": "0x081D",
+          "en": "Great Butterfly Fairy",
+          "es_ref": "Gran hada mariposa",
+          "pt": "Grande Fada Borboleta"
+        },
+        {
+          "id": 30,
+          "hex_id": "0x081E",
+          "en": "Great Mayfly Fairy",
+          "es_ref": "Gran hada colibrí",
+          "pt": "Grande Fada Efêmera"
+        },
+        {
+          "id": 31,
+          "hex_id": "0x081F",
+          "en": "Great Dragonfly Fairy",
+          "es_ref": "Gran hada libélula",
+          "pt": "Grande Fada Libélula"
+        },
+        {
+          "id": 32,
+          "hex_id": "0x0820",
+          "en": "Percy",
+          "es_ref": "Poemun",
+          "pt": "Percy"
+        },
+        {
+          "id": 33,
+          "hex_id": "0x0821",
+          "en": "Nayru",
+          "es_ref": "Nayru",
+          "pt": "Nayru"
+        },
+        {
+          "id": 34,
+          "hex_id": "0x0822",
+          "en": "Farore",
+          "es_ref": "Farore",
+          "pt": "Farore"
+        },
+        {
+          "id": 35,
+          "hex_id": "0x0823",
+          "en": "Din",
+          "es_ref": "Din",
+          "pt": "Din"
+        },
+        {
+          "id": 36,
+          "hex_id": "0x0824",
+          "en": "Joy Butterfly",
+          "es_ref": "Mariposa Felicidad",
+          "pt": "Borboleta da\nFelicidade"
+        },
+        {
+          "id": 37,
+          "hex_id": "0x0825",
+          "en": "Gina",
+          "es_ref": "Ghini rosa",
+          "pt": "Gina"
+        },
+        {
+          "id": 38,
+          "hex_id": "0x0826",
+          "en": "Festari",
+          "es_ref": "Festa",
+          "pt": "Festari"
+        },
+        {
+          "id": 39,
+          "hex_id": "0x0827",
+          "en": "Gentari",
+          "es_ref": "Gentel",
+          "pt": "Ancião Gentari"
+        },
+        {
+          "id": 40,
+          "hex_id": "0x0828",
+          "en": "Forest Picori",
+          "es_ref": "Minish bosque",
+          "pt": "Picori da Floresta"
+        },
+        {
+          "id": 41,
+          "hex_id": "0x0829",
+          "en": "Librari",
+          "es_ref": "Librari",
+          "pt": "Librari"
+        },
+        {
+          "id": 42,
+          "hex_id": "0x082A",
+          "en": "Town Picori",
+          "es_ref": "Minish comunidad",
+          "pt": "Picori da Cidade"
+        },
+        {
+          "id": 43,
+          "hex_id": "0x082B",
+          "en": "Melari",
+          "es_ref": "Melta",
+          "pt": "Mestre Melari"
+        },
+        {
+          "id": 44,
+          "hex_id": "0x082C",
+          "en": "Mountain Picori",
+          "es_ref": "Minish montaña",
+          "pt": "Picori da Montanha"
+        },
+        {
+          "id": 45,
+          "hex_id": "0x082D",
+          "en": "Goron",
+          "es_ref": "Goron",
+          "pt": "Goron"
+        },
+        {
+          "id": 46,
+          "hex_id": "0x082E",
+          "en": "Minish Vaati",
+          "es_ref": "Vaati minish",
+          "pt": "Vaati Minish"
+        },
+        {
+          "id": 47,
+          "hex_id": "0x082F",
+          "en": "Vassals",
+          "es_ref": "Vasallos",
+          "pt": "Vassalos do Castelo"
+        },
+        {
+          "id": 48,
+          "hex_id": "0x0830",
+          "en": "Library",
+          "es_ref": "Biblioteca",
+          "pt": "Biblioteca Real"
+        },
+        {
+          "id": 49,
+          "hex_id": "0x0831",
+          "en": "Blade Brothers",
+          "es_ref": "Maestros espada",
+          "pt": "Irmãos Espadachins"
+        },
+        {
+          "id": 50,
+          "hex_id": "0x0832",
+          "en": "Wheaton {Symbol:0D} Pita",
+          "es_ref": "Sal y Pimienta",
+          "pt": "Wheaton {Symbol:0D} Pita"
+        },
+        {
+          "id": 51,
+          "hex_id": "0x0833",
+          "en": "Funday School",
+          "es_ref": "Colegio Fabuloso",
+          "pt": "Escola de Hyrule"
+        },
+        {
+          "id": 52,
+          "hex_id": "0x0834",
+          "en": "Mama's Cafe",
+          "es_ref": "Cafetería Mamá",
+          "pt": "Cafeteria da Mama"
+        },
+        {
+          "id": 53,
+          "hex_id": "0x0835",
+          "en": "Happy Hearth Inn",
+          "es_ref": "Doncellas",
+          "pt": "Pousada Happy Hearth"
+        },
+        {
+          "id": 54,
+          "hex_id": "0x0836",
+          "en": "Zill and Friends",
+          "es_ref": "Amigos de Jil",
+          "pt": "Zill e Seus Amigos"
+        },
+        {
+          "id": 55,
+          "hex_id": "0x0837",
+          "en": "The Carpenters",
+          "es_ref": "Los carpinteros",
+          "pt": "Os Carpinteiros"
+        },
+        {
+          "id": 56,
+          "hex_id": "0x0838",
+          "en": "Young Couple",
+          "es_ref": "Joven pareja",
+          "pt": "Jovem Casal"
+        },
+        {
+          "id": 57,
+          "hex_id": "0x0839",
+          "en": "Peaceful Hyrule 1",
+          "es_ref": "Hyrule pacífica 1",
+          "pt": "Hyrule Serena 1"
+        },
+        {
+          "id": 58,
+          "hex_id": "0x083A",
+          "en": "Peaceful Hyrule 2",
+          "es_ref": "Hyrule pacífica 2",
+          "pt": "Hyrule Serena 2"
+        },
+        {
+          "id": 59,
+          "hex_id": "0x083B",
+          "en": "Peaceful Hyrule 3",
+          "es_ref": "Hyrule pacífica 3",
+          "pt": "Hyrule Serena 3"
+        },
+        {
+          "id": 60,
+          "hex_id": "0x083C",
+          "en": "Cucco!",
+          "es_ref": "¡Kikiriki!",
+          "pt": "Cucco!"
+        },
+        {
+          "id": 61,
+          "hex_id": "0x083D",
+          "en": "At Lon Lon Ranch",
+          "es_ref": "La granja Lon Lon",
+          "pt": "Na Fazenda Lon Lon"
+        },
+        {
+          "id": 62,
+          "hex_id": "0x083E",
+          "en": "The Wind Tribe",
+          "es_ref": "Hijos del viento",
+          "pt": "A Tribo dos Ventos"
+        },
+        {
+          "id": 63,
+          "hex_id": "0x083F",
+          "en": "Gregal {Symbol:0D} the Ghost",
+          "es_ref": "Espíritu y Brisa",
+          "pt": "Gregal {Symbol:0D} o Fantasma"
+        },
+        {
+          "id": 64,
+          "hex_id": "0x0840",
+          "en": "Tingle Siblings?",
+          "es_ref": "Tingle y hermanos",
+          "pt": "Irmãos do Tingle?"
+        },
+        {
+          "id": 65,
+          "hex_id": "0x0841",
+          "en": "Eenie {Symbol:0D} Meenie",
+          "es_ref": "Ine y Moni",
+          "pt": "Eenie {Symbol:0D} Meenie"
+        },
+        {
+          "id": 66,
+          "hex_id": "0x0842",
+          "en": "Goron Merchant",
+          "es_ref": "Goron mercader",
+          "pt": "Mercador Goron"
+        },
+        {
+          "id": 67,
+          "hex_id": "0x0843",
+          "en": "Spookter {Symbol:0D} Spekter",
+          "es_ref": "Pillo y Bicho",
+          "pt": "Spookter {Symbol:0D} Spekter"
+        },
+        {
+          "id": 68,
+          "hex_id": "0x0844",
+          "en": "Sluggula",
+          "es_ref": "Nuranul",
+          "pt": "Sluggula"
+        },
+        {
+          "id": 69,
+          "hex_id": "0x0845",
+          "en": "Scissors Beetle",
+          "es_ref": "Ciervo volador",
+          "pt": "Besouro Tesoura"
+        },
+        {
+          "id": 70,
+          "hex_id": "0x0846",
+          "en": "Moldworm",
+          "es_ref": "Gusano Mold",
+          "pt": "Moldworm"
+        },
+        {
+          "id": 71,
+          "hex_id": "0x0847",
+          "en": "Spiked Beetle",
+          "es_ref": "Pinchón",
+          "pt": "Besouro Espinhoso"
+        },
+        {
+          "id": 72,
+          "hex_id": "0x0848",
+          "en": "Eyegore Statue",
+          "es_ref": "Ojo diana",
+          "pt": "Estátua Eyegore"
+        },
+        {
+          "id": 73,
+          "hex_id": "0x0849",
+          "en": "Business Scrub",
+          "es_ref": "Matorral mercader",
+          "pt": "Business Scrub"
+        },
+        {
+          "id": 74,
+          "hex_id": "0x084A",
+          "en": "Armos",
+          "es_ref": "Armos",
+          "pt": "Armos"
+        },
+        {
+          "id": 75,
+          "hex_id": "0x084B",
+          "en": "Keese",
+          "es_ref": "Keese",
+          "pt": "Keese"
+        },
+        {
+          "id": 76,
+          "hex_id": "0x084C",
+          "en": "Keaton",
+          "es_ref": "Keaton",
+          "pt": "Keaton"
+        },
+        {
+          "id": 77,
+          "hex_id": "0x084D",
+          "en": "Ghini",
+          "es_ref": "Ghini",
+          "pt": "Ghini"
+        },
+        {
+          "id": 78,
+          "hex_id": "0x084E",
+          "en": "Gibdo",
+          "es_ref": "Gibdo",
+          "pt": "Gibdo"
+        },
+        {
+          "id": 79,
+          "hex_id": "0x084F",
+          "en": "Rollobite",
+          "es_ref": "Kyum",
+          "pt": "Rollobite"
+        },
+        {
+          "id": 80,
+          "hex_id": "0x0850",
+          "en": "Spark",
+          "es_ref": "Spark",
+          "pt": "Spark"
+        },
+        {
+          "id": 81,
+          "hex_id": "0x0851",
+          "en": "Dark Nut",
+          "es_ref": "Ferrus",
+          "pt": "Darknut"
+        },
+        {
+          "id": 82,
+          "hex_id": "0x0852",
+          "en": "Red Dark Nut",
+          "es_ref": "Ferrus rojo",
+          "pt": "Darknut Vermelho"
+        },
+        {
+          "id": 83,
+          "hex_id": "0x0853",
+          "en": "Chaser",
+          "es_ref": "Chaser",
+          "pt": "Chaser"
+        },
+        {
+          "id": 84,
+          "hex_id": "0x0854",
+          "en": "Rock Chuchu",
+          "es_ref": "Chuchu roca",
+          "pt": "Chuchu de Pedra"
+        },
+        {
+          "id": 85,
+          "hex_id": "0x0855",
+          "en": "Moldorm",
+          "es_ref": "Tail",
+          "pt": "Moldorm"
+        },
+        {
+          "id": 86,
+          "hex_id": "0x0856",
+          "en": "Door Mimic",
+          "es_ref": "Doamane",
+          "pt": "Porta Mímica"
+        },
+        {
+          "id": 87,
+          "hex_id": "0x0857",
+          "en": "Peahat",
+          "es_ref": "Peahat",
+          "pt": "Peahat"
+        },
+        {
+          "id": 88,
+          "hex_id": "0x0858",
+          "en": "Helmasaur",
+          "es_ref": "Yelmosaurio",
+          "pt": "Helmasaur"
+        },
+        {
+          "id": 89,
+          "hex_id": "0x0859",
+          "en": "Wall Master",
+          "es_ref": "Wallmaster",
+          "pt": "Wallmaster"
+        },
+        {
+          "id": 90,
+          "hex_id": "0x085A",
+          "en": "Floor Master",
+          "es_ref": "Floormaster",
+          "pt": "Floormaster"
+        },
+        {
+          "id": 91,
+          "hex_id": "0x085B",
+          "en": "Acro-Bandits",
+          "es_ref": "Pols",
+          "pt": "Bandidos Acrobáticos"
+        },
+        {
+          "id": 92,
+          "hex_id": "0x085C",
+          "en": "Bob-omb",
+          "es_ref": "Soldado bomba",
+          "pt": "Bob-omb"
+        },
+        {
+          "id": 93,
+          "hex_id": "0x085D",
+          "en": "Bombarossa",
+          "es_ref": "Bombite",
+          "pt": "Bombarossa"
+        },
+        {
+          "id": 94,
+          "hex_id": "0x085E",
+          "en": "Like Like",
+          "es_ref": "Like Like",
+          "pt": "Like Like"
+        },
+        {
+          "id": 95,
+          "hex_id": "0x085F",
+          "en": "Rupee Like",
+          "es_ref": "Rupiente",
+          "pt": "Rupee Like"
+        },
+        {
+          "id": 96,
+          "hex_id": "0x0860",
+          "en": "Rope",
+          "es_ref": "Rope",
+          "pt": "Rope"
+        },
+        {
+          "id": 97,
+          "hex_id": "0x0861",
+          "en": "Boulder",
+          "es_ref": "Goron roca",
+          "pt": "Rocha Rolante"
+        },
+        {
+          "id": 98,
+          "hex_id": "0x0862",
+          "en": "Ball {Symbol:0D} Chain Soldier",
+          "es_ref": "Ferrobola",
+          "pt": "Soldado com Bola de\nFerro"
+        },
+        {
+          "id": 99,
+          "hex_id": "0x0863",
+          "en": "Spiny Beetle",
+          "es_ref": "Heiji",
+          "pt": "Spiny Beetle"
+        },
+        {
+          "id": 100,
+          "hex_id": "0x0864",
+          "en": "Spear Moblin",
+          "es_ref": "Moblin lanza",
+          "pt": "Moblin com Lança"
+        },
+        {
+          "id": 101,
+          "hex_id": "0x0865",
+          "en": "Bow Moblin",
+          "es_ref": "Moblin arco",
+          "pt": "Moblin com Arco"
+        },
+        {
+          "id": 102,
+          "hex_id": "0x0866",
+          "en": "Cloud Piranha",
+          "es_ref": "Piraña nube",
+          "pt": "Piranha das Nuvens"
+        },
+        {
+          "id": 103,
+          "hex_id": "0x0867",
+          "en": "Mulldozer",
+          "es_ref": "Coleoptro pinchos",
+          "pt": "Mulldozer"
+        },
+        {
+          "id": 104,
+          "hex_id": "0x0868",
+          "en": "Pesto",
+          "es_ref": "Coleoptro",
+          "pt": "Pesto"
+        },
+        {
+          "id": 105,
+          "hex_id": "0x0869",
+          "en": "Puffstool",
+          "es_ref": "Poire",
+          "pt": "Puffstool"
+        },
+        {
+          "id": 106,
+          "hex_id": "0x086A",
+          "en": "Wizzrobe",
+          "es_ref": "Invocantis",
+          "pt": "Wizzrobe"
+        },
+        {
+          "id": 107,
+          "hex_id": "0x086B",
+          "en": "Fire Wizzrobe",
+          "es_ref": "Invocantis de fuego",
+          "pt": "Wizzrobe de Fogo"
+        },
+        {
+          "id": 108,
+          "hex_id": "0x086C",
+          "en": "Ice Wizzrobe",
+          "es_ref": "Invocantis de hielo",
+          "pt": "Wizzrobe de Gelo"
+        },
+        {
+          "id": 109,
+          "hex_id": "0x086D",
+          "en": "Wisp",
+          "es_ref": "Whisp",
+          "pt": "Wisp"
+        },
+        {
+          "id": 110,
+          "hex_id": "0x086E",
+          "en": "Octorok",
+          "es_ref": "Octorok",
+          "pt": "Octorok"
+        },
+        {
+          "id": 111,
+          "hex_id": "0x086F",
+          "en": "Golden Octorok",
+          "es_ref": "Octorok dorado",
+          "pt": "Octorok Dourado"
+        },
+        {
+          "id": 112,
+          "hex_id": "0x0870",
+          "en": "Golden Tektite",
+          "es_ref": "Tektite dorado",
+          "pt": "Tektite Dourado"
+        },
+        {
+          "id": 113,
+          "hex_id": "0x0871",
+          "en": "Golden Rope",
+          "es_ref": "Cuerda dorada",
+          "pt": "Rope Dourado"
+        },
+        {
+          "id": 114,
+          "hex_id": "0x0872",
+          "en": "Crow {Symbol:0D} Takkuri",
+          "es_ref": "Negri y Golpri",
+          "pt": "Corvo {Symbol:0D} Takkuri"
+        },
+        {
+          "id": 115,
+          "hex_id": "0x0873",
+          "en": "Lakitu",
+          "es_ref": "Lakitu",
+          "pt": "Lakitu"
+        },
+        {
+          "id": 116,
+          "hex_id": "0x0874",
+          "en": "Stalfos",
+          "es_ref": "Stalfos",
+          "pt": "Stalfos"
+        },
+        {
+          "id": 117,
+          "hex_id": "0x0875",
+          "en": "Beetle",
+          "es_ref": "Zoro Zoro",
+          "pt": "Besouro de Casca"
+        },
+        {
+          "id": 118,
+          "hex_id": "0x0876",
+          "en": "Chuchu",
+          "es_ref": "Chuchu",
+          "pt": "Chuchu Verde"
+        },
+        {
+          "id": 119,
+          "hex_id": "0x0877",
+          "en": "Tektite",
+          "es_ref": "Tektite",
+          "pt": "Tektite"
+        },
+        {
+          "id": 120,
+          "hex_id": "0x0878",
+          "en": "Trap",
+          "es_ref": "Trampa",
+          "pt": "Armadilha de Lâminas"
+        },
+        {
+          "id": 121,
+          "hex_id": "0x0879",
+          "en": "Leever",
+          "es_ref": "Leever",
+          "pt": "Leever"
+        },
+        {
+          "id": 122,
+          "hex_id": "0x087A",
+          "en": "Madderpillar",
+          "es_ref": "Imos",
+          "pt": "Madderpillar"
+        },
+        {
+          "id": 123,
+          "hex_id": "0x087B",
+          "en": "Spiny Chuchu",
+          "es_ref": "Chuchu pinchos",
+          "pt": "Chuchu Espinhoso"
+        },
+        {
+          "id": 124,
+          "hex_id": "0x087C",
+          "en": "Big Octorok",
+          "es_ref": "Ferrus negro",
+          "pt": "Grande Octorok"
+        },
+        {
+          "id": 125,
+          "hex_id": "0x087D",
+          "en": "Gyorg Pair",
+          "es_ref": "Gyorg",
+          "pt": "Casal de Gyorgs"
+        },
+        {
+          "id": 126,
+          "hex_id": "0x087E",
+          "en": "Biggoron",
+          "es_ref": "Biggoron",
+          "pt": "Biggoron"
+        },
+        {
+          "id": 127,
+          "hex_id": "0x087F",
+          "en": "Big Green Chuchu",
+          "es_ref": "Gran chuchu verde",
+          "pt": "Grande Chuchu Verde"
+        },
+        {
+          "id": 128,
+          "hex_id": "0x0880",
+          "en": "Gleerok",
+          "es_ref": "Gleeok",
+          "pt": "Gleerok"
+        },
+        {
+          "id": 129,
+          "hex_id": "0x0881",
+          "en": "Mazaal",
+          "es_ref": "Hisse",
+          "pt": "Mazaal"
+        },
+        {
+          "id": 130,
+          "hex_id": "0x0882",
+          "en": "Big Blue Chuchu",
+          "es_ref": "Gran chuchu azul",
+          "pt": "Grande Chuchu Azul"
+        },
+        {
+          "id": 131,
+          "hex_id": "0x0883",
+          "en": "Zelda {Symbol:0D} {Player}",
+          "es_ref": "Zelda y {Player}",
+          "pt": "Zelda {Symbol:0D} {Player}"
+        },
+        {
+          "id": 132,
+          "hex_id": "0x0884",
+          "en": "Minish Ezlo",
+          "es_ref": "Ezero minish",
+          "pt": "Ezlo Minish"
+        },
+        {
+          "id": 133,
+          "hex_id": "0x0885",
+          "en": "Black Knight",
+          "es_ref": "Blacknut",
+          "pt": "Cavaleiro Negro"
+        },
+        {
+          "id": 134,
+          "hex_id": "0x0886",
+          "en": "Vaati Reborn",
+          "es_ref": "Vaati brujo oscuro",
+          "pt": "Vaati Renascido"
+        },
+        {
+          "id": 135,
+          "hex_id": "0x0887",
+          "en": "Vaati Transfigured",
+          "es_ref": "Vaati tenebroso",
+          "pt": "Vaati Transfigurado"
+        },
+        {
+          "id": 136,
+          "hex_id": "0x0888",
+          "en": "Vaati's Wrath",
+          "es_ref": "Vaati monstruo",
+          "pt": "A Ira de Vaati"
+        },
+        {
+          "id": 137,
+          "hex_id": "0x0889",
+          "en": "- - - - - - - - -",
+          "es_ref": "{04:15}- - - - - - - - -",
+          "pt": "- - - - - - - - -"
+        }
+      ]
+    }
+  ]
+}

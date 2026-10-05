@@ -202,16 +202,16 @@ int font_draw_text_len(int x, int y, const char* text, int max_chars, u32 color,
             unsigned char next = (unsigned char)text[i + 1];
             char mapped = ' ';
             switch (next) {
-                case 0xA1: case 0xA0: case 0xA3: mapped = 'a'; break; // á, à, ã
-                case 0xA9: case 0xAA:             mapped = 'e'; break; // é, ê
-                case 0xAD:                         mapped = 'i'; break; // í
-                case 0xB3: case 0xB4: case 0xB5: mapped = 'o'; break; // ó, ô, õ
-                case 0xBA:                         mapped = 'u'; break; // ú
-                case 0xA7:                         mapped = 'c'; break; // ç
-                case 0x81: case 0x83:             mapped = 'A'; break; // Á, Ã
-                case 0x89:                         mapped = 'E'; break; // É
-                case 0x93: case 0x95:             mapped = 'O'; break; // Ó, Õ
-                case 0x87:                         mapped = 'C'; break; // Ç
+                case 0xA1: case 0xA0: case 0xA2: case 0xA3: mapped = 'a'; break; // á, à, â, ã
+                case 0xA9: case 0xAA:                         mapped = 'e'; break; // é, ê
+                case 0xAD:                                     mapped = 'i'; break; // í
+                case 0xB3: case 0xB4: case 0xB5:             mapped = 'o'; break; // ó, ô, õ
+                case 0xBA:                                     mapped = 'u'; break; // ú
+                case 0xA7:                                     mapped = 'c'; break; // ç
+                case 0x81: case 0x82: case 0x83:             mapped = 'A'; break; // Á, Â, Ã
+                case 0x89:                                     mapped = 'E'; break; // É
+                case 0x93: case 0x95:                         mapped = 'O'; break; // Ó, Õ
+                case 0x87:                                     mapped = 'C'; break; // Ç
                 default: mapped = ' '; break;
             }
             font_draw_char(cur_x, y, mapped, color, shadow);
