@@ -67,7 +67,7 @@
           "hex_id": "0x0508",
           "en": "{04:10:0E}You got a {Color:Red}Remote Bomb{Color:White}!\n\nPress the button to place a bomb, then\npress the button again to detonate it.",
           "es_ref": "{04:10:0E}¡Has conseguido {Color:Red}bombas con\ncontrol remoto{Color:White}!\nColoca la bomba, vuelve a pulsar el\nbotón correspondiente y explotará.",
-          "pt": "{04:10:0E}Você obteve as {Color:Red}Bombas\ncom Controle Remoto{Color:White}!\nColoque a bomba e\n\naperte\n\no botão novamente para\ndetoná-la."
+          "pt": "{04:10:0E}Você obteve as {Color:Red}Bombas\nRemotas{Color:White}! Coloque uma\nbomba e aperte o botão\n\nde novo\n\npara detoná-la!"
         },
         {
           "id": 9,
@@ -2055,7 +2055,7 @@
           "hex_id": "0x084B",
           "en": "Keese",
           "es_ref": "Keese",
-          "pt": "Keese"
+          "pt": "Morci"
         },
         {
           "id": 76,
@@ -2118,7 +2118,7 @@
           "hex_id": "0x0854",
           "en": "Rock Chuchu",
           "es_ref": "Chuchu roca",
-          "pt": "Chuchu de Pedra"
+          "pt": "Chulchul de Pedra"
         },
         {
           "id": 85,
@@ -2272,21 +2272,21 @@
           "hex_id": "0x086A",
           "en": "Wizzrobe",
           "es_ref": "Invocantis",
-          "pt": "Wizzrobe"
+          "pt": "Feitiçano"
         },
         {
           "id": 107,
           "hex_id": "0x086B",
           "en": "Fire Wizzrobe",
           "es_ref": "Invocantis de fuego",
-          "pt": "Wizzrobe de Fogo"
+          "pt": "Feitiçano de Fogo"
         },
         {
           "id": 108,
           "hex_id": "0x086C",
           "en": "Ice Wizzrobe",
           "es_ref": "Invocantis de hielo",
-          "pt": "Wizzrobe de Gelo"
+          "pt": "Feitiçano de Gelo"
         },
         {
           "id": 109,
@@ -2300,14 +2300,14 @@
           "hex_id": "0x086E",
           "en": "Octorok",
           "es_ref": "Octorok",
-          "pt": "Octorok"
+          "pt": "Octoroc"
         },
         {
           "id": 111,
           "hex_id": "0x086F",
           "en": "Golden Octorok",
           "es_ref": "Octorok dorado",
-          "pt": "Octorok Dourado"
+          "pt": "Octoroc Dourado"
         },
         {
           "id": 112,
@@ -2356,7 +2356,7 @@
           "hex_id": "0x0876",
           "en": "Chuchu",
           "es_ref": "Chuchu",
-          "pt": "Chuchu Verde"
+          "pt": "Chulchul Verde"
         },
         {
           "id": 119,
@@ -2391,14 +2391,14 @@
           "hex_id": "0x087B",
           "en": "Spiny Chuchu",
           "es_ref": "Chuchu pinchos",
-          "pt": "Chuchu Espinhoso"
+          "pt": "Chulchul Espinhoso"
         },
         {
           "id": 124,
           "hex_id": "0x087C",
           "en": "Big Octorok",
           "es_ref": "Ferrus negro",
-          "pt": "Grande Octorok"
+          "pt": "Grande Octoroc"
         },
         {
           "id": 125,
@@ -2419,7 +2419,7 @@
           "hex_id": "0x087F",
           "en": "Big Green Chuchu",
           "es_ref": "Gran chuchu verde",
-          "pt": "Grande Chuchu Verde"
+          "pt": "Grande Chulchul Verde"
         },
         {
           "id": 128,
@@ -2440,7 +2440,7 @@
           "hex_id": "0x0882",
           "en": "Big Blue Chuchu",
           "es_ref": "Gran chuchu azul",
-          "pt": "Grande Chuchu Azul"
+          "pt": "Grande Chulchul Azul"
         },
         {
           "id": 131,
