@@ -61,6 +61,9 @@ bool hal_video_init(const char* window_title, int scale_factor, bool enable_wide
         return false;
     }
 
+    // Ativa sincronização vertical (VSync) na GPU para evitar screen tearing
+    SDL_SetRenderVSync(s_renderer, 1);
+
     // Garante que o aspecto não fique deformado caso o usuário redimensione a janela
     SDL_SetRenderLogicalPresentation(s_renderer, s_ctx.render_width, s_ctx.render_height, SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
@@ -126,6 +129,10 @@ void hal_video_clear(u32 color_rgba) {
     }
 }
 
+// Frequência canônica de atualização de quadros: 60.0 FPS (16.666.666 ns = 16.666 ms)
+#define GBA_TARGET_FRAME_NS (1000000000ULL / 60ULL)
+static Uint64 s_next_frame_time_ns = 0;
+
 void hal_video_render_frame(void) {
     if (!s_renderer || !s_texture || !s_ctx.framebuffer) return;
 
@@ -141,11 +148,30 @@ void hal_video_render_frame(void) {
     SDL_RenderClear(s_renderer);
     SDL_RenderTexture(s_renderer, s_texture, NULL, NULL);
 
-    // 3. Apresenta o quadro pronto na tela (Swap Buffers sincronizado pelo VSync)
+    // 3. Apresenta o quadro pronto na tela
     SDL_RenderPresent(s_renderer);
+
+    // 4. Limitador estrito e preciso de 60 FPS (Frame Pacing Autêntico GBA)
+    // Garante cadência uniforme de 60 FPS em monitores de 60Hz, 120Hz, 144Hz, 240Hz ou sem VSync
+    Uint64 now_ns = SDL_GetTicksNS();
+    if (s_next_frame_time_ns == 0) {
+        s_next_frame_time_ns = now_ns + GBA_TARGET_FRAME_NS;
+    } else {
+        if (now_ns < s_next_frame_time_ns) {
+            Uint64 wait_ns = s_next_frame_time_ns - now_ns;
+            SDL_DelayPrecise(wait_ns);
+        }
+        s_next_frame_time_ns += GBA_TARGET_FRAME_NS;
+        now_ns = SDL_GetTicksNS();
+        // Se houver congelamento ou atraso prolongado (ex: arraste de janela), resincroniza
+        if (s_next_frame_time_ns < now_ns) {
+            s_next_frame_time_ns = now_ns + GBA_TARGET_FRAME_NS;
+        }
+    }
 }
 
 void hal_video_shutdown(void) {
+    s_next_frame_time_ns = 0;
     if (s_ctx.framebuffer) {
         free(s_ctx.framebuffer);
         s_ctx.framebuffer = NULL;
