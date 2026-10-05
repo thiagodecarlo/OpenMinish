@@ -128,6 +128,7 @@ typedef struct {
     int  royal_kinstone_banner_timer; // Temporizador do banner da Kinstone Real
     bool has_sanctum_key;           // Chave do Santuario de Vaati (Dark Hyrule Castle)
     int  sanctum_banner_timer;      // Temporizador do banner de abertura do Santuario
+    bool sanctum_banner_shown;      // Flag para exibir o banner do Santuário apenas uma vez
     bool vaati_defeated;            // Vaati derrotado definitivamente (Ato V concluido)
 
     // Regiões Canônicas: Quedas do Véu (Veil Falls) e Topo das Nuvens (Cloud Tops)
@@ -1879,7 +1880,7 @@ int main(int argc, char* argv[]) {
     load_region_sheets(REGION_USA);
 
     // Inicialização da entidade do Link
-    Player link;
+    Player link = { 0 };
     if (world_map && world_map->is_authentic) {
         // Caminho do jardim em frente ao santuário em Minish Woods (tx = 28, ty = 39)
         link.x = 448.0f;
@@ -2806,51 +2807,21 @@ int main(int argc, char* argv[]) {
                 hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
                 printf("[WHITE SWORD] Lamina Picori reforjada com sucesso na lendaria WHITE SWORD (Dano: 2)!\n");
             }
-            if (link.white_sword_banner_timer > 0) {
-                link.white_sword_banner_timer--;
-            }
-            if (link.fire_element_banner_timer > 0) {
-                link.fire_element_banner_timer--;
-            }
-            if (link.two_elements_banner_timer > 0) {
-                link.two_elements_banner_timer--;
-            }
-            if (link.three_elements_banner_timer > 0) {
-                link.three_elements_banner_timer--;
-            }
-            if (link.four_sword_banner_timer > 0) {
-                link.four_sword_banner_timer--;
-            }
-            if (link.royal_kinstone_banner_timer > 0) {
-                link.royal_kinstone_banner_timer--;
-            }
             if (subweapon_get_current() == ITEM_BOW && !link.has_bow) {
                 link.has_bow = true;
                 inventory_unlock_item(INV_ITEM_BOW);
                 link.bow_banner_timer = 200;
-            }
-            if (link.bow_banner_timer > 0) {
-                link.bow_banner_timer--;
             }
             if (subweapon_get_current() == ITEM_MOLE_MITTS && !link.has_mole_mitts) {
                 link.has_mole_mitts = true;
                 inventory_unlock_item(INV_ITEM_MOLE_MITTS);
                 link.mole_mitts_banner_timer = 200;
             }
-            if (link.mole_mitts_banner_timer > 0) {
-                link.mole_mitts_banner_timer--;
-            }
             if (armos_circuit_is_active() && !link.has_armos_activated) {
                 link.has_armos_activated = true;
                 link.armos_banner_timer = 220;
                 hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.2f);
                 printf("[ARMOS] Circuito central energizado! O robo Armos despertou e moveu-se!\n");
-            }
-            if (link.armos_banner_timer > 0) {
-                link.armos_banner_timer--;
-            }
-            if (link.ocarina_banner_timer > 0) {
-                link.ocarina_banner_timer--;
             }
 
             // Ação com Botão A: Primeiro Natação (Mergulho), Portal Minish, Masmorra / Loja / Guarda / Cidadã / Baús / Swiftblade / NPCs, depois golpe de espada!
@@ -2907,7 +2878,7 @@ int main(int argc, char* argv[]) {
                             } else if (link.has_water_element && !link.has_three_elements) {
                                 link.has_three_elements = true;
                                 link.three_elements_banner_timer = 240;
-                            } else {
+                            } else if (!link.has_two_elements) {
                                 link.has_two_elements = true;
                                 link.two_elements_banner_timer = 240;
                             }
@@ -3926,9 +3897,10 @@ int main(int argc, char* argv[]) {
                 spawn_wind_ruins_entities(armos_circuit_is_active());
             }
         } else if (dungeon_droplets_is_active()) {
+            bool prev_water = link.has_water_element;
             dungeon_droplets_update(&link.x, &link.y, link.dir, link.is_moving,
                                     &link.hearts, link.max_hearts, &link.rupees, &link.has_water_element);
-            if (link.has_water_element && link.water_element_banner_timer == 0) {
+            if (link.has_water_element && !prev_water) {
                 link.water_element_banner_timer = 240;
                 hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.3f);
             }
@@ -3945,12 +3917,13 @@ int main(int argc, char* argv[]) {
             RocsCapeState* rc = rocs_cape_get_state();
             bool is_downthrust = rc ? rc->is_down_thrust : false;
             bool is_gliding = rc ? rc->is_gliding : false;
+            bool prev_wind = link.has_wind_element;
             dungeon_palace_update(&link.x, &link.y, &link.dir, link.is_moving,
                                   &link.hearts, link.max_hearts, &link.rupees,
                                   &link.has_wind_element, link.has_rocs_cape,
                                   link.is_jumping, is_gliding,
                                   is_downthrust, link.is_attacking);
-            if (link.has_wind_element && link.wind_element_banner_timer == 0) {
+            if (link.has_wind_element && !prev_wind) {
                 link.wind_element_banner_timer = 240;
                 link.dungeon_palace_cleared = true;
                 hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.5f);
@@ -3980,7 +3953,8 @@ int main(int argc, char* argv[]) {
             dark_castle_update(&link.x, &link.y, &link.dir,
                                link.is_attacking, link.has_four_sword, cl_cnt,
                                cl_x, cl_y, &link.hearts, NULL);
-            if (dark_castle_is_ready_for_vaati() && link.sanctum_banner_timer == 0) {
+            if (dark_castle_is_ready_for_vaati() && !link.sanctum_banner_shown) {
+                link.sanctum_banner_shown = true;
                 link.sanctum_banner_timer = 240;
                 hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.5f);
             }
@@ -4106,6 +4080,26 @@ int main(int argc, char* argv[]) {
             link.anim_timer = 0;
         }
         } // Fim do bloco de gameplay (se não estiver em diálogo ativo)
+
+        // Decrementa temporizadores de banners festivos de conquistas/itens a cada quadro
+        if (link.tiger_scroll_banner_timer > 0) link.tiger_scroll_banner_timer--;
+        if (link.white_sword_banner_timer > 0) link.white_sword_banner_timer--;
+        if (link.fire_element_banner_timer > 0) link.fire_element_banner_timer--;
+        if (link.water_element_banner_timer > 0) link.water_element_banner_timer--;
+        if (link.wind_element_banner_timer > 0) link.wind_element_banner_timer--;
+        if (link.two_elements_banner_timer > 0) link.two_elements_banner_timer--;
+        if (link.three_elements_banner_timer > 0) link.three_elements_banner_timer--;
+        if (link.four_sword_banner_timer > 0) link.four_sword_banner_timer--;
+        if (link.royal_kinstone_banner_timer > 0) link.royal_kinstone_banner_timer--;
+        if (link.sanctum_banner_timer > 0) link.sanctum_banner_timer--;
+        if (link.veil_banner_timer > 0) link.veil_banner_timer--;
+        if (link.cloud_banner_timer > 0) link.cloud_banner_timer--;
+        if (link.bow_banner_timer > 0) link.bow_banner_timer--;
+        if (link.mole_mitts_banner_timer > 0) link.mole_mitts_banner_timer--;
+        if (link.armos_banner_timer > 0) link.armos_banner_timer--;
+        if (link.ocarina_banner_timer > 0) link.ocarina_banner_timer--;
+        if (link.lantern_banner_timer > 0) link.lantern_banner_timer--;
+        if (link.rocs_banner_timer > 0) link.rocs_banner_timer--;
 
         // Atualização da Câmera Virtual Widescreen (Segue o Link ou centraliza na Masmorra / Santuário)
         if (dungeon_is_active() || dungeon_flames_is_active() || dungeon_fortress_is_active() || dungeon_droplets_is_active() || dungeon_palace_is_active() || veil_clouds_is_active() || sanctuary_is_active()) {
@@ -4499,7 +4493,6 @@ int main(int argc, char* argv[]) {
 
         // 6d5. Banner Festivo do SANTUARIO DE VAATI (Dark Hyrule Castle)
         if (link.sanctum_banner_timer > 0) {
-            link.sanctum_banner_timer--;
             int ban_w = 236;
             int ban_h = 32;
             int ban_x = (ctx->render_width - ban_w) / 2;
@@ -4741,7 +4734,6 @@ int main(int argc, char* argv[]) {
 
         // Banner comemorativo de aquisição da Flame Lantern
         if (link.lantern_banner_timer > 0) {
-            link.lantern_banner_timer--;
             const char* b1 = "FLAME LANTERN ADQUIRIDA!";
             const char* b2 = "Chama Eterna: Ilumina a escuridao e derrete o gelo!";
             int bw = 240;
@@ -4756,7 +4748,6 @@ int main(int argc, char* argv[]) {
 
         // Banner comemorativo de aquisição do Elemento da Água (Water Element)
         if (link.water_element_banner_timer > 0) {
-            link.water_element_banner_timer--;
             const char* b1 = "ELEMENTO DA AGUA CONQUISTADO!";
             const char* b2 = "A pureza glacial e o fluxo eterno restauram a Forca Divina!";
             int bw = 240;
@@ -4771,7 +4762,6 @@ int main(int argc, char* argv[]) {
 
         // Banner comemorativo de aquisição do Elemento do Vento (Wind Element)
         if (link.wind_element_banner_timer > 0) {
-            link.wind_element_banner_timer--;
             const char* b1 = "ELEMENTO DO VENTO CONQUISTADO!";
             const char* b2 = "As brisas eternas e os 4 Elementos Sagrados foram reunidos!";
             int bw = 240;
@@ -4786,7 +4776,6 @@ int main(int argc, char* argv[]) {
 
         // Banner do Grande Tornado para o Palácio do Vento (Palace of Winds)
         if (link.cloud_banner_timer > 0) {
-            link.cloud_banner_timer--;
             const char* b1 = "GRANDE TORNADO DO PALACIO DO VENTO!";
             const char* b2 = "5 Kinstones Douradas fundidas! O caminho para o ceu esta aberto!";
             int bw = 240;
@@ -4816,7 +4805,6 @@ int main(int argc, char* argv[]) {
 
         // Banner comemorativo de aquisição da Capa de Roc
         if (link.rocs_banner_timer > 0) {
-            link.rocs_banner_timer--;
             const char* b1 = "CAPA DE ROC (ROC'S CAPE) ADQUIRIDA!";
             const char* b2 = "Salto Acrobatico: Pule, plane sobre abismos e execute o Down-Thrust!";
             int bw = 240;
