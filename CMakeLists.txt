@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.16)
 
 # ==============================================================================
 # PROJETO: OpenMinish - The Legend of Zelda: The Minish Cap Native PC Port
@@ -77,6 +77,10 @@ target_link_libraries(zelda_port PRIVATE
     SDL2::SDL2
 )
 
+if(UNIX)
+    target_link_libraries(zelda_port PRIVATE m)
+endif()
+
 # No Windows, copia automaticamente a SDL2.dll para a mesma pasta do zelda_port.exe
 if(WIN32)
     add_custom_command(TARGET zelda_port POST_BUILD
@@ -95,6 +99,7 @@ add_executable(asset_extractor
     tools/extractor/main.c
     tools/extractor/lz77.c
     tools/extractor/gfx.c
+    tools/extractor/text.c
 )
 
 target_include_directories(asset_extractor PRIVATE

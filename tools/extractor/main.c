@@ -4,6 +4,7 @@
 #include "gba/types.h"
 #include "lz77.h"
 #include "gfx.h"
+#include "text.h"
 
 /*
  * ============================================================================
@@ -232,6 +233,9 @@ static bool process_rom(const char* rom_path) {
         export_authentic_map_woods(hdr.region_tag, rom_buffer, rom_size,
                                    hdr.map_data_base, hdr.woods_pal_offset);
     }
+
+    // 6. Extracao de Textos e Dialogos para Localizacao (assets/lang/)
+    export_all_rom_texts(rom_buffer, rom_size, hdr.region_tag);
     printf("\n");
 
     free(rom_buffer);
