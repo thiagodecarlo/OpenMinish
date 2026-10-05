@@ -25,6 +25,7 @@
 #include "hal/rocs_cape.h"
 #include "hal/dungeon_palace.h"
 #include "hal/royal_valley.h"
+#include "hal/dungeon_dark_castle.h"
 #include "hal/startup_menu.h"
 #include <math.h>
 
@@ -120,6 +121,8 @@ typedef struct {
     int  four_sword_banner_timer;   // Temporizador do banner da Four Sword Forjada
     bool has_royal_kinstone;        // Royal Golden Kinstone (Rei Gustaf)
     int  royal_kinstone_banner_timer; // Temporizador do banner da Kinstone Real
+    bool has_sanctum_key;           // Chave do Santuario de Vaati (Dark Hyrule Castle)
+    int  sanctum_banner_timer;      // Temporizador do banner de abertura do Santuario
 
     // Regiões Canônicas: Quedas do Véu (Veil Falls) e Topo das Nuvens (Cloud Tops)
     bool has_veil_falls_unlocked;
@@ -1748,7 +1751,12 @@ static void apply_save_data(const SaveData* save, Player* link_ptr) {
         royal_valley_enter_graveyard(&link_ptr->x, &link_ptr->y, &link_ptr->dir);
     } else if (save->current_map == 24) {
         royal_valley_enter_crypt(&link_ptr->x, &link_ptr->y, &link_ptr->dir);
+    } else if (save->current_map >= 25 && save->current_map <= 30) {
+        dark_castle_enter(&link_ptr->x, &link_ptr->y, &link_ptr->dir);
+        dark_castle_set_room((DarkCastleRoomId)(save->current_map - 25), &link_ptr->x, &link_ptr->y, &link_ptr->dir);
     }
+    link_ptr->has_sanctum_key = save->has_sanctum_key;
+    dark_castle_restore_state(save->dark_castle_cleared, save->dark_castle_bells_silenced, save->has_sanctum_key);
     link_ptr->has_royal_kinstone = save->has_royal_kinstone;
     royal_valley_restore_state(save->graveyard_gate_unlocked, save->dampe_met, save->tomb_pushed, save->king_gustaf_met, save->has_royal_kinstone);
     link_ptr->has_lantern = save->has_flame_lantern;
@@ -2023,7 +2031,8 @@ int main(int argc, char* argv[]) {
                                 current_save.player_y = link.y;
                                 current_save.player_dir = (int)link.dir;
                                 int cur_m = 0;
-                                if (royal_valley_is_active()) cur_m = 20 + (int)royal_valley_get_scene();
+                                if (dark_castle_is_active()) cur_m = 25 + (int)dark_castle_get_room();
+                                else if (royal_valley_is_active()) cur_m = 20 + (int)royal_valley_get_scene();
                                 else if (veil_clouds_is_active()) {
                                     cur_m = (veil_clouds_get_scene() == VEIL_SCENE_FALLS_BASE || veil_clouds_get_scene() == VEIL_SCENE_FALLS_SUMMIT) ? 18 : 19;
                                 }
@@ -2084,6 +2093,10 @@ int main(int argc, char* argv[]) {
                                 current_save.tomb_pushed = rv_st ? rv_st->tomb_pushed : false;
                                 current_save.king_gustaf_met = rv_st ? rv_st->king_gustaf_met : false;
                                 current_save.has_royal_kinstone = link.has_royal_kinstone;
+                                current_save.dark_castle_unlocked = dark_castle_is_active();
+                                current_save.dark_castle_cleared = dark_castle_is_cleared();
+                                current_save.dark_castle_bells_silenced = dark_castle_is_ready_for_vaati();
+                                current_save.has_sanctum_key = link.has_sanctum_key;
                                 current_save.slot_a = (int)inventory_get_slot_a();
                                 current_save.slot_b = (int)inventory_get_slot_b();
                                 if (save_game(1, &current_save)) {
@@ -2447,6 +2460,19 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
+                        case SDLK_F9:
+                            if (!dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active() && !dungeon_droplets_is_active() && !dungeon_palace_is_active() && !sanctuary_is_active()) {
+                                if (dark_castle_is_active()) {
+                                    DarkCastleRoomId next_rm = (dark_castle_get_room() + 1) % DHC_ROOM_COUNT;
+                                    dark_castle_set_room(next_rm, &link.x, &link.y, &link.dir);
+                                    printf("[DEBUG] [F9] Dark Hyrule Castle sala alternada para %d!\n", next_rm);
+                                } else {
+                                    s_in_town = s_in_village = s_in_south_field = s_in_crenel_base = s_in_melari_mines = s_in_castor_wilds = s_in_mole_cave = s_in_wind_ruins = s_in_armos_interior = s_in_library = s_in_lake_hylia = s_in_north_field = false;
+                                    dark_castle_enter(&link.x, &link.y, &link.dir);
+                                    printf("[DEBUG] [F9] Entrada em Dark Hyrule Castle!\n");
+                                }
+                            }
+                            break;
                         case SDLK_F10:
                             startup_menu_return_to_title();
                             printf("[STARTUP] [F10] Retornando a Tela de Titulo e Selecao de Save!\n");
@@ -2530,7 +2556,8 @@ int main(int argc, char* argv[]) {
         // 2. ATUALIZAÇÃO DA LÓGICA DO JOGADOR (INPUT -> FÍSICA)
         // --------------------------------------------------------------------
         const HalVideoContext* ctx = hal_video_get_context();
-        Tilemap* active_map = royal_valley_is_active() ? royal_valley_get_state()->maps[royal_valley_get_scene()] :
+        Tilemap* active_map = dark_castle_is_active() ? dark_castle_get_current_map() :
+                              (royal_valley_is_active() ? royal_valley_get_state()->maps[royal_valley_get_scene()] :
                               (dungeon_palace_is_active() ? dungeon_palace_get_current_map() :
                               (veil_clouds_is_active() ? veil_clouds_get_current_map() :
                               (dungeon_droplets_is_active() ? dungeon_droplets_get_current_map() :
@@ -2545,7 +2572,7 @@ int main(int argc, char* argv[]) {
                               (s_in_village ? s_village_map :
                               (s_in_town ? s_town_map :
                               (s_in_south_field ? s_south_field_map :
-                              (s_in_north_field ? s_north_field_map : world_map)))))))))))))));
+                              (s_in_north_field ? s_north_field_map : world_map))))))))))))))));
 
         if (inventory_is_paused()) {
             if (hal_input_is_pressed(KEY_UP))    inventory_cursor_move(0, -1);
@@ -2934,6 +2961,20 @@ int main(int argc, char* argv[]) {
                 }
                 if (royal_valley_is_active()) {
                     royal_valley_check_sword_hit(hit_x, hit_y, hit_w, hit_h, sword_dmg, link.dir);
+                }
+                if (dark_castle_is_active()) {
+                    float cl_x[3] = { 0 };
+                    float cl_y[3] = { 0 };
+                    int cl_cnt = 0;
+                    for (int c = 0; c < 3; c++) {
+                        CloneState* cl = sanctuary_get_clone_at(c);
+                        if (cl && cl->active) {
+                            cl_x[cl_cnt] = cl->x;
+                            cl_y[cl_cnt] = cl->y;
+                            cl_cnt++;
+                        }
+                    }
+                    dark_castle_strike_sword(link.x, link.y, link.dir, sword_dmg, link.is_spinning, cl_cnt, cl_x, cl_y);
                 }
 
                 // Disparo de Raio da Four Sword com HP cheio no início do golpe
@@ -3745,6 +3786,25 @@ int main(int argc, char* argv[]) {
                 link.has_royal_kinstone = true;
                 link.royal_kinstone_banner_timer = 240;
             }
+        } else if (dark_castle_is_active()) {
+            float cl_x[3] = { 0 };
+            float cl_y[3] = { 0 };
+            int cl_cnt = 0;
+            for (int c = 0; c < 3; c++) {
+                CloneState* cl = sanctuary_get_clone_at(c);
+                if (cl && cl->active) {
+                    cl_x[cl_cnt] = cl->x;
+                    cl_y[cl_cnt] = cl->y;
+                    cl_cnt++;
+                }
+            }
+            dark_castle_update(&link.x, &link.y, &link.dir,
+                               link.is_attacking, link.has_four_sword, cl_cnt,
+                               cl_x, cl_y, &link.hearts, NULL);
+            if (dark_castle_is_ready_for_vaati() && link.sanctum_banner_timer == 0) {
+                link.sanctum_banner_timer = 240;
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.5f);
+            }
         }
 
         static bool s_was_dungeon_droplets_active = false;
@@ -3924,6 +3984,11 @@ int main(int argc, char* argv[]) {
             subweapon_render(&camera);
         } else if (royal_valley_is_active()) {
             royal_valley_render(&camera, link.x, link.y, link.dir, link.is_minish);
+            entity_manager_render(&camera);
+            draw_link(&link, &camera);
+            subweapon_render(&camera);
+        } else if (dark_castle_is_active()) {
+            dark_castle_render(&camera, link.x, link.y);
             entity_manager_render(&camera);
             draw_link(&link, &camera);
             subweapon_render(&camera);
@@ -4234,6 +4299,28 @@ int main(int argc, char* argv[]) {
 
             font_draw_text(ban_x + 26, ban_y + 6, "ROYAL GOLDEN KINSTONE OBTIDA!", 0xFDE047FF, true);
             font_draw_text(ban_x + 26, ban_y + 18, "O ESPIRITO DO REI GUSTAF O ABENCOA!", 0x38BDF8FF, true);
+        }
+
+        // 6d5. Banner Festivo do SANTUARIO DE VAATI (Dark Hyrule Castle)
+        if (link.sanctum_banner_timer > 0) {
+            link.sanctum_banner_timer--;
+            int ban_w = 236;
+            int ban_h = 32;
+            int ban_x = (ctx->render_width - ban_w) / 2;
+            int ban_y = 64;
+
+            draw_rect(ban_x - 2, ban_y - 2, ban_w + 4, ban_h + 4, 0x181824EE);
+            draw_rect(ban_x - 1, ban_y - 1, ban_w + 2, ban_h + 2, 0xF43F5EFF);
+            draw_rect(ban_x, ban_y, ban_w, ban_h, 0x0F0E17FF);
+            draw_rect(ban_x + 2, ban_y + 2, ban_w - 4, ban_h - 4, 0x1E1B4BEE);
+
+            // Ícone do Olho de Malícia de Vaati
+            draw_rect(ban_x + 6, ban_y + 10, 14, 12, 0x4C0519FF);
+            draw_rect(ban_x + 9, ban_y + 12, 8, 8, 0xF43F5EFF);
+            hal_video_put_pixel(ban_x + 12, ban_y + 15, 0xFFFFFFFF);
+
+            font_draw_text(ban_x + 26, ban_y + 6, "PORTAO DO SANTUARIO DESLACRADO!", 0xFDE047FF, true);
+            font_draw_text(ban_x + 26, ban_y + 18, "VAATI AGUARDA NO TOPO DO CASTELO!", 0xF43F5EFF, true);
         }
 
         // 6e. Banner Festivo de Aquisição do Arco e Flechas (Bow & Arrow)

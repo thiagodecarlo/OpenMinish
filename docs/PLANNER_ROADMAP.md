@@ -181,7 +181,7 @@ flowchart TD
 - **Objetivo**: Resgatar o reino e derrotar o feiticeiro Vaati em sua fortaleza sombria.
 - **Tarefas**:
   1. [x] `feature/royal-valley-graveyard`: Labirinto de névoa, Dampé o coveiro e Tumba do Rei Gustaf. (Merged ✅)
-  2. `feature/dungeon-dark-hyrule-castle`: Castelo corrompido por trevas, quebra-cabeças com 4 Clones e sinos de petrificação.
+  2. [x] `feature/dungeon-dark-hyrule-castle`: Castelo corrompido por trevas, quebra-cabeças com 4 Clones e sinos de petrificação. (Merged ✅)
   3. `feature/boss-vaati-climax`: Confronto final épico em 3 fases contra Vaati (Vaati Reborn, Vaati Transfigured, Vaati's Wrath), cura da Princesa Zelda e créditos finais.
 
 ### Sprint 6: Polimento, Minigames, Dojo & Lançamento 1.0
