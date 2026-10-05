@@ -4,6 +4,7 @@
 #include "gba/types.h"
 #include "lz77.h"
 #include "gfx.h"
+#include "text.h"
 
 /*
  * ============================================================================
@@ -35,6 +36,8 @@ typedef struct {
     u32         link_pal_offset;
     u32         octo_gfx_offset;
     u32         octo_pal_offset;
+    u32         map_data_base;
+    u32         woods_pal_offset;
     u8          software_version;
     u8          checksum;
 } GbaHeader;
@@ -60,31 +63,37 @@ static bool inspect_gba_header(const u8* rom_data, size_t rom_size, GbaHeader* o
         out_hdr->region_tag = "usa";
         out_hdr->region_name = "America do Norte (USA)";
         out_hdr->languages = "Ingles (EN)";
-        out_hdr->palette_offset  = 0x5A2E80;
-        out_hdr->link_gfx_offset = 0x13AE14;
-        out_hdr->link_pal_offset = 0x5A3F60;
-        out_hdr->octo_gfx_offset = 0x667B00;
-        out_hdr->octo_pal_offset = 0x5A3160;
+        out_hdr->palette_offset   = 0x5A2E80;
+        out_hdr->link_gfx_offset  = 0x13AE14;
+        out_hdr->link_pal_offset  = 0x5A4980;
+        out_hdr->octo_gfx_offset  = 0x667B00;
+        out_hdr->octo_pal_offset  = 0x5A3160;
+        out_hdr->map_data_base    = 0x324AE4;
+        out_hdr->woods_pal_offset = 0x5A5AC0;
     } else if (strcmp(out_hdr->game_code, "BZMP") == 0) {
         out_hdr->region = REGION_EUR;
         out_hdr->region_tag = "eur";
         out_hdr->region_name = "Europa (EUR)";
         out_hdr->languages = "Ingles (EN), Frances (FR), Alemao (DE), Espanhol (ES), Italiano (IT)";
-        out_hdr->palette_offset  = 0x5A23D0;
-        out_hdr->link_gfx_offset = 0x13A500;
-        out_hdr->link_pal_offset = 0x5A34B0;
-        out_hdr->octo_gfx_offset = 0x6672D0;
-        out_hdr->octo_pal_offset = 0x5A26B0;
+        out_hdr->palette_offset   = 0x5A23D0;
+        out_hdr->link_gfx_offset  = 0x13A500;
+        out_hdr->link_pal_offset  = 0x5A3ED0;
+        out_hdr->octo_gfx_offset  = 0x6672D0;
+        out_hdr->octo_pal_offset  = 0x5A26B0;
+        out_hdr->map_data_base    = 0x323FEC;
+        out_hdr->woods_pal_offset = 0x5A5010;
     } else if (strcmp(out_hdr->game_code, "BZMJ") == 0) {
         out_hdr->region = REGION_JPN;
         out_hdr->region_tag = "jpn";
         out_hdr->region_name = "Japao (JPN)";
         out_hdr->languages = "Japones (JA - Kanjis/Hiragana)";
-        out_hdr->palette_offset  = 0x5A2B20;
-        out_hdr->link_gfx_offset = 0x13AA40;
-        out_hdr->link_pal_offset = 0x5A3C00;
-        out_hdr->octo_gfx_offset = 0x6677A0;
-        out_hdr->octo_pal_offset = 0x5A2E00;
+        out_hdr->palette_offset   = 0x5A2B20;
+        out_hdr->link_gfx_offset  = 0x13AA40;
+        out_hdr->link_pal_offset  = 0x5A4620;
+        out_hdr->octo_gfx_offset  = 0x6677A0;
+        out_hdr->octo_pal_offset  = 0x5A2E00;
+        out_hdr->map_data_base    = 0x324710;
+        out_hdr->woods_pal_offset = 0x5A5760;
     } else {
         out_hdr->region = REGION_UNKNOWN;
         out_hdr->region_tag = "unknown";
@@ -95,6 +104,8 @@ static bool inspect_gba_header(const u8* rom_data, size_t rom_size, GbaHeader* o
         out_hdr->link_pal_offset = 0;
         out_hdr->octo_gfx_offset = 0;
         out_hdr->octo_pal_offset = 0;
+        out_hdr->map_data_base = 0;
+        out_hdr->woods_pal_offset = 0;
     }
 
     return true;
@@ -215,6 +226,16 @@ static bool process_rom(const char* rom_path) {
                    hdr.region_tag, octo_out, hdr.octo_gfx_offset);
         }
     }
+
+    // 5. Extracao do Mapa Autentico do Minish Woods (1008x1008 pixels) e Matriz de Colisao
+    if (hdr.map_data_base > 0 && hdr.woods_pal_offset > 0) {
+        printf("  [Extracao do Mapa de Cenario Autentico: Minish Woods]\n");
+        export_authentic_map_woods(hdr.region_tag, rom_buffer, rom_size,
+                                   hdr.map_data_base, hdr.woods_pal_offset);
+    }
+
+    // 6. Extracao de Textos e Dialogos para Localizacao (assets/lang/)
+    export_all_rom_texts(rom_buffer, rom_size, hdr.region_tag);
     printf("\n");
 
     free(rom_buffer);

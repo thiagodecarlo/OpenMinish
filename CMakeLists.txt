@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.16)
 
 # ==============================================================================
 # PROJETO: OpenMinish - The Legend of Zelda: The Minish Cap Native PC Port
@@ -40,6 +40,29 @@ add_executable(zelda_port
     src/hal/audio.c
     src/hal/map.c
     src/hal/entity.c
+    src/hal/font.c
+    src/hal/dialogue.c
+    src/hal/subweapon.c
+    src/hal/kinstone.c
+    src/hal/dungeon.c
+    src/hal/dungeon_flames.c
+    src/hal/dungeon_fortress.c
+    src/hal/dungeon_droplets.c
+    src/hal/fast_travel.c
+    src/hal/inventory.c
+    src/hal/library.c
+    src/hal/lantern.c
+    src/hal/save.c
+    src/hal/sanctuary.c
+    src/hal/veil_clouds.c
+    src/hal/rocs_cape.c
+    src/hal/startup_menu.c
+    src/hal/dungeon_palace.c
+    src/hal/royal_valley.c
+    src/hal/dungeon_dark_castle.c
+    src/hal/boss_vaati.c
+    src/hal/figurine_gallery.c
+    src/hal/cucco_minigame.c
 )
 
 # Adiciona nossas pastas de cabeçalhos (.h) para que o C encontre #include "gba/types.h"
@@ -53,6 +76,10 @@ target_link_libraries(zelda_port PRIVATE
     SDL2::SDL2main
     SDL2::SDL2
 )
+
+if(UNIX)
+    target_link_libraries(zelda_port PRIVATE m)
+endif()
 
 # No Windows, copia automaticamente a SDL2.dll para a mesma pasta do zelda_port.exe
 if(WIN32)
@@ -72,6 +99,7 @@ add_executable(asset_extractor
     tools/extractor/main.c
     tools/extractor/lz77.c
     tools/extractor/gfx.c
+    tools/extractor/text.c
 )
 
 target_include_directories(asset_extractor PRIVATE

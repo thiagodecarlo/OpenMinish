@@ -115,6 +115,13 @@ void hal_video_put_pixel(int x, int y, u32 color_rgba) {
     s_ctx.framebuffer[y * s_ctx.render_width + x] = color_rgba;
 }
 
+u32 hal_video_get_pixel(int x, int y) {
+    if (x < 0 || x >= s_ctx.render_width || y < 0 || y >= s_ctx.render_height || !s_ctx.framebuffer) {
+        return 0;
+    }
+    return s_ctx.framebuffer[y * s_ctx.render_width + x];
+}
+
 void hal_video_clear(u32 color_rgba) {
     int total_pixels = s_ctx.render_width * s_ctx.render_height;
     for (int i = 0; i < total_pixels; i++) {

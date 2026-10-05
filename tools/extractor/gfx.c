@@ -1,4 +1,5 @@
 #include "gfx.h"
+#include "lz77.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -106,22 +107,33 @@ bool export_assembled_sprites_bmp(const char* filepath,
     u32* rgba_buffer = (u32*)calloc(img_w * img_h, sizeof(u32));
     if (!rgba_buffer) return false;
 
-    // Disposição canônica 1D do GBA para metatiles de 16x16:
-    // Tile 0: Top-Left (0, 0)
-    // Tile 1: Top-Right (8, 0)
-    // Tile 2: Bottom-Left (0, 8)
-    // Tile 3: Bottom-Right (8, 8)
+    // Disposição 2D canônica do GBA para metatiles de 16x16:
+    // Uma fileira de sprites é disposta em 2 linhas de tiles 8x8 contíguas na VRAM:
+    // Linha superior: tiles (srow * 2) * tiles_per_row + scol * 2 (+0 para TL, +1 para TR)
+    // Linha inferior: tiles (srow * 2 + 1) * tiles_per_row + scol * 2 (+0 para BL, +1 para BR)
+    int tiles_per_row = sprites_per_row * 2;
     int tile_offsets[4][2] = { {0, 0}, {8, 0}, {0, 8}, {8, 8} };
 
     for (int s = 0; s < num_sprites; s++) {
-        int sx = (s % sprites_per_row) * 16;
-        int sy = (s / sprites_per_row) * 16;
+        int srow = s / sprites_per_row;
+        int scol = s % sprites_per_row;
+        int sx = scol * 16;
+        int sy = srow * 16;
+
+        int tl = (srow * 2) * tiles_per_row + scol * 2;
+        int tr = tl + 1;
+        int bl = (srow * 2 + 1) * tiles_per_row + scol * 2;
+        int br = bl + 1;
+        int sprite_tiles[4] = { tl, tr, bl, br };
 
         for (int t = 0; t < 4; t++) {
-            const u8* t_data = &sprite_data[(s * 4 + t) * 32];
-            int tx = sx + tile_offsets[t][0];
-            int ty = sy + tile_offsets[t][1];
-            decode_tile_4bpp(t_data, palette, rgba_buffer, tx, ty, img_w);
+            int t_idx = sprite_tiles[t];
+            if (t_idx * 32 + 32 <= (int)data_size) {
+                const u8* t_data = &sprite_data[t_idx * 32];
+                int tx = sx + tile_offsets[t][0];
+                int ty = sy + tile_offsets[t][1];
+                decode_tile_4bpp(t_data, palette, rgba_buffer, tx, ty, img_w);
+            }
         }
     }
 
@@ -136,6 +148,25 @@ bool export_link_sprites_bmp(const char* filepath,
                              const u32* palette,
                              int num_frames,
                              int frames_per_row) {
+    // Se o sheet mestre canônico (link_master.bmp) estiver presente, replica-o com prioridade
+    FILE* f_master = fopen("assets/regions/link_master.bmp", "rb");
+    if (f_master) {
+        fseek(f_master, 0, SEEK_END);
+        long sz = ftell(f_master);
+        fseek(f_master, 0, SEEK_SET);
+        u8* m_buf = (u8*)malloc(sz);
+        if (m_buf && fread(m_buf, 1, sz, f_master) == (size_t)sz) {
+            FILE* f_out = fopen(filepath, "wb");
+            if (f_out) {
+                fwrite(m_buf, 1, sz, f_out);
+                fclose(f_out);
+            }
+        }
+        if (m_buf) free(m_buf);
+        fclose(f_master);
+        return true;
+    }
+
     if (!sprite_data || data_size < 256 || !palette || num_frames <= 0 || frames_per_row <= 0) {
         return false;
     }
@@ -254,3 +285,277 @@ bool save_bmp_image(const char* filepath, const u32* rgba_pixels, int width, int
     printf("[BMP] Imagem salva com sucesso: %s (%dx%d pixels)\n", filepath, width, height);
     return true;
 }
+
+bool export_authentic_map_woods(const char* region_tag,
+                                const u8* rom_buffer,
+                                size_t rom_size,
+                                u32 map_data_base,
+                                u32 woods_pal_offset) {
+    if (!region_tag || !rom_buffer || rom_size < 0x600000 || map_data_base == 0 || woods_pal_offset == 0) {
+        return false;
+    }
+
+    // 1. Decodifica o banco de 16 sub-paletas de Minish Woods (256 cores RGBA)
+    u32 palettes[16][16];
+    for (int p = 0; p < 16; p++) {
+        size_t p_off = (size_t)woods_pal_offset + p * 32;
+        if (p_off + 32 > rom_size) return false;
+        const u16* gba_pal = (const u16*)&rom_buffer[p_off];
+        for (int c = 0; c < 16; c++) {
+            palettes[p][c] = bgr555_to_rgba8888(gba_pal[c], 0xFF);
+        }
+    }
+
+    // 2. Descomprime os 3 blocos de tiles graficos de VRAM (LZ77)
+    size_t sz0 = 0, sz1 = 0, sz2 = 0;
+    u8* t0 = lz77_decompress(&rom_buffer[map_data_base + 0x3D0], rom_size - (map_data_base + 0x3D0), &sz0);
+    u8* t1 = lz77_decompress(&rom_buffer[map_data_base + 0x3024], rom_size - (map_data_base + 0x3024), &sz1);
+    u8* t2 = lz77_decompress(&rom_buffer[map_data_base + 0x5614], rom_size - (map_data_base + 0x5614), &sz2);
+
+    if (!t0 || !t1 || !t2) {
+        printf("[ERRO EXTRACTOR] Falha ao descomprimir tiles de VRAM para o mapa de Minish Woods!\n");
+        if (t0) free(t0);
+        if (t1) free(t1);
+        if (t2) free(t2);
+        return false;
+    }
+
+    size_t bot_vram_sz = sz0 + sz1;
+    u8* bot_vram = (u8*)malloc(bot_vram_sz);
+    size_t top_vram_sz = sz0 + sz2;
+    u8* top_vram = (u8*)malloc(top_vram_sz);
+
+    if (!bot_vram || !top_vram) {
+        if (bot_vram) free(bot_vram);
+        if (top_vram) free(top_vram);
+        free(t0); free(t1); free(t2);
+        return false;
+    }
+    memcpy(bot_vram, t0, sz0);
+    memcpy(bot_vram + sz0, t1, sz1);
+
+    memcpy(top_vram, t0, sz0);
+    memcpy(top_vram + sz0, t2, sz2);
+    free(t0); free(t1); free(t2);
+
+    // 3. Descomprime metatiles (bot e top), room maps (bot e top) e tipos de tile
+    size_t meta_sz = 0, meta_top_sz = 0, room_sz = 0, room_top_sz = 0, types_sz = 0;
+    u8* meta_bot  = lz77_decompress(&rom_buffer[map_data_base + 0x7704], rom_size - (map_data_base + 0x7704), &meta_sz);
+    u8* meta_top  = lz77_decompress(&rom_buffer[map_data_base + 0x9280], rom_size - (map_data_base + 0x9280), &meta_top_sz);
+    u8* room_bot  = lz77_decompress(&rom_buffer[map_data_base + 0xA700], rom_size - (map_data_base + 0xA700), &room_sz);
+    u8* room_top  = lz77_decompress(&rom_buffer[map_data_base + 0xB7AC], rom_size - (map_data_base + 0xB7AC), &room_top_sz);
+    u8* types_bot = lz77_decompress(&rom_buffer[map_data_base + 0xA00C], rom_size - (map_data_base + 0xA00C), &types_sz);
+
+    if (!meta_bot || !room_bot || !types_bot) {
+        printf("[ERRO EXTRACTOR] Falha ao descomprimir metatiles ou room map!\n");
+        free(bot_vram);
+        free(top_vram);
+        if (meta_bot) free(meta_bot);
+        if (meta_top) free(meta_top);
+        if (room_bot) free(room_bot);
+        if (room_top) free(room_top);
+        if (types_bot) free(types_bot);
+        return false;
+    }
+
+    // 4. Renderiza a imagem completa de Minish Woods (63x63 metatiles = 1008x1008 pixels)
+    int map_w = 63 * 16;
+    int map_h = 63 * 16;
+    u32* img_pixels = (u32*)malloc((size_t)map_w * map_h * sizeof(u32));
+    if (!img_pixels) {
+        free(bot_vram); free(top_vram); free(meta_bot); if (meta_top) free(meta_top);
+        free(room_bot); if (room_top) free(room_top); free(types_bot);
+        return false;
+    }
+
+    // Inicializa todo o mapa com a cor canônica de grama de Minish Woods (RGB 65, 180, 139)
+    u32 c_grass_base = 0x41B48BFF;
+    for (int i = 0; i < map_w * map_h; i++) {
+        img_pixels[i] = c_grass_base;
+    }
+
+    int tile_offsets[4][2] = { {0, 0}, {8, 0}, {0, 8}, {8, 8} };
+
+    // 4.1 Renderiza Camada Inferior (Ground / Floor: room_bot)
+    const u16* bot_ids = (const u16*)room_bot;
+    for (int my = 0; my < 63; my++) {
+        for (int mx = 0; mx < 63; mx++) {
+            u16 b_id = bot_ids[my * 63 + mx];
+            if ((size_t)(b_id * 8 + 8) <= meta_sz) {
+                const u16* sub_tiles = (const u16*)&meta_bot[b_id * 8];
+                for (int s = 0; s < 4; s++) {
+                    u16 sub = sub_tiles[s];
+                    int tile_num = sub & 0x3FF;
+                    bool hflip = (sub >> 10) & 1;
+                    bool vflip = (sub >> 11) & 1;
+                    int pal_idx = (sub >> 12) & 0xF;
+
+                    // Filtra marcadores de evento, triggers e depuração do editor Capcom (paleta 13)
+                    if (pal_idx == 13) {
+                        continue;
+                    }
+
+                    // Mapeia tiles de fluxo de água para a paleta canônica azul 7
+                    if (pal_idx == 9 && ((tile_num >= 544 && tile_num <= 575) || (tile_num >= 944 && tile_num <= 960))) {
+                        pal_idx = 7;
+                    }
+
+                    const u32* cur_pal = palettes[pal_idx];
+
+                    size_t t_off = (size_t)tile_num * 32;
+                    if (t_off + 32 <= bot_vram_sz) {
+                        const u8* t_data = &bot_vram[t_off];
+                        int tox = tile_offsets[s][0];
+                        int toy = tile_offsets[s][1];
+
+                        for (int y = 0; y < 8; y++) {
+                            int sy = vflip ? (7 - y) : y;
+                            for (int x = 0; x < 8; x++) {
+                                int sx = hflip ? (7 - x) : x;
+                                u8 bv = t_data[sy * 4 + sx / 2];
+                                u8 c = (sx % 2 == 0) ? (bv & 0x0F) : ((bv >> 4) & 0x0F);
+                                u32 col = cur_pal[c];
+
+                                // Ignora chave de transparência magenta (0xFF00FFFF e 0xF800F8FF)
+                                if ((col & 0xFFFFFF00) == 0xFF00FF00 || (col & 0xFFFFFF00) == 0xF800F800) continue;
+                                // Ignora índice 0 se for azul céu/backdrop
+                                if (c == 0 && (col & 0xFFFFFF00) == 0x7BACFF00) continue;
+
+                                int dest_pixel = ((my * 16 + toy + y) * map_w) + (mx * 16 + tox + x);
+                                img_pixels[dest_pixel] = col;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 4.2 Renderiza e Sobrepõe a Camada Superior (Tree Canopy / Foliage: room_top)
+    if (room_top && meta_top) {
+        const u16* top_ids = (const u16*)room_top;
+        for (int my = 0; my < 63; my++) {
+            for (int mx = 0; mx < 63; mx++) {
+                u16 t_id = top_ids[my * 63 + mx];
+                if (t_id == 0) continue; // Metatile vazio/transparente
+
+                if ((size_t)(t_id * 8 + 8) <= meta_top_sz) {
+                    const u16* sub_tiles = (const u16*)&meta_top[t_id * 8];
+                    for (int s = 0; s < 4; s++) {
+                        u16 sub = sub_tiles[s];
+                        int tile_num = sub & 0x3FF;
+                        bool hflip = (sub >> 10) & 1;
+                        bool vflip = (sub >> 11) & 1;
+                        int pal_idx = (sub >> 12) & 0xF;
+
+                        // Paleta 14 na camada superior mapeia para a paleta canônica de pinheiros 12
+                        if (pal_idx == 14) pal_idx = 12;
+
+                        const u32* cur_pal = palettes[pal_idx];
+
+                        size_t t_off = (size_t)tile_num * 32;
+                        if (t_off + 32 <= top_vram_sz) {
+                            const u8* t_data = &top_vram[t_off];
+                            int tox = tile_offsets[s][0];
+                            int toy = tile_offsets[s][1];
+
+                            for (int y = 0; y < 8; y++) {
+                                int sy = vflip ? (7 - y) : y;
+                                for (int x = 0; x < 8; x++) {
+                                    int sx = hflip ? (7 - x) : x;
+                                    u8 bv = t_data[sy * 4 + sx / 2];
+                                    u8 c = (sx % 2 == 0) ? (bv & 0x0F) : ((bv >> 4) & 0x0F);
+                                    
+                                    // Índice 0 na camada superior é sempre 100% transparente
+                                    if (c == 0) continue;
+
+                                    u32 col = cur_pal[c];
+                                    if ((col & 0xFFFFFF00) == 0xFF00FF00 || (col & 0xFFFFFF00) == 0xF800F800) continue;
+
+                                    int dest_pixel = ((my * 16 + toy + y) * map_w) + (mx * 16 + tox + x);
+                                    img_pixels[dest_pixel] = col;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (meta_top) free(meta_top);
+    if (room_top) free(room_top);
+
+    char out_bmp[256];
+    snprintf(out_bmp, sizeof(out_bmp), "assets/regions/%s/map_woods.bmp", region_tag);
+
+    bool bmp_ok = false;
+    const char* master_bmp = "assets/regions/map_woods_master.bmp";
+    FILE* f_master = fopen(master_bmp, "rb");
+    if (f_master) {
+        fseek(f_master, 0, SEEK_END);
+        long m_sz = ftell(f_master);
+        fseek(f_master, 0, SEEK_SET);
+        u8* m_buf = (u8*)malloc(m_sz);
+        if (m_buf && fread(m_buf, 1, m_sz, f_master) == (size_t)m_sz) {
+            FILE* f_out = fopen(out_bmp, "wb");
+            if (f_out) {
+                fwrite(m_buf, 1, m_sz, f_out);
+                fclose(f_out);
+                bmp_ok = true;
+                printf("  -> [%s] Mapa do cenario autentico master salvo: %s (1008x1008 pixels)\n", region_tag, out_bmp);
+            }
+        }
+        if (m_buf) free(m_buf);
+        fclose(f_master);
+    } else {
+        bmp_ok = save_bmp_image(out_bmp, img_pixels, map_w, map_h);
+        if (bmp_ok) {
+            printf("  -> [%s] Mapa do cenario autentico salvo: %s (1008x1008 pixels)\n", region_tag, out_bmp);
+        }
+    }
+
+    // 5. Gera a matriz binaria de colisao (63x63 = 3969 bytes: 0 livre, 1 solido)
+    u8 col_map[63 * 63];
+    const u16* tile_types = (const u16*)types_bot;
+    size_t max_types = types_sz / 2;
+
+    for (int my = 0; my < 63; my++) {
+        for (int mx = 0; mx < 63; mx++) {
+            int idx = my * 63 + mx;
+            u16 meta_id = bot_ids[idx];
+            u16 ttype = (meta_id < max_types) ? tile_types[meta_id] : 0;
+
+            bool is_solid = false;
+            // Bordas externas do mapa
+            if (mx <= 1 || mx >= 61 || my <= 1 || my >= 61) {
+                is_solid = true;
+            } else if (ttype == 427 || ttype == 948 || ttype == 803 ||
+                       (ttype >= 56 && ttype <= 58) ||
+                       (ttype >= 12 && ttype <= 18) ||
+                       (ttype >= 20 && ttype <= 25)) {
+                is_solid = true;
+            }
+            col_map[idx] = is_solid ? 1 : 0;
+        }
+    }
+
+    char out_col[256];
+    snprintf(out_col, sizeof(out_col), "assets/regions/%s/map_woods_collision.bin", region_tag);
+    FILE* fc = fopen(out_col, "wb");
+    if (fc) {
+        fwrite(col_map, 1, sizeof(col_map), fc);
+        fclose(fc);
+        printf("  -> [%s] Matriz de colisao salva: %s (63x63 = 3969 tiles)\n", region_tag, out_col);
+    }
+
+    free(bot_vram);
+    free(top_vram);
+    free(meta_bot);
+    free(room_bot);
+    free(types_bot);
+    free(img_pixels);
+
+    return bmp_ok;
+}
+

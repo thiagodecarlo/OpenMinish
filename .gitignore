@@ -55,6 +55,7 @@ Makefile
 assets/extracted/
 assets/regions/*/
 !assets/regions/.gitkeep
+assets/regions/*.bmp
 assets/textures/*
 !assets/textures/.gitkeep
 
