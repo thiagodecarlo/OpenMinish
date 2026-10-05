@@ -9,6 +9,7 @@
 #include "hal/audio.h"
 #include "hal/font.h"
 #include "hal/fast_travel.h"
+#include "hal/dungeon_palace.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -494,6 +495,18 @@ void veil_clouds_update(float* player_x, float* player_y, Direction player_dir, 
             *player_x = 128.0f;
             *player_y = 28.0f;
             hal_audio_play_sound(SOUND_DOOR_SHUTTER, 0.8f, 1.2f);
+        }
+        // Grande Tornado Ciclônico para o Palace of Winds
+        if (s_veil.palace_tornado_active) {
+            float dx = *player_x - 128.0f;
+            float dy = *player_y - 80.0f;
+            if (dx * dx + dy * dy <= 18.0f * 18.0f) {
+                hal_audio_play_sound(SOUND_SPIN_ATTACK, 1.0f, 1.3f);
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.5f);
+                s_veil.is_active = false;
+                dungeon_palace_enter(player_x, player_y, NULL);
+                return;
+            }
         }
     }
 }

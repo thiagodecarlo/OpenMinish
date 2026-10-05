@@ -37,9 +37,11 @@ typedef struct {
     bool  has_earth_element;
     bool  has_fire_element;
     bool  has_water_element;
+    bool  has_wind_element;
     bool  has_two_elements;
     bool  has_three_elements;
     bool  dungeon_droplets_cleared;
+    bool  dungeon_palace_cleared;
     bool  has_bow;
     bool  has_mole_mitts;
     bool  has_armos_activated;

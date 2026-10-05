@@ -1538,6 +1538,110 @@ void render_metatile(int sx, int sy, TileType type) {
             }
             break;
 
+        case TILE_PALACE_FLOOR:
+            // Piso nobre de mármore e arabescos celestes do Palácio do Vento
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0xF1F5F9FF; // Mármore claro
+                    if (x == 0 || y == 0) c = 0xFFFFFFFF; // Brilho de luz
+                    else if (x == 15 || y == 15) c = 0xCBD5E1FF; // Sombra sutil de rejunte
+                    else if ((x == 7 || x == 8) && (y >= 4 && y <= 11)) c = 0xBAE6FDFF; // Friso celestial
+                    else if ((y == 7 || y == 8) && (x >= 4 && x <= 11)) c = 0xBAE6FDFF;
+                    else if ((x == 7 || x == 8) && (y == 7 || y == 8)) c = 0xFBBF24FF; // Ponto dourado
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_PALACE_WALL:
+            // Paredão/parapeito celeste com frisos dourados da Tribo do Vento
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x1E293BFF; // Pedra escura da base
+                    if (y <= 2) {
+                        c = (y == 1) ? 0xFBBF24FF : 0xD97706FF; // Moldura dourada
+                    } else if (y == 3) {
+                        c = 0x0F172AFF;
+                    } else {
+                        // Tijolos celestes
+                        if ((y == 9) || (y < 9 && x == 8) || (y > 9 && (x == 4 || x == 12))) {
+                            c = 0x0F172AFF; // Argamassa escura
+                        } else {
+                            c = ((x + y) % 3 == 0) ? 0x334155FF : 0x1E293BFF;
+                        }
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_PALACE_GRATE:
+            // Passarela aérea de grades de ferro com vista para as nuvens abaixo
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x0284C7FF; // Céu aberto ao fundo
+                    if ((x % 4 == 0) || (y % 4 == 0)) {
+                        c = ((x + y) % 2 == 0) ? 0x64748BFF : 0x475569FF; // Grade metálica
+                    } else if ((x + y) % 8 == 0) {
+                        c = 0xE0F2FE88; // Tufo de nuvem passando
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_PALACE_PIT:
+            // Abismo celeste infinito com correntes de ar (requer Roc's Cape)
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x0369A1FF; // Vácuo profundo
+                    if ((x + y * 2) % 11 == 0) c = 0x38BDF8AA; // Linha de corrente de vento
+                    else if ((x * 3 + y) % 19 == 0) c = 0xF0F9FFAA; // Tufo de névoa
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_PALACE_FAN:
+            // Turbina eólica ancestral com hélices giratórias de bronze
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    float dx = x - 7.5f;
+                    float dy = y - 7.5f;
+                    float d2 = dx * dx + dy * dy;
+                    u32 c = 0x1E293BFF;
+                    if (d2 <= 49.0f && d2 >= 36.0f) {
+                        c = 0xB45309FF; // Aro de bronze
+                    } else if (d2 < 36.0f) {
+                        // Vórtice e pás
+                        if (x == y || x == 15 - y || x == 7 || y == 7) {
+                            c = 0xFBBF24FF; // Pás da turbina
+                        } else {
+                            c = 0x0C4A6EFF; // Fundo da turbina com vento
+                        }
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_PALACE_SWITCH:
+            // Interruptor de piso da Four Sword
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x475569FF;
+                    if (x >= 2 && x <= 13 && y >= 2 && y <= 13) {
+                        c = 0x64748BFF;
+                        if ((x >= 5 && x <= 10 && (y == 7 || y == 8)) ||
+                            (y >= 5 && y <= 10 && (x == 7 || x == 8))) {
+                            c = 0x38BDF8FF; // Diamante reluzente
+                        }
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
         default:
             render_metatile(sx, sy, TILE_GRASS);
             break;

@@ -23,6 +23,7 @@
 #include "hal/lantern.h"
 #include "hal/veil_clouds.h"
 #include "hal/rocs_cape.h"
+#include "hal/dungeon_palace.h"
 #include "hal/startup_menu.h"
 #include <math.h>
 
@@ -103,6 +104,11 @@ typedef struct {
     // Elemento Canônico: Sagrado Elemento Água (Water Element)
     bool has_water_element;         // Conquistado ao derrotar Big Octorok no Temple of Droplets
     int  water_element_banner_timer;// Temporizador do banner festivo de obtenção
+
+    // Elemento Canônico: Sagrado Elemento Vento (Wind Element)
+    bool has_wind_element;          // Conquistado ao derrotar Gyorg Pair no Palace of Winds
+    int  wind_element_banner_timer; // Temporizador do banner festivo de obtenção
+    bool dungeon_palace_cleared;
 
     // Habilidade Lendária Four Sword: Infusão de 2 e 3 Elementos & Clones
     bool has_two_elements;          // White Sword (Two Elements) infundida no Santuário
@@ -1721,6 +1727,8 @@ static void apply_save_data(const SaveData* save, Player* link_ptr) {
     lantern_set_lit(save->lantern_lit);
     if (link_ptr->has_lantern) inventory_unlock_item(INV_ITEM_LANTERN);
     link_ptr->has_water_element = save->has_water_element;
+    link_ptr->has_wind_element = save->has_wind_element;
+    link_ptr->dungeon_palace_cleared = save->dungeon_palace_cleared;
     library_restore_save(save->library_books_mask, save->librari_met, save->lake_temple_unlocked);
     link_ptr->has_veil_falls_unlocked = save->has_veil_falls_unlocked;
     link_ptr->golden_kinstones_fused = save->golden_kinstones_fused;
@@ -1879,6 +1887,10 @@ int main(int argc, char* argv[]) {
     link.lantern_banner_timer = 0;
     link.has_water_element = false;
     link.water_element_banner_timer = 0;
+    link.has_wind_element = false;
+    link.wind_element_banner_timer = 0;
+    link.dungeon_palace_cleared = false;
+    dungeon_palace_init();
     link.has_three_elements = false;
     link.three_elements_banner_timer = 0;
     link.has_veil_falls_unlocked = false;
@@ -2013,6 +2025,8 @@ int main(int argc, char* argv[]) {
                                 current_save.has_two_elements = link.has_two_elements;
                                 current_save.has_three_elements = link.has_three_elements;
                                 current_save.has_water_element = link.has_water_element;
+                                current_save.has_wind_element = link.has_wind_element;
+                                current_save.dungeon_palace_cleared = link.dungeon_palace_cleared;
                                 current_save.has_bow = link.has_bow;
                                 current_save.has_mole_mitts = link.has_mole_mitts;
                                 current_save.has_armos_activated = link.has_armos_activated;
@@ -2354,6 +2368,17 @@ int main(int argc, char* argv[]) {
                                 printf("[ROCS CAPE] [F6] Capa de Roc DESEQUIPADA.\n");
                             }
                             break;
+                        case SDLK_F7:
+                            if (!dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active() && !dungeon_droplets_is_active()) {
+                                if (dungeon_palace_is_active()) {
+                                    dungeon_palace_exit(&link.x, &link.y, &link.dir);
+                                    veil_clouds_enter_clouds(&link.x, &link.y, &link.dir);
+                                } else {
+                                    s_in_town = s_in_village = s_in_south_field = s_in_crenel_base = s_in_melari_mines = s_in_castor_wilds = s_in_mole_cave = s_in_wind_ruins = s_in_armos_interior = s_in_library = s_in_lake_hylia = s_in_north_field = false;
+                                    dungeon_palace_enter(&link.x, &link.y, &link.dir);
+                                }
+                            }
+                            break;
                         case SDLK_F10:
                             startup_menu_return_to_title();
                             printf("[STARTUP] [F10] Retornando a Tela de Titulo e Selecao de Save!\n");
@@ -2437,7 +2462,8 @@ int main(int argc, char* argv[]) {
         // 2. ATUALIZAÇÃO DA LÓGICA DO JOGADOR (INPUT -> FÍSICA)
         // --------------------------------------------------------------------
         const HalVideoContext* ctx = hal_video_get_context();
-        Tilemap* active_map = veil_clouds_is_active() ? veil_clouds_get_current_map() :
+        Tilemap* active_map = dungeon_palace_is_active() ? dungeon_palace_get_current_map() :
+                              (veil_clouds_is_active() ? veil_clouds_get_current_map() :
                               (dungeon_droplets_is_active() ? dungeon_droplets_get_current_map() :
                               (s_in_armos_interior ? s_armos_interior_map :
                               (s_in_wind_ruins ? s_wind_ruins_map :
@@ -2450,7 +2476,7 @@ int main(int argc, char* argv[]) {
                               (s_in_village ? s_village_map :
                               (s_in_town ? s_town_map :
                               (s_in_south_field ? s_south_field_map :
-                              (s_in_north_field ? s_north_field_map : world_map)))))))))))));
+                              (s_in_north_field ? s_north_field_map : world_map))))))))))))));
 
         if (inventory_is_paused()) {
             if (hal_input_is_pressed(KEY_UP))    inventory_cursor_move(0, -1);
@@ -2813,6 +2839,9 @@ int main(int argc, char* argv[]) {
                 if (dungeon_droplets_is_active()) {
                     dungeon_droplets_check_boss_sword_hit(hit_x, hit_y, hit_w, hit_h, sword_dmg, link.dir);
                 }
+                if (dungeon_palace_is_active()) {
+                    dungeon_palace_check_sword_hit(hit_x, hit_y, hit_w, hit_h, sword_dmg, link.dir);
+                }
 
                 // Ataque sincronizado dos Clones da Four Sword (até 2 clones)
                 for (int c = 0; c < MAX_SANCTUARY_CLONES; c++) {
@@ -2895,6 +2924,9 @@ int main(int argc, char* argv[]) {
                 }
                 if (dungeon_droplets_is_active()) {
                     dungeon_droplets_check_boss_sword_hit(spin_cx - spin_r, spin_cy - spin_r, spin_r * 2.0f, spin_r * 2.0f, spin_dmg, link.dir);
+                }
+                if (dungeon_palace_is_active()) {
+                    dungeon_palace_check_sword_hit(spin_cx - spin_r, spin_cy - spin_r, spin_r * 2.0f, spin_r * 2.0f, spin_dmg, link.dir);
                 }
 
                 // Corte simultâneo de todos os arbustos no raio de 360 graus
@@ -3569,6 +3601,20 @@ int main(int argc, char* argv[]) {
                 hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.5f);
                 printf("[PALACE OF WINDS] O GRANDE TORNADO PARA O PALACIO DO VENTO FOI DESPERTADO!\n");
             }
+        } else if (dungeon_palace_is_active()) {
+            RocsCapeState* rc = rocs_cape_get_state();
+            bool is_downthrust = rc ? rc->is_down_thrust : false;
+            bool is_gliding = rc ? rc->is_gliding : false;
+            dungeon_palace_update(&link.x, &link.y, &link.dir, link.is_moving,
+                                  &link.hearts, link.max_hearts, &link.rupees,
+                                  &link.has_wind_element, link.has_rocs_cape,
+                                  link.is_jumping, is_gliding,
+                                  is_downthrust, link.is_attacking);
+            if (link.has_wind_element && link.wind_element_banner_timer == 0) {
+                link.wind_element_banner_timer = 240;
+                link.dungeon_palace_cleared = true;
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.5f);
+            }
         }
 
         static bool s_was_dungeon_droplets_active = false;
@@ -3578,6 +3624,13 @@ int main(int argc, char* argv[]) {
             hal_audio_play_bgm(BGM_MINISH_WOODS);
         }
         s_was_dungeon_droplets_active = dungeon_droplets_is_active();
+
+        static bool s_was_dungeon_palace_active = false;
+        if (s_was_dungeon_palace_active && !dungeon_palace_is_active()) {
+            veil_clouds_enter_clouds(&link.x, &link.y, &link.dir);
+            hal_audio_play_bgm(BGM_MINISH_WOODS);
+        }
+        s_was_dungeon_palace_active = dungeon_palace_is_active();
 
         static bool s_was_veil_clouds_active = false;
         if (s_was_veil_clouds_active && !veil_clouds_is_active()) {
@@ -3662,7 +3715,7 @@ int main(int argc, char* argv[]) {
         } // Fim do bloco de gameplay (se não estiver em diálogo ativo)
 
         // Atualização da Câmera Virtual Widescreen (Segue o Link ou centraliza na Masmorra)
-        if (dungeon_is_active() || dungeon_flames_is_active() || dungeon_fortress_is_active() || dungeon_droplets_is_active() || veil_clouds_is_active()) {
+        if (dungeon_is_active() || dungeon_flames_is_active() || dungeon_fortress_is_active() || dungeon_droplets_is_active() || dungeon_palace_is_active() || veil_clouds_is_active()) {
             camera.viewport_w = widescreen ? 284 : 240;
             camera.viewport_h = 160;
             camera.x = (float)(256 - camera.viewport_w) / 2.0f;
@@ -3722,6 +3775,12 @@ int main(int argc, char* argv[]) {
         } else if (dungeon_droplets_is_active()) {
             // Renderiza Temple of Droplets (gelo translúcido, facho solar, Big Octorok)
             dungeon_droplets_render(&camera, link.is_minish, link.x, link.y);
+            entity_manager_render(&camera);
+            draw_link(&link, &camera);
+            subweapon_render(&camera);
+        } else if (dungeon_palace_is_active()) {
+            // Renderiza Palace of Winds (turbinas, abismos, Roc's Cape crossing, Gyorg Pair)
+            dungeon_palace_render(&camera, link.x, link.y, link.is_minish);
             entity_manager_render(&camera);
             draw_link(&link, &camera);
             subweapon_render(&camera);
@@ -3821,6 +3880,8 @@ int main(int argc, char* argv[]) {
             dungeon_fortress_render_hud_keys(106, 2);
         } else if (dungeon_droplets_is_active()) {
             dungeon_droplets_render_hud_keys(106, 2);
+        } else if (dungeon_palace_is_active()) {
+            dungeon_palace_render_hud_keys(106, 2);
         }
 
         // Ícone das Nadadeiras de Zora (Zora's Flippers) no HUD
@@ -4235,6 +4296,21 @@ int main(int argc, char* argv[]) {
             font_draw_text(bx + 4, by + 13, b2, 0xE0F2FEFF, false);
         }
 
+        // Banner comemorativo de aquisição do Elemento do Vento (Wind Element)
+        if (link.wind_element_banner_timer > 0) {
+            link.wind_element_banner_timer--;
+            const char* b1 = "ELEMENTO DO VENTO CONQUISTADO!";
+            const char* b2 = "As brisas eternas e os 4 Elementos Sagrados foram reunidos!";
+            int bw = 240;
+            int bx = (ctx->render_width - bw) / 2;
+            int by = 35;
+            draw_rect(bx - 6, by - 4, bw + 12, 30, 0x064E3BEE);
+            draw_rect(bx - 5, by - 3, bw + 10, 28, 0x10B981FF);
+            draw_rect(bx - 4, by - 2, bw + 8, 26, 0x065F46EE);
+            font_draw_text(bx + 18, by + 1, b1, 0x6EE7B7FF, true);
+            font_draw_text(bx + 4, by + 13, b2, 0xECFDF5FF, false);
+        }
+
         // Banner do Grande Tornado para o Palácio do Vento (Palace of Winds)
         if (link.cloud_banner_timer > 0) {
             link.cloud_banner_timer--;
@@ -4313,6 +4389,7 @@ int main(int argc, char* argv[]) {
     if (s_library_map)         map_destroy(s_library_map);
     if (s_lake_hylia_map)      map_destroy(s_lake_hylia_map);
     dungeon_droplets_shutdown();
+    dungeon_palace_shutdown();
     veil_clouds_shutdown();
     rocs_cape_shutdown();
     startup_menu_shutdown();

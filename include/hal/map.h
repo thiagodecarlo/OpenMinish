@@ -99,6 +99,12 @@ typedef enum {
     TILE_TORCH_LIT,          // Tocha de pedra acesa com chamas incandescentes animadas
     TILE_ICE_BLOCK,          // Bloco maciço de gelo translúcido derretível pela Flame Lantern
     TILE_COBWEB,             // Teia de aranha espessa inflamável pela Flame Lantern
+    TILE_PALACE_FLOOR,       // Piso nobre de mármore e arabescos celestes do Palácio do Vento
+    TILE_PALACE_WALL,        // Paredão/parapeito celeste com frisos dourados da Tribo do Vento
+    TILE_PALACE_GRATE,       // Passarela aérea de grades de ferro com vista para as nuvens abaixo
+    TILE_PALACE_PIT,         // Abismo celeste infinito com correntes de ar (requer Roc's Cape)
+    TILE_PALACE_FAN,         // Turbina eólica ancestral com hélices giratórias de bronze
+    TILE_PALACE_SWITCH,      // Interruptor de piso da Four Sword
     TILE_COUNT
 } TileType;
 

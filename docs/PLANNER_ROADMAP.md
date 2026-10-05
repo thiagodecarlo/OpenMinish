@@ -106,7 +106,7 @@ flowchart TD
 | **Sprint 1: Ato I (Monte Crenel)** | **Concluído** ✅ | 100% | Sprint 0 + Bombas | `feature/mount-crenel` (Merged) |
 | **Sprint 2: Ato II (Fortress of Winds)** | **Concluído** ✅ | 100% | Sprint 1 (Elemento Fogo + White Sword) | `feature/fortress-of-winds` (Merged) |
 | **Sprint 3: Ato III (Temple of Droplets)**| **Concluído** ✅ | 100% | Sprint 2 (Ocarina + Flippers) | `feature/temple-of-droplets` (Merged) |
-| **Sprint 4: Ato IV (Palace of Winds)** | **Em Andamento** ⏳ | 50% | Sprint 3 (3 Elementos + Ocarina) | `feature/palace-of-winds` (Veil Falls & Cape Merged) |
+| **Sprint 4: Ato IV (Palace of Winds)** | **Em Andamento** ⏳ | 75% | Sprint 3 (3 Elementos + Ocarina) | `feature/dungeon-palace-of-winds` (Merged) |
 | **Sprint 5: Ato V (Dark Hyrule Castle)** | Pendente | 0% | Sprint 4 (Four Sword Completa) | `feature/dark-hyrule-castle` |
 | **Sprint 6: Polimento & Extras** | Pendente | 0% | Sprint 5 (Jogo Base Concluído) | `feature/extras-polish` |
 
@@ -169,13 +169,13 @@ flowchart TD
   4. `feature/dungeon-temple-of-droplets` (Merged ✅): Dungeon 4 congelada com quebra-cabeças de reflexão de luz solar e Chefe Big Octo congelado.
   5. `feature/elemental-sanctuary-split3` (Merged ✅): Infusão do 3º Elemento: divisão em 3 Clones triangulares.
 
-### Sprint 4: Ato IV - As Nuvens & A Four Sword Forjada (4 Clones) [Em Andamento ⏳ - 50%]
+### Sprint 4: Ato IV - As Nuvens & A Four Sword Forjada (4 Clones) [Em Andamento ⏳ - 75%]
 - **Objetivo**: Escalar as cachoeiras de Veil Falls, alcançar a Tribo dos Ventos no céu e forjar a lâmina quádrupla.
 - **Tarefas**:
   1. `feature/veil-falls-cloud-tops` (Merged ✅): Cachoeira sagrada, subida às nuvens e travessia com Gust Jar.
   2. `feature/rocs-cape` (Merged ✅): Capa de Roc para pulo livre, flutuação no ar e ataque aéreo Downthrust.
-  3. `feature/dungeon-palace-of-winds` (Próximo ⏳): Dungeon 5 sobre as nuvens e Chefe Gyorg Pair (batalha aérea pulando entre arraias gigantes).
-  4. `feature/four-sword-forged` (Pendente): Infusão do 4º Elemento sagrado no Santuário. A Four Sword completa é forjada, permitindo 4 Clones simultâneos e Sword Beams com vida cheia.
+  3. `feature/dungeon-palace-of-winds` (Merged ✅): Dungeon 5 sobre as nuvens e Chefe Gyorg Pair (batalha aérea pulando entre arraias gigantes, Heart Container permanente e Wind Element).
+  4. `feature/four-sword-forged` (Próximo ⏳): Infusão do 4º Elemento sagrado no Santuário. A Four Sword completa é forjada, permitindo 4 Clones simultâneos e Sword Beams com vida cheia.
 
 ### Sprint 5: Ato V - O Clímax & A Derrota de Vaati
 - **Objetivo**: Resgatar o reino e derrotar o feiticeiro Vaati em sua fortaleza sombria.
