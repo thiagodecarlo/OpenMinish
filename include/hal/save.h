@@ -75,6 +75,7 @@ typedef struct {
     bool  has_carlov_medal;
     u8    cucco_level_cleared;
     bool  cucco_heart_piece_obtained;
+    u8    tiger_scrolls_mask;
     int   slot_a;
     int   slot_b;
     u32   unlocked_items_mask;
