@@ -20,6 +20,7 @@ message(STATUS "Configurando a biblioteca multiplataforma SDL3...")
 
 set(SDL_INSTALL OFF CACHE BOOL "" FORCE)
 set(SDL_TESTS OFF CACHE BOOL "" FORCE)
+set(SDL_UNIX_CONSOLE_BUILD ON CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
     SDL3
