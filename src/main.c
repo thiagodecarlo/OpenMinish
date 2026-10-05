@@ -30,6 +30,8 @@
 #include "hal/startup_menu.h"
 #include "hal/figurine_gallery.h"
 #include "hal/cucco_minigame.h"
+#include "hal/sword_dojo.h"
+#include "hal/intro_cutscene.h"
 #include <math.h>
 
 /*
@@ -1791,12 +1793,13 @@ static void apply_save_data(const SaveData* save, Player* link_ptr) {
     link_ptr->has_carlov_medal = save->has_carlov_medal;
     cucco_minigame_restore(save->cucco_level_cleared, save->cucco_heart_piece_obtained);
     link_ptr->is_carrying_cucco = false;
+    sword_dojo_restore(save->tiger_scrolls_mask);
 }
 
 int main(int argc, char* argv[]) {
     setvbuf(stdout, NULL, _IONBF, 0);
     printf("====================================================================\n");
-    printf("   The Legend of Zelda: The Minish Cap - Native PC Port             \n");
+    printf("   The Legend of Zelda: The Minish Cap - Native PC Port (v0.99.0)   \n");
     printf("   Camada de Input & Entidade Controlavel do Heroi (Link)           \n");
     printf("====================================================================\n");
     printf("Controles Disponiveis:\n");
@@ -1965,6 +1968,8 @@ int main(int argc, char* argv[]) {
     figurine_gallery_init();
     link.is_carrying_cucco = false;
     cucco_minigame_init();
+    sword_dojo_init();
+    intro_cutscene_init();
 
     // Inicialização da Máquina de Estados de Abertura & Seleção de Save (Capcom, Nintendo, Title, File Select)
     startup_menu_init();
@@ -2129,6 +2134,7 @@ int main(int argc, char* argv[]) {
                                 cucco_minigame_export(&cucco_cleared, &cucco_hp);
                                 current_save.cucco_level_cleared = (u8)cucco_cleared;
                                 current_save.cucco_heart_piece_obtained = cucco_hp;
+                                sword_dojo_export(&current_save.tiger_scrolls_mask);
                                 current_save.slot_a = (int)inventory_get_slot_a();
                                 current_save.slot_b = (int)inventory_get_slot_b();
                                 if (save_game(1, &current_save)) {
@@ -2543,6 +2549,34 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
+                        case SDLK_BACKQUOTE: {
+                            // Debug: desbloqueia o próximo Tiger Scroll não-desbloqueado
+                            int unlocked_before = sword_dojo_get_unlocked_count();
+                            for (int ts = 0; ts < TOTAL_TIGER_SCROLLS; ts++) {
+                                if (!sword_dojo_has_scroll((TigerScrollId)ts)) {
+                                    sword_dojo_unlock_scroll((TigerScrollId)ts);
+                                    const TigerScrollInfo* info = sword_dojo_get_info((TigerScrollId)ts);
+                                    printf("[DEBUG] [~] Tiger Scroll desbloqueado: %s (%d/%d)!\n",
+                                           info ? info->name : "???",
+                                           sword_dojo_get_unlocked_count(), TOTAL_TIGER_SCROLLS);
+                                    break;
+                                }
+                            }
+                            if (sword_dojo_get_unlocked_count() == unlocked_before && unlocked_before == TOTAL_TIGER_SCROLLS) {
+                                printf("[DEBUG] [~] Todos os %d Tiger Scrolls ja desbloqueados!\n", TOTAL_TIGER_SCROLLS);
+                            }
+                            break;
+                        }
+                        case SDLK_INSERT: {
+                            if (intro_cutscene_is_active()) {
+                                intro_cutscene_skip();
+                                printf("[DEBUG] [INS] Cutscene inicial pulada!\n");
+                            } else {
+                                intro_cutscene_start();
+                                printf("[DEBUG] [INS] Disparando Cutscene Inicial Canônica (Festival de Picori & Vaati)!\n");
+                            }
+                            break;
+                        }
                         default:
                             break;
                     }
@@ -2598,14 +2632,39 @@ int main(int argc, char* argv[]) {
                 camera.x = link.x - ((float)camera.viewport_w / 2.0f);
                 camera.y = link.y - ((float)camera.viewport_h / 2.0f);
 
-                // Inicia a música tema do ambiente carregado
-                if (s_in_town) {
-                    hal_audio_play_bgm(BGM_HYRULE_TOWN);
-                } else if (s_in_village) {
-                    hal_audio_play_bgm(BGM_MINISH_VILLAGE);
-                } else {
-                    hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
+                // Se for um Novo Jogo, dispara a introdução canônica (Torneio, Picori Blade & Petrificação de Zelda)
+                if (startup_menu_is_new_game()) {
+                    intro_cutscene_start();
                 }
+
+                // Inicia a música tema do ambiente carregado (se cutscene não estiver ativa)
+                if (!intro_cutscene_is_active()) {
+                    if (s_in_town) {
+                        hal_audio_play_bgm(BGM_HYRULE_TOWN);
+                    } else if (s_in_village) {
+                        hal_audio_play_bgm(BGM_MINISH_VILLAGE);
+                    } else {
+                        hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
+                    }
+                }
+            }
+
+            hal_video_render_frame();
+            continue;
+        }
+
+        // --------------------------------------------------------------------
+        // 1b2. GESTÃO DA CUTSCENE CANÔNICA DE INTRODUÇÃO (FESTIVAL & VAATI)
+        // --------------------------------------------------------------------
+        if (intro_cutscene_is_active()) {
+            intro_cutscene_update();
+            intro_cutscene_render();
+
+            if (!intro_cutscene_is_active()) {
+                // Cutscene encerrou: toca a música de Hyrule Town e ajusta câmera
+                hal_audio_play_bgm(BGM_HYRULE_TOWN);
+                camera.x = link.x - ((float)camera.viewport_w / 2.0f);
+                camera.y = link.y - ((float)camera.viewport_h / 2.0f);
             }
 
             hal_video_render_frame();
@@ -2734,11 +2793,7 @@ int main(int argc, char* argv[]) {
             if (dialogue_is_swiftblade_reward_pending()) {
                 dialogue_clear_swiftblade_reward();
                 link.has_spin_attack = true;
-                link.tiger_scroll_banner_timer = 200;
-                hal_audio_play_sound(SOUND_TIGER_SCROLL, 1.0f, 1.0f);
-            }
-            if (link.tiger_scroll_banner_timer > 0) {
-                link.tiger_scroll_banner_timer--;
+                sword_dojo_unlock_scroll(SCROLL_SPIN_ATTACK);
             }
 
             // Recompensa do Mestre Melari: Forja a sagrada White Sword (Espada Branca)
@@ -3972,6 +4027,7 @@ int main(int argc, char* argv[]) {
             cucco_minigame_update(&link.x, &link.y, link.dir, &link.is_carrying_cucco,
                                   &link.rupees, &link.shells, &link.hearts, link.max_hearts);
         }
+        sword_dojo_update();
 
         entity_manager_update(active_map, link.x, link.y,
                               &link.hearts, &link.max_hearts, &link.rupees,
@@ -4299,27 +4355,8 @@ int main(int argc, char* argv[]) {
             cucco_minigame_render_hud();
         }
 
-        // 6. Banner Festivo de Aquisição do Pergaminho do Tigre (Tiger Scroll #1)
-        if (link.tiger_scroll_banner_timer > 0) {
-            int ban_w = 216;
-            int ban_h = 32;
-            int ban_x = (ctx->render_width - ban_w) / 2;
-            int ban_y = 64;
-
-            draw_rect(ban_x - 2, ban_y - 2, ban_w + 4, ban_h + 4, 0x0A0806EE);
-            draw_rect(ban_x - 1, ban_y - 1, ban_w + 2, ban_h + 2, 0xD4AF37FF);
-            draw_rect(ban_x, ban_y, ban_w, ban_h, 0x1A120EFF);
-            draw_rect(ban_x + 2, ban_y + 2, ban_w - 4, ban_h - 4, 0x2A1A12EE);
-
-            // Ícone do Pergaminho dourado
-            draw_rect(ban_x + 8, ban_y + 8, 10, 16, 0xFEF08AFF);
-            draw_rect(ban_x + 7, ban_y + 6, 12, 3, 0xD97706FF);
-            draw_rect(ban_x + 7, ban_y + 23, 12, 3, 0xD97706FF);
-            draw_rect(ban_x + 8, ban_y + 14, 10, 4, 0xDC2626FF); // Fita escarlate
-
-            font_draw_text(ban_x + 24, ban_y + 6, "PERGAMINHO DO TIGRE Nº 1!", 0xFDE047FF, true);
-            font_draw_text(ban_x + 24, ban_y + 18, "ATAQUE GIRATORIO (SPIN ATTACK)!", 0x38BDF8FF, true);
-        }
+        // 6. Banners Festivos dos Pergaminhos do Tigre (Tiger Scrolls - Sword Dojo)
+        sword_dojo_render_banner();
 
         // 6b. Banner Festivo de Aquisição da Lendária White Sword (Espada Branca)
         if (link.white_sword_banner_timer > 0) {

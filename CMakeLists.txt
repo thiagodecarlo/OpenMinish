@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.16)
 # Build System Universal: Windows (MSVC/GCC), macOS (Clang), Linux (GCC)
 # ==============================================================================
 
-project(OpenMinish C)
+project(OpenMinish VERSION 0.99.0 LANGUAGES C)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -63,6 +63,8 @@ add_executable(zelda_port
     src/hal/boss_vaati.c
     src/hal/figurine_gallery.c
     src/hal/cucco_minigame.c
+    src/hal/sword_dojo.c
+    src/hal/intro_cutscene.c
 )
 
 # Adiciona nossas pastas de cabeçalhos (.h) para que o C encontre #include "gba/types.h"
