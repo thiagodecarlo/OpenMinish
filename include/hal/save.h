@@ -65,6 +65,10 @@ typedef struct {
     bool  tomb_pushed;
     bool  king_gustaf_met;
     bool  has_royal_kinstone;
+    bool  dark_castle_unlocked;
+    bool  dark_castle_cleared;
+    bool  dark_castle_bells_silenced;
+    bool  has_sanctum_key;
     int   slot_a;
     int   slot_b;
     u32   unlocked_items_mask;
