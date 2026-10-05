@@ -59,6 +59,12 @@ typedef struct {
     bool  has_flame_lantern;
     bool  lantern_lit;
     bool  has_rocs_cape;
+    bool  royal_valley_unlocked;
+    bool  graveyard_gate_unlocked;
+    bool  dampe_met;
+    bool  tomb_pushed;
+    bool  king_gustaf_met;
+    bool  has_royal_kinstone;
     int   slot_a;
     int   slot_b;
     u32   unlocked_items_mask;

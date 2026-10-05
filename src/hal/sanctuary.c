@@ -1084,3 +1084,9 @@ void sanctuary_render_clones(const Camera* cam) {
         draw_filled_rect(cx + 2 + spk * 4, cy - 2 - spk, 2, 2, cl->cap_color);
     }
 }
+
+bool sanctuary_has_stepped_in_secret_exit(float link_x, float link_y) {
+    if (!s_sanc.active || !s_sanc.secret_exit_unlocked) return false;
+    return (link_y <= 1.2f * TILE_SIZE && link_x >= 6.5f * TILE_SIZE && link_x <= 9.5f * TILE_SIZE);
+}
+

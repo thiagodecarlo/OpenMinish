@@ -246,4 +246,9 @@ void sanctuary_render_sword_beams(const Camera* cam);
  */
 bool sanctuary_check_sword_beam_hit(float target_x, float target_y, float target_w, float target_h, int* out_dmg);
 
+/*
+ * Retorna true se Link pisou na passagem secreta norte aberta.
+ */
+bool sanctuary_has_stepped_in_secret_exit(float link_x, float link_y);
+
 #endif // HAL_SANCTUARY_H
