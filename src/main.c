@@ -67,6 +67,10 @@ typedef struct {
     float knock_x;
     float knock_y;
 
+    // Rolamento Acrobático Canônico (Somersault Roll & Tiger Scroll #2)
+    bool is_rolling;
+    int  roll_timer;
+
     // Habilidade Lendária: Ataque Giratório (Tiger Scroll #1)
     bool has_spin_attack;
     bool is_charging_spin;
@@ -184,6 +188,7 @@ static Texture* s_sheet0 = NULL;
 static Texture* s_sheet1 = NULL;
 static Texture* s_link_tex = NULL;
 static Texture* s_octo_tex = NULL;
+static Texture* s_hud_items_tex = NULL;
 static Tilemap* s_world_map          = NULL;
 static Tilemap* s_town_map           = NULL;
 static Tilemap* s_village_map        = NULL;
@@ -212,10 +217,11 @@ static bool     s_in_lake_hylia      = false;
 static SelectedRegion s_current_region = REGION_USA;
 
 static void load_region_sheets(SelectedRegion region) {
-    if (s_sheet0)   { texture_free(s_sheet0);   s_sheet0 = NULL; }
-    if (s_sheet1)   { texture_free(s_sheet1);   s_sheet1 = NULL; }
-    if (s_link_tex) { texture_free(s_link_tex); s_link_tex = NULL; }
-    if (s_octo_tex) { texture_free(s_octo_tex); s_octo_tex = NULL; }
+    if (s_sheet0)        { texture_free(s_sheet0);        s_sheet0 = NULL; }
+    if (s_sheet1)        { texture_free(s_sheet1);        s_sheet1 = NULL; }
+    if (s_link_tex)      { texture_free(s_link_tex);      s_link_tex = NULL; }
+    if (s_octo_tex)      { texture_free(s_octo_tex);      s_octo_tex = NULL; }
+    if (s_hud_items_tex) { texture_free(s_hud_items_tex); s_hud_items_tex = NULL; }
 
     s_current_region = region;
 
@@ -223,15 +229,26 @@ static void load_region_sheets(SelectedRegion region) {
     char path1[256];
     char path_link[256];
     char path_octo[256];
+    char path_hud[256];
     snprintf(path0, sizeof(path0), "assets/regions/%s/sheet_00.bmp", s_region_tags[region]);
     snprintf(path1, sizeof(path1), "assets/regions/%s/sheet_01.bmp", s_region_tags[region]);
     snprintf(path_link, sizeof(path_link), "assets/regions/%s/link.bmp", s_region_tags[region]);
     snprintf(path_octo, sizeof(path_octo), "assets/regions/%s/octorok.bmp", s_region_tags[region]);
+    snprintf(path_hud, sizeof(path_hud), "assets/ui/hud_items.bmp");
 
     s_sheet0 = texture_load_bmp(path0);
     s_sheet1 = texture_load_bmp(path1);
     s_link_tex = texture_load_bmp(path_link);
+    if (!s_link_tex) {
+        s_link_tex = texture_load_bmp("assets/regions/link_master.bmp");
+    }
     s_octo_tex = texture_load_bmp(path_octo);
+    s_hud_items_tex = texture_load_bmp(path_hud);
+    if (!s_hud_items_tex) {
+        char fallback_hud[256];
+        snprintf(fallback_hud, sizeof(fallback_hud), "assets/regions/%s/hud_items.bmp", s_region_tags[region]);
+        s_hud_items_tex = texture_load_bmp(fallback_hud);
+    }
 
     entity_set_texture(s_octo_tex);
 
@@ -239,10 +256,11 @@ static void load_region_sheets(SelectedRegion region) {
         map_set_region(s_world_map, s_region_tags[region]);
     }
 
-    printf("[REGIAO ATUALIZADA] -> %s (Link: %s, Octorok: %s, Mapa: %s)\n",
+    printf("[REGIAO ATUALIZADA] -> %s (Link: %s, Octorok: %s, HUD: %s, Mapa: %s)\n",
            s_region_names[region],
            s_link_tex ? "Autentico GBA" : "Procedural",
            s_octo_tex ? "Autentico GBA" : "Procedural",
+           s_hud_items_tex ? "Autentico GBA" : "Procedural",
            (s_world_map && s_world_map->is_authentic) ? "Autentico Minish Woods" : "Procedural");
 }
 
@@ -1492,25 +1510,87 @@ static void draw_link(const Player* p, const Camera* cam) {
             return;
         }
 
-        // Link Tamanho Humano Normal
+        // Link Tamanho Humano Normal - Máquina de Estados de Animação Canônica GBA
         int row = 0;
         int col = 0;
         bool flip_h = false;
 
-        if (!p->is_moving) {
-            // Linha 0: Frames Idle (0: Down, 1: Right, 2: Up, 3: Left)
-            row = 0;
-            if (p->dir == DIR_DOWN) {
-                col = 0;
-            } else if (p->dir == DIR_RIGHT) {
+        // 1. Invulnerability / Hurt (Reação autêntica de dano e recuo - Row 9)
+        if (p->invuln_timer > 0) {
+            row = 9;
+            if (p->dir == DIR_DOWN) col = 0;
+            else if (p->dir == DIR_UP) col = 2;
+            else {
                 col = 1;
-            } else if (p->dir == DIR_UP) {
-                col = 2;
-            } else if (p->dir == DIR_LEFT) {
-                col = 3;
+                flip_h = (p->dir == DIR_LEFT);
             }
-        } else {
-            // Ciclo de caminhada canônico fluido de 10 quadros por direção
+        }
+        // 2. Somersault Roll (Rolamento acrobático fluido de 8 quadros - Row 7)
+        else if (p->is_rolling) {
+            row = 7;
+            int roll_step = (16 - p->roll_timer) / 2;
+            if (roll_step < 0) roll_step = 0;
+            if (roll_step > 7) roll_step = 7;
+            col = roll_step;
+            if (p->dir == DIR_LEFT) flip_h = true;
+        }
+        // 3. Spin Attack (Ataque Giratório 360° em alta rotação - Row 7 e Row 3)
+        else if (p->is_spinning) {
+            int spin_rot = (16 - p->spin_timer) % 4;
+            if (spin_rot == 0) { row = 7; col = 8; }
+            else if (spin_rot == 1) { row = 7; col = 9; flip_h = false; }
+            else if (spin_rot == 2) { row = 3; col = 0; }
+            else { row = 7; col = 9; flip_h = true; }
+        }
+        // 4. Spin Charge (Postura tensa com lâmina cintilando pronta para o giro - Row 6, Col 9)
+        else if (p->is_charging_spin) {
+            row = 6;
+            col = 9;
+            if (p->dir == DIR_LEFT) flip_h = true;
+        }
+        // 5. Sword Attack (Golpe com lâmina em 4 direções canônicas - Row 6)
+        else if (p->is_attacking) {
+            row = 6;
+            int slash_step = (12 - p->attack_timer) / 4;
+            if (slash_step < 0) slash_step = 0;
+            if (slash_step > 2) slash_step = 2;
+            if (p->dir == DIR_DOWN) {
+                col = 0 + slash_step;
+            } else if (p->dir == DIR_RIGHT) {
+                col = 3 + slash_step;
+                flip_h = false;
+            } else if (p->dir == DIR_LEFT) {
+                col = 3 + slash_step;
+                flip_h = true;
+            } else if (p->dir == DIR_UP) {
+                col = 6 + slash_step;
+            }
+        }
+        // 6. Airborne Jump (Salto vertical e planeio com Capa de Roc / Pacci - Row 8)
+        else if (p->is_jumping) {
+            row = 8;
+            if (p->vz > 1.0f) col = 0;
+            else if (p->vz < -1.0f) col = 2;
+            else col = 1;
+            if (p->dir == DIR_LEFT) flip_h = true;
+        }
+        // 7. Swimming & Diving (Braçadas e mergulho sob a água - Row 9)
+        else if (p->is_swimming) {
+            row = 9;
+            if (p->is_diving) {
+                col = 9;
+            } else if (p->dir == DIR_RIGHT) {
+                col = 7 + (p->anim_frame % 2);
+                flip_h = false;
+            } else if (p->dir == DIR_LEFT) {
+                col = 7 + (p->anim_frame % 2);
+                flip_h = true;
+            } else {
+                col = 5 + (p->anim_frame % 2);
+            }
+        }
+        // 8. Walk cycle (Ciclo de caminhada canônico fluido de 10 quadros - Rows 1..3)
+        else if (p->is_moving) {
             col = p->anim_frame % 10;
             if (p->dir == DIR_DOWN) {
                 row = 1;
@@ -1520,15 +1600,25 @@ static void draw_link(const Player* p, const Camera* cam) {
                 row = 3;
             } else if (p->dir == DIR_LEFT) {
                 row = 2;
-                flip_h = true; // Inversão horizontal perfeita e centrada para andar para a esquerda
+                flip_h = true;
             }
+        }
+        // 9. Idle (Repouso - Row 0)
+        else {
+            row = 0;
+            if (p->dir == DIR_DOWN)       col = 0;
+            else if (p->dir == DIR_RIGHT) col = 1;
+            else if (p->dir == DIR_UP)    col = 2;
+            else if (p->dir == DIR_LEFT)  col = 3;
         }
 
         int src_x = col * 32;
         int src_y = row * 32;
 
         texture_draw_ex(s_link_tex, src_x, src_y, 32, 32, draw_x, draw_y, flip_h);
-        draw_link_sword_effects(p, px, py);
+        if (!s_link_tex || p->has_white_sword || p->is_charging_spin || p->is_spinning) {
+            draw_link_sword_effects(p, px, py);
+        }
         draw_link_swimming_effects(p, px, py);
         draw_link_climbing_effects(p, px, py);
         draw_link_mud_effects(p, px, py);
@@ -3273,8 +3363,28 @@ int main(int argc, char* argv[]) {
                         hal_audio_play_sound(SOUND_MINISH_GROW, 1.0f, 1.0f);
                         printf("[MINISH] [KEY_R] Link subiu no portal e esta CRESCENDO para tamanho Humano!\n");
                     }
+                } else if (!link.is_minish && !link.is_rolling && !link.is_swimming && !link.is_climbing) {
+                    // Rolamento somersault acrobático canônico do Minish Cap!
+                    link.is_rolling = true;
+                    link.roll_timer = 16;
+                    hal_audio_play_sound(SOUND_ROLL, 0.75f, 1.0f);
                 } else {
                     hal_audio_cycle_bgm();
+                }
+            }
+
+            // Atualização do Rolamento Acrobático (Somersault Roll)
+            if (link.is_rolling) {
+                link.roll_timer--;
+                if (link.roll_timer <= 0) {
+                    link.is_rolling = false;
+                }
+                // Roll Attack: Se pressionar [A] durante o rolamento e possuir o Tiger Scroll
+                if (hal_input_is_pressed(KEY_A) && sword_dojo_has_scroll(SCROLL_ROLL_ATTACK)) {
+                    link.is_rolling = false;
+                    link.is_attacking = true;
+                    link.attack_timer = 14;
+                    hal_audio_play_sound(SOUND_SWORD_SLASH, 1.1f, 1.15f);
                 }
             }
 
@@ -3450,6 +3560,16 @@ int main(int argc, char* argv[]) {
             }
             subweapon_use_held(link.x, link.y, link.dir);
             link.is_moving = false;
+        } else if (link.is_rolling) {
+            actual_speed = link.speed * 1.80f;
+            float r_dx = 0.0f, r_dy = 0.0f;
+            if (link.dir == DIR_DOWN)  r_dy = 1.0f;
+            if (link.dir == DIR_UP)    r_dy = -1.0f;
+            if (link.dir == DIR_LEFT)  r_dx = -1.0f;
+            if (link.dir == DIR_RIGHT) r_dx = 1.0f;
+            move_x = r_dx * actual_speed;
+            move_y = r_dy * actual_speed;
+            link.is_moving = true;
         } else if (!link.is_attacking && !link.is_spinning) {
             AnalogStick stick = hal_input_get_left_stick();
 
@@ -4238,39 +4358,57 @@ int main(int argc, char* argv[]) {
         // 3. Barra Superior de HUD (Status do Jogo fixo na tela)
         draw_rect(0, 0, ctx->render_width, 14, 0x0C1C0DFF);
 
-        // Corações de Vida de Zelda no canto superior esquerdo (Cheios e Vazios)
-        for (int h = 0; h < link.max_hearts; h++) {
-            if (h < link.hearts) {
-                draw_heart(4 + (h * 9), 3);
-            } else {
-                draw_empty_heart(4 + (h * 9), 3);
+        // Corações de Vida de Zelda no canto superior esquerdo (Autênticos GBA ou Procedural)
+        if (s_hud_items_tex && s_hud_items_tex->pixels) {
+            for (int h = 0; h < link.max_hearts; h++) {
+                int h_col = (h < link.hearts) ? 0 : 4;
+                texture_draw(s_hud_items_tex, h_col * 16, 0, 16, 16, 2 + (h * 11), -1);
+            }
+        } else {
+            for (int h = 0; h < link.max_hearts; h++) {
+                if (h < link.hearts) {
+                    draw_heart(4 + (h * 9), 3);
+                } else {
+                    draw_empty_heart(4 + (h * 9), 3);
+                }
             }
         }
 
         // Indicador de Controle Conectado (Verde se gamepad 8BitDo ativo, cinza se teclado)
         const char* pad_name = hal_input_get_controller_name();
         u32 pad_indicator_color = pad_name ? 0x00FF66FF : 0x555555FF;
-        draw_rect(36, 4, 10, 6, pad_indicator_color); // Ícone do controle
-        hal_video_put_pixel(37, 3, pad_indicator_color);
-        hal_video_put_pixel(44, 3, pad_indicator_color);
+        draw_rect(42, 4, 10, 6, pad_indicator_color); // Ícone do controle
+        hal_video_put_pixel(43, 3, pad_indicator_color);
+        hal_video_put_pixel(50, 3, pad_indicator_color);
 
         // Mini Radar Analógico no HUD
         AnalogStick stick_hud = hal_input_get_left_stick();
-        draw_rect(50, 3, 9, 8, 0x1A2E1CFF);
-        hal_video_put_pixel(54, 7, 0x446644FF);
+        draw_rect(56, 3, 9, 8, 0x1A2E1CFF);
+        hal_video_put_pixel(60, 7, 0x446644FF);
         if (stick_hud.magnitude > 0.05f) {
-            int dot_x = 54 + (int)(stick_hud.x * 3.2f);
+            int dot_x = 60 + (int)(stick_hud.x * 3.2f);
             int dot_y = 7  + (int)(stick_hud.y * 2.8f);
             u32 dot_color = (stick_hud.magnitude > 0.8f) ? 0xFFDD00FF : 0x00FFCCFF;
             hal_video_put_pixel(dot_x, dot_y, dot_color);
         }
 
-        // Contador de Rupees (Gemas Verdes de Zelda)
-        draw_rect(65, 4, 5, 6, 0x00FF88FF); // Gema verde
-        hal_video_put_pixel(67, 3, 0x00FF88FF);
-        hal_video_put_pixel(67, 10, 0x00FF88FF);
+        // Contador de Rupees (Gemas Autênticas Verdes de Zelda)
+        int rupee_hud_x = 70;
+        if (s_hud_items_tex && s_hud_items_tex->pixels) {
+            texture_draw(s_hud_items_tex, 5 * 16, 0, 16, 16, rupee_hud_x, -1);
+            char r_txt[16];
+            snprintf(r_txt, sizeof(r_txt), "%d", link.rupees);
+            font_draw_text(rupee_hud_x + 12, 3, r_txt, 0x00FF88FF, true);
+        } else {
+            draw_rect(rupee_hud_x, 4, 5, 6, 0x00FF88FF); // Gema verde
+            hal_video_put_pixel(rupee_hud_x + 2, 3, 0x00FF88FF);
+            hal_video_put_pixel(rupee_hud_x + 2, 10, 0x00FF88FF);
+            char r_txt[16];
+            snprintf(r_txt, sizeof(r_txt), "%d", link.rupees);
+            font_draw_text(rupee_hud_x + 8, 4, r_txt, 0x00FF88FF, true);
+        }
 
-        // Indicador de Trilha Sonora BGM no HUD (Minish Woods: Turquesa, Hyrule: Dourado, Deepwood: Roxo, Boss: Vermelho, Town: Esmeralda, Mudo: Cinza)
+        // Indicador de Trilha Sonora BGM no HUD
         BgmTrack current_bgm = hal_audio_get_current_bgm();
         u32 bgm_color = (current_bgm == BGM_MINISH_WOODS)     ? 0x00E5FFFF :
                         (current_bgm == BGM_HYRULE_OVERWORLD) ? 0xFFD700FF :
@@ -4278,13 +4416,40 @@ int main(int argc, char* argv[]) {
                         (current_bgm == BGM_BOSS_BATTLE)      ? 0xEF4444FF :
                         (current_bgm == BGM_HYRULE_TOWN)      ? 0x10B981FF :
                                                                 0x666666FF;
-        draw_rect(76, 5, 3, 5, bgm_color);
-        hal_video_put_pixel(79, 4, bgm_color);
-        hal_video_put_pixel(80, 5, bgm_color);
-        hal_video_put_pixel(80, 6, bgm_color);
+        draw_rect(106, 5, 3, 5, bgm_color);
+        hal_video_put_pixel(109, 4, bgm_color);
+        hal_video_put_pixel(110, 5, bgm_color);
+        hal_video_put_pixel(110, 6, bgm_color);
 
-        // Slot e Ícone da Subarma / Item Secundário Equipado [B]
-        subweapon_render_hud_icon(88, 1);
+        // Badges Canônicos [A] (Espada) e [B] (Subarma)
+        int hud_badge_x = 118;
+        if (s_hud_items_tex && s_hud_items_tex->pixels) {
+            // Badge [A] + Espada
+            texture_draw(s_hud_items_tex, 8 * 16, 0, 16, 16, hud_badge_x, -1);
+            int sword_col = link.has_four_sword ? 2 : (link.has_white_sword ? 1 : 0);
+            texture_draw(s_hud_items_tex, sword_col * 16, 1 * 16, 16, 16, hud_badge_x + 11, -1);
+
+            // Badge [B] + Subarma
+            texture_draw(s_hud_items_tex, 9 * 16, 0, 16, 16, hud_badge_x + 28, -1);
+            int sub_col = 0, sub_row = 2;
+            SubweaponType cur_sub = subweapon_get_current();
+            switch (cur_sub) {
+                case ITEM_BOOMERANG:      sub_col = 0; sub_row = 2; break;
+                case ITEM_GUST_JAR:       sub_col = 6; sub_row = 2; break;
+                case ITEM_PEGASUS_BOOTS:  sub_col = 7; sub_row = 2; break;
+                case ITEM_BOMBS:          sub_col = 2; sub_row = 2; break;
+                case ITEM_CANE_OF_PACCI:  sub_col = 3; sub_row = 3; break;
+                case ITEM_BOW:            sub_col = 4; sub_row = 2; break;
+                case ITEM_MOLE_MITTS:     sub_col = 0; sub_row = 3; break;
+                case ITEM_OCARINA_OF_WIND:sub_col = 4; sub_row = 3; break;
+                case ITEM_FLAME_LANTERN:  sub_col = 2; sub_row = 3; break;
+                case ITEM_ROCS_CAPE:      sub_col = 1; sub_row = 3; break;
+                default:                  sub_col = 0; sub_row = 2; break;
+            }
+            texture_draw(s_hud_items_tex, sub_col * 16, sub_row * 16, 16, 16, hud_badge_x + 39, -1);
+        } else {
+            subweapon_render_hud_icon(88, 1);
+        }
 
         // Contador de Bombas restantes quando a Bolsa de Bombas estiver equipada
         if (subweapon_get_current() == ITEM_BOMBS && !dungeon_is_active() && !dungeon_flames_is_active()) {
@@ -4848,10 +5013,11 @@ int main(int argc, char* argv[]) {
         hal_video_render_frame();
     }
 
-    if (s_sheet0)   texture_free(s_sheet0);
-    if (s_sheet1)   texture_free(s_sheet1);
-    if (s_link_tex) texture_free(s_link_tex);
-    if (s_octo_tex) texture_free(s_octo_tex);
+    if (s_sheet0)        texture_free(s_sheet0);
+    if (s_sheet1)        texture_free(s_sheet1);
+    if (s_link_tex)      texture_free(s_link_tex);
+    if (s_octo_tex)      texture_free(s_octo_tex);
+    if (s_hud_items_tex) texture_free(s_hud_items_tex);
 
     entity_manager_shutdown();
     if (s_town_map)        map_destroy(s_town_map);
