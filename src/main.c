@@ -1799,7 +1799,7 @@ static void apply_save_data(const SaveData* save, Player* link_ptr) {
 int main(int argc, char* argv[]) {
     setvbuf(stdout, NULL, _IONBF, 0);
     printf("====================================================================\n");
-    printf("   The Legend of Zelda: The Minish Cap - Native PC Port             \n");
+    printf("   The Legend of Zelda: The Minish Cap - Native PC Port (v0.99.0)   \n");
     printf("   Camada de Input & Entidade Controlavel do Heroi (Link)           \n");
     printf("====================================================================\n");
     printf("Controles Disponiveis:\n");

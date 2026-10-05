@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.16)
 # Build System Universal: Windows (MSVC/GCC), macOS (Clang), Linux (GCC)
 # ==============================================================================
 
-project(OpenMinish C)
+project(OpenMinish VERSION 0.99.0 LANGUAGES C)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
