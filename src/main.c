@@ -110,11 +110,13 @@ typedef struct {
     int  wind_element_banner_timer; // Temporizador do banner festivo de obtenção
     bool dungeon_palace_cleared;
 
-    // Habilidade Lendária Four Sword: Infusão de 2 e 3 Elementos & Clones
+    // Habilidade Lendária Four Sword: Infusão de 2, 3 e 4 Elementos & Clones
     bool has_two_elements;          // White Sword (Two Elements) infundida no Santuário
     int  two_elements_banner_timer; // Temporizador do banner da Four Sword
     bool has_three_elements;        // White Sword (Three Elements) infundida no Santuário
     int  three_elements_banner_timer; // Temporizador do banner dos 3 Elementos
+    bool has_four_sword;            // Four Sword Completa Forjada (4 Clones + Sword Beams)
+    int  four_sword_banner_timer;   // Temporizador do banner da Four Sword Forjada
 
     // Regiões Canônicas: Quedas do Véu (Veil Falls) e Topo das Nuvens (Cloud Tops)
     bool has_veil_falls_unlocked;
@@ -1634,11 +1636,19 @@ static void apply_save_data(const SaveData* save, Player* link_ptr) {
     link_ptr->has_white_sword = save->has_white_sword;
     link_ptr->has_two_elements = save->has_two_elements;
     link_ptr->has_three_elements = save->has_three_elements;
+    link_ptr->has_four_sword = save->has_four_sword;
     link_ptr->has_bow = save->has_bow;
-    if (link_ptr->has_three_elements) {
+    if (link_ptr->has_four_sword) {
+        sanctuary_set_four_elements(true);
+        inventory_set_four_sword(true);
+    } else if (link_ptr->has_three_elements) {
         sanctuary_set_three_elements(true);
     } else if (link_ptr->has_two_elements) {
         sanctuary_set_two_elements(true);
+    }
+    if (save->secret_exit_unlocked) {
+        ElementalSanctuaryState* sanc_st = sanctuary_get_state();
+        if (sanc_st) sanc_st->secret_exit_unlocked = true;
     }
     if (link_ptr->has_grip_ring) {
         inventory_unlock_item(INV_ITEM_GRIP_RING);
@@ -1893,6 +1903,8 @@ int main(int argc, char* argv[]) {
     dungeon_palace_init();
     link.has_three_elements = false;
     link.three_elements_banner_timer = 0;
+    link.has_four_sword = false;
+    link.four_sword_banner_timer = 0;
     link.has_veil_falls_unlocked = false;
     link.golden_kinstones_fused = 0;
     link.cloud_tornado_active = false;
@@ -2024,6 +2036,8 @@ int main(int argc, char* argv[]) {
                                 current_save.has_white_sword = link.has_white_sword;
                                 current_save.has_two_elements = link.has_two_elements;
                                 current_save.has_three_elements = link.has_three_elements;
+                                current_save.has_four_sword = link.has_four_sword;
+                                current_save.secret_exit_unlocked = sanctuary_get_state() ? sanctuary_get_state()->secret_exit_unlocked : false;
                                 current_save.has_water_element = link.has_water_element;
                                 current_save.has_wind_element = link.has_wind_element;
                                 current_save.dungeon_palace_cleared = link.dungeon_palace_cleared;
@@ -2332,11 +2346,19 @@ int main(int argc, char* argv[]) {
                             break;
                         case SDLK_F4:
                             if (sanctuary_is_active()) {
-                                sanctuary_set_three_elements(true);
-                                link.has_three_elements = true;
-                                link.three_elements_banner_timer = 200;
-                                printf("[DEBUG] [F4] Infusao de 3 Elementos ativada no Santuario!\n");
-                            } else if (!dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active() && !dungeon_droplets_is_active()) {
+                                if (!sanctuary_has_three_elements()) {
+                                    sanctuary_set_three_elements(true);
+                                    link.has_three_elements = true;
+                                    link.three_elements_banner_timer = 200;
+                                    printf("[DEBUG] [F4] Infusao de 3 Elementos ativada no Santuario!\n");
+                                } else {
+                                    sanctuary_set_four_elements(true);
+                                    link.has_four_sword = true;
+                                    link.four_sword_banner_timer = 240;
+                                    inventory_set_four_sword(true);
+                                    printf("[DEBUG] [F4] Infusao FINAL: FOUR SWORD FORJADA (4 Elementos)!\n");
+                                }
+                            } else if (!dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active() && !dungeon_droplets_is_active() && !dungeon_palace_is_active()) {
                                 transition_to_sanctuary(&link);
                             }
                             break;
@@ -2574,6 +2596,9 @@ int main(int argc, char* argv[]) {
             if (link.three_elements_banner_timer > 0) {
                 link.three_elements_banner_timer--;
             }
+            if (link.four_sword_banner_timer > 0) {
+                link.four_sword_banner_timer--;
+            }
             if (subweapon_get_current() == ITEM_BOW && !link.has_bow) {
                 link.has_bow = true;
                 inventory_unlock_item(INV_ITEM_BOW);
@@ -2649,8 +2674,12 @@ int main(int argc, char* argv[]) {
                             hal_audio_play_sound(SOUND_SWORD_SLASH, link.is_minish ? 0.7f : 1.0f, link.is_minish ? 1.38f : 1.0f);
                         }
                     } else if (sanctuary_is_active()) {
-                        if (sanctuary_interact(link.x, link.y, link.has_white_sword, true, link.has_fire_element, link.has_water_element)) {
-                            if (link.has_water_element && !link.has_three_elements) {
+                        if (sanctuary_interact(link.x, link.y, link.has_white_sword, true, link.has_fire_element, link.has_water_element, link.has_wind_element)) {
+                            if (link.has_wind_element && link.has_three_elements && !link.has_four_sword) {
+                                link.has_four_sword = true;
+                                link.four_sword_banner_timer = 240;
+                                inventory_set_four_sword(true);
+                            } else if (link.has_water_element && !link.has_three_elements) {
                                 link.has_three_elements = true;
                                 link.three_elements_banner_timer = 240;
                             } else {
@@ -2834,7 +2863,7 @@ int main(int argc, char* argv[]) {
                 if (link.dir == DIR_RIGHT) { hit_x = link.x + 14.0f; hit_y = link.y + 2.0f;  hit_w = 12.0f; hit_h = 14.0f; }
 
                 // Checa acerto contra inimigos (Octoroks, Keese, ChuChu) e projéteis
-                int sword_dmg = link.has_white_sword ? 2 : 1;
+                int sword_dmg = link.has_four_sword ? 3 : (link.has_white_sword ? 2 : 1);
                 entity_check_sword_hit(hit_x, hit_y, hit_w, hit_h, sword_dmg, link.dir);
                 if (dungeon_droplets_is_active()) {
                     dungeon_droplets_check_boss_sword_hit(hit_x, hit_y, hit_w, hit_h, sword_dmg, link.dir);
@@ -2843,7 +2872,12 @@ int main(int argc, char* argv[]) {
                     dungeon_palace_check_sword_hit(hit_x, hit_y, hit_w, hit_h, sword_dmg, link.dir);
                 }
 
-                // Ataque sincronizado dos Clones da Four Sword (até 2 clones)
+                // Disparo de Raio da Four Sword com HP cheio no início do golpe
+                if (link.attack_timer == 11) {
+                    sanctuary_try_fire_sword_beam(link.x, link.y, link.dir, link.hearts, link.max_hearts, link.has_four_sword);
+                }
+
+                // Ataque sincronizado dos Clones da Four Sword (até 3 clones: Red, Blue, Purple)
                 for (int c = 0; c < MAX_SANCTUARY_CLONES; c++) {
                     float c_hx, c_hy, c_hw, c_hh;
                     int c_dmg;
@@ -3556,7 +3590,15 @@ int main(int argc, char* argv[]) {
                              link.is_charging_spin, link.spin_ready,
                              link.is_attacking, link.attack_timer,
                              &link.hearts);
-            if (sanctuary_has_three_elements() && !link.has_three_elements) {
+            if (sanctuary_has_four_elements() && !link.has_four_sword) {
+                link.has_four_sword = true;
+                link.has_three_elements = true;
+                link.has_two_elements = true;
+                link.four_sword_banner_timer = 240;
+                inventory_set_four_sword(true);
+                hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.6f);
+                printf("[FOUR SWORD] FOUR SWORD COMPLETA FORJADA! 4 Herois simultaneos & Sword Beams ativados!\n");
+            } else if (sanctuary_has_three_elements() && !link.has_three_elements) {
                 link.has_three_elements = true;
                 link.three_elements_banner_timer = 240;
                 hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.4f);
@@ -3646,6 +3688,9 @@ int main(int argc, char* argv[]) {
 
         // Atualizacao do Subsistema de Subarmas (Bumerangue, Vórtice do Pote Magico, Projeteis)
         subweapon_update(active_map, link.x, link.y, &link.rupees, &link.hearts);
+
+        // Atualização dos Raios de Espada da Four Sword (Sword Beams)
+        sanctuary_update_sword_beams(active_map);
 
         if (veil_clouds_is_active() && veil_clouds_is_in_clouds() && subweapon_is_digging()) {
             float dig_x = link.x + (link.dir == DIR_RIGHT ? 14.0f : (link.dir == DIR_LEFT ? -14.0f : 0.0f));
@@ -3802,6 +3847,11 @@ int main(int argc, char* argv[]) {
 
         // 4b. Anel de Choque do Impacto de Down-Thrust (Roc's Cape)
         rocs_cape_render_shockwave(&camera);
+
+        // 4c. Raios de Espada da Four Sword (Sword Beams)
+        if (!sanctuary_is_active()) {
+            sanctuary_render_sword_beams(&camera);
+        }
 
         // 2b. Máscara de Iluminação Dinâmica da Flame Lantern (Dark Rooms & Dungeons)
         lantern_render_lighting(&camera, link.x, link.y, active_map, false);
@@ -4044,6 +4094,32 @@ int main(int argc, char* argv[]) {
 
             font_draw_text(ban_x + 28, ban_y + 6, "ESPADA BRANCA (3 ELEMENTOS)!", 0xFFFFFFFF, true);
             font_draw_text(ban_x + 28, ban_y + 18, "DIVISAO FOUR SWORD (3 CLONES)!", 0x38BDF8FF, true);
+        }
+
+        // 6d3. Banner Festivo da FOUR SWORD COMPLETA FORJADA (Four Elements Infused!)
+        if (link.four_sword_banner_timer > 0) {
+            int ban_w = 236;
+            int ban_h = 32;
+            int ban_x = (ctx->render_width - ban_w) / 2;
+            int ban_y = 64;
+
+            draw_rect(ban_x - 2, ban_y - 2, ban_w + 4, ban_h + 4, 0x1E1B4BEE);
+            draw_rect(ban_x - 1, ban_y - 1, ban_w + 2, ban_h + 2, 0xF59E0BFF);
+            draw_rect(ban_x, ban_y, ban_w, ban_h, 0x0F172AFF);
+            draw_rect(ban_x + 2, ban_y + 2, ban_w - 4, ban_h - 4, 0x1E1B4BEE);
+
+            // Icones dos 4 Herois da Four Sword: Verde, Vermelho, Azul, Roxo/Violeta
+            draw_rect(ban_x + 4, ban_y + 7, 5, 14, 0x22C55EFF);  // Link 1 (Verde)
+            draw_rect(ban_x + 10, ban_y + 7, 5, 14, 0xEF4444FF); // Link 2 (Vermelho)
+            draw_rect(ban_x + 16, ban_y + 7, 5, 14, 0x0284C7FF); // Link 3 (Azul)
+            draw_rect(ban_x + 22, ban_y + 7, 5, 14, 0x7E22CEFF); // Link 4 (Roxo)
+            hal_video_put_pixel(ban_x + 6, ban_y + 9, 0xFDE8CDFF);
+            hal_video_put_pixel(ban_x + 12, ban_y + 9, 0xFDE8CDFF);
+            hal_video_put_pixel(ban_x + 18, ban_y + 9, 0xFDE8CDFF);
+            hal_video_put_pixel(ban_x + 24, ban_y + 9, 0xFDE8CDFF);
+
+            font_draw_text(ban_x + 30, ban_y + 6, "FOUR SWORD COMPLETA FORJADA!", 0xFDE047FF, true);
+            font_draw_text(ban_x + 30, ban_y + 18, "4 HEROIS & SWORD BEAMS ATIVOS!", 0x38BDF8FF, true);
         }
 
         // 6e. Banner Festivo de Aquisição do Arco e Flechas (Bow & Arrow)
