@@ -119,7 +119,7 @@ void intro_cutscene_start(void) {
         s_intro.sparkles[i].size = 2.0f;
     }
 
-    hal_audio_play_bgm(BGM_HYRULE_TOWN);
+    hal_audio_play_bgm(BGM_PICORI_FESTIVAL);
     printf("[INTRO] Cutscene inicial iniciada: O Festival de Picori & Aparição de Vaati!\n");
 }
 

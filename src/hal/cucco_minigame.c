@@ -176,6 +176,7 @@ void cucco_minigame_start_level(int level) {
         }
     }
 
+    hal_audio_play_bgm(BGM_CUCCO_MINIGAME);
     hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.2f);
     printf("[CUCCO] Minigame da Anju iniciado! Nivel %d (%d Cuccos em %d segundos)!\n",
            level, s_game.total_cuccos, cfg->seconds);
@@ -185,6 +186,7 @@ void cucco_minigame_stop(void) {
     s_game.is_active = false;
     s_game.mode = CUCCO_GAME_INACTIVE;
     s_game.carrying_index = -1;
+    hal_audio_play_bgm(BGM_HYRULE_TOWN);
     printf("[CUCCO] Minigame de Anju encerrado.\n");
 }
 
@@ -252,7 +254,7 @@ void cucco_minigame_handle_action(float link_x, float link_y, int link_dir) {
         c->vx = 0.0f;
         c->vy = 0.0f;
         c->z = 16.0f;
-        hal_audio_play_sound(SOUND_TEXT_BLIP, 1.0f, 1.5f);
+        hal_audio_play_sound(SOUND_CUCCO_CALL, 1.0f, (c->type == CUCCO_TYPE_CHICK) ? 1.4f : 1.0f);
     }
 }
 
@@ -426,12 +428,14 @@ void cucco_minigame_update(float* link_x, float* link_y, int link_dir, bool* lin
         if (s_game.state_timer <= 0) {
             s_game.mode = CUCCO_GAME_INACTIVE;
             s_game.is_active = false;
+            hal_audio_play_bgm(BGM_HYRULE_TOWN);
         }
     } else if (s_game.mode == CUCCO_GAME_FAILED) {
         s_game.state_timer--;
         if (s_game.state_timer <= 0) {
             s_game.mode = CUCCO_GAME_INACTIVE;
             s_game.is_active = false;
+            hal_audio_play_bgm(BGM_HYRULE_TOWN);
         }
     }
 }

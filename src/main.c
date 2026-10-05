@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include "gba/types.h"
@@ -441,7 +442,7 @@ static void transition_to_south_field(Player* link) {
     link->dir = DIR_DOWN;
     link->is_moving = false;
     spawn_south_field_entities();
-    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
     printf("[SCENE] Entrando em South Hyrule Field (Planicies do Sul)!\n");
 }
 
@@ -458,7 +459,7 @@ static void transition_to_north_field(Player* link) {
     link->dir = DIR_UP;
     link->is_moving = false;
     spawn_north_field_entities();
-    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
     printf("[SCENE] Entrando em North Hyrule Field (Planicies do Norte)!\n");
 }
 
@@ -525,7 +526,7 @@ static void transition_to_crenel_base(Player* link) {
     link->dir = DIR_LEFT;
     link->is_moving = false;
     spawn_crenel_base_entities();
-    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    hal_audio_play_bgm(BGM_MT_CRENEL);
     printf("[SCENE] Entrando em Mount Crenel Base (Base do Monte Crenel)!\n");
 }
 
@@ -542,7 +543,7 @@ static void transition_to_north_field_from_crenel(Player* link) {
     link->dir = DIR_RIGHT;
     link->is_moving = false;
     spawn_north_field_entities();
-    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
     printf("[SCENE] Retornando a North Hyrule Field a partir do Monte Crenel!\n");
 }
 
@@ -570,7 +571,7 @@ static void transition_to_melari_mines(Player* link) {
     link->dir = DIR_UP;
     link->is_moving = false;
     spawn_melari_mines_entities();
-    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    hal_audio_play_bgm(BGM_MT_CRENEL);
     printf("[SCENE] Entrando em Melari's Mines (Minas de Melari - Forja da White Sword)!\n");
 }
 
@@ -587,7 +588,7 @@ static void transition_to_crenel_base_from_melari(Player* link) {
     link->dir = DIR_DOWN;
     link->is_moving = false;
     spawn_crenel_base_entities();
-    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    hal_audio_play_bgm(BGM_MT_CRENEL);
     printf("[SCENE] Retornando a Mount Crenel Base a partir das Minas de Melari!\n");
 }
 
@@ -641,7 +642,7 @@ static void transition_to_castor_wilds(Player* link) {
     link->dir = DIR_LEFT;
     link->is_moving = false;
     spawn_castor_wilds_entities();
-    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    hal_audio_play_bgm(BGM_CASTOR_WILDS);
     printf("[SCENE] Entrando no Pantano de Castor Wilds (Castor Wilds Swamp)!\n");
 }
 
@@ -715,7 +716,7 @@ static void transition_to_castor_from_cave(Player* link) {
     link->dir = DIR_DOWN;
     link->is_moving = false;
     spawn_castor_wilds_entities();
-    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    hal_audio_play_bgm(BGM_CASTOR_WILDS);
     printf("[SCENE] Retornando a Castor Wilds a partir da Caverna!\n");
 }
 
@@ -765,7 +766,7 @@ static void transition_to_wind_ruins(Player* link) {
     link->dir = DIR_RIGHT;
     link->is_moving = false;
     spawn_wind_ruins_entities(armos_circuit_is_active());
-    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    hal_audio_play_bgm(BGM_WIND_RUINS);
     printf("[SCENE] Entrando em Wind Ruins (Ruinas do Vento)!\n");
 }
 
@@ -786,7 +787,7 @@ static void transition_to_castor_from_ruins(Player* link) {
     link->dir = DIR_LEFT;
     link->is_moving = false;
     spawn_castor_wilds_entities();
-    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    hal_audio_play_bgm(BGM_CASTOR_WILDS);
     printf("[SCENE] Retornando a Castor Wilds a partir das Ruinas do Vento!\n");
 }
 
@@ -826,7 +827,7 @@ static void transition_to_wind_ruins_from_armos(Player* link) {
     link->dir = DIR_DOWN;
     link->is_moving = false;
     spawn_wind_ruins_entities(armos_circuit_is_active());
-    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    hal_audio_play_bgm(BGM_WIND_RUINS);
     printf("[SCENE] Saindo do Armos e retornando a Wind Ruins!\n");
 }
 
@@ -904,7 +905,7 @@ static void transition_to_south_field_from_lake(Player* link) {
     link->dir = DIR_LEFT;
     link->is_moving = false;
     spawn_south_field_entities();
-    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
     printf("[SCENE] Retornando a South Hyrule Field vindo do Lago Hylia!\n");
 }
 
@@ -947,21 +948,21 @@ static void handle_fast_travel_transition(int new_map_id, float new_x, float new
     } else if (new_map_id == 6) { // Crenel Base
         s_in_crenel_base = true;
         spawn_crenel_base_entities();
-        hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
+        hal_audio_play_bgm(BGM_MT_CRENEL);
     } else if (new_map_id == 10) { // Castor Wilds
         s_in_castor_wilds = true;
         spawn_castor_wilds_entities();
-        hal_audio_play_bgm(BGM_MINISH_WOODS);
+        hal_audio_play_bgm(BGM_CASTOR_WILDS);
     } else if (new_map_id == 12) { // Wind Ruins
         s_in_wind_ruins = true;
         spawn_wind_ruins_entities(armos_circuit_is_active());
-        hal_audio_play_bgm(BGM_MINISH_WOODS);
+        hal_audio_play_bgm(BGM_WIND_RUINS);
     } else if (new_map_id == 18) { // Veil Falls
         veil_clouds_enter_falls(&link->x, &link->y, &link->dir);
-        hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
+        hal_audio_play_bgm(BGM_CLOUD_TOPS);
     } else if (new_map_id == 19) { // Cloud Tops
         veil_clouds_enter_clouds(&link->x, &link->y, &link->dir);
-        hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
+        hal_audio_play_bgm(BGM_CLOUD_TOPS);
     }
     printf("[ZEFFA] Voo concluido com sucesso! Pouso no mapa %d em (%.1f, %.1f)!\n", new_map_id, new_x, new_y);
 }
@@ -1796,6 +1797,15 @@ static void apply_save_data(const SaveData* save, Player* link_ptr) {
     cucco_minigame_restore(save->cucco_level_cleared, save->cucco_heart_piece_obtained);
     link_ptr->is_carrying_cucco = false;
     sword_dojo_restore(save->tiger_scrolls_mask);
+}
+
+static void trigger_link_sword_attack(Player* link) {
+    link->is_attacking = true;
+    link->attack_timer = 12;
+    hal_audio_play_sound(SOUND_SWORD_SLASH, link->is_minish ? 0.7f : 1.0f, link->is_minish ? 1.38f : 1.0f);
+    if (!link->is_minish && (rand() % 100 < 45)) {
+        hal_audio_play_sound((rand() % 2 == 0) ? SOUND_LINK_ATTACK1 : SOUND_LINK_ATTACK2, 0.95f, 1.0f);
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -2858,17 +2868,13 @@ int main(int argc, char* argv[]) {
                         if (dungeon_interact(link.x, link.y, &link.rupees, &link.hearts)) {
                             // Abriu o baú do altar da masmorra!
                         } else {
-                            link.is_attacking = true;
-                            link.attack_timer = 12;
-                            hal_audio_play_sound(SOUND_SWORD_SLASH, link.is_minish ? 0.7f : 1.0f, link.is_minish ? 1.38f : 1.0f);
+                            trigger_link_sword_attack(&link);
                         }
                     } else if (dungeon_flames_is_active()) {
                         if (dungeon_flames_interact(link.x, link.y, &link.rupees, &link.hearts)) {
                             // Interagiu com a vagoneta ou elementos da Cave of Flames!
                         } else {
-                            link.is_attacking = true;
-                            link.attack_timer = 12;
-                            hal_audio_play_sound(SOUND_SWORD_SLASH, link.is_minish ? 0.7f : 1.0f, link.is_minish ? 1.38f : 1.0f);
+                            trigger_link_sword_attack(&link);
                         }
                     } else if (sanctuary_is_active()) {
                         if (sanctuary_interact(link.x, link.y, link.has_white_sword, true, link.has_fire_element, link.has_water_element, link.has_wind_element)) {
@@ -2884,17 +2890,13 @@ int main(int argc, char* argv[]) {
                                 link.two_elements_banner_timer = 240;
                             }
                         } else {
-                            link.is_attacking = true;
-                            link.attack_timer = 12;
-                            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                            trigger_link_sword_attack(&link);
                         }
                     } else if (veil_clouds_is_active()) {
                         if (veil_clouds_interact(link.x, link.y, link.dir)) {
                             link.golden_kinstones_fused = veil_clouds_get_golden_kinstones();
                         } else {
-                            link.is_attacking = true;
-                            link.attack_timer = 12;
-                            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                            trigger_link_sword_attack(&link);
                         }
                     } else if (royal_valley_is_active()) {
                         if (royal_valley_interact(link.x, link.y, link.dir, &link.hearts)) {
@@ -2903,17 +2905,13 @@ int main(int argc, char* argv[]) {
                                 link.royal_kinstone_banner_timer = 240;
                             }
                         } else {
-                            link.is_attacking = true;
-                            link.attack_timer = 12;
-                            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                            trigger_link_sword_attack(&link);
                         }
                     } else if (s_in_town) {
                         if (cucco_minigame_is_active()) {
                             cucco_minigame_handle_action(link.x, link.y, link.dir);
                             if (!cucco_minigame_is_carrying()) {
-                                link.is_attacking = true;
-                                link.attack_timer = 12;
-                                hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                                trigger_link_sword_attack(&link);
                             }
                         } else if (link.x >= 150.0f && link.x <= 185.0f && link.y >= 155.0f && link.y <= 200.0f) {
                             int next_lvl = cucco_minigame_get_highest_cleared() + 1;
@@ -2946,9 +2944,7 @@ int main(int argc, char* argv[]) {
                                         library_collect_book(BOOK_BESTIARY);
                                     }
                                 } else {
-                                    link.is_attacking = true;
-                                    link.attack_timer = 12;
-                                    hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                                    trigger_link_sword_attack(&link);
                                 }
                             }
                         }
@@ -2969,9 +2965,7 @@ int main(int argc, char* argv[]) {
                                 if (villager) {
                                     dialogue_trigger_village_minish_talk();
                                 } else {
-                                    link.is_attacking = true;
-                                    link.attack_timer = 12;
-                                    hal_audio_play_sound(SOUND_SWORD_SLASH, 0.7f, 1.38f);
+                                    trigger_link_sword_attack(&link);
                                 }
                             }
                         }
@@ -2982,9 +2976,7 @@ int main(int argc, char* argv[]) {
                         } else if (link.y <= 68.0f) {
                             library_return_books_to_shelf();
                         } else {
-                            link.is_attacking = true;
-                            link.attack_timer = 12;
-                            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                            trigger_link_sword_attack(&link);
                         }
                     } else if (s_in_lake_hylia) {
                         Entity* hagen = entity_find_nearby_mayor_hagen(link.x, link.y, 32.0f);
@@ -2993,9 +2985,7 @@ int main(int argc, char* argv[]) {
                         } else if (entity_interact_chest(link.x, link.y, &link.rupees, &link.hearts)) {
                             // Bau do Lago aberto!
                         } else {
-                            link.is_attacking = true;
-                            link.attack_timer = 12;
-                            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                            trigger_link_sword_attack(&link);
                         }
                     } else if (s_in_south_field) {
                         Entity* malon = entity_find_nearby_malon(link.x, link.y, 32.0f);
@@ -3007,9 +2997,7 @@ int main(int argc, char* argv[]) {
                         } else if (entity_interact_chest(link.x, link.y, &link.rupees, &link.hearts)) {
                             // Baú da fazenda Lon Lon aberto!
                         } else {
-                            link.is_attacking = true;
-                            link.attack_timer = 12;
-                            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                            trigger_link_sword_attack(&link);
                         }
                     } else if (s_in_north_field) {
                         float pdx = link.x - 48.0f;
@@ -3017,9 +3005,7 @@ int main(int argc, char* argv[]) {
                         if (pdx * pdx + pdy * pdy <= 32.0f * 32.0f) {
                             dialogue_trigger_crenel_sign_talk();
                         } else {
-                            link.is_attacking = true;
-                            link.attack_timer = 12;
-                            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                            trigger_link_sword_attack(&link);
                         }
                     } else if (s_in_crenel_base) {
                         Entity* scrub = entity_find_nearby_business_scrub(link.x, link.y, 32.0f);
@@ -3039,9 +3025,7 @@ int main(int argc, char* argv[]) {
                             hal_audio_play_sound(SOUND_CHEST_OPEN, 1.0f, 1.0f);
                             printf("[CRENEL] Broto de Feijao Magico regado! Cresceu um pe de feijao escalavel gigante!\n");
                         } else {
-                            link.is_attacking = true;
-                            link.attack_timer = 12;
-                            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                            trigger_link_sword_attack(&link);
                         }
                     } else if (s_in_melari_mines) {
                         Entity* melari = entity_find_nearby_melari(link.x, link.y, 36.0f);
@@ -3051,9 +3035,7 @@ int main(int argc, char* argv[]) {
                         } else if (miner) {
                             dialogue_trigger_mountain_minish_talk();
                         } else {
-                            link.is_attacking = true;
-                            link.attack_timer = 12;
-                            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                            trigger_link_sword_attack(&link);
                         }
                     } else if (entity_interact_chest(link.x, link.y, &link.rupees, &link.hearts)) {
                         // Abriu o baú dourado!
@@ -3066,9 +3048,7 @@ int main(int argc, char* argv[]) {
                             if (nearby_npc) {
                                 dialogue_trigger_minish_talk();
                             } else {
-                                link.is_attacking = true;
-                                link.attack_timer = 12; // Dura 12 frames (0.2 segundos)
-                                hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                                trigger_link_sword_attack(&link);
                             }
                         }
                     }
@@ -3185,6 +3165,9 @@ int main(int argc, char* argv[]) {
                         link.is_spinning = true;
                         link.spin_timer = 16;
                         hal_audio_play_sound(SOUND_SPIN_ATTACK, 1.0f, 1.0f);
+                        if (!link.is_minish) {
+                            hal_audio_play_sound(SOUND_LINK_SPIN, 1.0f, 1.0f);
+                        }
                     }
                     link.is_charging_spin = false;
                     link.spin_ready = false;
@@ -3239,6 +3222,9 @@ int main(int argc, char* argv[]) {
                     hal_audio_play_sound(SOUND_ROLL, 0.70f, 1.0f);
                 } else if (subweapon_get_current() == ITEM_ROCS_CAPE) {
                     rocs_cape_use_pressed(&link.x, &link.y, link.dir, &link.z, &link.vz, &link.is_jumping);
+                    if (!link.is_minish) {
+                        hal_audio_play_sound(SOUND_LINK_JUMP, 0.95f, 1.0f);
+                    }
                 }
                 subweapon_use_pressed(link.x, link.y, link.dir);
             }
@@ -3363,6 +3349,9 @@ int main(int argc, char* argv[]) {
             link.z = 2.0f;
             entity_trigger_screen_shake(6, 2);
             hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.85f);
+            if (!link.is_minish) {
+                hal_audio_play_sound(SOUND_LINK_JUMP, 0.95f, 1.0f);
+            }
             printf("[CANE OF PACCI] Link pisou no buraco energizado! Super salto vertical no ar!\n");
         }
 
@@ -3407,6 +3396,9 @@ int main(int argc, char* argv[]) {
                     link.mud_sink_timer = 0;
                     entity_trigger_screen_shake(10, 2);
                     hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 0.8f);
+                    if (!link.is_minish) {
+                        hal_audio_play_sound(SOUND_LINK_FALL, 1.0f, 1.0f);
+                    }
                     printf("[SWAMP HAZARD] Link afundou no lodo movedico! Dano e respawn em solo firme!\n");
                 }
             }
@@ -4028,9 +4020,33 @@ int main(int argc, char* argv[]) {
             }
         }
 
+        // Monitoramento de alteração de vida (dano/cura) e rupees para áudio reativo autêntico
+        static int s_prev_hearts = -1;
+        static int s_prev_rupees = -1;
+        if (s_prev_hearts == -1) {
+            s_prev_hearts = link.hearts;
+            s_prev_rupees = link.rupees;
+        } else {
+            if (link.hearts < s_prev_hearts) {
+                if (link.hearts <= 0) {
+                    hal_audio_play_sound(SOUND_LINK_DIE, 1.0f, 1.0f);
+                } else if (!link.is_minish) {
+                    hal_audio_play_sound(SOUND_LINK_HURT, 1.0f, 1.0f);
+                }
+            } else if (link.hearts > s_prev_hearts) {
+                hal_audio_play_sound(SOUND_HEART_GET, 1.0f, 1.0f);
+            }
+            if (link.rupees > s_prev_rupees) {
+                hal_audio_play_sound(SOUND_RUPEE_GET, 1.0f, 1.0f);
+            }
+            s_prev_hearts = link.hearts;
+            s_prev_rupees = link.rupees;
+        }
+
         // Respawn de teste caso o Link zere os corações
         if (link.hearts <= 0) {
             link.hearts = link.max_hearts;
+            s_prev_hearts = link.max_hearts;
             if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active()) {
                 link.x = 7.5f * TILE_SIZE;
                 link.y = 8.0f * TILE_SIZE;

@@ -58,6 +58,8 @@ assets/regions/*/
 assets/regions/*.bmp
 assets/textures/*
 !assets/textures/.gitkeep
+assets/audio/**
+!assets/audio/.gitkeep
 
 # ------------------------------------------------------------------------------
 # 4. AMBIENTES DE DESENVOLVIMENTO (IDEs E EDITORES)

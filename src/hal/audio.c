@@ -1353,6 +1353,361 @@ static void synth_generate_all_sfx(void) {
         s_precalc_sfx[SOUND_MENU_CURSOR].total_frames = num_frames;
         s_precalc_sfx[SOUND_MENU_CURSOR].is_stereo = false;
     }
+
+    // 47. SOUND_LINK_ATTACK1: Grunt procedural de ataque 1 (Yaaah!)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.12f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float p = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-14.0f * t);
+            float freq = 280.0f + 200.0f * sinf(3.14159f * t / 0.12f);
+            p += freq / (float)AUDIO_SAMPLE_RATE;
+            float total = (synth_triangle_wave(p) * 0.7f + synth_square_wave(p * 2.0f, 0.35f) * 0.3f) * env * 24000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_LINK_ATTACK1].samples = buf;
+        s_precalc_sfx[SOUND_LINK_ATTACK1].total_frames = num_frames;
+        s_precalc_sfx[SOUND_LINK_ATTACK1].is_stereo = false;
+    }
+
+    // 48. SOUND_LINK_ATTACK2: Grunt procedural de ataque 2 (Haaah!)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.14f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float p = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-12.0f * t);
+            float freq = 340.0f + 160.0f * sinf(3.14159f * t / 0.14f);
+            p += freq / (float)AUDIO_SAMPLE_RATE;
+            float total = (synth_triangle_wave(p) * 0.65f + synth_square_wave(p, 0.45f) * 0.35f) * env * 24000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_LINK_ATTACK2].samples = buf;
+        s_precalc_sfx[SOUND_LINK_ATTACK2].total_frames = num_frames;
+        s_precalc_sfx[SOUND_LINK_ATTACK2].is_stereo = false;
+    }
+
+    // 49. SOUND_LINK_HURT: Grito de dor ao sofrer dano (Ugh!)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.16f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float p = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-16.0f * t);
+            float freq = 360.0f - 180.0f * (t / 0.16f);
+            p += freq / (float)AUDIO_SAMPLE_RATE;
+            float n = ((float)rand() / (float)RAND_MAX * 2.0f - 1.0f) * 0.25f;
+            float total = (synth_triangle_wave(p) * 0.75f + n) * env * 26000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_LINK_HURT].samples = buf;
+        s_precalc_sfx[SOUND_LINK_HURT].total_frames = num_frames;
+        s_precalc_sfx[SOUND_LINK_HURT].is_stereo = false;
+    }
+
+    // 50. SOUND_LINK_FALL: Queda no abismo (Waaah!)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.40f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float p = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-5.0f * t);
+            float freq = 600.0f - 450.0f * (t / 0.40f);
+            p += freq / (float)AUDIO_SAMPLE_RATE;
+            float total = synth_triangle_wave(p) * env * 25000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_LINK_FALL].samples = buf;
+        s_precalc_sfx[SOUND_LINK_FALL].total_frames = num_frames;
+        s_precalc_sfx[SOUND_LINK_FALL].is_stereo = false;
+    }
+
+    // 51. SOUND_LINK_JUMP: Salto acrobático (Hop!)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.10f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float p = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-18.0f * t);
+            float freq = 300.0f + 400.0f * (t / 0.10f);
+            p += freq / (float)AUDIO_SAMPLE_RATE;
+            float total = synth_square_wave(p, 0.40f) * env * 20000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_LINK_JUMP].samples = buf;
+        s_precalc_sfx[SOUND_LINK_JUMP].total_frames = num_frames;
+        s_precalc_sfx[SOUND_LINK_JUMP].is_stereo = false;
+    }
+
+    // 52. SOUND_LINK_SPIN: Grito do Spin Attack (Seiyaaa!)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.22f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float p = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-8.0f * t);
+            float freq = 420.0f + 120.0f * sinf(3.14159f * t / 0.22f);
+            p += freq / (float)AUDIO_SAMPLE_RATE;
+            float total = (synth_triangle_wave(p) * 0.6f + synth_square_wave(p * 1.5f, 0.35f) * 0.4f) * env * 25000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_LINK_SPIN].samples = buf;
+        s_precalc_sfx[SOUND_LINK_SPIN].total_frames = num_frames;
+        s_precalc_sfx[SOUND_LINK_SPIN].is_stereo = false;
+    }
+
+    // 53. SOUND_LINK_DIE: Derrota no Game Over
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.55f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float p = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-4.0f * t);
+            float freq = 320.0f - 200.0f * (t / 0.55f);
+            p += freq / (float)AUDIO_SAMPLE_RATE;
+            float total = synth_triangle_wave(p) * env * 24000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_LINK_DIE].samples = buf;
+        s_precalc_sfx[SOUND_LINK_DIE].total_frames = num_frames;
+        s_precalc_sfx[SOUND_LINK_DIE].is_stereo = false;
+    }
+
+    // 54. SOUND_RUPEE_GET: Chime de Rupee
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.12f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float p1 = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-20.0f * t);
+            float freq = (t < 0.05f) ? 987.77f : 1318.51f; // B5 -> E6
+            p1 += freq / (float)AUDIO_SAMPLE_RATE;
+            float total = synth_square_wave(p1, 0.50f) * env * 20000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_RUPEE_GET].samples = buf;
+        s_precalc_sfx[SOUND_RUPEE_GET].total_frames = num_frames;
+        s_precalc_sfx[SOUND_RUPEE_GET].is_stereo = false;
+    }
+
+    // 55. SOUND_HEART_GET: Chime de Coração de cura
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.15f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float p1 = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-18.0f * t);
+            float freq = (t < 0.07f) ? 1046.50f : 1567.98f; // C6 -> G6
+            p1 += freq / (float)AUDIO_SAMPLE_RATE;
+            float total = synth_triangle_wave(p1) * env * 22000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_HEART_GET].samples = buf;
+        s_precalc_sfx[SOUND_HEART_GET].total_frames = num_frames;
+        s_precalc_sfx[SOUND_HEART_GET].is_stereo = false;
+    }
+
+    // 56. SOUND_ICE_SLIDE: Deslize de gelo
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.25f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float p = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = 1.0f - (t / 0.25f);
+            float n = ((float)rand() / (float)RAND_MAX * 2.0f - 1.0f);
+            p += 440.0f / (float)AUDIO_SAMPLE_RATE;
+            float total = (synth_triangle_wave(p) * 0.4f + n * 0.6f) * env * 16000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_ICE_SLIDE].samples = buf;
+        s_precalc_sfx[SOUND_ICE_SLIDE].total_frames = num_frames;
+        s_precalc_sfx[SOUND_ICE_SLIDE].is_stereo = false;
+    }
+
+    // 57. SOUND_ICE_STOP: Colisão do bloco de gelo
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.08f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-40.0f * t);
+            float total = ((float)rand() / (float)RAND_MAX * 2.0f - 1.0f) * env * 25000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_ICE_STOP].samples = buf;
+        s_precalc_sfx[SOUND_ICE_STOP].total_frames = num_frames;
+        s_precalc_sfx[SOUND_ICE_STOP].is_stereo = false;
+    }
+
+    // 58. SOUND_ICE_MELT: Gelo derretendo
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.35f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = 1.0f - (t / 0.35f);
+            float total = ((float)rand() / (float)RAND_MAX * 2.0f - 1.0f) * env * 18000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_ICE_MELT].samples = buf;
+        s_precalc_sfx[SOUND_ICE_MELT].total_frames = num_frames;
+        s_precalc_sfx[SOUND_ICE_MELT].is_stereo = false;
+    }
+
+    // 59. SOUND_ELEMENT_CHARGE: Infusão de elemento
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.50f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float p1 = 0.0f, p2 = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = 1.0f - (t / 0.50f);
+            float f = 523.25f + 400.0f * (t / 0.50f);
+            p1 += f / (float)AUDIO_SAMPLE_RATE;
+            p2 += (f * 1.5f) / (float)AUDIO_SAMPLE_RATE;
+            float total = (synth_triangle_wave(p1) * 0.6f + synth_square_wave(p2, 0.25f) * 0.4f) * env * 22000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_ELEMENT_CHARGE].samples = buf;
+        s_precalc_sfx[SOUND_ELEMENT_CHARGE].total_frames = num_frames;
+        s_precalc_sfx[SOUND_ELEMENT_CHARGE].is_stereo = false;
+    }
+
+    // 60. SOUND_CUCCO_CALL: Cacarejo de galinha Cucco
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.22f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float p = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-10.0f * t);
+            float f = 700.0f + 250.0f * sinf(2.0f * 3.14159f * 18.0f * t);
+            p += f / (float)AUDIO_SAMPLE_RATE;
+            float total = synth_square_wave(p, 0.35f) * env * 20000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_CUCCO_CALL].samples = buf;
+        s_precalc_sfx[SOUND_CUCCO_CALL].total_frames = num_frames;
+        s_precalc_sfx[SOUND_CUCCO_CALL].is_stereo = false;
+    }
+}
+
+typedef struct {
+    SoundEffect effect;
+    const char* filename;
+} SfxOverrideMapping;
+
+static void try_override_sfx_from_wav(SoundEffect effect, const char* filename) {
+    char path[256];
+    snprintf(path, sizeof(path), "assets/audio/sfx/%s", filename);
+
+    SDL_AudioSpec wav_spec;
+    Uint8* wav_buffer = NULL;
+    Uint32 wav_length = 0;
+
+    if (!SDL_LoadWAV(path, &wav_spec, &wav_buffer, &wav_length)) {
+        snprintf(path, sizeof(path), "../assets/audio/sfx/%s", filename);
+        if (!SDL_LoadWAV(path, &wav_spec, &wav_buffer, &wav_length)) {
+            return;
+        }
+    }
+
+    SDL_AudioSpec dst_spec;
+    dst_spec.freq = AUDIO_SAMPLE_RATE;
+    dst_spec.format = SDL_AUDIO_S16LE;
+    dst_spec.channels = 1;
+
+    Uint8* converted_buf = NULL;
+    int converted_len = 0;
+    if (SDL_ConvertAudioSamples(&wav_spec, wav_buffer, (int)wav_length, &dst_spec, &converted_buf, &converted_len)) {
+        s16* copy = (s16*)malloc(converted_len);
+        if (copy) {
+            memcpy(copy, converted_buf, converted_len);
+            if (s_precalc_sfx[effect].samples) {
+                free(s_precalc_sfx[effect].samples);
+            }
+            s_precalc_sfx[effect].samples = copy;
+            s_precalc_sfx[effect].total_frames = converted_len / sizeof(s16);
+            s_precalc_sfx[effect].is_stereo = false;
+        }
+        SDL_free(converted_buf);
+    }
+    SDL_free(wav_buffer);
+}
+
+static void load_authentic_sfx_overrides(void) {
+    static const SfxOverrideMapping s_overrides[] = {
+        { SOUND_LINK_ATTACK1,    "sfx_ply_vo1.wav" },
+        { SOUND_LINK_ATTACK2,    "sfx_ply_vo2.wav" },
+        { SOUND_LINK_HURT,       "sfx_ply_vo3.wav" },
+        { SOUND_LINK_FALL,       "sfx_ply_vo4.wav" },
+        { SOUND_LINK_JUMP,       "sfx_ply_vo5.wav" },
+        { SOUND_LINK_SPIN,       "sfx_ply_vo6.wav" },
+        { SOUND_LINK_DIE,        "sfx_ply_vo7.wav" },
+        { SOUND_SECRET,          "sfx_secret.wav" },
+        { SOUND_BOMB_EXPLODE,    "sfx_bomb_explode.wav" },
+        { SOUND_CHEST_OPEN,      "sfx_chest_open.wav" },
+        { SOUND_MINISH_SHRINK,   "sfx_minish_shrink.wav" },
+        { SOUND_MINISH_GROW,     "sfx_minish_grow.wav" },
+        { SOUND_RUPEE_GET,       "sfx_rupee_get.wav" },
+        { SOUND_HEART_GET,       "sfx_heart_get.wav" },
+        { SOUND_ICE_SLIDE,       "sfx_ice_slide.wav" },
+        { SOUND_ICE_STOP,        "sfx_ice_stop.wav" },
+        { SOUND_ICE_MELT,        "sfx_ice_melt.wav" },
+        { SOUND_ELEMENT_CHARGE,  "sfx_element_charge.wav" },
+        { SOUND_CUCCO_CALL,      "sfx_cucco1.wav" },
+        { SOUND_SWITCH_CLICK,    "sfx_switch_click.wav" },
+        { SOUND_HEART_CONTAINER, "sfx_heart_container_spawn.wav" }
+    };
+
+    int loaded = 0;
+    int count = (int)(sizeof(s_overrides) / sizeof(s_overrides[0]));
+    for (int i = 0; i < count; i++) {
+        try_override_sfx_from_wav(s_overrides[i].effect, s_overrides[i].filename);
+        if (s_precalc_sfx[s_overrides[i].effect].samples != NULL) {
+            loaded++;
+        }
+    }
+    printf("[HAL Audio] Pipeline Autentico: %d amostras GBA verificadas e ativas!\n", loaded);
 }
 
 // ----------------------------------------------------------------------------
@@ -2696,6 +3051,9 @@ bool hal_audio_init(void) {
     // Gera em tempo de execução os efeitos sonoros do sintetizador procedual retro
     synth_generate_all_sfx();
 
+    // Carrega sobreposições de áudio autêntico (DirectSound PCM extraído do GBA) se presentes
+    load_authentic_sfx_overrides();
+
     // Despausa o stream do hardware para iniciar a reprodução em tempo real
     SDL_ResumeAudioStreamDevice(s_audio_stream);
     s_audio_ready = true;
@@ -3035,16 +3393,32 @@ static s16* synth_generate_file_select(u32* out_total_frames) {
 
 const char* hal_audio_get_bgm_name(BgmTrack track) {
     switch (track) {
-        case BGM_MINISH_WOODS:     return "Minish Woods (Deepwood)";
-        case BGM_HYRULE_OVERWORLD: return "Hyrule Overworld (Theme)";
-        case BGM_DEEPWOOD_SHRINE:  return "Deepwood Shrine (Dungeon)";
-        case BGM_BOSS_BATTLE:      return "Boss Battle (Big Green ChuChu)";
-        case BGM_HYRULE_TOWN:      return "Hyrule Town (Hub Central)";
-        case BGM_MINISH_VILLAGE:   return "Minish Village (Vila dos Picori)";
-        case BGM_TITLE_THEME:      return "Title Screen (The Minish Cap Abertura)";
-        case BGM_FILE_SELECT:      return "File Select (Great Fairy Fountain)";
+        case BGM_MINISH_WOODS:        return "Minish Woods (Deepwood)";
+        case BGM_HYRULE_OVERWORLD:    return "Hyrule Overworld (Theme)";
+        case BGM_DEEPWOOD_SHRINE:     return "Deepwood Shrine (Dungeon)";
+        case BGM_BOSS_BATTLE:         return "Boss Battle (Big Green ChuChu / Vaati)";
+        case BGM_HYRULE_TOWN:         return "Hyrule Town (Hub Central)";
+        case BGM_MINISH_VILLAGE:      return "Minish Village (Vila dos Picori)";
+        case BGM_TITLE_THEME:         return "Title Screen (The Minish Cap Abertura)";
+        case BGM_FILE_SELECT:         return "File Select (Great Fairy Fountain)";
+        case BGM_CAVE_OF_FLAMES:      return "Cave of Flames (Masmorra de Fogo)";
+        case BGM_FORTRESS_OF_WINDS:   return "Fortress of Winds (Masmorra do Vento)";
+        case BGM_TEMPLE_OF_DROPLETS:  return "Temple of Droplets (Masmorra de Gelo)";
+        case BGM_PALACE_OF_WINDS:     return "Palace of Winds (Palacio Celestial)";
+        case BGM_DARK_HYRULE_CASTLE:  return "Dark Hyrule Castle (Castelo Corrompido)";
+        case BGM_ROYAL_VALLEY:        return "Royal Valley (Vale Real & Cemiterio)";
+        case BGM_ELEMENTAL_SANCTUARY: return "Elemental Sanctuary (Santuario Sagrado)";
+        case BGM_MT_CRENEL:           return "Mt. Crenel (Monte Crenel)";
+        case BGM_CRENEL_STORM:        return "Crenel Wall Storm (Escalada Tempestuosa)";
+        case BGM_CASTOR_WILDS:        return "Castor Wilds (Pantano Traicoeiro)";
+        case BGM_WIND_RUINS:          return "Wind Ruins (Ruinas do Vento)";
+        case BGM_CLOUD_TOPS:          return "Cloud Tops & Veil Falls (Quedas do Veu)";
+        case BGM_SWIFTBLADE_DOJO:     return "Swiftblade Dojo (Dojo de Treino)";
+        case BGM_CUCCO_MINIGAME:      return "Cucco Minigame (Captura de Galinhas)";
+        case BGM_HOUSE:               return "House & Interiors (Casas de Hyrule)";
+        case BGM_PICORI_FESTIVAL:     return "Picori Festival (Festival Anual)";
         case BGM_NONE:
-        default:                   return "Mudo / Silencio";
+        default:                      return "Mudo / Silencio";
     }
 }
 
@@ -3062,14 +3436,46 @@ void hal_audio_play_bgm(BgmTrack track) {
         return;
     }
 
-    // 1. Suporte a mods de audio: verifica se existe arquivo WAV customizado em assets/audio/
+    // 1. Suporte a mods de audio e faixas autenticas: verifica se existe arquivo WAV em assets/audio/
     char mod_path[256];
-    const char* track_tags[] = { "none", "minish_woods", "hyrule_overworld", "deepwood_shrine", "boss_battle", "hyrule_town", "minish_village", "title_theme", "file_select" };
-    snprintf(mod_path, sizeof(mod_path), "assets/audio/%s.wav", track_tags[track]);
+    static const char* track_tags[] = {
+        "none",
+        "minish_woods",
+        "hyrule_overworld",
+        "deepwood_shrine",
+        "boss_battle",
+        "hyrule_town",
+        "minish_village",
+        "title_theme",
+        "file_select",
+        "cave_of_flames",
+        "fortress_of_winds",
+        "temple_of_droplets",
+        "palace_of_winds",
+        "dark_hyrule_castle",
+        "royal_valley",
+        "elemental_sanctuary",
+        "mt_crenel",
+        "crenel_storm",
+        "castor_wilds",
+        "wind_ruins",
+        "cloud_tops",
+        "swiftblade_dojo",
+        "cucco_minigame",
+        "house",
+        "picori_festival"
+    };
 
+    snprintf(mod_path, sizeof(mod_path), "assets/audio/%s.wav", track_tags[track]);
     if (hal_audio_play_music(mod_path, 0.75f, true)) {
         s_current_bgm_track = track;
-        printf("[HAL Audio] Reproduzindo BGM personalizada: %s\n", mod_path);
+        printf("[HAL Audio] Reproduzindo BGM autentica/personalizada: %s\n", mod_path);
+        return;
+    }
+    snprintf(mod_path, sizeof(mod_path), "../assets/audio/%s.wav", track_tags[track]);
+    if (hal_audio_play_music(mod_path, 0.75f, true)) {
+        s_current_bgm_track = track;
+        printf("[HAL Audio] Reproduzindo BGM autentica/personalizada: %s\n", mod_path);
         return;
     }
 
@@ -3077,21 +3483,22 @@ void hal_audio_play_bgm(BgmTrack track) {
     u32 total_frames = 0;
     s16* samples = NULL;
 
-    if (track == BGM_MINISH_WOODS) {
+    if (track == BGM_MINISH_WOODS || track == BGM_CASTOR_WILDS || track == BGM_WIND_RUINS || track == BGM_CLOUD_TOPS) {
         samples = synth_generate_minish_woods(&total_frames);
-    } else if (track == BGM_HYRULE_OVERWORLD) {
+    } else if (track == BGM_HYRULE_OVERWORLD || track == BGM_MT_CRENEL || track == BGM_CRENEL_STORM) {
         samples = synth_generate_hyrule_overworld(&total_frames);
-    } else if (track == BGM_DEEPWOOD_SHRINE) {
+    } else if (track == BGM_DEEPWOOD_SHRINE || track == BGM_CAVE_OF_FLAMES || track == BGM_FORTRESS_OF_WINDS ||
+               track == BGM_TEMPLE_OF_DROPLETS || track == BGM_PALACE_OF_WINDS || track == BGM_ROYAL_VALLEY) {
         samples = synth_generate_deepwood_shrine(&total_frames);
-    } else if (track == BGM_BOSS_BATTLE) {
+    } else if (track == BGM_BOSS_BATTLE || track == BGM_DARK_HYRULE_CASTLE) {
         samples = synth_generate_boss_battle(&total_frames);
-    } else if (track == BGM_HYRULE_TOWN) {
+    } else if (track == BGM_HYRULE_TOWN || track == BGM_SWIFTBLADE_DOJO || track == BGM_CUCCO_MINIGAME) {
         samples = synth_generate_hyrule_town(&total_frames);
-    } else if (track == BGM_MINISH_VILLAGE) {
+    } else if (track == BGM_MINISH_VILLAGE || track == BGM_HOUSE) {
         samples = synth_generate_minish_village(&total_frames);
-    } else if (track == BGM_TITLE_THEME) {
+    } else if (track == BGM_TITLE_THEME || track == BGM_PICORI_FESTIVAL) {
         samples = synth_generate_title_theme(&total_frames);
-    } else if (track == BGM_FILE_SELECT) {
+    } else if (track == BGM_FILE_SELECT || track == BGM_ELEMENTAL_SANCTUARY) {
         samples = synth_generate_file_select(&total_frames);
     }
 

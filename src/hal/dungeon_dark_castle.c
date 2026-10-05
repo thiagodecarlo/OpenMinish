@@ -214,6 +214,7 @@ void dark_castle_enter(float* link_x, float* link_y, Direction* link_dir) {
     if (link_y) *link_y = 8.0f * TILE_SIZE;
     if (link_dir) *link_dir = DIR_UP;
 
+    hal_audio_play_bgm(BGM_DARK_HYRULE_CASTLE);
     hal_audio_play_sound(SOUND_SECRET, 1.0f, 0.85f);
     hal_audio_play_sound(SOUND_TOWN_BELL, 0.8f, 0.6f);
     printf("[DARK HYRULE CASTLE] Link penetrou o Castelo Corrompido de Hyrule! (Ato V)\n");

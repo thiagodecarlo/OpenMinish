@@ -266,7 +266,7 @@ void dungeon_palace_enter(float* player_x, float* player_y, Direction* player_di
     if (player_y) *player_y = (PALACE_ROOM_H * TILE_SIZE) - 26.0f;
     if (player_dir) *player_dir = DIR_UP;
 
-    hal_audio_play_bgm(BGM_DEEPWOOD_SHRINE);
+    hal_audio_play_bgm(BGM_PALACE_OF_WINDS);
     printf("[PALACE OF WINDS] Link adentrou o Palacio dos Ventos nos estratosfericos ceus!\n");
 }
 
@@ -276,7 +276,7 @@ void dungeon_palace_exit(float* player_x, float* player_y, Direction* player_dir
     if (player_y) *player_y = 96.0f;
     if (player_dir) *player_dir = DIR_DOWN;
 
-    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    hal_audio_play_bgm(BGM_CLOUD_TOPS);
     printf("[PALACE OF WINDS] Link retornou ao Santuario da Tribo do Vento em Cloud Tops!\n");
 }
 

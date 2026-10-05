@@ -202,7 +202,7 @@ void sanctuary_enter(float* link_x, float* link_y, Direction* link_dir) {
     s_sanc.safe_x = 7.5f * TILE_SIZE;
     s_sanc.safe_y = 10.0f * TILE_SIZE;
 
-    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    hal_audio_play_bgm(BGM_ELEMENTAL_SANCTUARY);
     hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
     printf("[SANCTUARY] Link adentrou o sagrado Santuario Elemental de Hyrule!\n");
 }

@@ -241,7 +241,7 @@ void veil_clouds_enter_falls(float* player_x, float* player_y, Direction* player
     s_veil.last_safe_x = 128.0f;
     s_veil.last_safe_y = 135.0f;
 
-    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    hal_audio_play_bgm(BGM_CLOUD_TOPS);
     hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.1f);
     printf("[VEIL FALLS] Link chegou a base das impetuosas Quedas do Veu!\n");
 }
@@ -258,7 +258,7 @@ void veil_clouds_enter_clouds(float* player_x, float* player_y, Direction* playe
     s_veil.last_safe_x = 128.0f;
     s_veil.last_safe_y = 130.0f;
 
-    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    hal_audio_play_bgm(BGM_CLOUD_TOPS);
     hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.3f);
     printf("[CLOUD TOPS] Link alcancou o místico Topo das Nuvens na estratosfera!\n");
 }
