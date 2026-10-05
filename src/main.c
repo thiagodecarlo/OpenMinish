@@ -28,6 +28,7 @@
 #include "hal/dungeon_dark_castle.h"
 #include "hal/boss_vaati.h"
 #include "hal/startup_menu.h"
+#include "hal/figurine_gallery.h"
 #include <math.h>
 
 /*
@@ -159,6 +160,10 @@ typedef struct {
     // Item Canônico: Capa de Roc (Roc's Cape) - Salto Livre, Planar e Down-Thrust
     bool has_rocs_cape;            // Possui a Capa de Roc
     int  rocs_banner_timer;        // Temporizador do banner comemorativo
+
+    // Sistema Canônico de Colecionáveis: Galeria de Estatuetas & Conchas Misteriosas (Ato VI)
+    int  shells;                   // Conchas Misteriosas (Mysterious Shells) possuídas
+    bool has_carlov_medal;         // Medalha de Carlov concedida
 } Player;
 
 static const char* s_region_tags[REGION_COUNT] = { "usa", "eur", "jpn" };
@@ -1779,6 +1784,9 @@ static void apply_save_data(const SaveData* save, Player* link_ptr) {
     if (link_ptr->has_rocs_cape) {
         inventory_unlock_item(INV_ITEM_ROCS_CAPE);
     }
+    figurine_gallery_restore(save->figurines_mask, 0, save->has_carlov_medal, (int)save->shells_owned);
+    link_ptr->shells = figurine_gallery_get_shells();
+    link_ptr->has_carlov_medal = save->has_carlov_medal;
 }
 
 int main(int argc, char* argv[]) {
@@ -1948,6 +1956,9 @@ int main(int argc, char* argv[]) {
     link.has_royal_kinstone = false;
     link.royal_kinstone_banner_timer = 0;
     royal_valley_init();
+    link.shells = 50;
+    link.has_carlov_medal = false;
+    figurine_gallery_init();
 
     // Inicialização da Máquina de Estados de Abertura & Seleção de Save (Capcom, Nintendo, Title, File Select)
     startup_menu_init();
@@ -2104,6 +2115,9 @@ int main(int argc, char* argv[]) {
                                 current_save.dark_castle_bells_silenced = dark_castle_is_ready_for_vaati();
                                 current_save.has_sanctum_key = link.has_sanctum_key;
                                 current_save.vaati_defeated = vaati_boss_is_defeated();
+                                int shells_temp = 0;
+                                figurine_gallery_export(current_save.figurines_mask, NULL, &current_save.has_carlov_medal, &shells_temp);
+                                current_save.shells_owned = (u16)shells_temp;
                                 current_save.slot_a = (int)inventory_get_slot_a();
                                 current_save.slot_b = (int)inventory_get_slot_b();
                                 if (save_game(1, &current_save)) {
@@ -2496,6 +2510,17 @@ int main(int argc, char* argv[]) {
                                 printf("[DEBUG] [F11] Entrada direta no Confronto Final contra Vaati!\n");
                             }
                             break;
+                        case SDLK_F12:
+                            if (figurine_gallery_is_active()) {
+                                figurine_gallery_close();
+                                link.shells = figurine_gallery_get_shells();
+                                link.has_carlov_medal = figurine_gallery_has_medal();
+                                printf("[DEBUG] [F12] Fechando a Galeria do Carlov!\n");
+                            } else {
+                                figurine_gallery_open(link.shells > 0 ? link.shells : 50);
+                                printf("[DEBUG] [F12] Abrindo a Galeria do Carlov (Gacha / Miniaturas)!\n");
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -2559,6 +2584,31 @@ int main(int argc, char* argv[]) {
                 } else {
                     hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
                 }
+            }
+
+            hal_video_render_frame();
+            continue;
+        }
+
+        // --------------------------------------------------------------------
+        // 1c. GESTÃO DA GALERIA DO CARLOV & SISTEMA GACHA (ATO VI)
+        // --------------------------------------------------------------------
+        if (figurine_gallery_is_active()) {
+            bool btn_a = hal_input_is_pressed(KEY_A);
+            bool btn_b = hal_input_is_pressed(KEY_B);
+            bool d_up = hal_input_is_pressed(KEY_UP);
+            bool d_down = hal_input_is_pressed(KEY_DOWN);
+            bool d_left = hal_input_is_pressed(KEY_LEFT);
+            bool d_right = hal_input_is_pressed(KEY_RIGHT);
+            bool start = hal_input_is_pressed(KEY_START);
+
+            figurine_gallery_handle_input(btn_a, btn_b, d_up, d_down, d_left, d_right, start);
+            figurine_gallery_update();
+            figurine_gallery_render();
+
+            if (!figurine_gallery_is_active()) {
+                link.shells = figurine_gallery_get_shells();
+                link.has_carlov_medal = figurine_gallery_has_medal();
             }
 
             hal_video_render_frame();
@@ -2887,6 +2937,9 @@ int main(int argc, char* argv[]) {
                         Entity* malon = entity_find_nearby_malon(link.x, link.y, 32.0f);
                         if (malon) {
                             dialogue_trigger_malon_talk();
+                        } else if (link.x >= 32.0f && link.x <= 96.0f && link.y >= 32.0f && link.y <= 96.0f) {
+                            figurine_gallery_open(link.shells > 0 ? link.shells : 50);
+                            printf("[CARLOV] Link entrou na Arvore de Carlov para jogar no Gacha de Estatuetas!\n");
                         } else if (entity_interact_chest(link.x, link.y, &link.rupees, &link.hearts)) {
                             // Baú da fazenda Lon Lon aberto!
                         } else {
