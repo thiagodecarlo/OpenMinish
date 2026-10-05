@@ -23,6 +23,7 @@
 #include "hal/lantern.h"
 #include "hal/veil_clouds.h"
 #include "hal/rocs_cape.h"
+#include "hal/startup_menu.h"
 #include <math.h>
 
 /*
@@ -1611,6 +1612,126 @@ static inline bool is_world_solid_for_player(const Tilemap* map, float wx, float
     return map_is_solid(map, wx, wy);
 }
 
+static void apply_save_data(const SaveData* save, Player* link_ptr) {
+    if (!save || !link_ptr) return;
+    link_ptr->x = save->player_x;
+    link_ptr->y = save->player_y;
+    link_ptr->dir = (Direction)save->player_dir;
+    link_ptr->hearts = save->hearts;
+    link_ptr->max_hearts = save->max_hearts;
+    link_ptr->rupees = save->rupees;
+    link_ptr->has_flippers = save->has_flippers;
+    link_ptr->has_spin_attack = save->has_spin_attack;
+    link_ptr->is_minish = save->is_minish;
+    link_ptr->has_grip_ring = save->has_grip_ring;
+    link_ptr->has_cane_of_pacci = save->has_cane_of_pacci;
+    link_ptr->has_white_sword = save->has_white_sword;
+    link_ptr->has_two_elements = save->has_two_elements;
+    link_ptr->has_three_elements = save->has_three_elements;
+    link_ptr->has_bow = save->has_bow;
+    if (link_ptr->has_three_elements) {
+        sanctuary_set_three_elements(true);
+    } else if (link_ptr->has_two_elements) {
+        sanctuary_set_two_elements(true);
+    }
+    if (link_ptr->has_grip_ring) {
+        inventory_unlock_item(INV_ITEM_GRIP_RING);
+    }
+    if (link_ptr->has_cane_of_pacci) {
+        inventory_unlock_item(INV_ITEM_CANE_OF_PACCI);
+    }
+    if (link_ptr->has_white_sword) {
+        inventory_set_white_sword(true);
+    }
+    if (link_ptr->has_bow) {
+        inventory_unlock_item(INV_ITEM_BOW);
+    }
+    link_ptr->has_mole_mitts = save->has_mole_mitts;
+    if (link_ptr->has_mole_mitts) {
+        inventory_unlock_item(INV_ITEM_MOLE_MITTS);
+    }
+    link_ptr->has_armos_activated = save->has_armos_activated;
+    if (link_ptr->has_armos_activated) {
+        armos_circuit_set_active(true);
+    }
+    link_ptr->has_ocarina = save->has_ocarina;
+    if (link_ptr->has_ocarina) {
+        inventory_unlock_item(INV_ITEM_OCARINA);
+    }
+    if (save->unlocked_wind_crests > 0) {
+        fast_travel_set_unlocked_mask(save->unlocked_wind_crests);
+    }
+    if (save->bomb_count > 0) {
+        subweapon_add_bombs(save->bomb_count - subweapon_get_bomb_count());
+    }
+    if (save->slot_a > 0) inventory_set_slot_a((InventoryItem)save->slot_a);
+    if (save->slot_b > 0) inventory_set_slot_b((InventoryItem)save->slot_b);
+
+    s_in_town = false;
+    s_in_village = false;
+    s_in_south_field = false;
+    s_in_north_field = false;
+    s_in_crenel_base = false;
+    s_in_melari_mines = false;
+    s_in_castor_wilds = false;
+    s_in_mole_cave = false;
+    s_in_wind_ruins = false;
+    s_in_armos_interior = false;
+    s_in_library = false;
+    s_in_lake_hylia = false;
+
+    if (save->current_map == 1) {
+        s_in_town = true;
+    } else if (save->current_map == 2) {
+        s_in_village = true;
+    } else if (save->current_map == 4) {
+        s_in_south_field = true;
+    } else if (save->current_map == 5) {
+        s_in_north_field = true;
+    } else if (save->current_map == 6) {
+        s_in_crenel_base = true;
+    } else if (save->current_map == 7) {
+        s_in_melari_mines = true;
+    } else if (save->current_map == 8) {
+        dungeon_flames_enter(&link_ptr->x, &link_ptr->y, &link_ptr->dir);
+    } else if (save->current_map == 9) {
+        sanctuary_enter(&link_ptr->x, &link_ptr->y, &link_ptr->dir);
+    } else if (save->current_map == 10) {
+        s_in_castor_wilds = true;
+    } else if (save->current_map == 11) {
+        s_in_mole_cave = true;
+    } else if (save->current_map == 12) {
+        s_in_wind_ruins = true;
+    } else if (save->current_map == 13) {
+        s_in_armos_interior = true;
+    } else if (save->current_map == 14) {
+        dungeon_fortress_enter(&link_ptr->x, &link_ptr->y, &link_ptr->dir);
+    } else if (save->current_map == 15) {
+        s_in_library = true;
+    } else if (save->current_map == 16) {
+        s_in_lake_hylia = true;
+    } else if (save->current_map == 17) {
+        dungeon_droplets_enter(&link_ptr->x, &link_ptr->y, &link_ptr->dir);
+    } else if (save->current_map == 18) {
+        veil_clouds_enter_falls(&link_ptr->x, &link_ptr->y, &link_ptr->dir);
+    } else if (save->current_map == 19) {
+        veil_clouds_enter_clouds(&link_ptr->x, &link_ptr->y, &link_ptr->dir);
+    }
+    link_ptr->has_lantern = save->has_flame_lantern;
+    lantern_set_lit(save->lantern_lit);
+    if (link_ptr->has_lantern) inventory_unlock_item(INV_ITEM_LANTERN);
+    link_ptr->has_water_element = save->has_water_element;
+    library_restore_save(save->library_books_mask, save->librari_met, save->lake_temple_unlocked);
+    link_ptr->has_veil_falls_unlocked = save->has_veil_falls_unlocked;
+    link_ptr->golden_kinstones_fused = save->golden_kinstones_fused;
+    link_ptr->cloud_tornado_active = save->cloud_tornado_active;
+    veil_clouds_set_golden_kinstones(save->golden_kinstones_fused);
+    link_ptr->has_rocs_cape = save->has_rocs_cape;
+    if (link_ptr->has_rocs_cape) {
+        inventory_unlock_item(INV_ITEM_ROCS_CAPE);
+    }
+}
+
 int main(int argc, char* argv[]) {
     setvbuf(stdout, NULL, _IONBF, 0);
     printf("====================================================================\n");
@@ -1660,9 +1781,6 @@ int main(int argc, char* argv[]) {
     sanctuary_init();
     inventory_init();
     save_system_init();
-
-    // Inicia a trilha sonora autêntica de Minish Woods no mixer chiptune da HAL
-    hal_audio_play_bgm(BGM_MINISH_WOODS);
 
     // Inicialização da Engine de Mapas e Câmera Widescreen (Autêntico Minish Woods ou Fallback)
     Tilemap* world_map = map_create_woods(s_region_tags[REGION_USA]);
@@ -1773,115 +1891,8 @@ int main(int argc, char* argv[]) {
     link.rocs_banner_timer = 0;
     rocs_cape_init();
 
-    // Carregamento automático de progresso salvo (Slot 1)
-    if (save_exists(1)) {
-        SaveData save;
-        if (load_game(1, &save)) {
-            link.x = save.player_x;
-            link.y = save.player_y;
-            link.dir = (Direction)save.player_dir;
-            link.hearts = save.hearts;
-            link.max_hearts = save.max_hearts;
-            link.rupees = save.rupees;
-            link.has_flippers = save.has_flippers;
-            link.has_spin_attack = save.has_spin_attack;
-            link.is_minish = save.is_minish;
-            link.has_grip_ring = save.has_grip_ring;
-            link.has_cane_of_pacci = save.has_cane_of_pacci;
-            link.has_white_sword = save.has_white_sword;
-            link.has_two_elements = save.has_two_elements;
-            link.has_three_elements = save.has_three_elements;
-            link.has_bow = save.has_bow;
-            if (link.has_three_elements) {
-                sanctuary_set_three_elements(true);
-            } else if (link.has_two_elements) {
-                sanctuary_set_two_elements(true);
-            }
-            if (link.has_grip_ring) {
-                inventory_unlock_item(INV_ITEM_GRIP_RING);
-            }
-            if (link.has_cane_of_pacci) {
-                inventory_unlock_item(INV_ITEM_CANE_OF_PACCI);
-            }
-            if (link.has_white_sword) {
-                inventory_set_white_sword(true);
-            }
-            if (link.has_bow) {
-                inventory_unlock_item(INV_ITEM_BOW);
-            }
-            link.has_mole_mitts = save.has_mole_mitts;
-            if (link.has_mole_mitts) {
-                inventory_unlock_item(INV_ITEM_MOLE_MITTS);
-            }
-            link.has_armos_activated = save.has_armos_activated;
-            if (link.has_armos_activated) {
-                armos_circuit_set_active(true);
-            }
-            link.has_ocarina = save.has_ocarina;
-            if (link.has_ocarina) {
-                inventory_unlock_item(INV_ITEM_OCARINA);
-            }
-            if (save.unlocked_wind_crests > 0) {
-                fast_travel_set_unlocked_mask(save.unlocked_wind_crests);
-            }
-            if (save.bomb_count > 0) {
-                subweapon_add_bombs(save.bomb_count - subweapon_get_bomb_count());
-            }
-            if (save.slot_a > 0) inventory_set_slot_a((InventoryItem)save.slot_a);
-            if (save.slot_b > 0) inventory_set_slot_b((InventoryItem)save.slot_b);
-
-            if (save.current_map == 1) {
-                s_in_town = true;
-            } else if (save.current_map == 2) {
-                s_in_village = true;
-            } else if (save.current_map == 4) {
-                s_in_south_field = true;
-            } else if (save.current_map == 5) {
-                s_in_north_field = true;
-            } else if (save.current_map == 6) {
-                s_in_crenel_base = true;
-            } else if (save.current_map == 7) {
-                s_in_melari_mines = true;
-            } else if (save.current_map == 8) {
-                dungeon_flames_enter(&link.x, &link.y, &link.dir);
-            } else if (save.current_map == 9) {
-                sanctuary_enter(&link.x, &link.y, &link.dir);
-            } else if (save.current_map == 10) {
-                s_in_castor_wilds = true;
-            } else if (save.current_map == 11) {
-                s_in_mole_cave = true;
-            } else if (save.current_map == 12) {
-                s_in_wind_ruins = true;
-            } else if (save.current_map == 13) {
-                s_in_armos_interior = true;
-            } else if (save.current_map == 14) {
-                dungeon_fortress_enter(&link.x, &link.y, &link.dir);
-            } else if (save.current_map == 15) {
-                s_in_library = true;
-            } else if (save.current_map == 16) {
-                s_in_lake_hylia = true;
-            } else if (save.current_map == 17) {
-                dungeon_droplets_enter(&link.x, &link.y, &link.dir);
-            } else if (save.current_map == 18) {
-                veil_clouds_enter_falls(&link.x, &link.y, &link.dir);
-            } else if (save.current_map == 19) {
-                veil_clouds_enter_clouds(&link.x, &link.y, &link.dir);
-            }
-            link.has_lantern = save.has_flame_lantern;
-            lantern_set_lit(save.lantern_lit);
-            if (link.has_lantern) inventory_unlock_item(INV_ITEM_LANTERN);
-            link.has_water_element = save.has_water_element;
-            library_restore_save(save.library_books_mask, save.librari_met, save.lake_temple_unlocked);
-            link.has_veil_falls_unlocked = save.has_veil_falls_unlocked;
-            link.golden_kinstones_fused = save.golden_kinstones_fused;
-            link.cloud_tornado_active = save.cloud_tornado_active;
-            veil_clouds_set_golden_kinstones(save.golden_kinstones_fused);
-            link.has_rocs_cape = save.has_rocs_cape;
-            if (link.has_rocs_cape) {
-                inventory_unlock_item(INV_ITEM_ROCS_CAPE);
-            }
-        }
-    }
+    // Inicialização da Máquina de Estados de Abertura & Seleção de Save (Capcom, Nintendo, Title, File Select)
+    startup_menu_init();
 
     // Inicialização do Subsistema de Entidades e Spawn de Inimigos e NPCs
     entity_manager_init();
@@ -2343,6 +2354,10 @@ int main(int argc, char* argv[]) {
                                 printf("[ROCS CAPE] [F6] Capa de Roc DESEQUIPADA.\n");
                             }
                             break;
+                        case SDLK_F10:
+                            startup_menu_return_to_title();
+                            printf("[STARTUP] [F10] Retornando a Tela de Titulo e Selecao de Save!\n");
+                            break;
                         default:
                             break;
                     }
@@ -2352,6 +2367,65 @@ int main(int argc, char* argv[]) {
 
         // Atualiza os estados de transição (borda de subida/descida dos botões)
         hal_input_update();
+
+        // --------------------------------------------------------------------
+        // 1b. GESTÃO DAS TELAS DE ABERTURA, LOGOS, TÍTULO E SELEÇÃO DE ARQUIVO
+        // --------------------------------------------------------------------
+        if (startup_menu_is_active()) {
+            startup_menu_update();
+            startup_menu_render();
+
+            if (!startup_menu_is_active()) {
+                // Menu de inicialização concluído: carrega os dados do save e posiciona o jogador
+                int slot = startup_menu_get_selected_slot();
+                SaveData loaded;
+                if (load_game(slot, &loaded)) {
+                    apply_save_data(&loaded, &link);
+                }
+
+                // Reinicializa entidades para o mapa selecionado
+                entity_manager_init();
+                if (s_in_armos_interior) {
+                    spawn_armos_interior_entities(armos_circuit_is_active());
+                } else if (s_in_wind_ruins) {
+                    spawn_wind_ruins_entities(armos_circuit_is_active());
+                } else if (s_in_mole_cave) {
+                    spawn_mole_cave_entities(link.has_mole_mitts);
+                } else if (s_in_castor_wilds) {
+                    spawn_castor_wilds_entities();
+                } else if (s_in_melari_mines) {
+                    spawn_melari_mines_entities();
+                } else if (s_in_village) {
+                    spawn_minish_village_entities();
+                } else if (s_in_town) {
+                    spawn_town_entities();
+                } else if (s_in_south_field) {
+                    spawn_south_field_entities();
+                } else if (s_in_north_field) {
+                    spawn_north_field_entities();
+                } else if (s_in_crenel_base) {
+                    spawn_crenel_base_entities();
+                } else {
+                    spawn_overworld_entities(world_map);
+                }
+
+                // Ajusta a câmera centrada em Link
+                camera.x = link.x - ((float)camera.viewport_w / 2.0f);
+                camera.y = link.y - ((float)camera.viewport_h / 2.0f);
+
+                // Inicia a música tema do ambiente carregado
+                if (s_in_town) {
+                    hal_audio_play_bgm(BGM_HYRULE_TOWN);
+                } else if (s_in_village) {
+                    hal_audio_play_bgm(BGM_MINISH_VILLAGE);
+                } else {
+                    hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
+                }
+            }
+
+            hal_video_render_frame();
+            continue;
+        }
 
         if (hal_input_is_pressed(KEY_START)) {
             if (!dialogue_is_active() && !kinstone_is_active()) {
@@ -4241,6 +4315,7 @@ int main(int argc, char* argv[]) {
     dungeon_droplets_shutdown();
     veil_clouds_shutdown();
     rocs_cape_shutdown();
+    startup_menu_shutdown();
     map_destroy(world_map);
     hal_audio_shutdown();
     hal_input_shutdown();

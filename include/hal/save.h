@@ -76,6 +76,9 @@ bool save_exists(int slot);
 // Remove o arquivo de save do slot
 bool save_delete(int slot);
 
+// Copia o arquivo de save de um slot para outro
+bool save_copy(int src_slot, int dst_slot);
+
 // Calcula o checksum para validação de integridade
 u32 save_calculate_checksum(const SaveData* data);
 
