@@ -841,7 +841,8 @@ void startup_menu_render(void) {
                     if (sd->has_earth_element) sm_draw_rect(card_x + 195, card_y + 4, 4, 4, 0x22C55EFF);
                     if (sd->has_fire_element)  sm_draw_rect(card_x + 201, card_y + 4, 4, 4, 0xEF4444FF);
                     if (sd->has_water_element) sm_draw_rect(card_x + 195, card_y + 10, 4, 4, 0x38BDF8FF);
-                    if (sd->golden_kinstones_fused >= 5) sm_draw_rect(card_x + 201, card_y + 10, 4, 4, 0xFBBF24FF);
+                    if (sd->has_wind_element)  sm_draw_rect(card_x + 201, card_y + 10, 4, 4, 0x10B981FF);
+                    else if (sd->golden_kinstones_fused >= 5) sm_draw_rect(card_x + 201, card_y + 10, 4, 4, 0xFBBF24FF);
                 } else {
                     font_draw_text(card_x + 36, card_y + 4, "- NOVO JOGO -", 0x94A3B8FF, false);
                     for (int h = 0; h < 3; h++) {
