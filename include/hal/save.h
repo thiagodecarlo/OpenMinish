@@ -73,6 +73,8 @@ typedef struct {
     u8    figurines_mask[17];
     u16   shells_owned;
     bool  has_carlov_medal;
+    u8    cucco_level_cleared;
+    bool  cucco_heart_piece_obtained;
     int   slot_a;
     int   slot_b;
     u32   unlocked_items_mask;
