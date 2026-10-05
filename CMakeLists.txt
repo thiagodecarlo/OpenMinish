@@ -14,20 +14,19 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 include(FetchContent)
 
 # ------------------------------------------------------------------------------
-# 1. Configuração e Download Automático da SDL2 via GitHub Releases
+# 1. Configuração e Download Automático da SDL3 via GitHub Releases
 # ------------------------------------------------------------------------------
-message(STATUS "Configurando a biblioteca multiplataforma SDL2...")
+message(STATUS "Configurando a biblioteca multiplataforma SDL3...")
 
-set(SDL2_DISABLE_INSTALL ON CACHE BOOL "" FORCE)
-set(SDL_TEST_ENABLED_BY_DEFAULT OFF CACHE BOOL "" FORCE)
-set(SDL_TEST OFF CACHE BOOL "" FORCE)
+set(SDL_INSTALL OFF CACHE BOOL "" FORCE)
+set(SDL_TESTS OFF CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
-    SDL2
-    URL https://github.com/libsdl-org/SDL/releases/download/release-2.30.12/SDL2-2.30.12.zip
+    SDL3
+    URL https://github.com/libsdl-org/SDL/releases/download/release-3.2.8/SDL3-3.2.8.zip
 )
 
-FetchContent_MakeAvailable(SDL2)
+FetchContent_MakeAvailable(SDL3)
 
 # ------------------------------------------------------------------------------
 # 2. Configuração do Nosso Executável Nativo (zelda_port)
@@ -72,22 +71,20 @@ target_include_directories(zelda_port PRIVATE
     include
 )
 
-# Vincula as bibliotecas da SDL2 ao nosso executável
-# SDL2main fornece o ponto de entrada WinMain no Windows de forma transparente
+# Vincula as bibliotecas da SDL3 ao nosso executável
 target_link_libraries(zelda_port PRIVATE
-    SDL2::SDL2main
-    SDL2::SDL2
+    SDL3::SDL3
 )
 
 if(UNIX)
     target_link_libraries(zelda_port PRIVATE m)
 endif()
 
-# No Windows, copia automaticamente a SDL2.dll para a mesma pasta do zelda_port.exe
+# No Windows, copia automaticamente a SDL3.dll para a mesma pasta do zelda_port.exe
 if(WIN32)
     add_custom_command(TARGET zelda_port POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:SDL2::SDL2>
+        $<TARGET_FILE:SDL3::SDL3>
         $<TARGET_FILE_DIR:zelda_port>
     )
 endif()
