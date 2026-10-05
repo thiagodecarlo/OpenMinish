@@ -1,5 +1,6 @@
 #include <stdio.h>
-#include <SDL.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
 #include "gba/types.h"
 #include "hal/video.h"
 #include "hal/texture.h"
@@ -2018,13 +2019,13 @@ int main(int argc, char* argv[]) {
         // 1. CAPTURA DE EVENTOS DO SISTEMA OPERACIONAL
         // --------------------------------------------------------------------
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
+            if (event.type == SDL_EVENT_QUIT) {
                 running = false;
             } else {
                 hal_input_process_event(&event);
 
-                if (event.type == SDL_KEYDOWN) {
-                    if (event.key.keysym.sym == SDLK_RETURN || event.key.keysym.sym == SDLK_p) {
+                if (event.type == SDL_EVENT_KEY_DOWN) {
+                    if (event.key.key == SDLK_RETURN || event.key.key == SDLK_P) {
                         if (!dialogue_is_active() && !kinstone_is_active()) {
                             inventory_toggle_pause();
                             continue;
@@ -2032,7 +2033,7 @@ int main(int argc, char* argv[]) {
                     }
 
                     if (inventory_is_paused()) {
-                        switch (event.key.keysym.sym) {
+                        switch (event.key.key) {
                             case SDLK_UP:
                                 inventory_cursor_move(0, -1);
                                 break;
@@ -2045,14 +2046,14 @@ int main(int argc, char* argv[]) {
                             case SDLK_RIGHT:
                                 inventory_cursor_move(1, 0);
                                 break;
-                            case SDLK_z:
+                            case SDLK_Z:
                             case SDLK_SPACE:
                                 inventory_assign_to_slot_a();
                                 break;
-                            case SDLK_x:
+                            case SDLK_X:
                                 inventory_assign_to_slot_b();
                                 break;
-                            case SDLK_s: {
+                            case SDLK_S: {
                                 SaveData current_save = { 0 };
                                 strncpy(current_save.player_name, "LINK", sizeof(current_save.player_name));
                                 current_save.player_x = link.x;
@@ -2153,7 +2154,7 @@ int main(int argc, char* argv[]) {
                         continue;
                     }
 
-                    switch (event.key.keysym.sym) {
+                    switch (event.key.key) {
                         case SDLK_ESCAPE:
                             running = false;
                             break;
@@ -2215,15 +2216,15 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
-                        case SDLK_w:
+                        case SDLK_W:
                             widescreen = !widescreen;
                             hal_video_shutdown();
                             hal_video_init("The Legend of Zelda: The Minish Cap (Port Nativo)", scale, widescreen);
                             break;
-                        case SDLK_m:
+                        case SDLK_M:
                             hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
                             break;
-                        case SDLK_h:
+                        case SDLK_H:
                             if (!dungeon_is_active()) {
                                 if (s_in_town) {
                                     transition_to_overworld(&link, world_map);
@@ -2232,7 +2233,7 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
-                        case SDLK_v:
+                        case SDLK_V:
                             if (!dungeon_is_active()) {
                                 if (s_in_village) {
                                     transition_to_woods_from_village(&link, world_map);
@@ -2241,10 +2242,10 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
-                        case SDLK_t:
+                        case SDLK_T:
                             hal_audio_cycle_bgm();
                             break;
-                        case SDLK_e:
+                        case SDLK_E:
                             if (!dialogue_is_active()) {
                                 if (link.is_minish) {
                                     dialogue_trigger_ezlo_minish_hint();
@@ -2253,7 +2254,7 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
-                        case SDLK_r:
+                        case SDLK_R:
                             if (!link.is_transforming && !dialogue_is_active() && !kinstone_is_active()) {
                                 Entity* stump = entity_find_nearby_minish_stump(link.x, link.y, 24.0f);
                                 if (stump) {
@@ -2273,7 +2274,7 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
-                        case SDLK_f:
+                        case SDLK_F:
                             link.has_flippers = !link.has_flippers;
                             if (link.has_flippers) {
                                 hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
@@ -2282,20 +2283,20 @@ int main(int argc, char* argv[]) {
                                 printf("[FLIPPERS] [F] Nadadeiras de Zora REMOVIDAS.\n");
                             }
                             break;
-                        case SDLK_q:
+                        case SDLK_Q:
                             subweapon_cycle();
                             break;
-                        case SDLK_c:
+                        case SDLK_C:
                             subweapon_set_current(ITEM_CANE_OF_PACCI);
                             hal_audio_play_sound(SOUND_SECRET, 0.9f, 1.8f);
                             printf("[CANE OF PACCI] [C] Cajado de Pacci EQUIPADO no botao [B]!\n");
                             break;
-                        case SDLK_b:
+                        case SDLK_B:
                             subweapon_add_bombs(10);
                             hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.2f);
                             printf("[DEBUG] [B] +10 Bombas adicionadas a Bolsa de Bombas! (Total: %d)\n", subweapon_get_bomb_count());
                             break;
-                        case SDLK_k:
+                        case SDLK_K:
                             if (!kinstone_is_active() && !dialogue_is_active()) {
                                 Entity* knpc = entity_find_kinstone_npc(link.x, link.y, 32.0f);
                                 if (knpc) {
@@ -2303,7 +2304,7 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
-                        case SDLK_d:
+                        case SDLK_D:
                             if (dungeon_is_active()) {
                                 dungeon_exit(&link.x, &link.y, &link.dir);
                             } else {
@@ -2311,7 +2312,7 @@ int main(int argc, char* argv[]) {
                                 dungeon_enter(&link.x, &link.y, &link.dir);
                             }
                             break;
-                        case SDLK_p:
+                        case SDLK_P:
                             if (!dungeon_is_active() && !dungeon_flames_is_active() && !sanctuary_is_active()) {
                                 if (s_in_castor_wilds) {
                                     transition_to_south_field_from_castor(&link);
@@ -2320,7 +2321,7 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
-                        case SDLK_o:
+                        case SDLK_O:
                             link.has_bow = !link.has_bow;
                             if (link.has_bow) {
                                 inventory_unlock_item(INV_ITEM_BOW);
@@ -2333,7 +2334,7 @@ int main(int argc, char* argv[]) {
                                 printf("[DEBUG] [O] Arco e Flechas DESEQUIPADO.\n");
                             }
                             break;
-                        case SDLK_j:
+                        case SDLK_J:
                             if (!dungeon_is_active() && !dungeon_flames_is_active() && !sanctuary_is_active()) {
                                 if (s_in_mole_cave) {
                                     transition_to_castor_from_cave(&link);
@@ -2342,7 +2343,7 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
-                        case SDLK_u:
+                        case SDLK_U:
                             if (!dungeon_is_active() && !dungeon_flames_is_active() && !sanctuary_is_active()) {
                                 if (s_in_wind_ruins) {
                                     transition_to_castor_from_ruins(&link);
@@ -2351,7 +2352,7 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
-                        case SDLK_y:
+                        case SDLK_Y:
                             if (!dungeon_is_active() && !dungeon_flames_is_active() && !sanctuary_is_active()) {
                                 if (s_in_armos_interior) {
                                     transition_to_wind_ruins_from_armos(&link);
@@ -2361,7 +2362,7 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
-                        case SDLK_i:
+                        case SDLK_I:
                             if (!dungeon_is_active() && !dungeon_flames_is_active() && !sanctuary_is_active()) {
                                 if (dungeon_fortress_is_active()) {
                                     dungeon_fortress_exit(&link.x, &link.y, &link.dir);
@@ -2372,12 +2373,12 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
-                        case SDLK_z:
+                        case SDLK_Z:
                             if (!dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active() && !dungeon_droplets_is_active()) {
                                 fast_travel_start(link.x, link.y);
                             }
                             break;
-                        case SDLK_l:
+                        case SDLK_L:
                             if (!dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active() && !dungeon_droplets_is_active()) {
                                 if (s_in_library) {
                                     transition_to_town_from_library(&link);
@@ -2386,7 +2387,7 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
-                        case SDLK_n:
+                        case SDLK_N:
                             if (!dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active() && !dungeon_droplets_is_active()) {
                                 if (s_in_lake_hylia) {
                                     transition_to_south_field_from_lake(&link);
@@ -2395,7 +2396,7 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
-                        case SDLK_g:
+                        case SDLK_G:
                             link.has_lantern = !link.has_lantern;
                             if (link.has_lantern) {
                                 inventory_unlock_item(INV_ITEM_LANTERN);
@@ -2550,7 +2551,7 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
-                        case SDLK_BACKQUOTE: {
+                        case SDLK_GRAVE: {
                             // Debug: desbloqueia o próximo Tiger Scroll não-desbloqueado
                             int unlocked_before = sword_dojo_get_unlocked_count();
                             for (int ts = 0; ts < TOTAL_TIGER_SCROLLS; ts++) {

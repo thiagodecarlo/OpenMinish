@@ -1,12 +1,12 @@
 #include "hal/video.h"
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 /*
  * ============================================================================
- * src/hal/video.c - Implementação da Camada de Vídeo Virtual com SDL2
+ * src/hal/video.c - Implementação da Camada de Vídeo Virtual com SDL3
  * ============================================================================
  * Este arquivo implementa o renderizador que converte os pixels da nossa
  * tela virtual de GBA em uma janela moderna acelerada por hardware.
@@ -19,9 +19,9 @@ static SDL_Texture*  s_texture  = NULL;
 static HalVideoContext s_ctx;
 
 bool hal_video_init(const char* window_title, int scale_factor, bool enable_widescreen) {
-    // 1. Inicializa os subsistemas da biblioteca SDL2 (Video, Joystick, Gamepad)
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER | SDL_INIT_EVENTS) < 0) {
-        printf("[ERRO HAL Video] Falha ao inicializar SDL2: %s\n", SDL_GetError());
+    // 1. Inicializa os subsistemas da biblioteca SDL3 (Video, Gamepad)
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
+        printf("[ERRO HAL Video] Falha ao inicializar SDL3: %s\n", SDL_GetError());
         return false;
     }
 
@@ -37,11 +37,9 @@ bool hal_video_init(const char* window_title, int scale_factor, bool enable_wide
     // 3. Cria a janela gráfica no Sistema Operacional (Windows/Mac/Linux)
     s_window = SDL_CreateWindow(
         window_title,
-        SDL_WINDOWPOS_CENTERED,
-        SDL_WINDOWPOS_CENTERED,
         window_width,
         window_height,
-        SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
+        SDL_WINDOW_RESIZABLE
     );
 
     if (!s_window) {
@@ -50,11 +48,10 @@ bool hal_video_init(const char* window_title, int scale_factor, bool enable_wide
         return false;
     }
 
-    // 4. Cria o Renderizador com Aceleração de Hardware (GPU) e VSync
+    // 4. Cria o Renderizador com Aceleração de Hardware (GPU)
     s_renderer = SDL_CreateRenderer(
         s_window,
-        -1,
-        SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC
+        NULL
     );
 
     if (!s_renderer) {
@@ -65,7 +62,7 @@ bool hal_video_init(const char* window_title, int scale_factor, bool enable_wide
     }
 
     // Garante que o aspecto não fique deformado caso o usuário redimensione a janela
-    SDL_RenderSetLogicalSize(s_renderer, s_ctx.render_width, s_ctx.render_height);
+    SDL_SetRenderLogicalPresentation(s_renderer, s_ctx.render_width, s_ctx.render_height, SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
     // 5. Aloca o Framebuffer Virtual na memória RAM
     // Cada pixel tem 4 bytes (RGBA): Vermelho, Verde, Azul e Alfa (transparência)
@@ -98,7 +95,7 @@ bool hal_video_init(const char* window_title, int scale_factor, bool enable_wide
     }
 
     // Configura filtro "Nearest Neighbor" para manter o visual retrô de pixel art nítido
-    SDL_SetTextureScaleMode(s_texture, SDL_ScaleModeNearest);
+    SDL_SetTextureScaleMode(s_texture, SDL_SCALEMODE_NEAREST);
 
     printf("[HAL Video] Inicializado com sucesso! Resolucao Virtual: %dx%d (Janela: %dx%d)\n",
            s_ctx.render_width, s_ctx.render_height, window_width, window_height);
@@ -142,7 +139,7 @@ void hal_video_render_frame(void) {
 
     // 2. Limpa o renderizador e desenha a textura esticada mantendo a proporção
     SDL_RenderClear(s_renderer);
-    SDL_RenderCopy(s_renderer, s_texture, NULL, NULL);
+    SDL_RenderTexture(s_renderer, s_texture, NULL, NULL);
 
     // 3. Apresenta o quadro pronto na tela (Swap Buffers sincronizado pelo VSync)
     SDL_RenderPresent(s_renderer);
