@@ -394,6 +394,42 @@ def cmd_init_template(out_path="assets/lang/template_pt_BR.json"):
         "0x0415": "Nadadeiras de Zora",
         "0x0416": "Ocarina do Vento",
         "0x0417": "Anel de Escalada",
+        "0x0501": "{04:10:0C}Você obteve a {Color:Red}Espada de Ferreiro{Color:White}!",
+        "0x0502": "{04:10:0E}Você obteve a {Color:Red}Espada Branca{Color:White}!",
+        "0x0503": "{04:10:00}O poder do {Color:Red}Elemento Terra{Color:White} infundiu sua lâmina!",
+        "0x0504": "{04:10:00}O poder do {Color:Red}Elemento Fogo{Color:White} infundiu sua lâmina!",
+        "0x0505": "{04:10:00}O poder do {Color:Red}Elemento Água{Color:White} infundiu sua lâmina!",
+        "0x0506": "{04:10:00}O poder do {Color:Red}Elemento Vento{Color:White} infundiu sua lâmina!",
+        "0x0507": "{04:10:0C}Você obteve o {Color:Red}Bumerangue{Color:White}!",
+        "0x0508": "{04:10:0E}Você obteve o {Color:Red}Bumerangue Mágico{Color:White}!",
+        "0x0509": "{04:10:0C}Você obteve o {Color:Red}Escudo Pequeno{Color:White}!",
+        "0x050A": "{04:10:0E}Você obteve o {Color:Red}Escudo Espelho{Color:White}!",
+        "0x050D": "{04:10:0C}Você obteve a {Color:Red}Lanterna de Chamas{Color:White}!",
+        "0x0510": "{04:10:0C}Você obteve o {Color:Red}Jarro dos Ventos{Color:White}!",
+        "0x0511": "{04:10:0C}Você obteve o {Color:Red}Cajado de Pacci{Color:White}!",
+        "0x0512": "{04:10:0C}Você obteve as {Color:Red}Luvas de Toupeira{Color:White}!",
+        "0x0513": "{04:10:0C}Você obteve a {Color:Red}Capa de Roc{Color:White}!",
+        "0x0514": "{04:10:0C}Você obteve as {Color:Red}Botas de Pegasus{Color:White}!",
+        "0x0515": "{04:10:0C}Você obteve as {Color:Red}Nadadeiras de Zora{Color:White}!",
+        "0x0516": "{04:10:0C}Você obteve a {Color:Red}Ocarina do Vento{Color:White}!",
+        "0x0517": "{04:10:0C}Você obteve o {Color:Red}Anel de Escalada{Color:White}!",
+        "0x051B": "{04:10:0C}Você obteve um {Color:Red}Pedaço de Coração{Color:White}!",
+        "0x051C": "{04:10:0E}Você obteve um {Color:Red}Recipiente de Coração{Color:White}!",
+        "0x0601": "A espada básica de Link.",
+        "0x0602": "Uma lâmina reforjada com o poder dos Minish.",
+        "0x0605": "A lendária espada sagrada capaz de criar 4 clones!",
+        "0x0606": "Exploda paredes rachadas e obstáculos.",
+        "0x0608": "Dispare flechas para atingir alvos distantes.",
+        "0x060A": "Atordoa inimigos e traz itens distantes.",
+        "0x060E": "Ilumina cavernas escuras e derrete gelo.",
+        "0x0610": "Suga e dispara fortes rajadas de vento.",
+        "0x0611": "Energiza buracos e vira objetos.",
+        "0x0612": "Escave terra macia e paredes de solo fofo.",
+        "0x0613": "Permite pular e planar suavemente no ar.",
+        "0x0614": "Corra em alta velocidade com arrancadas velozes.",
+        "0x0615": "Permite nadar em águas profundas e mergulhar.",
+        "0x0616": "Toque a melodia sagrada para chamar o pássaro Zeffa.",
+        "0x0617": "Permite escalar paredões de rocha e vinhas.",
     }
 
     template = {
@@ -559,8 +595,8 @@ def cmd_validate(json_path):
     return errors == 0
 
 
-def cmd_export_game_json(template_path, out_path="assets/lang/pt_BR.json"):
-    """Converte o template ou extração em JSON enxuto de runtime para a engine."""
+def cmd_export_game_json(template_path, out_path="assets/lang/pt_BR_dialogues.json"):
+    """Converte o template para o JSON padronizado idêntico aos demais idiomas."""
     if not os.path.exists(template_path):
         print(f"[ERRO] Template não encontrado: {template_path}")
         return False
@@ -568,35 +604,72 @@ def cmd_export_game_json(template_path, out_path="assets/lang/pt_BR.json"):
     with open(template_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    game_dict = {
+    total_groups = len(data.get("groups", []))
+    total_msgs = sum(len(g.get("messages", [])) for g in data.get("groups", []))
+
+    game_doc = {
         "locale": "pt_BR",
         "language_name": "Português (Brasil)",
-        "game_title": "The Legend of Zelda: The Minish Cap",
-        "dialogues": {},
-        "ui": {
-            "press_start": "PRESSIONE START",
-            "file_select": "ESCOLHA O ARQUIVO",
-            "widescreen_toggle": "Modo Widescreen (16:9)",
-            "texture_pack_enabled": "Pacote de Texturas HD Ativado"
-        }
+        "source_version": "Clean-Room Community Translation",
+        "total_groups": total_groups,
+        "total_messages": total_msgs,
+        "groups": []
     }
 
-    count = 0
+    translated_count = 0
+
     for g in data.get("groups", []):
-        for m in g.get("messages", []):
-            hex_id = m.get("hex_id", "")
+        g_id = g.get("group_id", 0)
+        g_hex = g.get("group_hex", f"0x{g_id:02X}")
+        g_name = g.get("name", get_group_name(g_id))
+        raw_msgs = g.get("messages", [])
+
+        group_obj = {
+            "group_id": g_id,
+            "group_hex": g_hex,
+            "name": g_name,
+            "message_count": len(raw_msgs),
+            "messages": []
+        }
+
+        for m in raw_msgs:
+            m_id = m.get("id", 0)
+            global_id = m.get("global_id", (g_id << 8) | m_id)
+            hex_id = m.get("hex_id", f"0x{global_id:04X}")
+
             pt_txt = m.get("pt", "").strip()
-            en_txt = m.get("en", m.get("text", "")).strip()
+            en_txt = m.get("en", m.get("text", ""))
 
-            chosen_text = pt_txt if pt_txt else en_txt
-            if chosen_text:
-                game_dict["dialogues"][hex_id] = chosen_text
-                count += 1
+            # Usa a tradução se existir, caso contrário o texto em inglês como fallback
+            if pt_txt:
+                chosen_text = pt_txt
+                translated_count += 1
+            else:
+                chosen_text = en_txt
 
+            group_obj["messages"].append({
+                "id": m_id,
+                "global_id": global_id,
+                "hex_id": hex_id,
+                "text": chosen_text
+            })
+
+        game_doc["groups"].append(group_obj)
+
+    # 1. Salva o arquivo padronizado principal assets/lang/pt_BR_dialogues.json
+    os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(game_dict, f, ensure_ascii=False, indent=2)
+        json.dump(game_doc, f, ensure_ascii=False, indent=2)
 
-    print(f"✅ Exportado arquivo de runtime '{out_path}' com {count} diálogos indexados.")
+    # 2. Também atualiza assets/lang/pt_BR.json com o mesmo schema padronizado
+    legacy_path = "assets/lang/pt_BR.json"
+    with open(legacy_path, "w", encoding="utf-8") as f:
+        json.dump(game_doc, f, ensure_ascii=False, indent=2)
+
+    print(f"✅ Exportados arquivos padronizados:")
+    print(f"   -> '{out_path}' ({total_msgs} mensagens em {total_groups} grupos)")
+    print(f"   -> '{legacy_path}' (sincronizado no mesmo padrão)")
+    print(f"   -> {translated_count} mensagens em PT-BR ativas ({translated_count*100/total_msgs:.1f}%).")
     return True
 
 
@@ -692,7 +765,7 @@ def main():
     # Comando: export-game-json
     p_export = subparsers.add_parser("export-game-json", help="Compila o template para o JSON de runtime da engine")
     p_export.add_argument("template", default="assets/lang/template_pt_BR.json", nargs="?")
-    p_export.add_argument("--out", default="assets/lang/pt_BR.json", help="Destino do JSON de runtime")
+    p_export.add_argument("--out", default="assets/lang/pt_BR_dialogues.json", help="Destino do JSON de runtime")
 
     args = parser.parse_args()
 
