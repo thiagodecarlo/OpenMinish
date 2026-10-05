@@ -69,6 +69,7 @@ typedef struct {
     bool  dark_castle_cleared;
     bool  dark_castle_bells_silenced;
     bool  has_sanctum_key;
+    bool  vaati_defeated;
     int   slot_a;
     int   slot_b;
     u32   unlocked_items_mask;

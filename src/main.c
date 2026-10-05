@@ -26,6 +26,7 @@
 #include "hal/dungeon_palace.h"
 #include "hal/royal_valley.h"
 #include "hal/dungeon_dark_castle.h"
+#include "hal/boss_vaati.h"
 #include "hal/startup_menu.h"
 #include <math.h>
 
@@ -123,6 +124,7 @@ typedef struct {
     int  royal_kinstone_banner_timer; // Temporizador do banner da Kinstone Real
     bool has_sanctum_key;           // Chave do Santuario de Vaati (Dark Hyrule Castle)
     int  sanctum_banner_timer;      // Temporizador do banner de abertura do Santuario
+    bool vaati_defeated;            // Vaati derrotado definitivamente (Ato V concluido)
 
     // Regiões Canônicas: Quedas do Véu (Veil Falls) e Topo das Nuvens (Cloud Tops)
     bool has_veil_falls_unlocked;
@@ -1754,7 +1756,10 @@ static void apply_save_data(const SaveData* save, Player* link_ptr) {
     } else if (save->current_map >= 25 && save->current_map <= 30) {
         dark_castle_enter(&link_ptr->x, &link_ptr->y, &link_ptr->dir);
         dark_castle_set_room((DarkCastleRoomId)(save->current_map - 25), &link_ptr->x, &link_ptr->y, &link_ptr->dir);
+    } else if (save->current_map == 31) {
+        vaati_boss_start(&link_ptr->x, &link_ptr->y, &link_ptr->dir);
     }
+    link_ptr->vaati_defeated = save->vaati_defeated;
     link_ptr->has_sanctum_key = save->has_sanctum_key;
     dark_castle_restore_state(save->dark_castle_cleared, save->dark_castle_bells_silenced, save->has_sanctum_key);
     link_ptr->has_royal_kinstone = save->has_royal_kinstone;
@@ -2031,7 +2036,8 @@ int main(int argc, char* argv[]) {
                                 current_save.player_y = link.y;
                                 current_save.player_dir = (int)link.dir;
                                 int cur_m = 0;
-                                if (dark_castle_is_active()) cur_m = 25 + (int)dark_castle_get_room();
+                                if (vaati_boss_is_active()) cur_m = 31;
+                                else if (dark_castle_is_active()) cur_m = 25 + (int)dark_castle_get_room();
                                 else if (royal_valley_is_active()) cur_m = 20 + (int)royal_valley_get_scene();
                                 else if (veil_clouds_is_active()) {
                                     cur_m = (veil_clouds_get_scene() == VEIL_SCENE_FALLS_BASE || veil_clouds_get_scene() == VEIL_SCENE_FALLS_SUMMIT) ? 18 : 19;
@@ -2097,6 +2103,7 @@ int main(int argc, char* argv[]) {
                                 current_save.dark_castle_cleared = dark_castle_is_cleared();
                                 current_save.dark_castle_bells_silenced = dark_castle_is_ready_for_vaati();
                                 current_save.has_sanctum_key = link.has_sanctum_key;
+                                current_save.vaati_defeated = vaati_boss_is_defeated();
                                 current_save.slot_a = (int)inventory_get_slot_a();
                                 current_save.slot_b = (int)inventory_get_slot_b();
                                 if (save_game(1, &current_save)) {
@@ -2477,6 +2484,18 @@ int main(int argc, char* argv[]) {
                             startup_menu_return_to_title();
                             printf("[STARTUP] [F10] Retornando a Tela de Titulo e Selecao de Save!\n");
                             break;
+                        case SDLK_F11:
+                            if (vaati_boss_is_active()) {
+                                vaati_boss_exit(&link.x, &link.y, &link.dir);
+                                dark_castle_enter(&link.x, &link.y, &link.dir);
+                                printf("[DEBUG] [F11] Saindo da Arena de Vaati e retornando ao Castelo!\n");
+                            } else {
+                                s_in_town = s_in_village = s_in_south_field = s_in_crenel_base = s_in_melari_mines = s_in_castor_wilds = s_in_mole_cave = s_in_wind_ruins = s_in_armos_interior = s_in_library = s_in_lake_hylia = s_in_north_field = false;
+                                if (dark_castle_is_active()) dark_castle_exit(&link.x, &link.y, &link.dir);
+                                vaati_boss_start(&link.x, &link.y, &link.dir);
+                                printf("[DEBUG] [F11] Entrada direta no Confronto Final contra Vaati!\n");
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -2556,7 +2575,8 @@ int main(int argc, char* argv[]) {
         // 2. ATUALIZAÇÃO DA LÓGICA DO JOGADOR (INPUT -> FÍSICA)
         // --------------------------------------------------------------------
         const HalVideoContext* ctx = hal_video_get_context();
-        Tilemap* active_map = dark_castle_is_active() ? dark_castle_get_current_map() :
+        Tilemap* active_map = vaati_boss_is_active() ? vaati_boss_get_arena_map() :
+                              (dark_castle_is_active() ? dark_castle_get_current_map() :
                               (royal_valley_is_active() ? royal_valley_get_state()->maps[royal_valley_get_scene()] :
                               (dungeon_palace_is_active() ? dungeon_palace_get_current_map() :
                               (veil_clouds_is_active() ? veil_clouds_get_current_map() :
@@ -2572,7 +2592,7 @@ int main(int argc, char* argv[]) {
                               (s_in_village ? s_village_map :
                               (s_in_town ? s_town_map :
                               (s_in_south_field ? s_south_field_map :
-                              (s_in_north_field ? s_north_field_map : world_map))))))))))))))));
+                              (s_in_north_field ? s_north_field_map : world_map)))))))))))))))));
 
         if (inventory_is_paused()) {
             if (hal_input_is_pressed(KEY_UP))    inventory_cursor_move(0, -1);
@@ -2975,6 +2995,20 @@ int main(int argc, char* argv[]) {
                         }
                     }
                     dark_castle_strike_sword(link.x, link.y, link.dir, sword_dmg, link.is_spinning, cl_cnt, cl_x, cl_y);
+                }
+                if (vaati_boss_is_active()) {
+                    float cl_x[3] = { 0 };
+                    float cl_y[3] = { 0 };
+                    int cl_cnt = 0;
+                    for (int c = 0; c < 3; c++) {
+                        CloneState* cl = sanctuary_get_clone_at(c);
+                        if (cl && cl->active) {
+                            cl_x[cl_cnt] = cl->x;
+                            cl_y[cl_cnt] = cl->y;
+                            cl_cnt++;
+                        }
+                    }
+                    vaati_boss_strike_sword(link.x, link.y, link.dir, sword_dmg, link.is_spinning, cl_cnt, cl_x, cl_y);
                 }
 
                 // Disparo de Raio da Four Sword com HP cheio no início do golpe
@@ -3805,6 +3839,21 @@ int main(int argc, char* argv[]) {
                 link.sanctum_banner_timer = 240;
                 hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.5f);
             }
+        } else if (vaati_boss_is_active()) {
+            float cl_x[3] = { 0 };
+            float cl_y[3] = { 0 };
+            int cl_cnt = 0;
+            for (int c = 0; c < 3; c++) {
+                CloneState* cl = sanctuary_get_clone_at(c);
+                if (cl && cl->active) {
+                    cl_x[cl_cnt] = cl->x;
+                    cl_y[cl_cnt] = cl->y;
+                    cl_cnt++;
+                }
+            }
+            vaati_boss_update(&link.x, &link.y, &link.dir,
+                             link.is_attacking, link.is_spinning, cl_cnt,
+                             cl_x, cl_y, link.is_minish, &link.hearts);
         }
 
         static bool s_was_dungeon_droplets_active = false;
@@ -3992,6 +4041,13 @@ int main(int argc, char* argv[]) {
             entity_manager_render(&camera);
             draw_link(&link, &camera);
             subweapon_render(&camera);
+        } else if (vaati_boss_is_active()) {
+            vaati_boss_render(&camera, link.x, link.y, link.is_minish);
+            if (!vaati_boss_is_credits()) {
+                entity_manager_render(&camera);
+                draw_link(&link, &camera);
+                subweapon_render(&camera);
+            }
         } else {
             // 1. Renderiza o mapa com Frustum Culling inteligente
             map_render(active_map, &camera);

@@ -182,7 +182,7 @@ flowchart TD
 - **Tarefas**:
   1. [x] `feature/royal-valley-graveyard`: Labirinto de névoa, Dampé o coveiro e Tumba do Rei Gustaf. (Merged ✅)
   2. [x] `feature/dungeon-dark-hyrule-castle`: Castelo corrompido por trevas, quebra-cabeças com 4 Clones e sinos de petrificação. (Merged ✅)
-  3. `feature/boss-vaati-climax`: Confronto final épico em 3 fases contra Vaati (Vaati Reborn, Vaati Transfigured, Vaati's Wrath), cura da Princesa Zelda e créditos finais.
+  3. [x] `feature/boss-vaati-climax`: Confronto final épico em 3 fases contra Vaati (Vaati Reborn, Vaati Transfigured, Vaati's Wrath), cura da Princesa Zelda e créditos finais. (Merged ✅)
 
 ### Sprint 6: Polimento, Minigames, Dojo & Lançamento 1.0
 - **Objetivo**: Conteúdo secundário de alta fidelidade e experiência completa 100%.
