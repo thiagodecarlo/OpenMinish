@@ -2706,7 +2706,8 @@ int main(int argc, char* argv[]) {
         // 2. ATUALIZAÇÃO DA LÓGICA DO JOGADOR (INPUT -> FÍSICA)
         // --------------------------------------------------------------------
         const HalVideoContext* ctx = hal_video_get_context();
-        Tilemap* active_map = vaati_boss_is_active() ? vaati_boss_get_arena_map() :
+        Tilemap* active_map = sanctuary_is_active() ? s_town_map :
+                              (vaati_boss_is_active() ? vaati_boss_get_arena_map() :
                               (dark_castle_is_active() ? dark_castle_get_current_map() :
                               (royal_valley_is_active() ? royal_valley_get_state()->maps[royal_valley_get_scene()] :
                               (dungeon_palace_is_active() ? dungeon_palace_get_current_map() :
@@ -2723,7 +2724,7 @@ int main(int argc, char* argv[]) {
                               (s_in_village ? s_village_map :
                               (s_in_town ? s_town_map :
                               (s_in_south_field ? s_south_field_map :
-                              (s_in_north_field ? s_north_field_map : world_map)))))))))))))))));
+                              (s_in_north_field ? s_north_field_map : world_map))))))))))))))))));
 
         if (inventory_is_paused()) {
             if (hal_input_is_pressed(KEY_UP))    inventory_cursor_move(0, -1);
@@ -4106,8 +4107,8 @@ int main(int argc, char* argv[]) {
         }
         } // Fim do bloco de gameplay (se não estiver em diálogo ativo)
 
-        // Atualização da Câmera Virtual Widescreen (Segue o Link ou centraliza na Masmorra)
-        if (dungeon_is_active() || dungeon_flames_is_active() || dungeon_fortress_is_active() || dungeon_droplets_is_active() || dungeon_palace_is_active() || veil_clouds_is_active()) {
+        // Atualização da Câmera Virtual Widescreen (Segue o Link ou centraliza na Masmorra / Santuário)
+        if (dungeon_is_active() || dungeon_flames_is_active() || dungeon_fortress_is_active() || dungeon_droplets_is_active() || dungeon_palace_is_active() || veil_clouds_is_active() || sanctuary_is_active()) {
             camera.viewport_w = widescreen ? 284 : 240;
             camera.viewport_h = 160;
             camera.x = (float)(256 - camera.viewport_w) / 2.0f;
