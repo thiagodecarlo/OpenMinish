@@ -1789,7 +1789,7 @@
           "hex_id": "0x0408",
           "en": "Remote Bombs",
           "es_ref": "Bomba con control remoto",
-          "pt": "Bombas de Controle\nRemoto"
+          "pt": "Bombas Remotas"
         },
         {
           "id": 9,
@@ -2671,7 +2671,7 @@
           "hex_id": "0x0508",
           "en": "{04:10:0E}You got a {Color:Red}Remote Bomb{Color:White}!\n\nPress the button to place a bomb, then\npress the button again to detonate it.",
           "es_ref": "{04:10:0E}¡Has conseguido {Color:Red}bombas con\ncontrol remoto{Color:White}!\nColoca la bomba, vuelve a pulsar el\nbotón correspondiente y explotará.",
-          "pt": "{04:10:0E}Você obteve as {Color:Red}Bombas\ncom Controle Remoto{Color:White}!\nColoque a bomba e\n\naperte\n\no botão novamente para\ndetoná-la."
+          "pt": "{04:10:0E}Você obteve as {Color:Red}Bombas\nRemotas{Color:White}! Coloque uma\nbomba e aperte o botão\n\nde novo\n\npara detoná-la!"
         },
         {
           "id": 9,
@@ -5212,7 +5212,7 @@
           "hex_id": "0x084B",
           "en": "Keese",
           "es_ref": "Keese",
-          "pt": "Keese"
+          "pt": "Morci"
         },
         {
           "id": 76,
@@ -5275,7 +5275,7 @@
           "hex_id": "0x0854",
           "en": "Rock Chuchu",
           "es_ref": "Chuchu roca",
-          "pt": "Chuchu de Pedra"
+          "pt": "Chulchul de Pedra"
         },
         {
           "id": 85,
@@ -5429,21 +5429,21 @@
           "hex_id": "0x086A",
           "en": "Wizzrobe",
           "es_ref": "Invocantis",
-          "pt": "Wizzrobe"
+          "pt": "Feitiçano"
         },
         {
           "id": 107,
           "hex_id": "0x086B",
           "en": "Fire Wizzrobe",
           "es_ref": "Invocantis de fuego",
-          "pt": "Wizzrobe de Fogo"
+          "pt": "Feitiçano de Fogo"
         },
         {
           "id": 108,
           "hex_id": "0x086C",
           "en": "Ice Wizzrobe",
           "es_ref": "Invocantis de hielo",
-          "pt": "Wizzrobe de Gelo"
+          "pt": "Feitiçano de Gelo"
         },
         {
           "id": 109,
@@ -5457,14 +5457,14 @@
           "hex_id": "0x086E",
           "en": "Octorok",
           "es_ref": "Octorok",
-          "pt": "Octorok"
+          "pt": "Octoroc"
         },
         {
           "id": 111,
           "hex_id": "0x086F",
           "en": "Golden Octorok",
           "es_ref": "Octorok dorado",
-          "pt": "Octorok Dourado"
+          "pt": "Octoroc Dourado"
         },
         {
           "id": 112,
@@ -5513,7 +5513,7 @@
           "hex_id": "0x0876",
           "en": "Chuchu",
           "es_ref": "Chuchu",
-          "pt": "Chuchu Verde"
+          "pt": "Chulchul Verde"
         },
         {
           "id": 119,
@@ -5548,14 +5548,14 @@
           "hex_id": "0x087B",
           "en": "Spiny Chuchu",
           "es_ref": "Chuchu pinchos",
-          "pt": "Chuchu Espinhoso"
+          "pt": "Chulchul Espinhoso"
         },
         {
           "id": 124,
           "hex_id": "0x087C",
           "en": "Big Octorok",
           "es_ref": "Ferrus negro",
-          "pt": "Grande Octorok"
+          "pt": "Grande Octoroc"
         },
         {
           "id": 125,
@@ -5576,7 +5576,7 @@
           "hex_id": "0x087F",
           "en": "Big Green Chuchu",
           "es_ref": "Gran chuchu verde",
-          "pt": "Grande Chuchu Verde"
+          "pt": "Grande Chulchul Verde"
         },
         {
           "id": 128,
@@ -5597,7 +5597,7 @@
           "hex_id": "0x0882",
           "en": "Big Blue Chuchu",
           "es_ref": "Gran chuchu azul",
-          "pt": "Grande Chuchu Azul"
+          "pt": "Grande Chulchul Azul"
         },
         {
           "id": 131,
@@ -6185,7 +6185,7 @@
           "hex_id": "0x094B",
           "en": "Appears in various areas.\nThese bats live in dungeons and caves.\nTheir movement is unpredictable, so use\nranged weapons from a safe distance.",
           "es_ref": "Aparece por todo el juego,\nen mazmorras y cuevas. No se\nmueve con rapidez, así que aprovecha\nque tú sí puedes para atacar.",
-          "pt": "Aparece por tudo o\njogo, em mazmorras e\ncavernas. Não se mueve\n\ncom rapidez, assim que\naprovecha que você sim\npode para atacar."
+          "pt": "Aparece por todo o\njogo, em cavernas e\nmasmorras. O Morci é\n\nimprevisível,\n\nentão ataque à\ndistância para ficar em\nsegurança!"
         },
         {
           "id": 76,
@@ -6248,7 +6248,7 @@
           "hex_id": "0x0954",
           "en": "Appears in Veil Falls.\nThese tough Chuchus wear rocks on\ntheir heads. The rocks protect them\nfrom damage, so you'll have to find\na way to knock the rocks off before\nyou'll be able to destroy them.",
           "es_ref": "Aparece en varios sitios.\nEs un Chuchu con una roca sobre la\ncabeza. Está bien protegido, así que\nlo primero que debes hacer es romperla.",
-          "pt": "Aparece em varios\nlugares. É um Chuchu\ncom uma rocha sobre a\n\ncabeza. Está bem\nprotegido, assim que o\nprimeiro que deve fazer\n\né romperla."
+          "pt": "Aparece em vários\nlugares. É um Chulchul\ncom uma rocha na\n\ncabeça. Seu\n\ncorpo é protegido,\nentão tire a pedra\nantes de atacá-lo!"
         },
         {
           "id": 85,
@@ -6402,21 +6402,21 @@
           "hex_id": "0x096A",
           "en": "Appears in the Palace of Winds, etc.\nThey fire magic bolts from afar. Hit\nthem when they appear so they don't\ncast another spell!",
           "es_ref": "Aparece en el palacio de los vientos y\nen el castillo de Hyrule tomado por las\nsombras. Es muy hábil desde lejos.\nObserva cómo se mueve, ¡y ataca!",
-          "pt": "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule tomado pelas\n\nsombras. É muito hábil\ndesde longe. Observa\ncomo se mueve, e ataca!"
+          "pt": "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule. Dispara magias\n\nde longe. Ataque assim\nque aparecer para que\nnão lance outro\n\nfeitiço!"
         },
         {
           "id": 107,
           "hex_id": "0x096B",
           "en": "Appears in the Palace of Winds.\nThey wield fire magic. Hit them when\nthey appear so they don't cast\nanother spell!",
           "es_ref": "Aparece en el palacio de los vientos y\nen el castillo de Hyrule tomado por las\nsombras. Ataca con fuego.\nObserva cómo se mueve, ¡y ataca!",
-          "pt": "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule tomado pelas\n\nsombras. Ataca com\nfogo. Observa como se\nmueve, e ataca!"
+          "pt": "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule. Ataca com fogo.\n\nGolpeie-o logo ao\nsurgir para cancelar\nseu feitiço!"
         },
         {
           "id": 108,
           "hex_id": "0x096C",
           "en": "Appears in the Palace of Winds.\nThey wield ice magic. They're weak\nagainst fire, so attack with fire for a\nquick battle!",
           "es_ref": "Aparece en el palacio de los vientos y\nen el castillo de Hyrule tomado por\nlas sombras. Ataca con hielo.\nObserva cómo se mueve, ¡y ataca!",
-          "pt": "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule tomado pelas\n\nsombras. Ataca com\nhielo. Observa como se\nmueve, e ataca!"
+          "pt": "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule. Usa magia de\n\ngelo.\n\nÉ fraco contra o fogo,\nentão ataque com chamas\npara vencer depressa!"
         },
         {
           "id": 109,
@@ -6430,14 +6430,14 @@
           "hex_id": "0x096E",
           "en": "Appears in various areas.\nThere are red and blue ones. They've\nappeared in every Zelda game to date.\nThey spit rocks, so be careful!",
           "es_ref": "Aparece en varios sitios. Son rojos\ny azules, y aparecen en todos los\njuegos de Zelda.\n¡Cuidado con las rocas que lanzan!",
-          "pt": "Aparece em varios\nlugares. São vermelhos\ne azuis, e aparecen em\n\ntodos os jogos de\nZelda. Cuidado com as\nrochas que lançam!"
+          "pt": "Aparece em vários\nlugares. Há tipos\nvermelhos e azuis em\n\nquase todos os jogos\n\nde Zelda. Cuidado com\nas pedras que eles\ncospem!"
         },
         {
           "id": 111,
           "hex_id": "0x096F",
           "en": "Appears in... Well, we're not sure!\nThe legendary Golden Octorok. It can't\nbe confirmed, but they are said to\nshoot chunks of pure gold...",
           "es_ref": "No sabemos dónde aparece. Este\nenemigo es un fantasma. Dicen que\nlanza rocas que son fantasmas\ntambién. No se sabe nada más...",
-          "pt": "Não sabemos onde\naparece. Este inimigo é\num fantasma. Dizem que\n\nlança rochas que são\nfantasmas também. Não\nse sabe nada mais..."
+          "pt": "Não sabemos onde ele\naparece! O lendário {Color:Red}\nOctoroc Dourado{Color:White}.\n\nDizem que ele cospe\npepitas de ouro puro!\nMas nada foi\n\nconfirmado..."
         },
         {
           "id": 112,
@@ -6486,7 +6486,7 @@
           "hex_id": "0x0976",
           "en": "Appears in various areas.\nChuchus come in many colors.\nEach color is a little different, but\nranged weapons work well against all.",
           "es_ref": "Aparecen en varios sitios. Hay Chuchu\nde muchos colores y distintas\ncaracterísticas. Lo más eficaz es una\nherramienta para saltar.",
-          "pt": "Aparecen em varios\nlugares. Há Chuchu de\nmuchos cores e\n\ndistintas\ncaracterísticas. O\nmais eficaz é uma\n\nherramienta para\npular."
+          "pt": "Aparecem em vários\nlugares. Há Chulchuls\nde várias cores, cada\n\num\n\ncom traços diferentes.\nArmas de longo alcance\nfuncionam bem em todos!"
         },
         {
           "id": 119,
@@ -6521,14 +6521,14 @@
           "hex_id": "0x097B",
           "en": "Appears in various areas.\nThese Chuchus project spikes from\ntheir bodies at the first sign of\ndanger. Try a well-placed bomb.",
           "es_ref": "Aparece en varios sitios. Este Chuchu\nsaca los pinchos si siente peligro.\nSuele atacar en grupo, así que ¡usa\n{Color:Red}bombas{Color:White} para acabar con varios!",
-          "pt": "Aparece em varios\nlugares. Este Chuchu\nsaca os espinhos se\n\nsente perigo. Suele\natacar em grupo, assim\nque usa {Color:Red}bombas{Color:White} para\n\nacabar com varios!"
+          "pt": "Aparece em vários\nlugares. Este Chulchul\nergue espinhos se sente\n\nperigo.\n\nCostuma atacar em\ngrupo, então use bombas\npara acertar vários de\n\numa vez!"
         },
         {
           "id": 124,
           "hex_id": "0x097C",
           "en": "Appears in the Temple of Droplets.\nFrozen solid by the power of the Water\nElement. He's been frozen so long that\nhis hunger is unbearable.",
           "es_ref": "Aparece en el templo de las aguas.\nLlevaba mucho tiempo congelado\npor la fuerza del elemento de agua.\nAhora tiene mucha hambre...",
-          "pt": "Aparece no Templo das\nGotas. Levava muito\ntempo congelado pela\n\nForça do Elemento da\nÁgua. Agora tem mucha\nhambre..."
+          "pt": "Aparece no Templo das\nGotas. Ficou congelado\npor muito tempo pelo\n\npoder do\n\nElemento da Água. Agora\nele está com uma fome\ninsaciável!"
         },
         {
           "id": 125,
@@ -6549,7 +6549,7 @@
           "hex_id": "0x097F",
           "en": "Appears in Deepwood Shrine.\nA perfectly ordinary Chuchu. Though\nnot much of an enemy usually, they are\nterrifying to anyone Minish-sized.",
           "es_ref": "Aparece en el sepulcro del bosque.\nChuchu corriente y moliente, pero,\ncuando tengas el tamaño de un minish,\nserá un enemigo gigante para ti.",
-          "pt": "Aparece no Santuário\nDeepwood. Chuchu\ncorriente e moliente,\n\nmas, quando tenha o\ntamanho de um Minish,\nserá um inimigo gigante\n\npara você."
+          "pt": "Aparece no Santuário\nDeepwood. É um Chulchul\ncomum, mas quando você\n\nestá no tamanho Minish,\nele se torna um monstro\ngigantesco!"
         },
         {
           "id": 128,
@@ -6570,7 +6570,7 @@
           "hex_id": "0x0982",
           "en": "Appears in the Temple of Droplets.\nAn ordinary blue Chuchu. Fighting him\nwhile Minish-sized is daunting, but just\ntry to avoid that electric attack.",
           "es_ref": "Aparece en el templo de las aguas.\nChuchu normal y corriente, pero serio\nenemigo cuando eres diminuto.\nProcura que no te dé calambre...",
-          "pt": "Aparece no Templo das\nGotas. Chuchu normal e\ncorriente, mas serio\n\ninimigo quando é\ndiminuto. Procura que\nnão te dê calambre..."
+          "pt": "Aparece no Templo das\nGotas. Um Chulchul azul\ncomum, mas terrível no\n\ntamanho Minish.\nCuidado com seus\nchoques elétricos!"
         },
         {
           "id": 131,
@@ -7263,7 +7263,7 @@
           "hex_id": "0x0B44",
           "en": "{Sound:00:8D}What!? What's this?!\n\nThat stupid Octorok stole our {Color:Red}element{Color:White}!\n\nDon't just stand there! We've got to go\nget it! {Player}! Now!",
           "es_ref": "{Sound:00:8D}¿Qué ocurre aquí?\n\n¡Ese fantasma se ha llevado nuestro\n{Color:Red}elemento{Color:White}! ¡Eh, {Player}, no podemos\nquedarnos mirando cómo se lo lleva!\n¡A por él! ¡Rápido!",
-          "pt": "{Sound:00:8D}Que acontece aqui?\n\nEsse fantasma se tem\nlevado nosso {Color:Red}elemento{Color:White}!\nEi, {Player}, não podemos\n\nnos ficar olhando como\nse o leve! A por ele!\nRápido!"
+          "pt": "{Sound:00:8D}O quê!? O que é isso?!\n\nAquele Octoroc idiota\nroubou nosso {Color:Red}elemento{Color:White}!\n\nNão fique aí parado!\nTemos que pegá-lo! {Player}\n! Agora!"
         },
         {
           "id": 69,
@@ -14291,35 +14291,35 @@
           "hex_id": "0x1F0E",
           "en": "At last, it's complete! The {Color:Red}Remote\nBomb{Color:White}! It blows up whenever you want!\nIf you ever need normal {Color:Red}bombs {Color:White}again,\njust trade me back for them. So...\nWant to trade for {Color:Red}Remote Bombs{Color:White}?\n   {Choice:FF}Sure   {Choice:1F:10}No, thanks",
           "es_ref": "¡Las tengo! ¡{Color:Red}Bombas con control remoto{Color:White}!\n¡Hazlas explotar cuando quieras!\nSi prefieres las bombas normales, vale,\npero ¿y si pruebas mi nuevo invento?\n¿Quieres {Color:Red}bombas con control remoto{Color:White}?\n  {Choice:FF}Venga, las probaré.  {Choice:1F:10}Mejor no.",
-          "pt": "As tenho! {Color:Red}Bombas de\nControle Remoto{Color:White}!\nHazlas explotar quando\n\nqueira! Se prefieres as\nbombas normais, vale,\nmas e se experimenta\n\nmeu novo invento? Quer {Color:Red}\nBombas de Controle\nRemoto{Color:White}? {Choice:FF}Venha, as\n\nprobaré. {Choice:1F:10}Melhor não."
+          "pt": "Finalmente completei!\nAs {Color:Red}Bombas Remotas{Color:White}! Elas\nexplodem na hora que\n\nvocê quiser! Se você\nfaz questão das\nnormais, tudo bem, mas\n\nnão quer\n\ntestar minha invenção?\nQuer as {Color:Red}Bombas Remotas{Color:White}?\n{Choice:FF}Claro! {Choice:1F:10}Agora não."
         },
         {
           "id": 15,
           "hex_id": "0x1F0F",
           "en": "You traded for {Color:Red}Remote Bombs{Color:White}.\n\nPress the button to use a bomb, then\npress the button again to detonate it.",
           "es_ref": "¡Ahora tienes {Color:Red}bombas con\ncontrol remoto{Color:White}!\n¡Pon una y {Color:Blue}vuelve a pulsar el botón{Color:White}\ncorrespondiente para que explote!",
-          "pt": "Agora tem {Color:Red}bombas com\ncontrol remoto{Color:White}! Ponha\numa e {Color:Blue}volta a\n\npressionar o botão{Color:White}\ncorrespondiente para\nque explote!"
+          "pt": "Você trocou por {Color:Red}Bombas\nRemotas{Color:White}! Coloque uma e {Color:Blue}\naperte o botão de novo{Color:White}\n\npara detoná-la!"
         },
         {
           "id": 16,
           "hex_id": "0x1F10",
           "en": "If you ever need a {Color:Red}Remote Bomb{Color:White}, just\nsay the word.",
           "es_ref": "Vuelve cuando quieras probar las\n{Color:Red}bombas con control remoto{Color:White}.",
-          "pt": "Volta quando queira\ntentar as {Color:Red}Bombas de\nControle Remoto{Color:White}."
+          "pt": "Se precisar das {Color:Red}Bombas\nRemotas{Color:White}, é só aparecer!"
         },
         {
           "id": 17,
           "hex_id": "0x1F11",
           "en": "You want to use normal {Color:Red}bombs {Color:White}again?\nJust trade back those {Color:Red}Remote Bombs{Color:White}.\nWant to trade for normal {Color:Red}bombs{Color:White}?\n   {Choice:FF}Sure   {Choice:1F:13}Maybe later",
           "es_ref": "¿Quieres tus {Color:Red}bombas normales{Color:White}?\nPero entonces te quedarás sin bombas\ncon control remoto. ¿Quieres {Color:Blue}devolver{Color:White}\nlas {Color:Red}bombas con control remoto{Color:White}?\n  {Choice:FF}Sí  {Choice:1F:13}No",
-          "pt": "Quer seus {Color:Red}bombas\nnormais{Color:White}? Mas então te\nquedarás sem bombas com\n\ncontrol remoto. Quer {Color:Blue}\ndevolver{Color:White} as {Color:Red}Bombas de\nControle Remoto{Color:White}? {Choice:FF}Sim {Choice:1F:13}\n\nNão"
+          "pt": "Quer voltar para as {Color:Red}\nbombas normais{Color:White}? Mas aí\nterá que abrir mão das {Color:Red}\n\nBombas\n\nRemotas{Color:White}... Quer {Color:Blue}trocar{Color:White}\npara as {Color:Red}bombas normais{Color:White}?\n{Choice:FF}Sim {Choice:1F:13}Não"
         },
         {
           "id": 18,
           "hex_id": "0x1F12",
           "en": "You traded for normal {Color:Red}bombs{Color:White}!\n\nIf you ever want to use {Color:Red}Remote Bombs{Color:White}\nagain, just come see me.",
           "es_ref": "¡Ya tienes tus {Color:Red}bombas normales{Color:White}\nde nuevo!\nVuelve cuando quieras usar las {Color:Red}bombas\ncon control remoto{Color:White} de nuevo.",
-          "pt": "Já tem seus {Color:Red}bombas\nnormais{Color:White} de novo! Volta\nquando queira usar as {Color:Red}\n\nbombas com control\nremoto{Color:White} de novo."
+          "pt": "Você trocou pelas {Color:Red}\nbombas normais{Color:White}! Volte\nse quiser as {Color:Red}Bombas\n\nRemotas{Color:White} de novo!"
         },
         {
           "id": 19,
@@ -14333,7 +14333,7 @@
           "hex_id": "0x1F14",
           "en": "Tell me if you want to swap for\n{Color:Red}Remote Bombs{Color:White}.\nI can trade with you if you like.\n   {Choice:FF}Sure   {Choice:1F:10}No, thanks",
           "es_ref": "Si quieres usar las {Color:Red}bombas con control\nremoto{Color:White}, dímelo y {Color:Blue}te las devolveré{Color:White}.\n  {Choice:FF}Las quiero.  {Choice:1F:10}No las quiero.",
-          "pt": "Se quer usar as {Color:Red}bombas\ncom control remoto{Color:White},\ndímelo e {Color:Blue}te as\n\ndevolveré{Color:White}. {Choice:FF}As quero. {Choice:1F:10}\nNão as quero."
+          "pt": "Diga se quiser trocar\npelas {Color:Red}Bombas Remotas{Color:White}! {Choice:FF}\nEu quero. {Choice:1F:10}Não quero."
         },
         {
           "id": 21,
@@ -16916,14 +16916,14 @@
           "hex_id": "0x2E05",
           "en": "10 Remote Bombs 40 Rupees",
           "es_ref": "10 bombas control remoto 40 rupias",
-          "pt": "10 bombas control\nremoto 40 Rupees"
+          "pt": "10 Bombas Remotas 40\nRupees"
         },
         {
           "id": 6,
           "hex_id": "0x2E06",
           "en": "30 Remote Bombs 100 Rupees",
           "es_ref": "30 bombas control remoto 100 rupias",
-          "pt": "30 bombas control\nremoto 100 Rupees"
+          "pt": "30 Bombas Remotas 100\nRupees"
         },
         {
           "id": 7,

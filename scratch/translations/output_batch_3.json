@@ -536,7 +536,7 @@
           "hex_id": "0x094B",
           "en": "Appears in various areas.\nThese bats live in dungeons and caves.\nTheir movement is unpredictable, so use\nranged weapons from a safe distance.",
           "es_ref": "Aparece por todo el juego,\nen mazmorras y cuevas. No se\nmueve con rapidez, así que aprovecha\nque tú sí puedes para atacar.",
-          "pt": "Aparece por tudo o\njogo, em mazmorras e\ncavernas. Não se mueve\n\ncom rapidez, assim que\naprovecha que você sim\npode para atacar."
+          "pt": "Aparece por todo o\njogo, em cavernas e\nmasmorras. O Morci é\n\nimprevisível,\n\nentão ataque à\ndistância para ficar em\nsegurança!"
         },
         {
           "id": 76,
@@ -599,7 +599,7 @@
           "hex_id": "0x0954",
           "en": "Appears in Veil Falls.\nThese tough Chuchus wear rocks on\ntheir heads. The rocks protect them\nfrom damage, so you'll have to find\na way to knock the rocks off before\nyou'll be able to destroy them.",
           "es_ref": "Aparece en varios sitios.\nEs un Chuchu con una roca sobre la\ncabeza. Está bien protegido, así que\nlo primero que debes hacer es romperla.",
-          "pt": "Aparece em varios\nlugares. É um Chuchu\ncom uma rocha sobre a\n\ncabeza. Está bem\nprotegido, assim que o\nprimeiro que deve fazer\n\né romperla."
+          "pt": "Aparece em vários\nlugares. É um Chulchul\ncom uma rocha na\n\ncabeça. Seu\n\ncorpo é protegido,\nentão tire a pedra\nantes de atacá-lo!"
         },
         {
           "id": 85,
@@ -753,21 +753,21 @@
           "hex_id": "0x096A",
           "en": "Appears in the Palace of Winds, etc.\nThey fire magic bolts from afar. Hit\nthem when they appear so they don't\ncast another spell!",
           "es_ref": "Aparece en el palacio de los vientos y\nen el castillo de Hyrule tomado por las\nsombras. Es muy hábil desde lejos.\nObserva cómo se mueve, ¡y ataca!",
-          "pt": "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule tomado pelas\n\nsombras. É muito hábil\ndesde longe. Observa\ncomo se mueve, e ataca!"
+          "pt": "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule. Dispara magias\n\nde longe. Ataque assim\nque aparecer para que\nnão lance outro\n\nfeitiço!"
         },
         {
           "id": 107,
           "hex_id": "0x096B",
           "en": "Appears in the Palace of Winds.\nThey wield fire magic. Hit them when\nthey appear so they don't cast\nanother spell!",
           "es_ref": "Aparece en el palacio de los vientos y\nen el castillo de Hyrule tomado por las\nsombras. Ataca con fuego.\nObserva cómo se mueve, ¡y ataca!",
-          "pt": "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule tomado pelas\n\nsombras. Ataca com\nfogo. Observa como se\nmueve, e ataca!"
+          "pt": "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule. Ataca com fogo.\n\nGolpeie-o logo ao\nsurgir para cancelar\nseu feitiço!"
         },
         {
           "id": 108,
           "hex_id": "0x096C",
           "en": "Appears in the Palace of Winds.\nThey wield ice magic. They're weak\nagainst fire, so attack with fire for a\nquick battle!",
           "es_ref": "Aparece en el palacio de los vientos y\nen el castillo de Hyrule tomado por\nlas sombras. Ataca con hielo.\nObserva cómo se mueve, ¡y ataca!",
-          "pt": "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule tomado pelas\n\nsombras. Ataca com\nhielo. Observa como se\nmueve, e ataca!"
+          "pt": "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule. Usa magia de\n\ngelo.\n\nÉ fraco contra o fogo,\nentão ataque com chamas\npara vencer depressa!"
         },
         {
           "id": 109,
@@ -781,14 +781,14 @@
           "hex_id": "0x096E",
           "en": "Appears in various areas.\nThere are red and blue ones. They've\nappeared in every Zelda game to date.\nThey spit rocks, so be careful!",
           "es_ref": "Aparece en varios sitios. Son rojos\ny azules, y aparecen en todos los\njuegos de Zelda.\n¡Cuidado con las rocas que lanzan!",
-          "pt": "Aparece em varios\nlugares. São vermelhos\ne azuis, e aparecen em\n\ntodos os jogos de\nZelda. Cuidado com as\nrochas que lançam!"
+          "pt": "Aparece em vários\nlugares. Há tipos\nvermelhos e azuis em\n\nquase todos os jogos\n\nde Zelda. Cuidado com\nas pedras que eles\ncospem!"
         },
         {
           "id": 111,
           "hex_id": "0x096F",
           "en": "Appears in... Well, we're not sure!\nThe legendary Golden Octorok. It can't\nbe confirmed, but they are said to\nshoot chunks of pure gold...",
           "es_ref": "No sabemos dónde aparece. Este\nenemigo es un fantasma. Dicen que\nlanza rocas que son fantasmas\ntambién. No se sabe nada más...",
-          "pt": "Não sabemos onde\naparece. Este inimigo é\num fantasma. Dizem que\n\nlança rochas que são\nfantasmas também. Não\nse sabe nada mais..."
+          "pt": "Não sabemos onde ele\naparece! O lendário {Color:Red}\nOctoroc Dourado{Color:White}.\n\nDizem que ele cospe\npepitas de ouro puro!\nMas nada foi\n\nconfirmado..."
         },
         {
           "id": 112,
@@ -837,7 +837,7 @@
           "hex_id": "0x0976",
           "en": "Appears in various areas.\nChuchus come in many colors.\nEach color is a little different, but\nranged weapons work well against all.",
           "es_ref": "Aparecen en varios sitios. Hay Chuchu\nde muchos colores y distintas\ncaracterísticas. Lo más eficaz es una\nherramienta para saltar.",
-          "pt": "Aparecen em varios\nlugares. Há Chuchu de\nmuchos cores e\n\ndistintas\ncaracterísticas. O\nmais eficaz é uma\n\nherramienta para\npular."
+          "pt": "Aparecem em vários\nlugares. Há Chulchuls\nde várias cores, cada\n\num\n\ncom traços diferentes.\nArmas de longo alcance\nfuncionam bem em todos!"
         },
         {
           "id": 119,
@@ -872,14 +872,14 @@
           "hex_id": "0x097B",
           "en": "Appears in various areas.\nThese Chuchus project spikes from\ntheir bodies at the first sign of\ndanger. Try a well-placed bomb.",
           "es_ref": "Aparece en varios sitios. Este Chuchu\nsaca los pinchos si siente peligro.\nSuele atacar en grupo, así que ¡usa\n{Color:Red}bombas{Color:White} para acabar con varios!",
-          "pt": "Aparece em varios\nlugares. Este Chuchu\nsaca os espinhos se\n\nsente perigo. Suele\natacar em grupo, assim\nque usa {Color:Red}bombas{Color:White} para\n\nacabar com varios!"
+          "pt": "Aparece em vários\nlugares. Este Chulchul\nergue espinhos se sente\n\nperigo.\n\nCostuma atacar em\ngrupo, então use bombas\npara acertar vários de\n\numa vez!"
         },
         {
           "id": 124,
           "hex_id": "0x097C",
           "en": "Appears in the Temple of Droplets.\nFrozen solid by the power of the Water\nElement. He's been frozen so long that\nhis hunger is unbearable.",
           "es_ref": "Aparece en el templo de las aguas.\nLlevaba mucho tiempo congelado\npor la fuerza del elemento de agua.\nAhora tiene mucha hambre...",
-          "pt": "Aparece no Templo das\nGotas. Levava muito\ntempo congelado pela\n\nForça do Elemento da\nÁgua. Agora tem mucha\nhambre..."
+          "pt": "Aparece no Templo das\nGotas. Ficou congelado\npor muito tempo pelo\n\npoder do\n\nElemento da Água. Agora\nele está com uma fome\ninsaciável!"
         },
         {
           "id": 125,
@@ -900,7 +900,7 @@
           "hex_id": "0x097F",
           "en": "Appears in Deepwood Shrine.\nA perfectly ordinary Chuchu. Though\nnot much of an enemy usually, they are\nterrifying to anyone Minish-sized.",
           "es_ref": "Aparece en el sepulcro del bosque.\nChuchu corriente y moliente, pero,\ncuando tengas el tamaño de un minish,\nserá un enemigo gigante para ti.",
-          "pt": "Aparece no Santuário\nDeepwood. Chuchu\ncorriente e moliente,\n\nmas, quando tenha o\ntamanho de um Minish,\nserá um inimigo gigante\n\npara você."
+          "pt": "Aparece no Santuário\nDeepwood. É um Chulchul\ncomum, mas quando você\n\nestá no tamanho Minish,\nele se torna um monstro\ngigantesco!"
         },
         {
           "id": 128,
@@ -921,7 +921,7 @@
           "hex_id": "0x0982",
           "en": "Appears in the Temple of Droplets.\nAn ordinary blue Chuchu. Fighting him\nwhile Minish-sized is daunting, but just\ntry to avoid that electric attack.",
           "es_ref": "Aparece en el templo de las aguas.\nChuchu normal y corriente, pero serio\nenemigo cuando eres diminuto.\nProcura que no te dé calambre...",
-          "pt": "Aparece no Templo das\nGotas. Chuchu normal e\ncorriente, mas serio\n\ninimigo quando é\ndiminuto. Procura que\nnão te dê calambre..."
+          "pt": "Aparece no Templo das\nGotas. Um Chulchul azul\ncomum, mas terrível no\n\ntamanho Minish.\nCuidado com seus\nchoques elétricos!"
         },
         {
           "id": 131,
@@ -1460,7 +1460,7 @@
           "hex_id": "0x0B44",
           "en": "{Sound:00:8D}What!? What's this?!\n\nThat stupid Octorok stole our {Color:Red}element{Color:White}!\n\nDon't just stand there! We've got to go\nget it! {Player}! Now!",
           "es_ref": "{Sound:00:8D}¿Qué ocurre aquí?\n\n¡Ese fantasma se ha llevado nuestro\n{Color:Red}elemento{Color:White}! ¡Eh, {Player}, no podemos\nquedarnos mirando cómo se lo lleva!\n¡A por él! ¡Rápido!",
-          "pt": "{Sound:00:8D}Que acontece aqui?\n\nEsse fantasma se tem\nlevado nosso {Color:Red}elemento{Color:White}!\nEi, {Player}, não podemos\n\nnos ficar olhando como\nse o leve! A por ele!\nRápido!"
+          "pt": "{Sound:00:8D}O quê!? O que é isso?!\n\nAquele Octoroc idiota\nroubou nosso {Color:Red}elemento{Color:White}!\n\nNão fique aí parado!\nTemos que pegá-lo! {Player}\n! Agora!"
         },
         {
           "id": 69,

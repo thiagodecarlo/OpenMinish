@@ -170,8 +170,27 @@ CANONICAL = [
     (r'\bescudo espejo\b', 'Escudo Espelho'),
     (r'\bescudo pequeño\b', 'Escudo Pequeno'),
     (r'\bsaco de bombas\b', 'Bolsa de Bombas'),
-    (r'\bbombas con control remoto\b', 'Bombas de Controle Remoto'),
+    (r'\bbombas con control remoto\b', 'Bombas Remotas'),
+    (r'\bbomba con control remoto\b', 'Bomba Remota'),
+    (r'\bbombas de control remoto\b', 'Bombas Remotas'),
+    (r'\bbomba de control remoto\b', 'Bomba Remota'),
+    (r'\bbombas remotas\b', 'Bombas Remotas'),
+    (r'\bbomba remota\b', 'Bomba Remota'),
     (r'\bcarcaj\b', 'Aljava'),
+
+    # Inimigos e Criaturas Canônicas (Oficial Nintendo PT-BR)
+    (r'\bChuchu\b', 'Chulchul'),
+    (r'\bChuchus\b', 'Chulchuls'),
+    (r'\bKeese\b', 'Morci'),
+    (r'\bOctorok\b', 'Octoroc'),
+    (r'\bOctoroks\b', 'Octorocs'),
+    (r'\bWizzrobe\b', 'Feitiçano'),
+    (r'\bWizzrobes\b', 'Feitiçanos'),
+    (r'\bBokoblin\b', 'Koboblin'),
+    (r'\bBokoblins\b', 'Koboblins'),
+    (r'\bLizalfos\b', 'Lagalfos'),
+    (r'\bLynel\b', 'Centaleão'),
+    (r'\bHinox\b', 'Rinox'),
 
     # Elementos Sagrados
     (r'\belemento de tierra\b', 'Elemento da Terra'),
@@ -247,6 +266,49 @@ EXACT_GLOBAL_OVERRIDES = {
     0x0883: "Zelda {Symbol:0D} {Player}",
     0x0C80: "{Sound:00:92}Assim que resolvemos um\nproblema, surge outro!\n{Player}, sinto muito...\n\nMas você terá que adiar\nseu reencontro com {Color:Green}Zelda{Color:White}\npara depois!",
     0x240D: "Se eu fosse com você, só\natrapalharia.\nPor favor, {Player}, salve a\n\nminha filha, a {Color:Green}Princesa Zelda{Color:White}!",
+
+    # Bombas Remotas (Oficial Nintendo PT-BR)
+    0x0408: "Bombas Remotas",
+    0x0508: "{04:10:0E}Você obteve as {Color:Red}Bombas\nRemotas{Color:White}! Coloque uma bomba\ne aperte o botão de novo\n\npara detoná-la!",
+    0x1F0E: "Finalmente completei! As\n{Color:Red}Bombas Remotas{Color:White}! Elas\nexplodem na hora que\n\nvocê quiser! Se você faz\nquestão das normais,\ntudo bem, mas não quer\n\ntestar minha invenção?\nQuer as {Color:Red}Bombas Remotas{Color:White}?\n{Choice:FF}Claro! {Choice:1F:10}Agora não.",
+    0x1F0F: "Você trocou por {Color:Red}Bombas\nRemotas{Color:White}! Coloque uma e\n{Color:Blue}aperte o botão de novo{Color:White}\n\npara detoná-la!",
+    0x1F10: "Se precisar das {Color:Red}Bombas\nRemotas{Color:White}, é só aparecer!",
+    0x1F11: "Quer voltar para as {Color:Red}bombas\nnormais{Color:White}? Mas aí terá\nque abrir mão das {Color:Red}Bombas\n\nRemotas{Color:White}... Quer {Color:Blue}trocar{Color:White}\npara as {Color:Red}bombas normais{Color:White}?\n{Choice:FF}Sim {Choice:1F:13}Não",
+    0x1F12: "Você trocou pelas {Color:Red}bombas\nnormais{Color:White}! Volte se quiser\nas {Color:Red}Bombas Remotas{Color:White} de novo!",
+    0x1F14: "Diga se quiser trocar\npelas {Color:Red}Bombas Remotas{Color:White}!\n{Choice:FF}Eu quero. {Choice:1F:10}Não quero.",
+    0x2E05: "10 Bombas Remotas\n40 Rupees",
+    0x2E06: "30 Bombas Remotas\n100 Rupees",
+
+    # Inimigos Canônicos (Oficial Nintendo PT-BR)
+    0x084B: "Morci",
+    0x0854: "Chulchul de Pedra",
+    0x086A: "Feitiçano",
+    0x086B: "Feitiçano de Fogo",
+    0x086C: "Feitiçano de Gelo",
+    0x086E: "Octoroc",
+    0x086F: "Octoroc Dourado",
+    0x0876: "Chulchul Verde",
+    0x087B: "Chulchul Espinhoso",
+    0x087C: "Grande Octoroc",
+    0x087F: "Grande Chulchul Verde",
+    0x0882: "Grande Chulchul Azul",
+
+    # Descrições de Monstros (Oficial Nintendo PT-BR)
+    0x094B: "Aparece por todo o jogo,\nem cavernas e masmorras.\nO Morci é imprevisível,\n\nentão ataque à distância\npara ficar em segurança!",
+    0x0954: "Aparece em vários lugares.\nÉ um Chulchul com uma\nrocha na cabeça. Seu\n\ncorpo é protegido,\nentão tire a pedra antes\nde atacá-lo!",
+    0x096A: "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule. Dispara magias\n\nde longe. Ataque assim\nque aparecer para que\nnão lance outro feitiço!",
+    0x096B: "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule. Ataca com fogo.\n\nGolpeie-o logo ao surgir\npara cancelar seu feitiço!",
+    0x096C: "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule. Usa magia de gelo.\n\nÉ fraco contra o fogo,\nentão ataque com chamas\npara vencer depressa!",
+    0x096E: "Aparece em vários lugares.\nHá tipos vermelhos e azuis\nem quase todos os jogos\n\nde Zelda. Cuidado com as\npedras que eles cospem!",
+    0x096F: "Não sabemos onde ele\naparece! O lendário\n{Color:Red}Octoroc Dourado{Color:White}.\n\nDizem que ele cospe\npepitas de ouro puro!\nMas nada foi confirmado...",
+    0x0976: "Aparecem em vários\nlugares. Há Chulchuls de\nvárias cores, cada um\n\ncom traços diferentes.\nArmas de longo alcance\nfuncionam bem em todos!",
+    0x097B: "Aparece em vários lugares.\nEste Chulchul ergue\nespinhos se sente perigo.\n\nCostuma atacar em grupo,\nentão use bombas para\nacertar vários de uma vez!",
+    0x097C: "Aparece no Templo das\nGotas. Ficou congelado por\nmuito tempo pelo poder do\n\nElemento da Água. Agora ele\nestá com uma fome\ninsaciável!",
+    0x097F: "Aparece no Santuário\nDeepwood. É um Chulchul\ncomum, mas quando você\n\nestá no tamanho Minish,\nele se torna um monstro\ngigantesco!",
+    0x0982: "Aparece no Templo das\nGotas. Um Chulchul azul\ncomum, mas terrível no\n\ntamanho Minish. Cuidado com\nseus choques elétricos!",
+
+    # Diálogo de Cutscene (Grupo 0x0B)
+    0x0B44: "{Sound:00:8D}O quê!? O que é isso?!\n\nAquele Octoroc idiota\nroubou nosso {Color:Red}elemento{Color:White}!\n\nNão fique aí parado!\nTemos que pegá-lo!\n{Player}! Agora!",
 }
 
 def morph_word(w):
