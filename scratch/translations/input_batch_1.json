@@ -1,0 +1,2182 @@
+{
+  "batch_name": "batch_1",
+  "groups": [
+    {
+      "group_id": 1,
+      "group_hex": "0x01",
+      "name": "Créditos Finais & Epílogo",
+      "messages": [
+        {
+          "id": 0,
+          "hex_id": "0x0100",
+          "en": "\n\n\n\n\n{Color:Green}DIRECTOR{Color:White}\n\nHidemaro Fujibayashi",
+          "es_ref": "\n\n\n\n\n{Color:Green}DIRECTOR{Color:White}\n\nHidemaro Fujibayashi",
+          "pt": "{Color:Green}DIRECTOR{Color:White}\n\nHidemaro Fujibayashi"
+        },
+        {
+          "id": 1,
+          "hex_id": "0x0101",
+          "en": "{Color:Green}PLANNING{Color:White}\n\nHidemaro Fujibayashi\nSuchol Lee\nJoko Kazuki\nMitsuki Tsukada\nMinoru Nakai\nTakashi Hamamura\nShigeki Morihira",
+          "es_ref": "{Color:Green}PLANNING{Color:White}\n\nHidemaro Fujibayashi\nSuchol Lee\nJoko Kazuki\nMitsuki Tsukada\nMinoru Nakai\nTakashi Hamamura\nShigeki Morihira",
+          "pt": "{Color:Green}PLANNING{Color:White}\n\nHidemaro Fujibayashi\nSuchol Lee\nJoko Kazuki\nMitsuki Tsukada\nMinoru Nakai\nTakashi Hamamura\nShigeki Morihira"
+        },
+        {
+          "id": 2,
+          "hex_id": "0x0102",
+          "en": "{Color:Green}PROGRAMMING{Color:White}\n\nToshihiko Honda\nshimitan\nYoshiyuki Fujikawa\nN.MINOMIYA\nYohey Doi\nK.YOSHIDA",
+          "es_ref": "{Color:Green}PROGRAMMING{Color:White}\n\nToshihiko Honda\nshimitan\nYoshiyuki Fujikawa\nN.MINOMIYA\nYohey Doi\nK.YOSHIDA",
+          "pt": "{Color:Green}PROGRAMMING{Color:White}\n\nToshihiko Honda\nshimitan\nYoshiyuki Fujikawa\nN.MINOMIYA\nYohey Doi\nK.YOSHIDA"
+        },
+        {
+          "id": 3,
+          "hex_id": "0x0103",
+          "en": "{Color:Green}OBJECT DESIGN{Color:White}\n\nKIMOKIMO\nerichop\nKumiko Fujiwara\n\nKeisuke\n     \"TWIGGY\"\n         Motozono",
+          "es_ref": "{Color:Green}OBJECT DESIGN{Color:White}\n\nKIMOKIMO\nerichop\nKumiko Fujiwara\n\nKeisuke\n     \"TWIGGY\"\n         Motozono",
+          "pt": "{Color:Green}OBJECT DESIGN{Color:White}\n\nKIMOKIMO\nerichop\nKumiko Fujiwara\n\nKeisuke\n     \"TWIGGY\"\n         Motozono"
+        },
+        {
+          "id": 4,
+          "hex_id": "0x0104",
+          "en": "{Color:Green}SCROLL DESIGN{Color:White}\n\nNishitsuji Asae\nTakayuki Nakayama\nHiroyuki Imahori\nYoshi Maeda\nHaruki Suetsugu",
+          "es_ref": "{Color:Green}SCROLL DESIGN{Color:White}\n\nNishitsuji Asae\nTakayuki Nakayama\nHiroyuki Imahori\nYoshi Maeda\nHaruki Suetsugu",
+          "pt": "{Color:Green}SCROLL DESIGN{Color:White}\n\nNishitsuji Asae\nTakayuki Nakayama\nHiroyuki Imahori\nYoshi Maeda\nHaruki Suetsugu"
+        },
+        {
+          "id": 5,
+          "hex_id": "0x0105",
+          "en": "\n{Color:Green}MUSIC{Color:White}\n\nMitsuhiko Takano\n\n\n{Color:Green}SOUND EFFECTS{Color:White}\n\nShinji Amagishi\nTakashi Moriguchi",
+          "es_ref": "\n{Color:Green}MUSIC{Color:White}\n\nMitsuhiko Takano\n\n\n{Color:Green}SOUND EFFECTS{Color:White}\n\nShinji Amagishi\nTakashi Moriguchi",
+          "pt": "{Color:Green}MUSIC{Color:White}\n\nMitsuhiko Takano\n\n\n{Color:Green}SOUND EFFECTS{Color:White}\n\nShinji Amagishi\nTakashi Moriguchi"
+        },
+        {
+          "id": 6,
+          "hex_id": "0x0106",
+          "en": "\n\n\n\n\n{Color:Green}CHARACTER DESIGN{Color:White}\n\nKIMOKIMO",
+          "es_ref": "\n\n\n\n\n{Color:Green}CHARACTER DESIGN{Color:White}\n\nKIMOKIMO",
+          "pt": "{Color:Green}CHARACTER DESIGN{Color:White}\n\nKIMOKIMO"
+        },
+        {
+          "id": 7,
+          "hex_id": "0x0107",
+          "en": "\n\n\n\n\n{Color:Green}ARTWORK{Color:White}\n\nHaruki Suetsugu",
+          "es_ref": "\n\n\n\n\n{Color:Green}ARTWORK{Color:White}\n\nHaruki Suetsugu",
+          "pt": "{Color:Green}ARTWORK{Color:White}\n\nHaruki Suetsugu"
+        },
+        {
+          "id": 8,
+          "hex_id": "0x0108",
+          "en": "\n\n\n\n{Color:Green}TITLE LOGO DESIGN{Color:White}\n\nSHOEI\nSatoshi Ukai",
+          "es_ref": "\n\n\n\n{Color:Green}TITLE LOGO DESIGN{Color:White}\n\nSHOEI\nSatoshi Ukai",
+          "pt": "{Color:Green}TITLE LOGO DESIGN{Color:White}\n\nSHOEI\nSatoshi Ukai"
+        },
+        {
+          "id": 10,
+          "hex_id": "0x010A",
+          "en": "\n\n{Color:Green}SUPERVISOR{Color:White}\n\nE. Aonuma\nY. Yamada\nM. Narita\nT. Tezuka\nY. Yamashita",
+          "es_ref": "\n\n{Color:Green}SUPERVISOR{Color:White}\n\nE.Aonuma\nY.Yamada\nM.Narita\nT.Tezuka\nY.Yamashita",
+          "pt": "{Color:Green}SUPERVISOR{Color:White}\n\nE. Aonuma\nY. Yamada\nM. Narita\nT. Tezuka\nY. Yamashita"
+        },
+        {
+          "id": 11,
+          "hex_id": "0x010B",
+          "en": "\n\n\n\n\n{Color:Green}SOUND ADVISOR{Color:White}\n\nK. Kondo",
+          "es_ref": "\n\n\n\n\n{Color:Green}SOUND ADVISOR{Color:White}\n\nK.Kondo",
+          "pt": "{Color:Green}SOUND ADVISOR{Color:White}\n\nK. Kondo"
+        },
+        {
+          "id": 12,
+          "hex_id": "0x010C",
+          "en": "{Color:Green}SPECIAL THANKS{Color:White}\n\nM. TAKEGUCHI\nSUPER MARIO CLUB\nNOA PRODUCT\n         TESTING\n\nROCKMAN CLUB\nCAPCOM HC\nFLAGSHIP Co., Ltd",
+          "es_ref": "{Color:Green}SPECIAL THANKS{Color:White}\n\nM.TAKEGUCHI\nSUPER MARIO CLUB\n\nROCKMAN CLUB\nCAPCOM HC\n\nFLAGSHIP Co.,Ltd",
+          "pt": "{Color:Green}SPECIAL THANKS{Color:White}\n\nM. TAKEGUCHI\nSUPER MARIO CLUB\nNOA PRODUCT\n         TESTING\n\nROCKMAN CLUB\nCAPCOM HC\nFLAGSHIP Co., Ltd"
+        },
+        {
+          "id": 13,
+          "hex_id": "0x010D",
+          "en": "\n\n\n\n{Color:Green}SPECIAL THANKS{Color:White}\n\nORIGINAL\n     \"ZELDA\" STAFF",
+          "es_ref": "\n\n\n\n{Color:Green}SPECIAL THANKS{Color:White}\n\nORIGINAL\n     \"ZELDA\" STAFF",
+          "pt": "{Color:Green}SPECIAL THANKS{Color:White}\n\nORIGINAL\n     \"ZELDA\" STAFF"
+        },
+        {
+          "id": 14,
+          "hex_id": "0x010E",
+          "en": "{Color:Green}MANAGEMENT{Color:White}\n\nnosetake\nMasanori Kusumoto\n\n\n{Color:Green}PRODUCT\n    MANAGEMENT{Color:White}\n\nYasushi Adachi",
+          "es_ref": "{Color:Green}MANAGEMENT{Color:White}\n\nnosetake\nMasanori Kusumoto\n\n\n{Color:Green}PRODUCT\n    MANAGEMENT{Color:White}\n\nYasushi Adachi",
+          "pt": "{Color:Green}MANAGEMENT{Color:White}\n\nnosetake\nMasanori Kusumoto\n\n\n{Color:Green}PRODUCT\n    MANAGEMENT{Color:White}\n\nYasushi Adachi"
+        },
+        {
+          "id": 15,
+          "hex_id": "0x010F",
+          "en": "\n\n\n\n\n{Color:Green}PRODUCER{Color:White}\n\nKeiji Inafune",
+          "es_ref": "\n\n\n\n\n{Color:Green}PRODUCER{Color:White}\n\nKeiji Inafune",
+          "pt": "{Color:Green}PRODUCER{Color:White}\n\nKeiji Inafune"
+        },
+        {
+          "id": 16,
+          "hex_id": "0x0110",
+          "en": "\n\n\n{Color:Green}GENERAL\n    PRODUCER{Color:White}\n\nShigeru Miyamoto",
+          "es_ref": "\n\n\n{Color:Green}GENERAL\n    PRODUCER{Color:White}\n\nShigeru Miyamoto",
+          "pt": "{Color:Green}GENERAL\n    PRODUCER{Color:White}\n\nShigeru Miyamoto"
+        },
+        {
+          "id": 17,
+          "hex_id": "0x0111",
+          "en": "\n\n\n{Color:Green}EXECUTIVE\n      PRODUCER{Color:White}\n\nSatoru Iwata",
+          "es_ref": "\n\n\n{Color:Green}EXECUTIVE\n      PRODUCER{Color:White}\n\nSatoru Iwata",
+          "pt": "{Color:Green}EXECUTIVE\n      PRODUCER{Color:White}\n\nSatoru Iwata"
+        },
+        {
+          "id": 19,
+          "hex_id": "0x0113",
+          "en": "\n\n\n\n\nNORTH AMERICAN\n     LOCALIZATION\n",
+          "es_ref": "{Color:Red}European\n Localization\n   {Color:Green}COORDINATION{Color:White}\n    Marcus Krause\n\n   {Color:Green}TRANSLATION{Color:White}\n    {Color:Blue}GERMAN{Color:White}\n     Martin Weers\n     Andrea Jähn",
+          "pt": "NORTH AMERICAN\n     LOCALIZATION"
+        },
+        {
+          "id": 20,
+          "hex_id": "0x0114",
+          "en": "\n\n\n\n{Color:Green}MANAGEMENT{Color:White}\n\nJeff Miller\nLeslie Swan",
+          "es_ref": "{Color:Green}TRANSLATION{Color:White}\n {Color:Blue}FRENCH{Color:White}\n  Laurent Sautière\n  Pierre Sanchez\n {Color:Blue}SPANISH{Color:White}\n  Inés Rubio\n     San Martín\n  Sofía Marín\n     Aguilar-Galindo",
+          "pt": "{Color:Green}MANAGEMENT{Color:White}\n\nJeff Miller\nLeslie Swan"
+        },
+        {
+          "id": 21,
+          "hex_id": "0x0115",
+          "en": "\n\n\n\n{Color:Green}LOCALIZATION\n\n{Color:White}Rich Amtower\nScot Ritchey\nBill Trinen",
+          "es_ref": "{Color:Blue}ITALIAN{Color:White}\n Marilina Carpanzano\n Marina Paris\n{Color:Blue}ENGLISH{Color:White}\n Rich Amtower\n Scot Ritchey\n Bill Trinen\n\nValidation and\n         Testing Team",
+          "pt": "{Color:Green}LOCALIZATION\n\n{Color:White}Rich Amtower\nScot Ritchey\nBill Trinen"
+        },
+        {
+          "id": 24,
+          "hex_id": "0x0118",
+          "en": "\n\n\n\nAll Rights, including the copyrights of\nGame, Scenario, Music and Program,\nreserved by NINTENDO.",
+          "es_ref": "\n\n\n\nAll Rights, including the copyrights of\nGame, Scenario, Music and Program,\nreserved by NINTENDO.",
+          "pt": "All Rights, including the copyrights of\nGame, Scenario, Music and Program,\nreserved by NINTENDO."
+        },
+        {
+          "id": 25,
+          "hex_id": "0x0119",
+          "en": "Thus did {Player}'s quest\ncome to an end.",
+          "es_ref": "Y así acabó la aventura\nde {Player}...",
+          "pt": "Assim a jornada de {Player}\nchegou ao fim."
+        },
+        {
+          "id": 26,
+          "hex_id": "0x011A",
+          "en": "But surely, this is not the end of Zelda\nand {Player}'s adventures in Hyrule.",
+          "es_ref": "Aunque... Hyrule siempre necesitará\nla presencia de {Player} y de Zelda...",
+          "pt": "Mas certamente, este não é o fim das\naventuras de Zelda e {Player} em Hyrule."
+        },
+        {
+          "id": 27,
+          "hex_id": "0x011B",
+          "en": "\nThe legend will continue...",
+          "es_ref": "\nAsí la leyenda continuará...",
+          "pt": "\nA lenda continuará..."
+        },
+        {
+          "id": 28,
+          "hex_id": "0x011C",
+          "en": "...as long as the power of the light\nforce echoes throughout the ages.",
+          "es_ref": "\nmientras la fuerza guíe sus pasos...",
+          "pt": "...enquanto o poder da Força da Luz\necoar através das eras."
+        }
+      ]
+    },
+    {
+      "group_id": 2,
+      "group_hex": "0x02",
+      "name": "Nomes de NPCs & Lugares de Hyrule",
+      "messages": [
+        {
+          "id": 0,
+          "hex_id": "0x0200",
+          "en": "NPC Name",
+          "es_ref": "Otros personajes",
+          "pt": "NPC Name"
+        },
+        {
+          "id": 1,
+          "hex_id": "0x0201",
+          "en": "Mysterious Cloud",
+          "es_ref": "Nube extraña",
+          "pt": "Mysterious Cloud"
+        },
+        {
+          "id": 2,
+          "hex_id": "0x0202",
+          "en": "Mysterious Statue",
+          "es_ref": "Estatua de piedra",
+          "pt": "Mysterious Statue"
+        },
+        {
+          "id": 3,
+          "hex_id": "0x0203",
+          "en": "Source of the Flow",
+          "es_ref": "Origen del agua",
+          "pt": "Source of the Flow"
+        },
+        {
+          "id": 4,
+          "hex_id": "0x0204",
+          "en": "Percy",
+          "es_ref": "Poemun",
+          "pt": "Percy"
+        },
+        {
+          "id": 5,
+          "hex_id": "0x0205",
+          "en": "Mysterious Wall",
+          "es_ref": "Muro extraño",
+          "pt": "Mysterious Wall"
+        },
+        {
+          "id": 6,
+          "hex_id": "0x0206",
+          "en": "Belari",
+          "es_ref": "Inventín",
+          "pt": "Belari"
+        },
+        {
+          "id": 8,
+          "hex_id": "0x0208",
+          "en": "Stranger",
+          "es_ref": "Forastero",
+          "pt": "Stranger"
+        },
+        {
+          "id": 9,
+          "hex_id": "0x0209",
+          "en": "Din",
+          "es_ref": "Din",
+          "pt": "Din"
+        },
+        {
+          "id": 10,
+          "hex_id": "0x020A",
+          "en": "Farore",
+          "es_ref": "Farore",
+          "pt": "Farore"
+        },
+        {
+          "id": 11,
+          "hex_id": "0x020B",
+          "en": "Nayru",
+          "es_ref": "Nayru",
+          "pt": "Nayru"
+        },
+        {
+          "id": 12,
+          "hex_id": "0x020C",
+          "en": "Swiftblade",
+          "es_ref": "Tesshin",
+          "pt": "Swiftblade"
+        },
+        {
+          "id": 13,
+          "hex_id": "0x020D",
+          "en": "Grayblade",
+          "es_ref": "Tosshin",
+          "pt": "Grayblade"
+        },
+        {
+          "id": 14,
+          "hex_id": "0x020E",
+          "en": "Waveblade",
+          "es_ref": "Hasshin",
+          "pt": "Waveblade"
+        },
+        {
+          "id": 15,
+          "hex_id": "0x020F",
+          "en": "Grimblade",
+          "es_ref": "Kusshin",
+          "pt": "Grimblade"
+        },
+        {
+          "id": 16,
+          "hex_id": "0x0210",
+          "en": "Swiftblade I",
+          "es_ref": "Tesshin I",
+          "pt": "Swiftblade I"
+        },
+        {
+          "id": 17,
+          "hex_id": "0x0211",
+          "en": "Gentari",
+          "es_ref": "Gentel",
+          "pt": "Gentari"
+        },
+        {
+          "id": 18,
+          "hex_id": "0x0212",
+          "en": "Festari",
+          "es_ref": "Sacerdote Festa",
+          "pt": "Festari"
+        },
+        {
+          "id": 19,
+          "hex_id": "0x0213",
+          "en": "Melari",
+          "es_ref": "Herrero Melta",
+          "pt": "Melari"
+        },
+        {
+          "id": 20,
+          "hex_id": "0x0214",
+          "en": "Librari",
+          "es_ref": "Anciano Librari",
+          "pt": "Librari"
+        },
+        {
+          "id": 21,
+          "hex_id": "0x0215",
+          "en": "Forest Minish",
+          "es_ref": "Minish bosque",
+          "pt": "Forest Minish"
+        },
+        {
+          "id": 22,
+          "hex_id": "0x0216",
+          "en": "Mountain Minish",
+          "es_ref": "Minish montaña",
+          "pt": "Mountain Minish"
+        },
+        {
+          "id": 23,
+          "hex_id": "0x0217",
+          "en": "Town Minish",
+          "es_ref": "Minish ciudadela",
+          "pt": "Town Minish"
+        },
+        {
+          "id": 24,
+          "hex_id": "0x0218",
+          "en": "Village Minish",
+          "es_ref": "Minish comunidad",
+          "pt": "Village Minish"
+        },
+        {
+          "id": 25,
+          "hex_id": "0x0219",
+          "en": "Library Minish",
+          "es_ref": "Minish biblioteca",
+          "pt": "Library Minish"
+        },
+        {
+          "id": 27,
+          "hex_id": "0x021B",
+          "en": "Goron",
+          "es_ref": "Goron",
+          "pt": "Goron"
+        },
+        {
+          "id": 28,
+          "hex_id": "0x021C",
+          "en": "Business Scrub",
+          "es_ref": "Matorral mercader",
+          "pt": "Business Scrub"
+        },
+        {
+          "id": 29,
+          "hex_id": "0x021D",
+          "en": "Spookter",
+          "es_ref": "Zurari",
+          "pt": "Spookter"
+        },
+        {
+          "id": 31,
+          "hex_id": "0x021F",
+          "en": "Dampé",
+          "es_ref": "Dumper",
+          "pt": "Dampé"
+        },
+        {
+          "id": 32,
+          "hex_id": "0x0220",
+          "en": "Syrup",
+          "es_ref": "Sirope",
+          "pt": "Syrup"
+        },
+        {
+          "id": 34,
+          "hex_id": "0x0222",
+          "en": "Anton",
+          "es_ref": "Yantan",
+          "pt": "Anton"
+        },
+        {
+          "id": 35,
+          "hex_id": "0x0223",
+          "en": "Sheila",
+          "es_ref": "Shor",
+          "pt": "Sheila"
+        },
+        {
+          "id": 36,
+          "hex_id": "0x0224",
+          "en": "June",
+          "es_ref": "Jun",
+          "pt": "June"
+        },
+        {
+          "id": 37,
+          "hex_id": "0x0225",
+          "en": "Keeley",
+          "es_ref": "Kiri",
+          "pt": "Keeley"
+        },
+        {
+          "id": 38,
+          "hex_id": "0x0226",
+          "en": "Gepper",
+          "es_ref": "Geppo",
+          "pt": "Gepper"
+        },
+        {
+          "id": 39,
+          "hex_id": "0x0227",
+          "en": "Klaus",
+          "es_ref": "Frekt",
+          "pt": "Klaus"
+        },
+        {
+          "id": 40,
+          "hex_id": "0x0228",
+          "en": "Marshall",
+          "es_ref": "Masa",
+          "pt": "Marshall"
+        },
+        {
+          "id": 41,
+          "hex_id": "0x0229",
+          "en": "Dottie",
+          "es_ref": "Mable",
+          "pt": "Dottie"
+        },
+        {
+          "id": 42,
+          "hex_id": "0x022A",
+          "en": "Edmond",
+          "es_ref": "Edmond",
+          "pt": "Edmond"
+        },
+        {
+          "id": 43,
+          "hex_id": "0x022B",
+          "en": "Martin",
+          "es_ref": "Muso",
+          "pt": "Martin"
+        },
+        {
+          "id": 44,
+          "hex_id": "0x022C",
+          "en": "Spekter",
+          "es_ref": "Risitas",
+          "pt": "Spekter"
+        },
+        {
+          "id": 45,
+          "hex_id": "0x022D",
+          "en": "Guts",
+          "es_ref": "Guts",
+          "pt": "Guts"
+        },
+        {
+          "id": 46,
+          "hex_id": "0x022E",
+          "en": "Match",
+          "es_ref": "Macchi",
+          "pt": "Match"
+        },
+        {
+          "id": 48,
+          "hex_id": "0x0230",
+          "en": "Zill",
+          "es_ref": "Jil",
+          "pt": "Zill"
+        },
+        {
+          "id": 49,
+          "hex_id": "0x0231",
+          "en": "Lolly",
+          "es_ref": "Bekko",
+          "pt": "Lolly"
+        },
+        {
+          "id": 50,
+          "hex_id": "0x0232",
+          "en": "Candy",
+          "es_ref": "Candy",
+          "pt": "Candy"
+        },
+        {
+          "id": 52,
+          "hex_id": "0x0234",
+          "en": "Crenel Hermit",
+          "es_ref": "Ermitaño Gongol",
+          "pt": "Crenel Hermit"
+        },
+        {
+          "id": 54,
+          "hex_id": "0x0236",
+          "en": "Verona",
+          "es_ref": "Verona",
+          "pt": "Verona"
+        },
+        {
+          "id": 55,
+          "hex_id": "0x0237",
+          "en": "Julietta",
+          "es_ref": "Julieta",
+          "pt": "Julietta"
+        },
+        {
+          "id": 56,
+          "hex_id": "0x0238",
+          "en": "Romio",
+          "es_ref": "Romeo",
+          "pt": "Romio"
+        },
+        {
+          "id": 58,
+          "hex_id": "0x023A",
+          "en": "Mama",
+          "es_ref": "Mamá",
+          "pt": "Mama"
+        },
+        {
+          "id": 59,
+          "hex_id": "0x023B",
+          "en": "Joe",
+          "es_ref": "Dorip",
+          "pt": "Joe"
+        },
+        {
+          "id": 60,
+          "hex_id": "0x023C",
+          "en": "Baris",
+          "es_ref": "Moka",
+          "pt": "Baris"
+        },
+        {
+          "id": 61,
+          "hex_id": "0x023D",
+          "en": "Chai",
+          "es_ref": "Chino",
+          "pt": "Chai"
+        },
+        {
+          "id": 62,
+          "hex_id": "0x023E",
+          "en": "Herb",
+          "es_ref": "Orwen",
+          "pt": "Herb"
+        },
+        {
+          "id": 63,
+          "hex_id": "0x023F",
+          "en": "Jasmine",
+          "es_ref": "Bluman",
+          "pt": "Jasmine"
+        },
+        {
+          "id": 64,
+          "hex_id": "0x0240",
+          "en": "Breve",
+          "es_ref": "Kilman",
+          "pt": "Breve"
+        },
+        {
+          "id": 66,
+          "hex_id": "0x0242",
+          "en": "Mutoh",
+          "es_ref": "Muto",
+          "pt": "Mutoh"
+        },
+        {
+          "id": 67,
+          "hex_id": "0x0243",
+          "en": "Mack",
+          "es_ref": "Kyu",
+          "pt": "Mack"
+        },
+        {
+          "id": 68,
+          "hex_id": "0x0244",
+          "en": "Doyle",
+          "es_ref": "Jee",
+          "pt": "Doyle"
+        },
+        {
+          "id": 69,
+          "hex_id": "0x0245",
+          "en": "Bremor",
+          "es_ref": "Mita",
+          "pt": "Bremor"
+        },
+        {
+          "id": 70,
+          "hex_id": "0x0246",
+          "en": "Brent",
+          "es_ref": "Gari",
+          "pt": "Brent"
+        },
+        {
+          "id": 72,
+          "hex_id": "0x0248",
+          "en": "Beedle",
+          "es_ref": "Terry",
+          "pt": "Beedle"
+        },
+        {
+          "id": 73,
+          "hex_id": "0x0249",
+          "en": "Pina",
+          "es_ref": "Fresón",
+          "pt": "Pina"
+        },
+        {
+          "id": 74,
+          "hex_id": "0x024A",
+          "en": "Brocco",
+          "es_ref": "Broco Lee",
+          "pt": "Brocco"
+        },
+        {
+          "id": 76,
+          "hex_id": "0x024C",
+          "en": "Emma",
+          "es_ref": "Taki",
+          "pt": "Emma"
+        },
+        {
+          "id": 77,
+          "hex_id": "0x024D",
+          "en": "Bindle",
+          "es_ref": "Luk",
+          "pt": "Bindle"
+        },
+        {
+          "id": 78,
+          "hex_id": "0x024E",
+          "en": "Satchel",
+          "es_ref": "Kobak",
+          "pt": "Satchel"
+        },
+        {
+          "id": 80,
+          "hex_id": "0x0250",
+          "en": "Tina",
+          "es_ref": "Chinmin",
+          "pt": "Tina"
+        },
+        {
+          "id": 81,
+          "hex_id": "0x0251",
+          "en": "Dina",
+          "es_ref": "Minmin",
+          "pt": "Dina"
+        },
+        {
+          "id": 82,
+          "hex_id": "0x0252",
+          "en": "Joel",
+          "es_ref": "Joel",
+          "pt": "Joel"
+        },
+        {
+          "id": 83,
+          "hex_id": "0x0253",
+          "en": "Harrison",
+          "es_ref": "Harrison",
+          "pt": "Harrison"
+        },
+        {
+          "id": 84,
+          "hex_id": "0x0254",
+          "en": "Erik",
+          "es_ref": "Erik",
+          "pt": "Erik"
+        },
+        {
+          "id": 85,
+          "hex_id": "0x0255",
+          "en": "Jim",
+          "es_ref": "Jim",
+          "pt": "Jim"
+        },
+        {
+          "id": 86,
+          "hex_id": "0x0256",
+          "en": "Berry",
+          "es_ref": "Billy",
+          "pt": "Berry"
+        },
+        {
+          "id": 87,
+          "hex_id": "0x0257",
+          "en": "Leila",
+          "es_ref": "Leila",
+          "pt": "Leila"
+        },
+        {
+          "id": 89,
+          "hex_id": "0x0259",
+          "en": "Anju",
+          "es_ref": "Anju",
+          "pt": "Anju"
+        },
+        {
+          "id": 90,
+          "hex_id": "0x025A",
+          "en": "Gorman",
+          "es_ref": "Gorman",
+          "pt": "Gorman"
+        },
+        {
+          "id": 91,
+          "hex_id": "0x025B",
+          "en": "Monty",
+          "es_ref": "Vesga",
+          "pt": "Monty"
+        },
+        {
+          "id": 92,
+          "hex_id": "0x025C",
+          "en": "Wheaton",
+          "es_ref": "Sal",
+          "pt": "Wheaton"
+        },
+        {
+          "id": 93,
+          "hex_id": "0x025D",
+          "en": "Pita",
+          "es_ref": "Pimienta",
+          "pt": "Pita"
+        },
+        {
+          "id": 95,
+          "hex_id": "0x025F",
+          "en": "Dr. Left",
+          "es_ref": "Dr. Left",
+          "pt": "Dr. Left"
+        },
+        {
+          "id": 96,
+          "hex_id": "0x0260",
+          "en": "Rem",
+          "es_ref": "Lem",
+          "pt": "Rem"
+        },
+        {
+          "id": 98,
+          "hex_id": "0x0262",
+          "en": "Stamp",
+          "es_ref": "Sello",
+          "pt": "Stamp"
+        },
+        {
+          "id": 99,
+          "hex_id": "0x0263",
+          "en": "Marcy",
+          "es_ref": "Carta",
+          "pt": "Marcy"
+        },
+        {
+          "id": 101,
+          "hex_id": "0x0265",
+          "en": "Sturgeon",
+          "es_ref": "Azulín",
+          "pt": "Sturgeon"
+        },
+        {
+          "id": 102,
+          "hex_id": "0x0266",
+          "en": "Paige",
+          "es_ref": "Fermín",
+          "pt": "Paige"
+        },
+        {
+          "id": 103,
+          "hex_id": "0x0267",
+          "en": "Maggie",
+          "es_ref": "Cosme",
+          "pt": "Maggie"
+        },
+        {
+          "id": 105,
+          "hex_id": "0x0269",
+          "en": "Hagen",
+          "es_ref": "Hagar",
+          "pt": "Hagen"
+        },
+        {
+          "id": 107,
+          "hex_id": "0x026B",
+          "en": "Siroc",
+          "es_ref": "Maki",
+          "pt": "Siroc"
+        },
+        {
+          "id": 108,
+          "hex_id": "0x026C",
+          "en": "Hailey",
+          "es_ref": "Sam",
+          "pt": "Hailey"
+        },
+        {
+          "id": 109,
+          "hex_id": "0x026D",
+          "en": "Caprice",
+          "es_ref": "Caprice",
+          "pt": "Caprice"
+        },
+        {
+          "id": 110,
+          "hex_id": "0x026E",
+          "en": "Gale",
+          "es_ref": "Gale",
+          "pt": "Gale"
+        },
+        {
+          "id": 111,
+          "hex_id": "0x026F",
+          "en": "Strato",
+          "es_ref": "Strato",
+          "pt": "Strato"
+        },
+        {
+          "id": 112,
+          "hex_id": "0x0270",
+          "en": "Gregal",
+          "es_ref": "Abuelo Huracán",
+          "pt": "Gregal"
+        },
+        {
+          "id": 114,
+          "hex_id": "0x0272",
+          "en": "Castle Servant",
+          "es_ref": "Doncella castillo",
+          "pt": "Castle Servant"
+        },
+        {
+          "id": 115,
+          "hex_id": "0x0273",
+          "en": "Soldier",
+          "es_ref": "Soldado",
+          "pt": "Soldier"
+        },
+        {
+          "id": 116,
+          "hex_id": "0x0274",
+          "en": "Soldier Captain",
+          "es_ref": "Capitán",
+          "pt": "Soldier Captain"
+        },
+        {
+          "id": 117,
+          "hex_id": "0x0275",
+          "en": "Potho",
+          "es_ref": "Tengal",
+          "pt": "Potho"
+        },
+        {
+          "id": 118,
+          "hex_id": "0x0276",
+          "en": "Daltus",
+          "es_ref": "Daphness",
+          "pt": "Daltus"
+        },
+        {
+          "id": 120,
+          "hex_id": "0x0278",
+          "en": "Smith",
+          "es_ref": "Smith",
+          "pt": "Smith"
+        },
+        {
+          "id": 122,
+          "hex_id": "0x027A",
+          "en": "Epona",
+          "es_ref": "Epona",
+          "pt": "Epona"
+        },
+        {
+          "id": 123,
+          "hex_id": "0x027B",
+          "en": "Fifi",
+          "es_ref": "Tilka",
+          "pt": "Fifi"
+        },
+        {
+          "id": 124,
+          "hex_id": "0x027C",
+          "en": "Rolf",
+          "es_ref": "Fiera",
+          "pt": "Rolf"
+        },
+        {
+          "id": 125,
+          "hex_id": "0x027D",
+          "en": "Growler",
+          "es_ref": "León",
+          "pt": "Growler"
+        },
+        {
+          "id": 126,
+          "hex_id": "0x027E",
+          "en": "Scratcher",
+          "es_ref": "Chiki",
+          "pt": "Scratcher"
+        },
+        {
+          "id": 127,
+          "hex_id": "0x027F",
+          "en": "Purry",
+          "es_ref": "Reina",
+          "pt": "Purry"
+        },
+        {
+          "id": 128,
+          "hex_id": "0x0280",
+          "en": "Cucco",
+          "es_ref": "Cuco",
+          "pt": "Cucco"
+        },
+        {
+          "id": 129,
+          "hex_id": "0x0281",
+          "en": "Brown Cucco",
+          "es_ref": "Cuco marrón",
+          "pt": "Brown Cucco"
+        },
+        {
+          "id": 130,
+          "hex_id": "0x0282",
+          "en": "Cucco Chick",
+          "es_ref": "Cuqui",
+          "pt": "Cucco Chick"
+        },
+        {
+          "id": 131,
+          "hex_id": "0x0283",
+          "en": "Elsie",
+          "es_ref": "Elsie",
+          "pt": "Elsie"
+        },
+        {
+          "id": 133,
+          "hex_id": "0x0285",
+          "en": "Tingle",
+          "es_ref": "Tingle",
+          "pt": "Tingle"
+        },
+        {
+          "id": 134,
+          "hex_id": "0x0286",
+          "en": "Ankle",
+          "es_ref": "Angle",
+          "pt": "Ankle"
+        },
+        {
+          "id": 135,
+          "hex_id": "0x0287",
+          "en": "Knuckle",
+          "es_ref": "Nangle",
+          "pt": "Knuckle"
+        },
+        {
+          "id": 136,
+          "hex_id": "0x0288",
+          "en": "David Jr.",
+          "es_ref": "David Jr.",
+          "pt": "David Jr."
+        },
+        {
+          "id": 138,
+          "hex_id": "0x028A",
+          "en": "Postbox",
+          "es_ref": "Cartero",
+          "pt": "Postbox"
+        },
+        {
+          "id": 141,
+          "hex_id": "0x028D",
+          "en": "Gina",
+          "es_ref": "Ghini rosa",
+          "pt": "Gina"
+        },
+        {
+          "id": 142,
+          "hex_id": "0x028E",
+          "en": "Flurris",
+          "es_ref": "Brisa",
+          "pt": "Flurris"
+        },
+        {
+          "id": 143,
+          "hex_id": "0x028F",
+          "en": "Postman",
+          "es_ref": "Cartero",
+          "pt": "Postman"
+        },
+        {
+          "id": 144,
+          "hex_id": "0x0290",
+          "en": "Talon",
+          "es_ref": "Taron",
+          "pt": "Talon"
+        },
+        {
+          "id": 145,
+          "hex_id": "0x0291",
+          "en": "Malon",
+          "es_ref": "Maron",
+          "pt": "Malon"
+        },
+        {
+          "id": 146,
+          "hex_id": "0x0292",
+          "en": "Eenie",
+          "es_ref": "Ine",
+          "pt": "Eenie"
+        },
+        {
+          "id": 147,
+          "hex_id": "0x0293",
+          "en": "Meenie",
+          "es_ref": "Moni",
+          "pt": "Meenie"
+        },
+        {
+          "id": 148,
+          "hex_id": "0x0294",
+          "en": "Hurdy-Gurdy Man",
+          "es_ref": "Vendedor bolsas",
+          "pt": "Hurdy-Gurdy Man"
+        }
+      ]
+    },
+    {
+      "group_id": 3,
+      "group_hex": "0x03",
+      "name": "Boletim dos Espadachins (Newsletters)",
+      "messages": [
+        {
+          "id": 1,
+          "hex_id": "0x0301",
+          "en": "This is the Swordsman Newsletter {Symbol:10}1.\n\nWould you like to read it?\n    {Choice:03:09}Yes  {Choice:FF}No",
+          "es_ref": "Lección I\n\n¿Quieres leerla?\n{Choice:03:09}Sí {Choice:FF}No",
+          "pt": "This is the Swordsman Newsletter {Symbol:10}1.\n\nWould you like to read it?\n    {Choice:03:09}Yes  {Choice:FF}No"
+        },
+        {
+          "id": 2,
+          "hex_id": "0x0302",
+          "en": "This is the Swordsman Newsletter {Symbol:10}2.\n\nWould you like to read it?\n    {Choice:03:0D}Yes  {Choice:FF}No",
+          "es_ref": "Lección II\n\n¿Quieres leerla?\n{Choice:03:0D}Sí {Choice:FF}No",
+          "pt": "This is the Swordsman Newsletter {Symbol:10}2.\n\nWould you like to read it?\n    {Choice:03:0D}Yes  {Choice:FF}No"
+        },
+        {
+          "id": 3,
+          "hex_id": "0x0303",
+          "en": "This is the Swordsman Newsletter {Symbol:10}3.\n\nWould you like to read it?\n    {Choice:03:11}Yes  {Choice:FF}No",
+          "es_ref": "Lección III\n\n¿Quieres leerla?\n{Choice:03:11}Sí {Choice:FF}No",
+          "pt": "This is the Swordsman Newsletter {Symbol:10}3.\n\nWould you like to read it?\n    {Choice:03:11}Yes  {Choice:FF}No"
+        },
+        {
+          "id": 4,
+          "hex_id": "0x0304",
+          "en": "This is the Swordsman Newsletter {Symbol:10}4.\n\nWould you like to read it?\n    {Choice:03:15}Yes  {Choice:FF}No",
+          "es_ref": "Lección IV\n\n¿Quieres leerla?\n{Choice:03:15}Sí {Choice:FF}No",
+          "pt": "This is the Swordsman Newsletter {Symbol:10}4.\n\nWould you like to read it?\n    {Choice:03:15}Yes  {Choice:FF}No"
+        },
+        {
+          "id": 5,
+          "hex_id": "0x0305",
+          "en": "This is the Swordsman Newsletter {Symbol:10}5.\n\nWould you like to read it?\n    {Choice:03:19}Yes  {Choice:FF}No",
+          "es_ref": "Lección V\n\n¿Quieres leerla?\n{Choice:03:19}Sí {Choice:FF}No",
+          "pt": "This is the Swordsman Newsletter {Symbol:10}5.\n\nWould you like to read it?\n    {Choice:03:19}Yes  {Choice:FF}No"
+        },
+        {
+          "id": 6,
+          "hex_id": "0x0306",
+          "en": "This is the Swordsman Newsletter {Symbol:10}6.\n\nWould you like to read it?\n    {Choice:03:1D}Yes  {Choice:FF}No",
+          "es_ref": "Lección VI\n\n¿Quieres leerla?\n{Choice:03:1D}Sí {Choice:FF}No",
+          "pt": "This is the Swordsman Newsletter {Symbol:10}6.\n\nWould you like to read it?\n    {Choice:03:1D}Yes  {Choice:FF}No"
+        },
+        {
+          "id": 7,
+          "hex_id": "0x0307",
+          "en": "This is the Swordsman Newsletter {Symbol:10}7.\n\nWould you like to read it?\n    {Choice:03:21}Yes  {Choice:FF}No",
+          "es_ref": "Lección VII\n\n¿Quieres leerla?\n{Choice:03:21}Sí {Choice:FF}No",
+          "pt": "This is the Swordsman Newsletter {Symbol:10}7.\n\nWould you like to read it?\n    {Choice:03:21}Yes  {Choice:FF}No"
+        },
+        {
+          "id": 8,
+          "hex_id": "0x0308",
+          "en": "This is the Swordsman Newsletter {Symbol:10}8.\n\nWould you like to read it?\n    {Choice:03:25}Yes  {Choice:FF}No",
+          "es_ref": "Lección VIII\n\n¿Quieres leerla?\n{Choice:03:25}Sí {Choice:FF}No",
+          "pt": "This is the Swordsman Newsletter {Symbol:10}8.\n\nWould you like to read it?\n    {Choice:03:25}Yes  {Choice:FF}No"
+        },
+        {
+          "id": 9,
+          "hex_id": "0x0309",
+          "en": "Swordsman Newsletter {Symbol:10}1\n    Some Walls Go Boom...\nIt may look like a regular wall, but\nit may be something you can blow up.\nThere's actually an easy way to tell.\nAnd I'm here to teach you!\n{Color:Blue}Build up the power in your sword and\nstart stabbing the wall.{Color:White}\nIf you pay attention, you'll find that\nsome spots make a different sound!\n{Choice:03:0A}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}Lección de Tesshin I\n{Color:White}\"Cómo saber si puedes volar un muro\"\nYa sabes que puedes hacer volar\nmuros con {Color:Red}bombas{Color:White}. Hoy te enseñaré\nalgo más. Intenta acumular fuerza en\nla espada y después {Color:Blue}golpea el muro{Color:White}.\nSegún como suene, podrás o no hacer\nvolar ese muro con una bomba.\n¿Qué te ha parecido?\n{Choice:03:0A}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Swordsman Newsletter {Symbol:10}1\n    Some Walls Go Boom...\nIt may look like a regular wall, but\nit may be something you can blow up.\nThere's actually an easy way to tell.\nAnd I'm here to teach you!\n{Color:Blue}Build up the power in your sword and\nstart stabbing the wall.{Color:White}\nIf you pay attention, you'll find that\nsome spots make a different sound!\n{Choice:03:0A}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 10,
+          "hex_id": "0x030A",
+          "en": "    Teach us, Teacher!\nMonsters got you?\nDon't give up! {Color:Blue}Start mashing buttons!{Color:White}\nYou might be able to escape quickly!\n{Choice:03:0B}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}¡Otro truco del maestro Tesshin!\n{Color:White} Si te atrapa un enemigo, no\nte pongas nervioso y {Color:Blue}pulsa los botones\nsin parar{Color:White} hasta que consigas escapar.\n¿Qué te ha parecido?\n{Choice:03:0B}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Teach us, Teacher!\nMonsters got you?\nDon't give up! {Color:Blue}Start mashing buttons!{Color:White}\nYou might be able to escape quickly!\n{Choice:03:0B}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 11,
+          "hex_id": "0x030B",
+          "en": "    Swiftblade's Gossip Column\nThe Magical Boomerang...\nSomewhere in Hyrule, you can find an\nincredibly handy {Color:Red}boomerang{Color:White}.\nIt's designed so you can change its\ndirection after you throw it!\nOr so I've been told.\nBut it's just a rumor...\n{Choice:03:0C}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}Las ocho maravillas de Hyrule\n{Color:White}El {Color:Red}bumerán mágico{Color:White}...\nCuentan que en algún lugar de Hyrule\nhay un bumerán mágico que podrás\ncontrolar a tu antojo...\nAunque sólo es un rumor...\n¿Qué te ha parecido?\n{Choice:03:0C}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Swiftblade's Gossip Column\nThe Magical Boomerang...\nSomewhere in Hyrule, you can find an\nincredibly handy {Color:Red}boomerang{Color:White}.\nIt's designed so you can change its\ndirection after you throw it!\nOr so I've been told.\nBut it's just a rumor...\n{Choice:03:0C}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 12,
+          "hex_id": "0x030C",
+          "en": "    Swiftblade, Signing Off!\nThat's it for our first issue!\nWe plan to bring you helpful questing\nhints every week, rain or shine.\nBe sure to check with your local\npost office for future issues!\nSee you in issue 2!\nUntil next time, warriors!",
+          "es_ref": "{Color:Green}Epílogo de Tesshin{Color:White}\nEspero que te haya gustado mi\nprimera lección. En la siguiente,\nte enseñaré nuevos trucos para\nmejorar tus técnicas de lucha.\n\n¡Nos vemos en la lección II!\n¡Adiós!",
+          "pt": "Swiftblade, Signing Off!\nThat's it for our first issue!\nWe plan to bring you helpful questing\nhints every week, rain or shine.\nBe sure to check with your local\npost office for future issues!\nSee you in issue 2!\nUntil next time, warriors!"
+        },
+        {
+          "id": 13,
+          "hex_id": "0x030D",
+          "en": "Swordsman Newsletter {Symbol:10}2\n    This Year's Must-Have Item!\nHave you seen those sparks that move\nalong walls?\nYour sword doesn't work, so maybe\nyou've just given up fighting them.\nBut have you tried ALL your items?\nLike...what about your boomerang?\nGive that a shot! You might be\nsurprised at the results!\n{Choice:03:0E}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}Lección de Tesshin II\n{Color:White}\"El objeto del año\"\n¿Has visto esos enemigos cargados\nde electricidad que se mueven por\nlas paredes? ¿Cómo te enfrentarás\na ellos si no llegas con tu espada?\n{Color:Blue}¡Prueba todos los objetos que\ntengas a tu alcance!{Color:White} ¿Has visto ya\ntodo lo que puedes hacer con el\nbumerán?\n¿Qué te ha parecido?\n{Choice:03:0E}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Swordsman Newsletter {Symbol:10}2\n    This Year's Must-Have Item!\nHave you seen those sparks that move\nalong walls?\nYour sword doesn't work, so maybe\nyou've just given up fighting them.\nBut have you tried ALL your items?\nLike...what about your boomerang?\nGive that a shot! You might be\nsurprised at the results!\n{Choice:03:0E}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 14,
+          "hex_id": "0x030E",
+          "en": "    Teach us, Teacher!\nMonster took your shield?\nWell, don't get all down about it.\nAll hope is not lost.\nBeat him up quickly, and you might\njust get it back!\n{Choice:03:0F}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}¡Otro truco del maestro Tesshin!\n{Color:White}Si te roban el escudo...\nSi un enemigo te roba el {Color:Red}escudo{Color:White},\nno te rindas. {Color:Blue}¡Derrótale enseguida\ny te lo devolverá!{Color:White}\n¿Qué te ha parecido?\n{Choice:03:0F}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Teach us, Teacher!\nMonster took your shield?\nWell, don't get all down about it.\nAll hope is not lost.\nBeat him up quickly, and you might\njust get it back!\n{Choice:03:0F}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 15,
+          "hex_id": "0x030F",
+          "en": "    Swiftblade's Gossip Column\nThe Mirror Shield...\nA beautiful, glimmering shield capable\nof reflecting monsters' shots.\nYou can use it to turn their\nattacks back at them.\nOr so they say...\nBut it's just a rumor...\n{Choice:03:10}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}Las ocho maravillas de Hyrule\n{Color:Red}El escudo espejo{Color:White}...\nHay un escudo con el que podrás\nrepeler los ataques de los enemigos.\nEso cuentan... aunque no sé si\nes verdad o no.\n¿Qué te ha parecido?\n{Choice:03:10}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Swiftblade's Gossip Column\nThe Mirror Shield...\nA beautiful, glimmering shield capable\nof reflecting monsters' shots.\nYou can use it to turn their\nattacks back at them.\nOr so they say...\nBut it's just a rumor...\n{Choice:03:10}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 16,
+          "hex_id": "0x0310",
+          "en": "    Swiftblade, Signing Off!\nIssue 2 is out the door!\nWe've got our first reader letter!\nLet's answer it now!\n\"Hey, Swiftblade, what's your best\nfeature?\"\nThat would be my eyebrows! I spend\na lot of time grooming these suckers!\nSee you in issue 3!\nUntil next time, warriors!",
+          "es_ref": "{Color:Green}Epílogo de Tesshin{Color:White}\n¡Gracias a vuestra inspiración,\nhe terminado la lección II!\nRecibo muchos correos vuestros\ncon dudas.\nAhora mismo contestaré a uno:\n\"¿Cuál es su mayor atractivo?\"\n\"Sin ninguna duda... ¡{Color:Blue}mis cejas{Color:White}!\"\n¡Nos vemos en la lección III!\n¡Adiós!",
+          "pt": "Swiftblade, Signing Off!\nIssue 2 is out the door!\nWe've got our first reader letter!\nLet's answer it now!\n\"Hey, Swiftblade, what's your best\nfeature?\"\nThat would be my eyebrows! I spend\na lot of time grooming these suckers!\nSee you in issue 3!\nUntil next time, warriors!"
+        },
+        {
+          "id": 17,
+          "hex_id": "0x0311",
+          "en": "Swordsman Newsletter {Symbol:10}3{Color:Green}\n    {Color:White}Got a Bone to Pick?\nYou're sure to run into more than\na few skeletons on your journey.\nThat's why this week's newsletter is\ndedicated to all you bone-breakers!\nA good, solid whack to the head should\ndo the trick. That's their weak spot!\nTry smacking them with a beam\nfrom your {Color:Red}Cane of Pacci{Color:White}.\nYou should also try your {Color:Red}Gust Jar{Color:White}.\nThat head should just pop right off!\nThey go all to pieces once they\nlose their head.\n{Choice:03:12}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}Lección de Tesshin III\n{Color:White}\"¡Hazles perder la cabeza!\"\n¿Has visto a los esqueletos?\nSí, sí, esos que te lanzan huesos.\nSeguro que ya has visto que la\nespada no sirve de mucho contra ellos.\n¡Su punto débil es la cabeza!\n¡Intenta darles con el {Color:Red}bastón revés{Color:White}\no aspirarlas con el {Color:Red}jarrón mágico{Color:White}!\n¡Perderán la cabeza y {Color:Blue}no podrán verte{Color:White}!\n¿Qué te ha parecido?\n{Choice:03:12}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Swordsman Newsletter {Symbol:10}3{Color:Green}\n    {Color:White}Got a Bone to Pick?\nYou're sure to run into more than\na few skeletons on your journey.\nThat's why this week's newsletter is\ndedicated to all you bone-breakers!\nA good, solid whack to the head should\ndo the trick. That's their weak spot!\nTry smacking them with a beam\nfrom your {Color:Red}Cane of Pacci{Color:White}.\nYou should also try your {Color:Red}Gust Jar{Color:White}.\nThat head should just pop right off!\nThey go all to pieces once they\nlose their head.\n{Choice:03:12}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 18,
+          "hex_id": "0x0312",
+          "en": "    Teach us, Teacher!\nThose darn Bob-ombs!\nIf you hit them with your sword, they'll\nrun all over the place and explode!\nBut don't you worry. This newsletter's\nhere to teach you how to cope!\nYour best bet is arrows!\nOne shot can take them down!\nYou can fire from a safe distance,\ntoo! There's also your Gust Jar...\nDraw them in and shoot them out, and\nthey'll even blow up whatever they hit!\n{Choice:03:13}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}¡Otro truco del maestro Tesshin!\n{Color:White} \n¿Te has encontrado ya con estos\nenemigos que explotan como bombas?\nLo mejor es {Color:Blue}darles con una flecha{Color:White}\nantes. Después hazlos volar con el\n{Color:Red}jarrón mágico{Color:White} y que exploten, pero\nlejos...\n¿Qué te ha parecido?\n{Choice:03:13}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Teach us, Teacher!\nThose darn Bob-ombs!\nIf you hit them with your sword, they'll\nrun all over the place and explode!\nBut don't you worry. This newsletter's\nhere to teach you how to cope!\nYour best bet is arrows!\nOne shot can take them down!\nYou can fire from a safe distance,\ntoo! There's also your Gust Jar...\nDraw them in and shoot them out, and\nthey'll even blow up whatever they hit!\n{Choice:03:13}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 19,
+          "hex_id": "0x0313",
+          "en": "    Swiftblade's Gossip Column\nLight Arrows are amazing...\nThey go through grass!\nThey fell a monster with one strike!\nThey're handy! They're dandy!\nThey're a super-duper-ultra-item!\nOr so it seems...\nBut it's just a rumor...\n{Choice:03:14}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}Las ocho maravillas de Hyrule{Color:White}\nLas {Color:Red}flechas de luz{Color:White}...\nCuentan que en algún lugar hay unas\nflechas con las que podrás hacer\ndiana en un enemigo incluso a través\nde setos... Aunque sólo es un rumor...\n¿Qué te ha parecido?\n{Choice:03:14}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Swiftblade's Gossip Column\nLight Arrows are amazing...\nThey go through grass!\nThey fell a monster with one strike!\nThey're handy! They're dandy!\nThey're a super-duper-ultra-item!\nOr so it seems...\nBut it's just a rumor...\n{Choice:03:14}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 20,
+          "hex_id": "0x0314",
+          "en": "    Swiftblade, Signing Off!\nWe've got more reader mail this week!\n\"Hey, Swiftblade! How many siblings\ndo you have?\"\nThere are nine of us, not counting\nthe ghost of Swiftblade the First.\nI'm the oldest, but again, that's if you\ndon't count Swiftblade the First!\nSee you in issue 4!\nUntil next time, warriors!!!!",
+          "es_ref": "{Color:Green}Epílogo de Tesshin{Color:White}\n¡Contestaré a una pregunta de\nun lector! \n\"¿Cuántos hermanos tiene, maestro?\"\n\"{Color:Blue}Soy el mayor de diez hermanos{Color:White}.\"\n¡Nos vemos en la lección IV!\n¡Adiós!",
+          "pt": "Swiftblade, Signing Off!\nWe've got more reader mail this week!\n\"Hey, Swiftblade! How many siblings\ndo you have?\"\nThere are nine of us, not counting\nthe ghost of Swiftblade the First.\nI'm the oldest, but again, that's if you\ndon't count Swiftblade the First!\nSee you in issue 4!\nUntil next time, warriors!!!!"
+        },
+        {
+          "id": 21,
+          "hex_id": "0x0315",
+          "en": "Swordsman Newsletter {Symbol:10}4\n    Seek Out the Strong!\nHave you ever seen a golden monster?\n\nWhen you fuse Kinstone pieces, you\nmight get the rare chance to meet one.\nThey're much stronger than the\nregular version of that monster.\nOf course, if you beat one of 'em,\nyou'll get something REALLY good!\nIf you see one, go fight it instantly!\nJust drop everything and go!\n{Choice:03:16}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}Lección de Tesshin IV\n{Color:White}\"Enfréntate al más fuerte\"\n¿Has visto a un enemigo que brilla\ncomo el oro? Aparece a veces\ncuado pruebas suerte con tus\npiedras. Es seguramente el enemigo\nmás fuerte al que te puedes enfrentar,\npero {Color:Blue}la recompensa valdrá la pena{Color:White}.\n¿Qué te ha parecido?\n{Choice:03:16}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Swordsman Newsletter {Symbol:10}4\n    Seek Out the Strong!\nHave you ever seen a golden monster?\n\nWhen you fuse Kinstone pieces, you\nmight get the rare chance to meet one.\nThey're much stronger than the\nregular version of that monster.\nOf course, if you beat one of 'em,\nyou'll get something REALLY good!\nIf you see one, go fight it instantly!\nJust drop everything and go!\n{Choice:03:16}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 22,
+          "hex_id": "0x0316",
+          "en": "    Teach us, Teacher!{Color:Green}\n{Color:White}  Coping with a Thorny Situation\nThose thorny little thorn monsters!\nYour sword doesn't hurt 'em at all!\nBut if you bump 'em with your\n{Color:Red}shield {Color:White}up, they'll totally flip!\nThere are other ways, though.\nFlip 'em with a {Color:Red}bomb{Color:White}!\nOr your {Color:Red}Cane of Pacci{Color:White}!\nOr with a well-placed {Color:Red}Down Thrust{Color:White}!{Color:Blue}\n{Color:White}How's that for options? Your head must\nbe swimming at the possibilities!\n{Choice:03:17}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}¡Otro truco del maestro Tesshin!\n{Color:White} ¿Y si el enemigo tiene pinchos?...\nLo mejor que puedes hacer es darle\nla vuelta. Prueba con tu escudo.\nSi no, con el {Color:Red}bastón revés{Color:White}. También\npuedes probar con una {Color:Red}bomba{Color:White} o\ncon una {Color:Red}estocada{Color:White}.\nNo dirás que no te he dado opciones...\n¿Qué te ha parecido?\n{Choice:03:17}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Teach us, Teacher!{Color:Green}\n{Color:White}  Coping with a Thorny Situation\nThose thorny little thorn monsters!\nYour sword doesn't hurt 'em at all!\nBut if you bump 'em with your\n{Color:Red}shield {Color:White}up, they'll totally flip!\nThere are other ways, though.\nFlip 'em with a {Color:Red}bomb{Color:White}!\nOr your {Color:Red}Cane of Pacci{Color:White}!\nOr with a well-placed {Color:Red}Down Thrust{Color:White}!{Color:Blue}\n{Color:White}How's that for options? Your head must\nbe swimming at the possibilities!\n{Choice:03:17}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 23,
+          "hex_id": "0x0317",
+          "en": "    Swiftblade's Gossip Column\nRemote Bombs...\nHere's a secret: you can blow them up\nwhenever you want! How cool is that?!\nOr so it seems...\nBut it's just a rumor...\n{Choice:03:18}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}Las ocho maravillas de Hyrule\n{Color:White}Las {Color:Red}bombas con control remoto{Color:White}...\nCuentan que hay unas bombas que\npuedes hacer explotar cuando más te\nconvenga... Aunque sólo es un rumor...\n\n¿Qué te ha parecido?\n{Choice:03:18}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Swiftblade's Gossip Column\nRemote Bombs...\nHere's a secret: you can blow them up\nwhenever you want! How cool is that?!\nOr so it seems...\nBut it's just a rumor...\n{Choice:03:18}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 24,
+          "hex_id": "0x0318",
+          "en": "    Swiftblade, Signing Off!\nI went to {Color:Green}Lon Lon Ranch {Color:White}the other day.\nI saw the ghost of Swiftblade the First\ndefeat a cow with his bare hands!\nIt was kind of sad, really...\n\nSee you in issue 5!\nUntil next time, warriors!!!!",
+          "es_ref": "{Color:Green}Epílogo de Tesshin{Color:White}\nHace poco estuve en la {Color:Green}granja\nLon Lon{Color:White} y me contaron que uno\nde mis hermanos había dejado\nmolida a una vaca en una pelea...\nPobrecita vaca...\n¡Nos vemos en la lección V!\n¡Adiós!",
+          "pt": "Swiftblade, Signing Off!\nI went to {Color:Green}Lon Lon Ranch {Color:White}the other day.\nI saw the ghost of Swiftblade the First\ndefeat a cow with his bare hands!\nIt was kind of sad, really...\n\nSee you in issue 5!\nUntil next time, warriors!!!!"
+        },
+        {
+          "id": 25,
+          "hex_id": "0x0319",
+          "en": "Swordsman Newsletter {Symbol:10}5\n    Fire Up That Chilly Chump!\nHave you seen a sorcerer who throws\ncold curses at you?\nYeah, the one who keeps disappearing!\nThat's him!\nWell, next time he shows up, whack him\nwith your lantern!\nFire against ice!\nIt's the law of nature!\n{Choice:03:1A}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}Lección de Tesshin V\n{Color:White}\"Enfréntate al más fuerte\"\n¿Has visto a un enemigo que usa la\nfuerza del hielo? Sí, el que aparece y\ndesaparece. Si vuelves a verlo,\nacércale el {Color:Red}candil{Color:White}. ¡{Color:Blue}El hielo se combate\ncon el fuego{Color:White}! ¡Es una ley natural!\n\n¿Qué te ha parecido?\n{Choice:03:1A}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Swordsman Newsletter {Symbol:10}5\n    Fire Up That Chilly Chump!\nHave you seen a sorcerer who throws\ncold curses at you?\nYeah, the one who keeps disappearing!\nThat's him!\nWell, next time he shows up, whack him\nwith your lantern!\nFire against ice!\nIt's the law of nature!\n{Choice:03:1A}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 26,
+          "hex_id": "0x031A",
+          "en": "    Teach us, Teacher!\nThose pig-faced Moblins...\nYou see them around the Minish Woods,\nright? They're big and dumb?\nWell, they're also rich!\n{Color:Blue}Beat one up for some quick cash!{Color:White}\n{Choice:03:1B}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}¡Otro truco del maestro Tesshin!\n{Color:White} Seguro que has visto a unos enemigos\nenormes con cara de cerdo en el\nbosque... Son fuertes, pero si vences\na uno, {Color:Blue}soltará un montón de rupias{Color:White}.\n¿Qué te ha parecido?\n{Choice:03:1B}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Teach us, Teacher!\nThose pig-faced Moblins...\nYou see them around the Minish Woods,\nright? They're big and dumb?\nWell, they're also rich!\n{Color:Blue}Beat one up for some quick cash!{Color:White}\n{Choice:03:1B}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 27,
+          "hex_id": "0x031B",
+          "en": "    Swiftblade's Gossip Column\nA tidbit about amulets...\nI hear that there's a mysterious amulet\nthat raises your abilities if you use it!\nWell, that's what I heard, anyway...\nBut it's just a rumor...\n{Choice:03:1C}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}Las ocho maravillas de Hyrule\n{Color:White}Los {Color:Red}zumos mágicos{Color:White}...\nHay unos zumos mágicos que aumentan\ntu fuerza sólo con llevarlos...\nAunque sólo es un rumor...\n¿Qué te ha parecido?\n{Choice:03:1C}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Swiftblade's Gossip Column\nA tidbit about amulets...\nI hear that there's a mysterious amulet\nthat raises your abilities if you use it!\nWell, that's what I heard, anyway...\nBut it's just a rumor...\n{Choice:03:1C}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 28,
+          "hex_id": "0x031C",
+          "en": "    Swiftblade, Signing Off!\nI went to Smith's the other day.\nThe old guy's still looking pretty good.\n... ...\nBut I AM a little concerned about the\n{Color:Blue}guy in green tights {Color:White}on the hill there...\nSee you in issue 6!\nUntil next time, warriors!!!!",
+          "es_ref": "{Color:Green}Epílogo de Tesshin{Color:White}\nAyer estuve en casa de Smith y\nestaba tan alegre como siempre...\nAunque... lo que no sé todavía es quién\nera aquel tipo que estaba en la colina\ncon unas {Color:Blue}mallas verdes{Color:White}.\n¡Nos vemos en la lección VI!\n¡Adiós!",
+          "pt": "Swiftblade, Signing Off!\nI went to Smith's the other day.\nThe old guy's still looking pretty good.\n... ...\nBut I AM a little concerned about the\n{Color:Blue}guy in green tights {Color:White}on the hill there...\nSee you in issue 6!\nUntil next time, warriors!!!!"
+        },
+        {
+          "id": 29,
+          "hex_id": "0x031D",
+          "en": "Swordsman Newsletter {Symbol:10}6\n    Here's What You Do!\nHave you seen a monster wrapped in\nbandages? It tries to grab you?\nWell, here's a pro tip: {Color:Blue}bandages burn{Color:White}\neasily, especially on a mummy!\nI don't have to spell this out, do I?\nYeah, you know what I'm about to say!\nThat's right, it's time to light up\ntheir world! FWOOOSH!\n{Choice:03:1E}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}Lección de Tesshin VI\n{Color:White}\"¡Acaba con esa momia!\"\n¿Has visto a un enemigo totalmente\nenvuelto en vendas? Si te acercas,\nte atrapará. Las vendas {Color:Blue}prenden con\nmucha facilidad{Color:White}. No creo que tenga\nque darte más pistas...\nAlumbra tu camino...\n¿Qué te ha parecido?\n{Choice:03:1E}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Swordsman Newsletter {Symbol:10}6\n    Here's What You Do!\nHave you seen a monster wrapped in\nbandages? It tries to grab you?\nWell, here's a pro tip: {Color:Blue}bandages burn{Color:White}\neasily, especially on a mummy!\nI don't have to spell this out, do I?\nYeah, you know what I'm about to say!\nThat's right, it's time to light up\ntheir world! FWOOOSH!\n{Choice:03:1E}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 30,
+          "hex_id": "0x031E",
+          "en": "    Teach us, Teacher!\nThose heavy-handed Floor Masters...\nAnd their irritating friends,\nthe Wall Masters...\nThey're really annoying, but if you\nbeat one, they say you'll be rich!!\nBut it's just a rumor... Don't complain\nto me if it turns out to be wrong.\n{Choice:03:1F}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}¡Otro truco del maestro Tesshin!\n{Color:White} Si consigues derrotar a los enemigos\ncon forma de mano que te atacarán,\nobtendrás un montón de rupias.\nBueno, eso es lo que cuentan...\n\n¿Qué te ha parecido?\n{Choice:03:1F}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Teach us, Teacher!\nThose heavy-handed Floor Masters...\nAnd their irritating friends,\nthe Wall Masters...\nThey're really annoying, but if you\nbeat one, they say you'll be rich!!\nBut it's just a rumor... Don't complain\nto me if it turns out to be wrong.\n{Choice:03:1F}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 31,
+          "hex_id": "0x031F",
+          "en": "    Swiftblade's Gossip Column\nRupee-stealing nasties...\nThose Rupee-camouflaged creeps have\nbeen ripping a lot of you off lately.\nI've heard that you greedy\nadventurers are getting soaked!\nIn fact, I hear that the greedier\nyou are, the more it takes!\nOr so it seems...\nBut it's just a rumor...\n{Choice:03:20}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}Las ocho maravillas de Hyrule\n{Color:White}Hay un enemigo que se hace pasar\npor una rupia. Cuando su presa se\nacerca, la atrapa y le roba las\nrupias... Mantén los ojos bien\nabiertos porque {Color:Blue}te podría dejar\nsin una rupia{Color:White}....\nAunque sólo es un rumor...\n¿Qué te ha parecido?\n{Choice:03:20}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Swiftblade's Gossip Column\nRupee-stealing nasties...\nThose Rupee-camouflaged creeps have\nbeen ripping a lot of you off lately.\nI've heard that you greedy\nadventurers are getting soaked!\nIn fact, I hear that the greedier\nyou are, the more it takes!\nOr so it seems...\nBut it's just a rumor...\n{Choice:03:20}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 32,
+          "hex_id": "0x0320",
+          "en": "    Swiftblade, Signing Off!\nWe've got reader mail again!\n\"Hey, Swiftblade, do you have\na hobby?\"\nTraining!\n\nSee you in issue 7!\nUntil next time, warriors!!!!",
+          "es_ref": "{Color:Green}Epílogo de Tesshin{Color:White}\nHacía mucho que no recibía\npreguntas de los lectores.\nAhí va:\n\"¿Qué aficiones tiene, maestro?\"\n\"¡El {Color:Blue}esgrima{Color:White}, sin duda!\"\n¡Nos vemos en la lección VII!\n¡Adiós!",
+          "pt": "Swiftblade, Signing Off!\nWe've got reader mail again!\n\"Hey, Swiftblade, do you have\na hobby?\"\nTraining!\n\nSee you in issue 7!\nUntil next time, warriors!!!!"
+        },
+        {
+          "id": 33,
+          "hex_id": "0x0321",
+          "en": "Swordsman Newsletter {Symbol:10}7\n    For Real Swordsmen Only\nYou know the Roll Attack, right?\nYeah, the one you do midroll!\nI bet Grayblade told you to attack\njust as you finish the roll, right?\nWell, actually, you can do it just as\nyou start the roll, too!\nBut the timing is very tricky!\nYou can do it! Hone your skill!\nThe journey of a thousand miles begins\nwith a single step! Or...something!\n{Choice:03:22}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}Lección de Tesshin VII\n{Color:White}\"¡Movimientos encadenados!\"\nYa conoces la {Color:Red}estocada circular{Color:White}. Giras\ny después clavas tu espada como te\nenseñó Tosshin. También puedes dar un\n{Color:Blue}golpe con la espada antes de realizar\neste ataque{Color:White} y unir dos golpes...\nCuesta, pero practicando lo lograrás.\n¿Qué te ha parecido?\n{Choice:03:22}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Swordsman Newsletter {Symbol:10}7\n    For Real Swordsmen Only\nYou know the Roll Attack, right?\nYeah, the one you do midroll!\nI bet Grayblade told you to attack\njust as you finish the roll, right?\nWell, actually, you can do it just as\nyou start the roll, too!\nBut the timing is very tricky!\nYou can do it! Hone your skill!\nThe journey of a thousand miles begins\nwith a single step! Or...something!\n{Choice:03:22}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 34,
+          "hex_id": "0x0322",
+          "en": "    Teach us, Teacher!\nCamouflaged shell-shockers...\nThese fiends festoon themselves with\ngrass and rocks to deceive your eyes.\nBut you can remove their camo without\ntrying to pick them up, you know!\nHit them with that {Color:Red}Cane of Pacci{Color:White}!\nSuck them with the {Color:Red}Gust Jar{Color:White}!\nHow do you like that!?\nNow you're a camo-buster!\n{Choice:03:23}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}¡Otro truco del maestro Tesshin!\n{Color:White} ¿Has visto los enemigos con forma\nde tortuga que llevan sobre el\ncaparazón una planta o una piedra?\nPodrás quitárselas con las manos\no bien darles la vuelta con el\n{Color:Red}bastón revés{Color:White} y aspirarlas con el\n{Color:Red}jarrón mágico{Color:White}.\n¿Qué te ha parecido?\n{Choice:03:23}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Teach us, Teacher!\nCamouflaged shell-shockers...\nThese fiends festoon themselves with\ngrass and rocks to deceive your eyes.\nBut you can remove their camo without\ntrying to pick them up, you know!\nHit them with that {Color:Red}Cane of Pacci{Color:White}!\nSuck them with the {Color:Red}Gust Jar{Color:White}!\nHow do you like that!?\nNow you're a camo-buster!\n{Choice:03:23}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 35,
+          "hex_id": "0x0323",
+          "en": "    Swiftblade's Gossip Column\nThose short-fused Bob-ombs...\nI told you about them in issue 3, but\nhere's another thing...\nApparently they drop {Color:Red}bombs {Color:White}at a higher\nrate than other enemies!\nOr so it seems...\nBut it's just a rumor...\n{Choice:03:24}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}Las ocho maravillas de Hyrule\n{Color:White}Ya te hablé de los enemigos con forma\nde bomba en la lección II. Resulta que\nsi los vences, hay muchas posibilidades\nde que obtengas {Color:Red}bombas{Color:White}.\nAunque sólo es un rumor...\n¿Qué te ha parecido?\n {Choice:03:24}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Swiftblade's Gossip Column\nThose short-fused Bob-ombs...\nI told you about them in issue 3, but\nhere's another thing...\nApparently they drop {Color:Red}bombs {Color:White}at a higher\nrate than other enemies!\nOr so it seems...\nBut it's just a rumor...\n{Choice:03:24}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 36,
+          "hex_id": "0x0324",
+          "en": "    Swiftblade, Signing Off!\nThe next one is our last issue!\nAfter that, it'll be time for me to put\ndown my pen.\nAs much as I like writing, I'm a\nteacher at heart.\nBut I know you'll miss me when I'm\ngone. I'm like a star! A superstar!\nIssue 8, the last one, is coming soon!\nHope you're looking forward to it!\nUntil next time, warriors!!!!",
+          "es_ref": "{Color:Green}Epílogo de Tesshin{Color:White}\nParece mentira que ya estemos\nllegando al {Color:Blue}final del curso{Color:White}.\nDespués de esto, volveré a\nmis clases de esgrima tradicionales.\n¡Nos vemos en la lección VIII!\n¡Adiós!",
+          "pt": "Swiftblade, Signing Off!\nThe next one is our last issue!\nAfter that, it'll be time for me to put\ndown my pen.\nAs much as I like writing, I'm a\nteacher at heart.\nBut I know you'll miss me when I'm\ngone. I'm like a star! A superstar!\nIssue 8, the last one, is coming soon!\nHope you're looking forward to it!\nUntil next time, warriors!!!!"
+        },
+        {
+          "id": 37,
+          "hex_id": "0x0325",
+          "en": "Swordsman Newsletter {Symbol:10}8\n    The Way to the Sacred Blade\nHave you ever wished you could unleash\nyour {Color:Red}Spin Attack {Color:White}a little faster?\nOr perhaps split faster? Or maybe you\nwanted a longer {Color:Red}Great Spin Attack{Color:White}?\nIt's only natural to want these things.\nEvery warrior wants to be his best!\nSo now for some good news! I haven't\nconfirmed it, but there MAY be a way!\nAll of these things could be yours if\nyou only figure out how to do it!\n{Choice:03:26}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}Lección de Tesshin VIII\n{Color:White}\"¡El camino de la espada!\"\n¿Quieres realizar el {Color:Red}ataque\ncircular{Color:White} con más rapidez?\n¿Rellenar tu {Color:Red}medidor de\ndivisón{Color:White} a más velocidad?\n¿Poder realizar el {Color:Red}gran ataque\ncircular{Color:White} durante más tiempo?\nDicen que hay maestros capaces\nde estas hazañas. {Color:Blue}Si tienes mucha\nsuerte, igual consigues hablar\ncon ellos alguna vez{Color:White}.\n¿Qué te ha parecido?\n{Choice:03:26}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Swordsman Newsletter {Symbol:10}8\n    The Way to the Sacred Blade\nHave you ever wished you could unleash\nyour {Color:Red}Spin Attack {Color:White}a little faster?\nOr perhaps split faster? Or maybe you\nwanted a longer {Color:Red}Great Spin Attack{Color:White}?\nIt's only natural to want these things.\nEvery warrior wants to be his best!\nSo now for some good news! I haven't\nconfirmed it, but there MAY be a way!\nAll of these things could be yours if\nyou only figure out how to do it!\n{Choice:03:26}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 38,
+          "hex_id": "0x0326",
+          "en": "    Teach us, Teacher!\nThe one-eyed statue Eyegore...\nYou have to shoot him with an {Color:Red}arrow {Color:White}to\nmake him move...\nBut if you beat him, he almost always\n{Color:Blue}drops spare arrows {Color:White}for you!\nSo don't you worry about running out of\narrows once you've beaten him!\nJust fire away!\n{Choice:03:27}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}¡Otro truco del maestro Tesshin!\n{Color:White}La estatua de piedra de un solo\nojo, Igor...\nSi aciertas en el ojo con una\n{Color:Red}flecha{Color:White}, se pondrá en movimiento.\nQue no te importe usar muchas\nflechas porque si consigues\ndarle, {Color:Blue}obtendrás más{Color:White}.\n¿Qué te ha parecido?\n{Choice:03:27}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Teach us, Teacher!\nThe one-eyed statue Eyegore...\nYou have to shoot him with an {Color:Red}arrow {Color:White}to\nmake him move...\nBut if you beat him, he almost always\n{Color:Blue}drops spare arrows {Color:White}for you!\nSo don't you worry about running out of\narrows once you've beaten him!\nJust fire away!\n{Choice:03:27}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 39,
+          "hex_id": "0x0327",
+          "en": "    Swiftblade's Gossip Column\nArmos, fabled creations of the Minish.\nI hear that they {Color:Blue}drop Kinstone pieces{Color:White}\nwhen you beat them!\nOr so it seems...\nBut it's just a rumor...\n{Choice:03:28}Continue reading  {Choice:FF}That's enough",
+          "es_ref": "{Color:Green}Las ocho maravillas de Hyrule\n{Color:White}Si consigues derrotar al enemigo\nArmos, quizá te dé una {Color:Blue}piedra de la\nsuerte{Color:White}. Aunque sólo es un rumor...\n¿Qué te ha parecido?\n{Choice:03:28}Seguiré leyendo {Choice:FF}Me aburro",
+          "pt": "Swiftblade's Gossip Column\nArmos, fabled creations of the Minish.\nI hear that they {Color:Blue}drop Kinstone pieces{Color:White}\nwhen you beat them!\nOr so it seems...\nBut it's just a rumor...\n{Choice:03:28}Continue reading  {Choice:FF}That's enough"
+        },
+        {
+          "id": 40,
+          "hex_id": "0x0328",
+          "en": "    Swiftblade, Signing Off!\nThat's all the news for you!\nIf you get lonely, just come over\nand spar for a while!\nAnd thanks for reading! I hope you've\nenjoyed it as much as I have.\nAnd now, let me sign off one final time\nwith that oh-so-familiar farewell...\nUntil next time, warriors!!!!",
+          "es_ref": "{Color:Green}Epílogo de Tesshin{Color:White}\n¡{Color:Blue}Ésta ha sido la última lección{Color:White}!\nSi me echáis mucho de menos,\nno dudéis en pasar a verme.\n¡Gracias por vuestro apoyo!\n¡Adiós!",
+          "pt": "Swiftblade, Signing Off!\nThat's all the news for you!\nIf you get lonely, just come over\nand spar for a while!\nAnd thanks for reading! I hope you've\nenjoyed it as much as I have.\nAnd now, let me sign off one final time\nwith that oh-so-familiar farewell...\nUntil next time, warriors!!!!"
+        }
+      ]
+    },
+    {
+      "group_id": 4,
+      "group_hex": "0x04",
+      "name": "Nomes de Itens & Equipamentos",
+      "messages": [
+        {
+          "id": 0,
+          "hex_id": "0x0400",
+          "en": "(Empty)",
+          "es_ref": "Vacío",
+          "pt": "(Empty)"
+        },
+        {
+          "id": 1,
+          "hex_id": "0x0401",
+          "en": "Smith's Sword",
+          "es_ref": "Espada Smith",
+          "pt": "Espada de Ferreiro"
+        },
+        {
+          "id": 2,
+          "hex_id": "0x0402",
+          "en": "White Sword",
+          "es_ref": "Espada blanca",
+          "pt": "Espada Branca"
+        },
+        {
+          "id": 3,
+          "hex_id": "0x0403",
+          "en": "White Sword (Two Elements)",
+          "es_ref": "Espada blanca (2 elementos)",
+          "pt": "Espada Branca (Dois Elementos)"
+        },
+        {
+          "id": 4,
+          "hex_id": "0x0404",
+          "en": "White Sword (Three Elements)",
+          "es_ref": "Espada blanca (3 elementos)",
+          "pt": "Espada Branca (Três Elementos)"
+        },
+        {
+          "id": 6,
+          "hex_id": "0x0406",
+          "en": "Four Sword",
+          "es_ref": "Espada cuádruple",
+          "pt": "Bombas"
+        },
+        {
+          "id": 7,
+          "hex_id": "0x0407",
+          "en": "Bombs",
+          "es_ref": "Bomba",
+          "pt": "Controle Remoto de Bombas"
+        },
+        {
+          "id": 8,
+          "hex_id": "0x0408",
+          "en": "Remote Bombs",
+          "es_ref": "Bomba con control remoto",
+          "pt": "Arco e Flechas"
+        },
+        {
+          "id": 9,
+          "hex_id": "0x0409",
+          "en": "Bow",
+          "es_ref": "Arco y flechas",
+          "pt": "Arco de Luz"
+        },
+        {
+          "id": 10,
+          "hex_id": "0x040A",
+          "en": "Light Arrow",
+          "es_ref": "Arco y flechas de luz",
+          "pt": "Bumerangue"
+        },
+        {
+          "id": 11,
+          "hex_id": "0x040B",
+          "en": "Boomerang",
+          "es_ref": "Bumerán",
+          "pt": "Bumerangue Mágico"
+        },
+        {
+          "id": 12,
+          "hex_id": "0x040C",
+          "en": "Magical Boomerang",
+          "es_ref": "Bumerán mágico",
+          "pt": "Escudo Pequeno"
+        },
+        {
+          "id": 13,
+          "hex_id": "0x040D",
+          "en": "Small Shield",
+          "es_ref": "Escudo pequeño",
+          "pt": "Escudo Espelho"
+        },
+        {
+          "id": 14,
+          "hex_id": "0x040E",
+          "en": "Mirror Shield",
+          "es_ref": "Escudo espejo",
+          "pt": "Lanterna de Chamas"
+        },
+        {
+          "id": 15,
+          "hex_id": "0x040F",
+          "en": "Flame Lantern",
+          "es_ref": "Candil",
+          "pt": "Lâmpada"
+        },
+        {
+          "id": 16,
+          "hex_id": "0x0410",
+          "en": "Flame Lantern",
+          "es_ref": "Candil",
+          "pt": "Jarro dos Ventos"
+        },
+        {
+          "id": 17,
+          "hex_id": "0x0411",
+          "en": "Gust Jar",
+          "es_ref": "Jarrón mágico",
+          "pt": "Cajado de Pacci"
+        },
+        {
+          "id": 18,
+          "hex_id": "0x0412",
+          "en": "Cane of Pacci",
+          "es_ref": "Bastón revés",
+          "pt": "Luvas de Toupeira"
+        },
+        {
+          "id": 19,
+          "hex_id": "0x0413",
+          "en": "Mole Mitts",
+          "es_ref": "Guantes de topo",
+          "pt": "Capa de Roc"
+        },
+        {
+          "id": 20,
+          "hex_id": "0x0414",
+          "en": "Roc's Cape",
+          "es_ref": "Capa Roc",
+          "pt": "Botas de Pegasus"
+        },
+        {
+          "id": 21,
+          "hex_id": "0x0415",
+          "en": "Pegasus Boots",
+          "es_ref": "Botas de Pegaso",
+          "pt": "Nadadeiras de Zora"
+        },
+        {
+          "id": 22,
+          "hex_id": "0x0416",
+          "en": "Fire Rod",
+          "es_ref": "Cetro de fuego",
+          "pt": "Ocarina do Vento"
+        },
+        {
+          "id": 23,
+          "hex_id": "0x0417",
+          "en": "Ocarina of Wind",
+          "es_ref": "Ocarina del viento",
+          "pt": "Anel de Escalada"
+        },
+        {
+          "id": 24,
+          "hex_id": "0x0418",
+          "en": "(DEBUG) Mega Crush",
+          "es_ref": "",
+          "pt": "(DEBUG) Mega Crush"
+        },
+        {
+          "id": 25,
+          "hex_id": "0x0419",
+          "en": "(DEBUG) Enemy Set",
+          "es_ref": "",
+          "pt": "(DEBUG) Enemy Set"
+        },
+        {
+          "id": 26,
+          "hex_id": "0x041A",
+          "en": "(DEBUG) Cell Overwrite Set",
+          "es_ref": "",
+          "pt": "(DEBUG) Cell Overwrite Set"
+        },
+        {
+          "id": 27,
+          "hex_id": "0x041B",
+          "en": "Power Wrist",
+          "es_ref": "Muñequera",
+          "pt": "Power Wrist"
+        },
+        {
+          "id": 28,
+          "hex_id": "0x041C",
+          "en": "Empty Bottle",
+          "es_ref": "Botella",
+          "pt": "Empty Bottle"
+        },
+        {
+          "id": 29,
+          "hex_id": "0x041D",
+          "en": "Empty Bottle",
+          "es_ref": "Botella",
+          "pt": "Empty Bottle"
+        },
+        {
+          "id": 30,
+          "hex_id": "0x041E",
+          "en": "Empty Bottle",
+          "es_ref": "Botella",
+          "pt": "Empty Bottle"
+        },
+        {
+          "id": 31,
+          "hex_id": "0x041F",
+          "en": "Empty Bottle",
+          "es_ref": "Botella",
+          "pt": "Empty Bottle"
+        },
+        {
+          "id": 32,
+          "hex_id": "0x0420",
+          "en": "Empty Bottle",
+          "es_ref": "Botella",
+          "pt": "Empty Bottle"
+        },
+        {
+          "id": 33,
+          "hex_id": "0x0421",
+          "en": "Butter",
+          "es_ref": "Mantequilla Lon Lon",
+          "pt": "Butter"
+        },
+        {
+          "id": 34,
+          "hex_id": "0x0422",
+          "en": "Lon Lon Milk",
+          "es_ref": "Lechera Lon Lon",
+          "pt": "Lon Lon Milk"
+        },
+        {
+          "id": 35,
+          "hex_id": "0x0423",
+          "en": "Lon Lon Milk (1{Symbol:15}2)",
+          "es_ref": "Media lechera Lon Lon",
+          "pt": "Lon Lon Milk (1{Symbol:15}2)"
+        },
+        {
+          "id": 36,
+          "hex_id": "0x0424",
+          "en": "Red Potion",
+          "es_ref": "Poción roja",
+          "pt": "Red Potion"
+        },
+        {
+          "id": 37,
+          "hex_id": "0x0425",
+          "en": "Blue Potion",
+          "es_ref": "Poción azul",
+          "pt": "Blue Potion"
+        },
+        {
+          "id": 38,
+          "hex_id": "0x0426",
+          "en": "Water",
+          "es_ref": "Agua",
+          "pt": "Water"
+        },
+        {
+          "id": 39,
+          "hex_id": "0x0427",
+          "en": "Mt. Crenel Mineral Water",
+          "es_ref": "Agua del monte Gongol",
+          "pt": "Mt. Crenel Mineral Water"
+        },
+        {
+          "id": 40,
+          "hex_id": "0x0428",
+          "en": "Fairy",
+          "es_ref": "Hada",
+          "pt": "Fairy"
+        },
+        {
+          "id": 41,
+          "hex_id": "0x0429",
+          "en": "Red Picolyte",
+          "es_ref": "Néctar rojo",
+          "pt": "Red Picolyte"
+        },
+        {
+          "id": 42,
+          "hex_id": "0x042A",
+          "en": "Orange Picolyte",
+          "es_ref": "Néctar naranja",
+          "pt": "Orange Picolyte"
+        },
+        {
+          "id": 43,
+          "hex_id": "0x042B",
+          "en": "Yellow Picolyte",
+          "es_ref": "Néctar amarillo",
+          "pt": "Yellow Picolyte"
+        },
+        {
+          "id": 44,
+          "hex_id": "0x042C",
+          "en": "Green Picolyte",
+          "es_ref": "Néctar verde",
+          "pt": "Green Picolyte"
+        },
+        {
+          "id": 45,
+          "hex_id": "0x042D",
+          "en": "Blue Picolyte",
+          "es_ref": "Néctar azul",
+          "pt": "Blue Picolyte"
+        },
+        {
+          "id": 46,
+          "hex_id": "0x042E",
+          "en": "White Picolyte",
+          "es_ref": "Néctar blanco",
+          "pt": "White Picolyte"
+        },
+        {
+          "id": 47,
+          "hex_id": "0x042F",
+          "en": "Nayru's Charm",
+          "es_ref": "Zumo mágico de Nayru",
+          "pt": "Nayru's Charm"
+        },
+        {
+          "id": 48,
+          "hex_id": "0x0430",
+          "en": "Farore's Charm",
+          "es_ref": "Zumo mágico de Farore",
+          "pt": "Farore's Charm"
+        },
+        {
+          "id": 49,
+          "hex_id": "0x0431",
+          "en": "Din's Charm",
+          "es_ref": "Zumo mágico de Din",
+          "pt": "Din's Charm"
+        },
+        {
+          "id": 52,
+          "hex_id": "0x0434",
+          "en": "Smith's Blade",
+          "es_ref": "Espada Smith",
+          "pt": "Smith's Blade"
+        },
+        {
+          "id": 53,
+          "hex_id": "0x0435",
+          "en": "Broken Picori Sword",
+          "es_ref": "Espada minish rota",
+          "pt": "Broken Picori Sword"
+        },
+        {
+          "id": 54,
+          "hex_id": "0x0436",
+          "en": "Bottle of Dog Food",
+          "es_ref": "Botella con comida para perros",
+          "pt": "Bottle of Dog Food"
+        },
+        {
+          "id": 55,
+          "hex_id": "0x0437",
+          "en": "Lon Lon Ranch Key",
+          "es_ref": "Llave de la granja",
+          "pt": "Lon Lon Ranch Key"
+        },
+        {
+          "id": 56,
+          "hex_id": "0x0438",
+          "en": "Wake-Up Mushroom",
+          "es_ref": "Seta despertador",
+          "pt": "Wake-Up Mushroom"
+        },
+        {
+          "id": 57,
+          "hex_id": "0x0439",
+          "en": "Library Book: A Hyrulean Bestiary",
+          "es_ref": "\"Libro ilustrado de los animales\"",
+          "pt": "Library Book: A Hyrulean Bestiary"
+        },
+        {
+          "id": 58,
+          "hex_id": "0x043A",
+          "en": "Library Book: Legend of the Picori",
+          "es_ref": "\"Leyendas de los minish\"",
+          "pt": "Library Book: Legend of the Picori"
+        },
+        {
+          "id": 59,
+          "hex_id": "0x043B",
+          "en": "Library Book: A History of Masks",
+          "es_ref": "\"Todo sobre las máscaras\"",
+          "pt": "Library Book: A History of Masks"
+        },
+        {
+          "id": 60,
+          "hex_id": "0x043C",
+          "en": "Graveyard Key",
+          "es_ref": "Llave del cementerio",
+          "pt": "Graveyard Key"
+        },
+        {
+          "id": 61,
+          "hex_id": "0x043D",
+          "en": "Tingle Trophy",
+          "es_ref": "Trofeo Tingle",
+          "pt": "Tingle Trophy"
+        },
+        {
+          "id": 62,
+          "hex_id": "0x043E",
+          "en": "Carlov Medal",
+          "es_ref": "Medalla del Club Minitendo",
+          "pt": "Carlov Medal"
+        },
+        {
+          "id": 63,
+          "hex_id": "0x043F",
+          "en": "Mysterious Shells",
+          "es_ref": "Caracola misteriosa",
+          "pt": "Mysterious Shells"
+        },
+        {
+          "id": 64,
+          "hex_id": "0x0440",
+          "en": "Earth Element",
+          "es_ref": "Elemento de tierra",
+          "pt": "Earth Element"
+        },
+        {
+          "id": 65,
+          "hex_id": "0x0441",
+          "en": "Fire Element",
+          "es_ref": "Elemento de fuego",
+          "pt": "Fire Element"
+        },
+        {
+          "id": 66,
+          "hex_id": "0x0442",
+          "en": "Water Element",
+          "es_ref": "Elemento de agua",
+          "pt": "Water Element"
+        },
+        {
+          "id": 67,
+          "hex_id": "0x0443",
+          "en": "Wind Element",
+          "es_ref": "Elemento de aire",
+          "pt": "Wind Element"
+        },
+        {
+          "id": 68,
+          "hex_id": "0x0444",
+          "en": "Grip Ring",
+          "es_ref": "Anillo escalada",
+          "pt": "Grip Ring"
+        },
+        {
+          "id": 69,
+          "hex_id": "0x0445",
+          "en": "Power Bracelets",
+          "es_ref": "Muñequera",
+          "pt": "Power Bracelets"
+        },
+        {
+          "id": 70,
+          "hex_id": "0x0446",
+          "en": "Flippers",
+          "es_ref": "Aletas",
+          "pt": "Flippers"
+        },
+        {
+          "id": 71,
+          "hex_id": "0x0447",
+          "en": "Map of Hyrule",
+          "es_ref": "Mapa de Hyrule",
+          "pt": "Map of Hyrule"
+        },
+        {
+          "id": 72,
+          "hex_id": "0x0448",
+          "en": "Spin Attack",
+          "es_ref": "Ataque circular",
+          "pt": "Spin Attack"
+        },
+        {
+          "id": 73,
+          "hex_id": "0x0449",
+          "en": "Roll Attack",
+          "es_ref": "Estocada circular",
+          "pt": "Roll Attack"
+        },
+        {
+          "id": 74,
+          "hex_id": "0x044A",
+          "en": "Dash Attack",
+          "es_ref": "Ataque Pegaso",
+          "pt": "Dash Attack"
+        },
+        {
+          "id": 75,
+          "hex_id": "0x044B",
+          "en": "Rock Breaker",
+          "es_ref": "Romperrocas",
+          "pt": "Rock Breaker"
+        },
+        {
+          "id": 76,
+          "hex_id": "0x044C",
+          "en": "Sword Beam",
+          "es_ref": "Ataque con rayo",
+          "pt": "Sword Beam"
+        },
+        {
+          "id": 77,
+          "hex_id": "0x044D",
+          "en": "Great Spin Attack",
+          "es_ref": "Gran ataque circular",
+          "pt": "Great Spin Attack"
+        },
+        {
+          "id": 78,
+          "hex_id": "0x044E",
+          "en": "Down Thrust",
+          "es_ref": "Estocada inferior",
+          "pt": "Down Thrust"
+        },
+        {
+          "id": 79,
+          "hex_id": "0x044F",
+          "en": "Peril Beam",
+          "es_ref": "Ataque supervivencia",
+          "pt": "Peril Beam"
+        },
+        {
+          "id": 80,
+          "hex_id": "0x0450",
+          "en": "Dungeon Map",
+          "es_ref": "Mapa de la mazmorra",
+          "pt": "Dungeon Map"
+        },
+        {
+          "id": 81,
+          "hex_id": "0x0451",
+          "en": "Compass",
+          "es_ref": "Brújula",
+          "pt": "Compass"
+        },
+        {
+          "id": 82,
+          "hex_id": "0x0452",
+          "en": "Big Key",
+          "es_ref": "Llave grande",
+          "pt": "Big Key"
+        },
+        {
+          "id": 83,
+          "hex_id": "0x0453",
+          "en": "Small Key",
+          "es_ref": "Llave pequeña",
+          "pt": "Small Key"
+        },
+        {
+          "id": 84,
+          "hex_id": "0x0454",
+          "en": "1 Rupee",
+          "es_ref": "1 rupia",
+          "pt": "1 Rupee"
+        },
+        {
+          "id": 85,
+          "hex_id": "0x0455",
+          "en": "5 Rupees",
+          "es_ref": "5 rupias",
+          "pt": "5 Rupees"
+        },
+        {
+          "id": 86,
+          "hex_id": "0x0456",
+          "en": "20 Rupees",
+          "es_ref": "20 rupias",
+          "pt": "20 Rupees"
+        },
+        {
+          "id": 87,
+          "hex_id": "0x0457",
+          "en": "50 Rupees",
+          "es_ref": "50 rupias",
+          "pt": "50 Rupees"
+        },
+        {
+          "id": 88,
+          "hex_id": "0x0458",
+          "en": "100 Rupees",
+          "es_ref": "100 rupias",
+          "pt": "100 Rupees"
+        },
+        {
+          "id": 89,
+          "hex_id": "0x0459",
+          "en": "200 Rupees",
+          "es_ref": "200 rupias",
+          "pt": "200 Rupees"
+        },
+        {
+          "id": 91,
+          "hex_id": "0x045B",
+          "en": "Jabber Nut",
+          "es_ref": "Frutabel",
+          "pt": "Jabber Nut"
+        },
+        {
+          "id": 92,
+          "hex_id": "0x045C",
+          "en": "Kinstone Piece",
+          "es_ref": "Piedra de la suerte",
+          "pt": "Kinstone Piece"
+        },
+        {
+          "id": 93,
+          "hex_id": "0x045D",
+          "en": "5 Bombs",
+          "es_ref": "5 bombas",
+          "pt": "5 Bombs"
+        },
+        {
+          "id": 94,
+          "hex_id": "0x045E",
+          "en": "5 Arrows",
+          "es_ref": "5 flechas",
+          "pt": "5 Arrows"
+        },
+        {
+          "id": 95,
+          "hex_id": "0x045F",
+          "en": "Heart",
+          "es_ref": "Corazón",
+          "pt": "Heart"
+        },
+        {
+          "id": 96,
+          "hex_id": "0x0460",
+          "en": "Fairy",
+          "es_ref": "Hada",
+          "pt": "Fairy"
+        },
+        {
+          "id": 98,
+          "hex_id": "0x0462",
+          "en": "Heart Container",
+          "es_ref": "Contenedor de corazón",
+          "pt": "Heart Container"
+        },
+        {
+          "id": 99,
+          "hex_id": "0x0463",
+          "en": "Pieces of Heart",
+          "es_ref": "Trozo de corazón",
+          "pt": "Pieces of Heart"
+        },
+        {
+          "id": 100,
+          "hex_id": "0x0464",
+          "en": "Big Wallet (Increased Size)",
+          "es_ref": "Bolsa más grande",
+          "pt": "Big Wallet (Increased Size)"
+        },
+        {
+          "id": 101,
+          "hex_id": "0x0465",
+          "en": "Big Bomb Bag (Increased Size)",
+          "es_ref": "Saco de bombas más grande",
+          "pt": "Big Bomb Bag (Increased Size)"
+        },
+        {
+          "id": 102,
+          "hex_id": "0x0466",
+          "en": "Big Quiver",
+          "es_ref": "Carcaj grande",
+          "pt": "Big Quiver"
+        },
+        {
+          "id": 103,
+          "hex_id": "0x0467",
+          "en": "Kinstone Bag",
+          "es_ref": "Bolsa para piedras",
+          "pt": "Kinstone Bag"
+        },
+        {
+          "id": 104,
+          "hex_id": "0x0468",
+          "en": "Brioche",
+          "es_ref": "Barra de pan",
+          "pt": "Brioche"
+        },
+        {
+          "id": 105,
+          "hex_id": "0x0469",
+          "en": "Slice of Cake",
+          "es_ref": "Chapata",
+          "pt": "Slice of Cake"
+        },
+        {
+          "id": 106,
+          "hex_id": "0x046A",
+          "en": "Croissant",
+          "es_ref": "Lazo de pan",
+          "pt": "Croissant"
+        },
+        {
+          "id": 107,
+          "hex_id": "0x046B",
+          "en": "Slice of Pie",
+          "es_ref": "Pan de pueblo",
+          "pt": "Slice of Pie"
+        },
+        {
+          "id": 108,
+          "hex_id": "0x046C",
+          "en": "10 Bombs",
+          "es_ref": "10 bombas",
+          "pt": "10 Bombs"
+        },
+        {
+          "id": 109,
+          "hex_id": "0x046D",
+          "en": "30 Bombs",
+          "es_ref": "30 bombas",
+          "pt": "30 Bombs"
+        },
+        {
+          "id": 110,
+          "hex_id": "0x046E",
+          "en": "10 Arrows",
+          "es_ref": "10 flechas",
+          "pt": "10 Arrows"
+        },
+        {
+          "id": 111,
+          "hex_id": "0x046F",
+          "en": "30 Arrows",
+          "es_ref": "30 flechas",
+          "pt": "30 Arrows"
+        },
+        {
+          "id": 112,
+          "hex_id": "0x0470",
+          "en": "Tiger Scrolls",
+          "es_ref": "Pergamino del tigre",
+          "pt": "Tiger Scrolls"
+        },
+        {
+          "id": 115,
+          "hex_id": "0x0473",
+          "en": "Go to Save Screen",
+          "es_ref": "Pantalla para guardar",
+          "pt": "Go to Save Screen"
+        },
+        {
+          "id": 116,
+          "hex_id": "0x0474",
+          "en": "Go to Sleep Screen",
+          "es_ref": "Pantalla salvapantallas",
+          "pt": "Go to Sleep Screen"
+        },
+        {
+          "id": 117,
+          "hex_id": "0x0475",
+          "en": "Spin Attack{Color:Red}\n{Color:White}Press and hold your {Color:Red}sword\n{Color:White}button. Charge and release!",
+          "es_ref": "{Color:Red}Ataque circular{Color:White}: acumula\nenergía pulsando el botón\nde la {Color:Red}espada {Color:White}y suéltalo.\n¡Eres un gran espadachín!",
+          "pt": "Spin Attack{Color:Red}\n{Color:White}Press and hold your {Color:Red}sword\n{Color:White}button. Charge and release!"
+        },
+        {
+          "id": 118,
+          "hex_id": "0x0476",
+          "en": "Roll Attack\nRoll! Then swing your {Color:Red}sword\n{Color:White}as you start to get up!",
+          "es_ref": "{Color:Red}Estocada circular{Color:White}: rueda y\nda un golpe de {Color:Red}espada{Color:White} al\nlevantarte. ¡Un golpe del\nmaestro Tosshin!",
+          "pt": "Roll Attack\nRoll! Then swing your {Color:Red}sword\n{Color:White}as you start to get up!"
+        },
+        {
+          "id": 119,
+          "hex_id": "0x0477",
+          "en": "Dash Attack\nEquip your {Color:Red}Pegasus Boots\n{Color:White}and {Color:Red}sword{Color:White}, then dash away!",
+          "es_ref": "{Color:Red}Ataque Pegaso{Color:White}: ponte las\n{Color:Red}botas de Pegaso {Color:White}y corre.\nAhora ataca con la {Color:Red}espada{Color:White}.\n¡Como el maestro Tesshin!",
+          "pt": "Dash Attack\nEquip your {Color:Red}Pegasus Boots\n{Color:White}and {Color:Red}sword{Color:White}, then dash away!"
+        },
+        {
+          "id": 120,
+          "hex_id": "0x0478",
+          "en": "Rock Breaker{Color:Red}\n{Color:White}Break pots with your {Color:Red}sword{Color:White}!\nThat's all there is to it!",
+          "es_ref": "{Color:Red}Romperrocas{Color:White}: ponte la capa\nRoc y rompe rocas con un\ngolpe de {Color:Red}espada{Color:White}. ¡Es un\ngran movimiento de Tesshin!",
+          "pt": "Rock Breaker{Color:Red}\n{Color:White}Break pots with your {Color:Red}sword{Color:White}!\nThat's all there is to it!"
+        },
+        {
+          "id": 121,
+          "hex_id": "0x0479",
+          "en": "Sword Beam\nWhen your hearts are full,\nswing your {Color:Red}sword{Color:White}!",
+          "es_ref": "{Color:Red}Ataque con rayo{Color:White}: se hace\ngolpeando con la {Color:Red}espada\n{Color:White}con todos los corazones\nllenos. ¡Técnica de Kusshin!",
+          "pt": "Sword Beam\nWhen your hearts are full,\nswing your {Color:Red}sword{Color:White}!"
+        },
+        {
+          "id": 122,
+          "hex_id": "0x047A",
+          "en": "Great Spin Attack\nPerform a {Color:Red}Spin Attack{Color:White}...and\nhit the button repeatedly!",
+          "es_ref": "{Color:Red}Gran ataque circular{Color:White}: tras\nun ataque circular, pulsa el\nbotón con rapidez.\n¡Como el maestro Tesshin I!",
+          "pt": "Great Spin Attack\nPerform a {Color:Red}Spin Attack{Color:White}...and\nhit the button repeatedly!"
+        },
+        {
+          "id": 123,
+          "hex_id": "0x047B",
+          "en": "Down Thrust\nEquip the {Color:Red}Roc's Cape{Color:White} and\nthe {Color:Red}sword{Color:White}!! Jump and swing!",
+          "es_ref": "{Color:Red}Estocada inferior{Color:White}: da un\nsalto y golpea con tu\n{Color:Red}espada {Color:White}cuando estés en el\naire. ¡Movimiento Tesshin!",
+          "pt": "Down Thrust\nEquip the {Color:Red}Roc's Cape{Color:White} and\nthe {Color:Red}sword{Color:White}!! Jump and swing!"
+        },
+        {
+          "id": 124,
+          "hex_id": "0x047C",
+          "en": "Peril Beam\nWhen you have only one\nheart left, swing the {Color:Red}sword{Color:White}!",
+          "es_ref": "{Color:Red}Ataque supervivencia{Color:White}:\nataca con la {Color:Red}espada\n{Color:White}cuando sólo te quede un\ncorazón. ¡Técnica Hasshin!",
+          "pt": "Peril Beam\nWhen you have only one\nheart left, swing the {Color:Red}sword{Color:White}!"
+        }
+      ]
+    }
+  ]
+}
