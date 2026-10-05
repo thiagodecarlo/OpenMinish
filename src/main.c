@@ -29,6 +29,7 @@
 #include "hal/boss_vaati.h"
 #include "hal/startup_menu.h"
 #include "hal/figurine_gallery.h"
+#include "hal/cucco_minigame.h"
 #include <math.h>
 
 /*
@@ -164,6 +165,7 @@ typedef struct {
     // Sistema Canônico de Colecionáveis: Galeria de Estatuetas & Conchas Misteriosas (Ato VI)
     int  shells;                   // Conchas Misteriosas (Mysterious Shells) possuídas
     bool has_carlov_medal;         // Medalha de Carlov concedida
+    bool is_carrying_cucco;        // Carregando galinha Cucco nos braços
 } Player;
 
 static const char* s_region_tags[REGION_COUNT] = { "usa", "eur", "jpn" };
@@ -1787,6 +1789,8 @@ static void apply_save_data(const SaveData* save, Player* link_ptr) {
     figurine_gallery_restore(save->figurines_mask, 0, save->has_carlov_medal, (int)save->shells_owned);
     link_ptr->shells = figurine_gallery_get_shells();
     link_ptr->has_carlov_medal = save->has_carlov_medal;
+    cucco_minigame_restore(save->cucco_level_cleared, save->cucco_heart_piece_obtained);
+    link_ptr->is_carrying_cucco = false;
 }
 
 int main(int argc, char* argv[]) {
@@ -1959,6 +1963,8 @@ int main(int argc, char* argv[]) {
     link.shells = 50;
     link.has_carlov_medal = false;
     figurine_gallery_init();
+    link.is_carrying_cucco = false;
+    cucco_minigame_init();
 
     // Inicialização da Máquina de Estados de Abertura & Seleção de Save (Capcom, Nintendo, Title, File Select)
     startup_menu_init();
@@ -2118,6 +2124,11 @@ int main(int argc, char* argv[]) {
                                 int shells_temp = 0;
                                 figurine_gallery_export(current_save.figurines_mask, NULL, &current_save.has_carlov_medal, &shells_temp);
                                 current_save.shells_owned = (u16)shells_temp;
+                                int cucco_cleared = 0;
+                                bool cucco_hp = false;
+                                cucco_minigame_export(&cucco_cleared, &cucco_hp);
+                                current_save.cucco_level_cleared = (u8)cucco_cleared;
+                                current_save.cucco_heart_piece_obtained = cucco_hp;
                                 current_save.slot_a = (int)inventory_get_slot_a();
                                 current_save.slot_b = (int)inventory_get_slot_b();
                                 if (save_game(1, &current_save)) {
@@ -2521,6 +2532,17 @@ int main(int argc, char* argv[]) {
                                 printf("[DEBUG] [F12] Abrindo a Galeria do Carlov (Gacha / Miniaturas)!\n");
                             }
                             break;
+                        case SDLK_TAB:
+                            if (s_in_town) {
+                                if (cucco_minigame_is_active()) {
+                                    cucco_minigame_stop();
+                                } else {
+                                    int next_lvl = cucco_minigame_get_highest_cleared() + 1;
+                                    if (next_lvl > 10) next_lvl = 10;
+                                    cucco_minigame_start_level(next_lvl);
+                                }
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -2858,9 +2880,22 @@ int main(int argc, char* argv[]) {
                             hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
                         }
                     } else if (s_in_town) {
-                        Entity* shopkeeper = entity_find_nearby_shopkeeper(link.x, link.y, 40.0f);
-                        if (shopkeeper) {
-                            dialogue_trigger_shopkeeper_talk(link.rupees);
+                        if (cucco_minigame_is_active()) {
+                            cucco_minigame_handle_action(link.x, link.y, link.dir);
+                            if (!cucco_minigame_is_carrying()) {
+                                link.is_attacking = true;
+                                link.attack_timer = 12;
+                                hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                            }
+                        } else if (link.x >= 150.0f && link.x <= 185.0f && link.y >= 155.0f && link.y <= 200.0f) {
+                            int next_lvl = cucco_minigame_get_highest_cleared() + 1;
+                            if (next_lvl > 10) next_lvl = 10;
+                            cucco_minigame_start_level(next_lvl);
+                            printf("[ANJU] Link conversou com Anju e aceitou a rodada %d do resgate de Cuccos!\n", next_lvl);
+                        } else {
+                            Entity* shopkeeper = entity_find_nearby_shopkeeper(link.x, link.y, 40.0f);
+                            if (shopkeeper) {
+                                dialogue_trigger_shopkeeper_talk(link.rupees);
                             // Se estiver perto do balcão de compras:
                             if (link.x >= 420.0f && link.x <= 468.0f && link.y <= 136.0f) {
                                 if (link.hearts < link.max_hearts && link.rupees >= 30) {
@@ -2889,7 +2924,8 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                         }
-                    } else if (s_in_village) {
+                    }
+                } else if (s_in_village) {
                         Entity* gentari = entity_find_nearby_gentari(link.x, link.y, 30.0f);
                         if (gentari) {
                             dialogue_trigger_gentari_talk();
@@ -3932,6 +3968,11 @@ int main(int argc, char* argv[]) {
         }
         s_was_veil_clouds_active = veil_clouds_is_active();
 
+        if (s_in_town && cucco_minigame_is_active()) {
+            cucco_minigame_update(&link.x, &link.y, link.dir, &link.is_carrying_cucco,
+                                  &link.rupees, &link.shells, &link.hearts, link.max_hearts);
+        }
+
         entity_manager_update(active_map, link.x, link.y,
                               &link.hearts, &link.max_hearts, &link.rupees,
                               &link.invuln_timer, &link.knock_x, &link.knock_y);
@@ -4104,6 +4145,9 @@ int main(int argc, char* argv[]) {
         } else {
             // 1. Renderiza o mapa com Frustum Culling inteligente
             map_render(active_map, &camera);
+            if (s_in_town && cucco_minigame_is_active()) {
+                cucco_minigame_render(&camera, link.x, link.y, link.dir);
+            }
             // 2. Renderiza as entidades ativas (Octoroks, Projéteis e Itens no chão)
             entity_manager_render(&camera);
             // 3. Desenha a entidade do Link nas coordenadas relativas da câmera
@@ -4249,6 +4293,11 @@ int main(int argc, char* argv[]) {
 
         // 5. Interface de Fusão de Kinstones (Pedras da Sorte)
         kinstone_render();
+
+        // 5b. HUD do Minigame das Galinhas Cucco de Anju (Ato VI)
+        if (s_in_town && cucco_minigame_is_active()) {
+            cucco_minigame_render_hud();
+        }
 
         // 6. Banner Festivo de Aquisição do Pergaminho do Tigre (Tiger Scroll #1)
         if (link.tiger_scroll_banner_timer > 0) {
