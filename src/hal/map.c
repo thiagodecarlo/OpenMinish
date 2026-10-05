@@ -1,7 +1,7 @@
 #include "hal/map.h"
 #include "hal/video.h"
 #include "hal/audio.h"
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,21 +20,18 @@ static FILE* open_binary_asset(const char* rel_path) {
     f = fopen(fallback, "rb");
     if (f) return f;
 
-    char* base = SDL_GetBasePath();
+    const char* base = SDL_GetBasePath();
     if (base) {
         snprintf(fallback, sizeof(fallback), "%s%s", base, rel_path);
         f = fopen(fallback, "rb");
         if (f) {
-            SDL_free(base);
             return f;
         }
         snprintf(fallback, sizeof(fallback), "%s../%s", base, rel_path);
         f = fopen(fallback, "rb");
         if (f) {
-            SDL_free(base);
             return f;
         }
-        SDL_free(base);
     }
     return NULL;
 }

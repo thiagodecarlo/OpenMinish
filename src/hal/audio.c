@@ -1,5 +1,5 @@
 #include "hal/audio.h"
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,8 +37,8 @@ typedef struct {
     bool is_stereo;
 } PrecalcSfx;
 
-static SDL_AudioDeviceID s_audio_device = 0;
-static SDL_AudioSpec     s_audio_spec;
+static SDL_AudioStream* s_audio_stream = NULL;
+static SDL_AudioSpec   s_audio_spec;
 
 static Voice      s_voices[MAX_CONCURRENT_VOICES];
 static PrecalcSfx s_precalc_sfx[SOUND_COUNT];
@@ -2552,16 +2552,20 @@ static s16* synth_generate_minish_village(u32* out_total_frames) {
 }
 
 // ----------------------------------------------------------------------------
-// CALLBACK DO MIXER DE BAIXA LATÊNCIA DO SDL2
+// ----------------------------------------------------------------------------
+// CALLBACK DO MIXER DE BAIXA LATÊNCIA DO SDL3
 // ----------------------------------------------------------------------------
 
-static void audio_mixer_callback(void* userdata, Uint8* stream, int len) {
+static void SDLCALL audio_stream_callback(void* userdata, SDL_AudioStream* stream, int additional_amount, int total_amount) {
     (void)userdata;
-    int num_samples = len / sizeof(s16); // Total de amostras individuais no buffer
-    int num_frames  = num_samples / AUDIO_CHANNELS; // Quadros estéreo (L + R)
+    (void)total_amount;
+    if (additional_amount <= 0) return;
 
-    s16* out_ptr = (s16*)stream;
-    memset(stream, 0, len); // Silêncio base
+    int frames_to_generate = additional_amount / (sizeof(s16) * AUDIO_CHANNELS);
+    if (frames_to_generate > AUDIO_BUFFER_SIZE) frames_to_generate = AUDIO_BUFFER_SIZE;
+
+    s16 out_ptr[AUDIO_BUFFER_SIZE * AUDIO_CHANNELS];
+    memset(out_ptr, 0, frames_to_generate * sizeof(s16) * AUDIO_CHANNELS);
 
     // Buffers de acumulação de 32-bit para evitar overflow durante a mixagem
     s32 mix_buffer_l[AUDIO_BUFFER_SIZE];
@@ -2572,7 +2576,7 @@ static void audio_mixer_callback(void* userdata, Uint8* stream, int len) {
     // 1. Mixa a trilha sonora de fundo (BGM)
     if (s_bgm_voice.is_active && s_bgm_voice.samples) {
         float gain = s_bgm_voice.volume * s_vol_bgm;
-        for (int i = 0; i < num_frames; i++) {
+        for (int i = 0; i < frames_to_generate; i++) {
             u32 frame_idx = (u32)s_bgm_voice.current_frame;
             if (frame_idx >= s_bgm_voice.total_frames) {
                 if (s_bgm_voice.is_looping) {
@@ -2608,7 +2612,7 @@ static void audio_mixer_callback(void* userdata, Uint8* stream, int len) {
 
         float gain = voice->volume * s_vol_sfx;
 
-        for (int i = 0; i < num_frames; i++) {
+        for (int i = 0; i < frames_to_generate; i++) {
             u32 frame_idx = (u32)voice->current_frame;
             if (frame_idx >= voice->total_frames) {
                 if (voice->is_looping) {
@@ -2642,7 +2646,7 @@ static void audio_mixer_callback(void* userdata, Uint8* stream, int len) {
     }
 
     // 3. Aplica o Volume Master e proteção contra distorção (Clamping / Saturação)
-    for (int i = 0; i < num_frames; i++) {
+    for (int i = 0; i < frames_to_generate; i++) {
         s32 final_l = (s32)(mix_buffer_l[i] * s_vol_master);
         s32 final_r = (s32)(mix_buffer_r[i] * s_vol_master);
 
@@ -2654,6 +2658,8 @@ static void audio_mixer_callback(void* userdata, Uint8* stream, int len) {
         out_ptr[i * 2 + 0] = (s16)final_l;
         out_ptr[i * 2 + 1] = (s16)final_r;
     }
+
+    SDL_PutAudioStreamData(stream, out_ptr, frames_to_generate * sizeof(s16) * AUDIO_CHANNELS);
 }
 
 // ----------------------------------------------------------------------------
@@ -2661,22 +2667,24 @@ static void audio_mixer_callback(void* userdata, Uint8* stream, int len) {
 // ----------------------------------------------------------------------------
 
 bool hal_audio_init(void) {
-    if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0) {
+    if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) {
         printf("[AUDIO ERRO] Falha ao inicializar subsistema SDL_Audio: %s\n", SDL_GetError());
         return false;
     }
 
-    SDL_AudioSpec desired;
-    SDL_zero(desired);
-    desired.freq     = AUDIO_SAMPLE_RATE;
-    desired.format   = AUDIO_S16SYS;
-    desired.channels = AUDIO_CHANNELS;
-    desired.samples  = AUDIO_BUFFER_SIZE;
-    desired.callback = audio_mixer_callback;
-    desired.userdata = NULL;
+    SDL_zero(s_audio_spec);
+    s_audio_spec.freq     = AUDIO_SAMPLE_RATE;
+    s_audio_spec.format   = SDL_AUDIO_S16LE;
+    s_audio_spec.channels = AUDIO_CHANNELS;
 
-    s_audio_device = SDL_OpenAudioDevice(NULL, 0, &desired, &s_audio_spec, 0);
-    if (s_audio_device == 0) {
+    s_audio_stream = SDL_OpenAudioDeviceStream(
+        SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
+        &s_audio_spec,
+        audio_stream_callback,
+        NULL
+    );
+
+    if (!s_audio_stream) {
         printf("[AUDIO AVISO] Nenhum dispositivo de som encontrado: %s\n", SDL_GetError());
         return false;
     }
@@ -2688,11 +2696,11 @@ bool hal_audio_init(void) {
     // Gera em tempo de execução os efeitos sonoros do sintetizador procedual retro
     synth_generate_all_sfx();
 
-    // Despausa o mixer do hardware para iniciar a reprodução em tempo real
-    SDL_PauseAudioDevice(s_audio_device, 0);
+    // Despausa o stream do hardware para iniciar a reprodução em tempo real
+    SDL_ResumeAudioStreamDevice(s_audio_stream);
     s_audio_ready = true;
 
-    printf("[HAL Audio] Inicializado com sucesso! (44100Hz, Estereo 16-bit, Latencia: ~%.1fms)\n",
+    printf("[HAL Audio] Inicializado com sucesso via SDL3! (44100Hz, Estereo 16-bit, Latencia: ~%.1fms)\n",
            (float)AUDIO_BUFFER_SIZE * 1000.0f / AUDIO_SAMPLE_RATE);
     return true;
 }
@@ -2703,7 +2711,7 @@ void hal_audio_play_sound(SoundEffect effect, float volume, float pitch_shift) {
     PrecalcSfx* sfx = &s_precalc_sfx[effect];
     if (!sfx->samples) return;
 
-    SDL_LockAudioDevice(s_audio_device);
+    SDL_LockAudioStream(s_audio_stream);
 
     // Encontra uma voz inativa no mixer
     int voice_idx = -1;
@@ -2728,7 +2736,7 @@ void hal_audio_play_sound(SoundEffect effect, float volume, float pitch_shift) {
     voice->is_stereo      = sfx->is_stereo;
     voice->free_on_finish = false;
 
-    SDL_UnlockAudioDevice(s_audio_device);
+    SDL_UnlockAudioStream(s_audio_stream);
 }
 
 bool hal_audio_play_music(const char* wav_path, float volume, bool loop) {
@@ -2738,37 +2746,43 @@ bool hal_audio_play_music(const char* wav_path, float volume, bool loop) {
     Uint8* wav_buffer = NULL;
     Uint32 wav_length = 0;
 
-    if (SDL_LoadWAV(wav_path, &wav_spec, &wav_buffer, &wav_length) == NULL) {
+    if (!SDL_LoadWAV(wav_path, &wav_spec, &wav_buffer, &wav_length)) {
         printf("[AUDIO] Arquivo de musica nao encontrado: %s\n", wav_path);
         return false;
     }
 
-    // Converte automaticamente qualquer formato de WAV para o formato nativo do nosso mixer
-    SDL_AudioCVT cvt;
-    if (SDL_BuildAudioCVT(&cvt, wav_spec.format, wav_spec.channels, wav_spec.freq,
-                          s_audio_spec.format, s_audio_spec.channels, s_audio_spec.freq) < 0) {
-        SDL_FreeWAV(wav_buffer);
+    SDL_AudioSpec dst_spec;
+    dst_spec.freq = AUDIO_SAMPLE_RATE;
+    dst_spec.format = SDL_AUDIO_S16LE;
+    dst_spec.channels = AUDIO_CHANNELS;
+
+    Uint8* converted_buf = NULL;
+    int converted_len = 0;
+    if (!SDL_ConvertAudioSamples(&wav_spec, wav_buffer, (int)wav_length, &dst_spec, &converted_buf, &converted_len)) {
+        SDL_free(wav_buffer);
         return false;
     }
+    SDL_free(wav_buffer);
 
-    cvt.len = wav_length;
-    cvt.buf = (Uint8*)malloc(cvt.len * cvt.len_mult);
-    memcpy(cvt.buf, wav_buffer, wav_length);
-    SDL_FreeWAV(wav_buffer);
-
-    if (SDL_ConvertAudio(&cvt) < 0) {
-        free(cvt.buf);
-        return false;
-    }
-
-    SDL_LockAudioDevice(s_audio_device);
+    SDL_LockAudioStream(s_audio_stream);
 
     if (s_bgm_voice.free_on_finish && s_bgm_voice.samples) {
         free(s_bgm_voice.samples);
     }
 
-    s_bgm_voice.samples        = (s16*)cvt.buf;
-    s_bgm_voice.total_frames   = cvt.len_cvt / (sizeof(s16) * AUDIO_CHANNELS);
+    s16* samples_copy = (s16*)malloc(converted_len);
+    if (samples_copy) {
+        memcpy(samples_copy, converted_buf, converted_len);
+    }
+    SDL_free(converted_buf);
+
+    if (!samples_copy) {
+        SDL_UnlockAudioStream(s_audio_stream);
+        return false;
+    }
+
+    s_bgm_voice.samples        = samples_copy;
+    s_bgm_voice.total_frames   = converted_len / (sizeof(s16) * AUDIO_CHANNELS);
     s_bgm_voice.current_frame  = 0.0f;
     s_bgm_voice.volume         = volume;
     s_bgm_voice.pitch          = 1.0f;
@@ -2777,7 +2791,7 @@ bool hal_audio_play_music(const char* wav_path, float volume, bool loop) {
     s_bgm_voice.is_stereo      = true;
     s_bgm_voice.free_on_finish = true;
 
-    SDL_UnlockAudioDevice(s_audio_device);
+    SDL_UnlockAudioStream(s_audio_stream);
     printf("[AUDIO] Reproduzindo BGM: %s\n", wav_path);
     return true;
 }
@@ -3083,7 +3097,7 @@ void hal_audio_play_bgm(BgmTrack track) {
 
     if (!samples || total_frames == 0) return;
 
-    SDL_LockAudioDevice(s_audio_device);
+    SDL_LockAudioStream(s_audio_stream);
 
     if (s_bgm_voice.free_on_finish && s_bgm_voice.samples) {
         free(s_bgm_voice.samples);
@@ -3101,7 +3115,7 @@ void hal_audio_play_bgm(BgmTrack track) {
 
     s_current_bgm_track = track;
 
-    SDL_UnlockAudioDevice(s_audio_device);
+    SDL_UnlockAudioStream(s_audio_stream);
     printf("[HAL Audio] Trilha sonora chiptune iniciada: %s (%.1fs em loop continuo)\n",
            hal_audio_get_bgm_name(track),
            (float)total_frames / (float)AUDIO_SAMPLE_RATE);
@@ -3115,14 +3129,14 @@ void hal_audio_cycle_bgm(void) {
 void hal_audio_stop_music(void) {
     if (!s_audio_ready) return;
 
-    SDL_LockAudioDevice(s_audio_device);
+    SDL_LockAudioStream(s_audio_stream);
     s_bgm_voice.is_active = false;
     if (s_bgm_voice.free_on_finish && s_bgm_voice.samples) {
         free(s_bgm_voice.samples);
         s_bgm_voice.samples = NULL;
     }
     s_current_bgm_track = BGM_NONE;
-    SDL_UnlockAudioDevice(s_audio_device);
+    SDL_UnlockAudioStream(s_audio_stream);
 }
 
 void hal_audio_set_master_volume(float volume) {
@@ -3148,9 +3162,9 @@ float hal_audio_get_sfx_volume(void)    { return s_vol_sfx; }
 float hal_audio_get_bgm_volume(void)    { return s_vol_bgm; }
 
 void hal_audio_shutdown(void) {
-    if (s_audio_device != 0) {
-        SDL_CloseAudioDevice(s_audio_device);
-        s_audio_device = 0;
+    if (s_audio_stream != NULL) {
+        SDL_DestroyAudioStream(s_audio_stream);
+        s_audio_stream = NULL;
     }
 
     for (int i = 0; i < SOUND_COUNT; i++) {
