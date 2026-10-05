@@ -215,7 +215,7 @@ void dungeon_droplets_enter(float* player_x, float* player_y, Direction* player_
     if (player_dir) *player_dir = DIR_UP;
 
     entity_clear_all();
-    hal_audio_play_bgm(BGM_DEEPWOOD_SHRINE);
+    hal_audio_play_bgm(BGM_TEMPLE_OF_DROPLETS);
     printf("[DUNGEON 4] Link adentrou o Temple of Droplets nas profundezas congeladas de Lake Hylia!\n");
 }
 

@@ -67,20 +67,50 @@ typedef enum {
     SOUND_CAPCOM_CHIME,    // Jingle brilhante harmônico de abertura da Capcom
     SOUND_TITLE_SWORD,     // Golpe reluzente de espada e chime mágico ao pressionar START no título
     SOUND_MENU_CURSOR,     // Clique sutil ao navegar nos slots do menu de arquivos
+    SOUND_LINK_ATTACK1,    // Grunt autêntico de ataque do Link 1 (Yaaah!)
+    SOUND_LINK_ATTACK2,    // Grunt autêntico de ataque do Link 2 (Haaah!)
+    SOUND_LINK_HURT,       // Grito de dor ao sofrer dano (Ugh!)
+    SOUND_LINK_FALL,       // Grito de queda no abismo (Waaah!)
+    SOUND_LINK_JUMP,       // Salto ágil acrobático (Hop!)
+    SOUND_LINK_SPIN,       // Grito de ataque giratório liberado (Seiyaaa!)
+    SOUND_LINK_DIE,        // Grito de derrota no Game Over
+    SOUND_RUPEE_GET,       // Coleta de Rupee
+    SOUND_HEART_GET,       // Coleta de Coração de cura
+    SOUND_ICE_SLIDE,       // Bloco de gelo deslizando no Temple of Droplets
+    SOUND_ICE_STOP,        // Bloco de gelo colidindo e parando
+    SOUND_ICE_MELT,        // Gelo derretendo sob a chama da lanterna
+    SOUND_ELEMENT_CHARGE,  // Energia do elemento infundindo na lâmina
+    SOUND_CUCCO_CALL,      // Cacarejo da galinha Cucco no minigame
     SOUND_COUNT
 } SoundEffect;
 
 // Identificadores de Trilhas Sonoras (BGM)
 typedef enum {
     BGM_NONE = 0,
-    BGM_MINISH_WOODS,     // Trilha misteriosa e mágica de Minish Woods (Deepwood)
-    BGM_HYRULE_OVERWORLD, // O lendário tema marcial de Hyrule Field
-    BGM_DEEPWOOD_SHRINE,  // A atmosfera enigmática e gótica de Deepwood Shrine
-    BGM_BOSS_BATTLE,      // Batalha urgente e épica contra o Chefe (Boss Battle)
-    BGM_HYRULE_TOWN,      // O tema alegre, festivo e vibrante da Cidade de Hyrule (Hyrule Town Hub)
-    BGM_MINISH_VILLAGE,   // O tema acolhedor, bucólico e mágico da Vila dos Minish (Picori Village)
-    BGM_TITLE_THEME,      // O tema triunfante e épico de abertura (Title Screen de The Minish Cap)
-    BGM_FILE_SELECT,      // O tema celestial da Grande Fada / Seleção de Arquivo (Fairy Fountain Harp)
+    BGM_MINISH_WOODS,         // Trilha misteriosa e mágica de Minish Woods (Deepwood)
+    BGM_HYRULE_OVERWORLD,     // O lendário tema marcial de Hyrule Field
+    BGM_DEEPWOOD_SHRINE,      // A atmosfera enigmática e gótica de Deepwood Shrine
+    BGM_BOSS_BATTLE,          // Batalha urgente e épica contra o Chefe (Boss Battle)
+    BGM_HYRULE_TOWN,          // O tema alegre, festivo e vibrante da Cidade de Hyrule (Hyrule Town Hub)
+    BGM_MINISH_VILLAGE,       // O tema acolhedor, bucólico e mágico da Vila dos Minish (Picori Village)
+    BGM_TITLE_THEME,          // O tema triunfante e épico de abertura (Title Screen de The Minish Cap)
+    BGM_FILE_SELECT,          // O tema celestial da Grande Fada / Seleção de Arquivo (Fairy Fountain Harp)
+    BGM_CAVE_OF_FLAMES,       // Masmorra do Monte Crenel (Cave of Flames)
+    BGM_FORTRESS_OF_WINDS,    // Masmorra antiga e misteriosa (Fortress of Winds)
+    BGM_TEMPLE_OF_DROPLETS,   // Masmorra de gelo e água do Lago Hylia (Temple of Droplets)
+    BGM_PALACE_OF_WINDS,      // O palácio flutuante dos céus (Palace of Winds)
+    BGM_DARK_HYRULE_CASTLE,   // Castelo corrompido e sombrio de Vaati (Dark Hyrule Castle)
+    BGM_ROYAL_VALLEY,         // O vale gótico e cemitério enevoado (Royal Valley)
+    BGM_ELEMENTAL_SANCTUARY,  // O santuário sagrado dos quatro elementos (Elemental Sanctuary)
+    BGM_MT_CRENEL,            // A escalada rochosa e perigosa do Monte Crenel
+    BGM_CRENEL_STORM,         // A parede tempestuosa de escalada do Monte Crenel
+    BGM_CASTOR_WILDS,         // O pântano nebuloso e traiçoeiro (Castor Wilds)
+    BGM_WIND_RUINS,           // As ruínas ancestrais e ventos do deserto (Wind Ruins)
+    BGM_CLOUD_TOPS,           // As quedas d'água e o topo das nuvens (Veil Falls / Cloud Tops)
+    BGM_SWIFTBLADE_DOJO,      // O dojo marcial de treino do mestre espadachim Swiftblade
+    BGM_CUCCO_MINIGAME,       // A música frenética e cômica do minigame de pegar Cuccos
+    BGM_HOUSE,                // Interiores pacíficos e acolhedores das casas de Hyrule
+    BGM_PICORI_FESTIVAL,      // O alegre e festivo festival anual dos Minish (Cutscene Inicial)
     BGM_COUNT
 } BgmTrack;
 

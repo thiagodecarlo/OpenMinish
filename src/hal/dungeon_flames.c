@@ -179,6 +179,7 @@ void dungeon_flames_enter(float* link_x, float* link_y, Direction* link_dir) {
     if (link_y) *link_y = 8.0f * TILE_SIZE; // Próximo ao arco sul
     if (link_dir) *link_dir = DIR_UP;
 
+    hal_audio_play_bgm(BGM_CAVE_OF_FLAMES);
     hal_audio_play_sound(SOUND_SECRET, 0.85f, 1.0f);
     printf("[CAVE OF FLAMES] Link adentrou a Masmorra de Fogo (Vestibulo de Entrada)!\n");
 }
@@ -545,7 +546,7 @@ void dungeon_flames_update(float* link_x, float* link_y, Direction* link_dir, bo
             if (entity_count_active_enemies() == 0 && s_flames.boss_chamber_entered) {
                 s_flames.boss_cleared = true;
                 s_flames.door_boss_shutter.is_open = true; // Reabre o portão sul
-                hal_audio_play_bgm(BGM_MINISH_WOODS);
+                hal_audio_play_bgm(BGM_CAVE_OF_FLAMES);
                 hal_audio_play_sound(SOUND_BOSS_DEFEAT, 1.0f, 1.0f);
                 printf("[CAVE OF FLAMES] GLEEROK DERROTADO! Cristal e Receptaculo de Coracao gerados!\n");
 

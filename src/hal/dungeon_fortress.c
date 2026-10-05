@@ -161,7 +161,7 @@ void dungeon_fortress_enter(float* link_x, float* link_y, Direction* link_dir) {
     s_fortress.safe_x = 128.0f;
     s_fortress.safe_y = 136.0f;
 
-    hal_audio_play_bgm(BGM_DEEPWOOD_SHRINE);
+    hal_audio_play_bgm(BGM_FORTRESS_OF_WINDS);
     hal_audio_play_sound(SOUND_DOOR_SHUTTER, 1.0f, 0.9f);
     printf("[DUNGEON] Link adentrou a Fortress of Winds (Dungeon 3)!\n");
 }
@@ -175,7 +175,7 @@ void dungeon_fortress_exit(float* link_x, float* link_y, Direction* link_dir) {
     if (link_y)   *link_y = 64.0f;
     if (link_dir) *link_dir = DIR_DOWN;
 
-    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    hal_audio_play_bgm(BGM_WIND_RUINS);
     hal_audio_play_sound(SOUND_DOOR_SHUTTER, 1.0f, 1.1f);
     printf("[DUNGEON] Link retornou as Wind Ruins da Fortress of Winds!\n");
 }

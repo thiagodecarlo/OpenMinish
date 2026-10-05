@@ -218,7 +218,7 @@ void royal_valley_enter_entrance(float* link_x, float* link_y, Direction* link_d
     s_rv.safe_x = 7.5f * TILE_SIZE;
     s_rv.safe_y = 8.5f * TILE_SIZE;
 
-    hal_audio_play_bgm(BGM_DEEPWOOD_SHRINE);
+    hal_audio_play_bgm(BGM_ROYAL_VALLEY);
     hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.2f);
     printf("[ROYAL VALLEY] Link adentrou o lendario Vale Real (Royal Valley)!\n");
 }
@@ -277,7 +277,7 @@ void royal_valley_exit(float* link_x, float* link_y, Direction* link_dir) {
     if (link_y) *link_y = 2.0f * TILE_SIZE;
     if (link_dir) *link_dir = DIR_DOWN;
 
-    hal_audio_play_bgm(BGM_MINISH_WOODS);
+    hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
     hal_audio_play_sound(SOUND_SECRET, 0.9f, 1.1f);
     printf("[ROYAL VALLEY] Link retornou do Vale Real para Hyrule!\n");
 }
