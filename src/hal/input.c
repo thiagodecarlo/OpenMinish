@@ -16,8 +16,7 @@ static u16 s_keys_previous = 0;
 static u16 s_keys_pressed  = 0;
 static u16 s_keys_released = 0;
 
-static SDL_GameController* s_controller = NULL;
-static SDL_Joystick*       s_joystick   = NULL;
+static SDL_Gamepad* s_gamepad = NULL;
 static char s_controller_name[128] = "Nenhum Gamepad Conectado";
 static bool s_has_controller = false;
 
@@ -26,45 +25,24 @@ static s16 s_raw_axis_x = 0;
 static s16 s_raw_axis_y = 0;
 static AnalogStick s_left_stick = { 0.0f, 0.0f, 0.0f };
 
-static void open_controller(int device_index) {
-    if (s_controller) {
-        SDL_GameControllerClose(s_controller);
-        s_controller = NULL;
-    }
-    if (s_joystick) {
-        SDL_JoystickClose(s_joystick);
-        s_joystick = NULL;
+static void open_controller(SDL_JoystickID instance_id) {
+    if (s_gamepad) {
+        SDL_CloseGamepad(s_gamepad);
+        s_gamepad = NULL;
     }
 
-    if (SDL_IsGameController(device_index)) {
-        s_controller = SDL_GameControllerOpen(device_index);
-        if (s_controller) {
-            const char* name = SDL_GameControllerName(s_controller);
-            snprintf(s_controller_name, sizeof(s_controller_name), "%s", name ? name : "Gamepad Compativel");
-            s_has_controller = true;
-            printf("\n====================================================================\n");
-            printf("[GAMEPAD CONECTADO] %s (Modo GameController Ativo)\n", s_controller_name);
-            printf("====================================================================\n\n");
-            return;
-        }
-    }
-
-    s_joystick = SDL_JoystickOpen(device_index);
-    if (s_joystick) {
-        const char* name = SDL_JoystickName(s_joystick);
-        snprintf(s_controller_name, sizeof(s_controller_name), "%s", name ? name : "Joystick Generico");
+    s_gamepad = SDL_OpenGamepad(instance_id);
+    if (s_gamepad) {
+        const char* name = SDL_GetGamepadName(s_gamepad);
+        snprintf(s_controller_name, sizeof(s_controller_name), "%s", name ? name : "Gamepad Compativel");
         s_has_controller = true;
         printf("\n====================================================================\n");
-        printf("[GAMEPAD CONECTADO] %s (Modo Joystick / DirectInput Ativo)\n", s_controller_name);
+        printf("[GAMEPAD CONECTADO] %s (Modo Gamepad SDL3 Ativo)\n", s_controller_name);
         printf("====================================================================\n\n");
     }
 }
 
 void hal_input_init(void) {
-    SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK);
-    SDL_GameControllerEventState(SDL_ENABLE);
-    SDL_JoystickEventState(SDL_ENABLE);
-
     s_keys_raw = 0;
     s_keys_current = 0;
     s_keys_previous = 0;
@@ -79,10 +57,11 @@ void hal_input_init(void) {
     s_has_controller = false;
     snprintf(s_controller_name, sizeof(s_controller_name), "Nenhum Gamepad Conectado");
 
-    int num_joysticks = SDL_NumJoysticks();
-    for (int i = 0; i < num_joysticks; i++) {
-        open_controller(i);
-        if (s_has_controller) break;
+    int count = 0;
+    SDL_JoystickID* gamepads = SDL_GetGamepads(&count);
+    if (gamepads && count > 0) {
+        open_controller(gamepads[0]);
+        SDL_free(gamepads);
     }
 
     if (!s_has_controller) {
@@ -93,27 +72,27 @@ void hal_input_init(void) {
 static u16 map_key(SDL_Keycode key) {
     switch (key) {
         case SDLK_UP:
-        case SDLK_w:      return KEY_UP;
+        case SDLK_W:      return KEY_UP;
         case SDLK_DOWN:
-        case SDLK_s:      return KEY_DOWN;
+        case SDLK_S:      return KEY_DOWN;
         case SDLK_LEFT:
-        case SDLK_a:      return KEY_LEFT;
+        case SDLK_A:      return KEY_LEFT;
         case SDLK_RIGHT:
-        case SDLK_d:      return KEY_RIGHT;
+        case SDLK_D:      return KEY_RIGHT;
 
-        case SDLK_z:
-        case SDLK_j:
+        case SDLK_Z:
+        case SDLK_J:
         case SDLK_SPACE:  return KEY_A;
 
-        case SDLK_x:
-        case SDLK_k:      return KEY_B;
+        case SDLK_X:
+        case SDLK_K:      return KEY_B;
 
         case SDLK_RETURN: return KEY_START;
         case SDLK_BACKSPACE:
         case SDLK_RSHIFT: return KEY_SELECT;
 
-        case SDLK_q:      return KEY_L;
-        case SDLK_e:      return KEY_R;
+        case SDLK_Q:      return KEY_L;
+        case SDLK_E:      return KEY_R;
 
         default:          return 0;
     }
@@ -121,22 +100,22 @@ static u16 map_key(SDL_Keycode key) {
 
 static u16 map_controller_button(u8 button) {
     switch (button) {
-        case SDL_CONTROLLER_BUTTON_DPAD_UP:        return KEY_UP;
-        case SDL_CONTROLLER_BUTTON_DPAD_DOWN:      return KEY_DOWN;
-        case SDL_CONTROLLER_BUTTON_DPAD_LEFT:      return KEY_LEFT;
-        case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:     return KEY_RIGHT;
+        case SDL_GAMEPAD_BUTTON_DPAD_UP:        return KEY_UP;
+        case SDL_GAMEPAD_BUTTON_DPAD_DOWN:      return KEY_DOWN;
+        case SDL_GAMEPAD_BUTTON_DPAD_LEFT:      return KEY_LEFT;
+        case SDL_GAMEPAD_BUTTON_DPAD_RIGHT:     return KEY_RIGHT;
 
-        case SDL_CONTROLLER_BUTTON_A:              return KEY_A;
-        case SDL_CONTROLLER_BUTTON_B:              return KEY_B;
-        case SDL_CONTROLLER_BUTTON_X:              return KEY_A;
-        case SDL_CONTROLLER_BUTTON_Y:              return KEY_B;
+        case SDL_GAMEPAD_BUTTON_SOUTH:          return KEY_A;
+        case SDL_GAMEPAD_BUTTON_EAST:           return KEY_B;
+        case SDL_GAMEPAD_BUTTON_WEST:           return KEY_A;
+        case SDL_GAMEPAD_BUTTON_NORTH:          return KEY_B;
 
-        case SDL_CONTROLLER_BUTTON_START:          return KEY_START;
-        case SDL_CONTROLLER_BUTTON_BACK:           return KEY_SELECT;
-        case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:   return KEY_L;
-        case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:  return KEY_R;
+        case SDL_GAMEPAD_BUTTON_START:          return KEY_START;
+        case SDL_GAMEPAD_BUTTON_BACK:           return KEY_SELECT;
+        case SDL_GAMEPAD_BUTTON_LEFT_SHOULDER:  return KEY_L;
+        case SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER: return KEY_R;
 
-        default:                                   return 0;
+        default:                                return 0;
     }
 }
 
@@ -144,92 +123,43 @@ void hal_input_process_event(const SDL_Event* event) {
     if (!event) return;
 
     switch (event->type) {
-        case SDL_KEYDOWN:
+        case SDL_EVENT_KEY_DOWN:
             if (!event->key.repeat) {
-                s_keys_raw |= map_key(event->key.keysym.sym);
+                s_keys_raw |= map_key(event->key.key);
             }
             break;
 
-        case SDL_KEYUP:
-            s_keys_raw &= ~map_key(event->key.keysym.sym);
+        case SDL_EVENT_KEY_UP:
+            s_keys_raw &= ~map_key(event->key.key);
             break;
 
-        case SDL_CONTROLLERBUTTONDOWN:
-            s_keys_raw |= map_controller_button(event->cbutton.button);
+        case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+            s_keys_raw |= map_controller_button(event->gbutton.button);
             break;
 
-        case SDL_CONTROLLERBUTTONUP:
-            s_keys_raw &= ~map_controller_button(event->cbutton.button);
+        case SDL_EVENT_GAMEPAD_BUTTON_UP:
+            s_keys_raw &= ~map_controller_button(event->gbutton.button);
             break;
 
         // Captura do Movimento Analógico do 8BitDo / Xbox / PS5
-        case SDL_CONTROLLERAXISMOTION:
-            if (event->caxis.axis == SDL_CONTROLLER_AXIS_LEFTX) {
-                s_raw_axis_x = event->caxis.value;
-            } else if (event->caxis.axis == SDL_CONTROLLER_AXIS_LEFTY) {
-                s_raw_axis_y = event->caxis.value;
+        case SDL_EVENT_GAMEPAD_AXIS_MOTION:
+            if (event->gaxis.axis == SDL_GAMEPAD_AXIS_LEFTX) {
+                s_raw_axis_x = event->gaxis.value;
+            } else if (event->gaxis.axis == SDL_GAMEPAD_AXIS_LEFTY) {
+                s_raw_axis_y = event->gaxis.value;
             }
             break;
 
-        // Fallback Joystick Analógico Clássico (apenas se não estiver em modo GameController)
-        case SDL_JOYAXISMOTION:
-            if (!s_controller) {
-                if (event->jaxis.axis == 0) {
-                    s_raw_axis_x = event->jaxis.value;
-                } else if (event->jaxis.axis == 1) {
-                    s_raw_axis_y = event->jaxis.value;
-                }
-            }
-            break;
-
-        case SDL_JOYBUTTONDOWN:
-            if (!s_controller) {
-                if (event->jbutton.button == 0) s_keys_raw |= KEY_A;
-                else if (event->jbutton.button == 1) s_keys_raw |= KEY_B;
-                else if (event->jbutton.button == 2) s_keys_raw |= KEY_A;
-                else if (event->jbutton.button == 3) s_keys_raw |= KEY_B;
-                else if (event->jbutton.button == 6 || event->jbutton.button == 10) s_keys_raw |= KEY_SELECT;
-                else if (event->jbutton.button == 7 || event->jbutton.button == 11) s_keys_raw |= KEY_START;
-                else if (event->jbutton.button == 4) s_keys_raw |= KEY_L;
-                else if (event->jbutton.button == 5) s_keys_raw |= KEY_R;
-            }
-            break;
-
-        case SDL_JOYBUTTONUP:
-            if (!s_controller) {
-                if (event->jbutton.button == 0) s_keys_raw &= ~KEY_A;
-                else if (event->jbutton.button == 1) s_keys_raw &= ~KEY_B;
-                else if (event->jbutton.button == 2) s_keys_raw &= ~KEY_A;
-                else if (event->jbutton.button == 3) s_keys_raw &= ~KEY_B;
-                else if (event->jbutton.button == 6 || event->jbutton.button == 10) s_keys_raw &= ~KEY_SELECT;
-                else if (event->jbutton.button == 7 || event->jbutton.button == 11) s_keys_raw &= ~KEY_START;
-                else if (event->jbutton.button == 4) s_keys_raw &= ~KEY_L;
-                else if (event->jbutton.button == 5) s_keys_raw &= ~KEY_R;
-            }
-            break;
-
-        case SDL_JOYHATMOTION:
-            s_keys_raw &= ~(KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT);
-            if (event->jhat.value & SDL_HAT_UP)    s_keys_raw |= KEY_UP;
-            if (event->jhat.value & SDL_HAT_DOWN)  s_keys_raw |= KEY_DOWN;
-            if (event->jhat.value & SDL_HAT_LEFT)  s_keys_raw |= KEY_LEFT;
-            if (event->jhat.value & SDL_HAT_RIGHT) s_keys_raw |= KEY_RIGHT;
-            break;
-
-        case SDL_CONTROLLERDEVICEADDED:
-        case SDL_JOYDEVICEADDED:
+        case SDL_EVENT_GAMEPAD_ADDED:
             if (!s_has_controller) {
-                open_controller(event->cdevice.which);
+                open_controller(event->gdevice.which);
             }
             break;
 
-        case SDL_CONTROLLERDEVICEREMOVED:
-        case SDL_JOYDEVICEREMOVED:
+        case SDL_EVENT_GAMEPAD_REMOVED:
             if (s_has_controller) {
-                if (s_controller) SDL_GameControllerClose(s_controller);
-                if (s_joystick) SDL_JoystickClose(s_joystick);
-                s_controller = NULL;
-                s_joystick = NULL;
+                if (s_gamepad) SDL_CloseGamepad(s_gamepad);
+                s_gamepad = NULL;
                 s_has_controller = false;
                 s_raw_axis_x = 0;
                 s_raw_axis_y = 0;
@@ -313,13 +243,10 @@ const char* hal_input_get_controller_name(void) {
 }
 
 void hal_input_shutdown(void) {
-    if (s_controller) {
-        SDL_GameControllerClose(s_controller);
-        s_controller = NULL;
+    if (s_gamepad) {
+        SDL_CloseGamepad(s_gamepad);
+        s_gamepad = NULL;
     }
-    if (s_joystick) {
-        SDL_JoystickClose(s_joystick);
-        s_joystick = NULL;
-    }
+    s_has_controller = false;
     printf("[INPUT] Subsistema de entrada finalizado.\n");
 }

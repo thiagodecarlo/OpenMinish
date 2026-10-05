@@ -11,7 +11,7 @@
  */
 
 #include "gba/types.h"
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 // Máscara de Bits oficial dos 10 botões do Game Boy Advance
 #define KEY_A        (1 << 0)  // Bit 0: Botão A (Ataque / Confirmar)

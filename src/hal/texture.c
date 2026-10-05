@@ -1,6 +1,6 @@
 #include "hal/texture.h"
 #include "hal/video.h"
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,14 +60,13 @@ static FILE* open_asset_file(const char* rel_path, char* resolved_out, size_t ou
     }
 
     // 3. Tenta resolver via diretório do executável (SDL_GetBasePath)
-    char* base = SDL_GetBasePath();
+    const char* base = SDL_GetBasePath();
     if (base) {
         // Tenta base/rel_path
         snprintf(fallback, sizeof(fallback), "%s%s", base, rel_path);
         f = fopen(fallback, "rb");
         if (f) {
             snprintf(resolved_out, out_size, "%s", fallback);
-            SDL_free(base);
             return f;
         }
 
@@ -76,11 +75,8 @@ static FILE* open_asset_file(const char* rel_path, char* resolved_out, size_t ou
         f = fopen(fallback, "rb");
         if (f) {
             snprintf(resolved_out, out_size, "%s", fallback);
-            SDL_free(base);
             return f;
         }
-
-        SDL_free(base);
     }
 
     return NULL;

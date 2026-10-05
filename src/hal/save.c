@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #ifdef _WIN32
 #include <direct.h>
