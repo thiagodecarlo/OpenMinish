@@ -1275,6 +1275,84 @@ static void synth_generate_all_sfx(void) {
         s_precalc_sfx[SOUND_ROCS_GLIDE].total_frames = num_frames;
         s_precalc_sfx[SOUND_ROCS_GLIDE].is_stereo = false;
     }
+
+    // 44. SOUND_CAPCOM_CHIME: Jingle harmônico de abertura da Capcom (450ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.450f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float p1 = 0.0f, p2 = 0.0f, p3 = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env1 = (t < 0.20f) ? (1.0f - t / 0.20f) : 0.0f;
+            float env2 = (t >= 0.16f) ? expf(-8.0f * (t - 0.16f)) : 0.0f;
+
+            p1 += 1174.66f / (float)AUDIO_SAMPLE_RATE; // D6
+            p2 += 1760.00f / (float)AUDIO_SAMPLE_RATE; // A6
+            p3 += 1479.98f / (float)AUDIO_SAMPLE_RATE; // F#6
+
+            float s1 = sinf(2.0f * PI_F * p1) * env1 * 0.50f;
+            float s2 = (sinf(2.0f * PI_F * p2) * 0.60f + sinf(2.0f * PI_F * p3) * 0.40f) * env2 * 0.50f;
+            float total = (s1 + s2) * 26000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_CAPCOM_CHIME].samples = buf;
+        s_precalc_sfx[SOUND_CAPCOM_CHIME].total_frames = num_frames;
+        s_precalc_sfx[SOUND_CAPCOM_CHIME].is_stereo = false;
+    }
+
+    // 45. SOUND_TITLE_SWORD: Golpe reluzente de espada e chime ao pressionar START (550ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.550f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float p_sw1 = 0.0f, p_sw2 = 0.0f, p_sw3 = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float swish = 0.0f;
+            if (t < 0.12f) {
+                float swish_env = 1.0f - (t / 0.12f);
+                swish = synth_noise() * swish_env * 0.45f;
+            }
+            float chord = 0.0f;
+            if (t >= 0.06f) {
+                float ct = t - 0.06f;
+                float chord_env = expf(-6.5f * ct);
+                p_sw1 += 587.33f / (float)AUDIO_SAMPLE_RATE;  // D5
+                p_sw2 += 880.00f / (float)AUDIO_SAMPLE_RATE;  // A5
+                p_sw3 += 1174.66f / (float)AUDIO_SAMPLE_RATE; // D6
+                chord = (synth_square_wave(p_sw1, 0.50f) * 0.35f +
+                         synth_square_wave(p_sw2, 0.25f) * 0.35f +
+                         sinf(2.0f * PI_F * p_sw3) * 0.30f) * chord_env;
+            }
+            float total = (swish + chord) * 28000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_TITLE_SWORD].samples = buf;
+        s_precalc_sfx[SOUND_TITLE_SWORD].total_frames = num_frames;
+        s_precalc_sfx[SOUND_TITLE_SWORD].is_stereo = false;
+    }
+
+    // 46. SOUND_MENU_CURSOR: Clique seco retro de navegação do menu (45ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.045f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float p_c = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-60.0f * t);
+            p_c += 880.0f / (float)AUDIO_SAMPLE_RATE;
+            float total = synth_square_wave(p_c, 0.50f) * env * 22000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_MENU_CURSOR].samples = buf;
+        s_precalc_sfx[SOUND_MENU_CURSOR].total_frames = num_frames;
+        s_precalc_sfx[SOUND_MENU_CURSOR].is_stereo = false;
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -2704,6 +2782,243 @@ bool hal_audio_play_music(const char* wav_path, float volume, bool loop) {
     return true;
 }
 
+static s16* synth_generate_title_theme(u32* out_total_frames) {
+    float bpm = 112.0f;
+    float beat_sec = 60.0f / bpm;
+    int total_bars = 8;
+    float total_seconds = total_bars * 4.0f * beat_sec;
+    u32 total_frames = (u32)(total_seconds * AUDIO_SAMPLE_RATE);
+
+    float* mix_l = (float*)calloc(total_frames, sizeof(float));
+    float* mix_r = (float*)calloc(total_frames, sizeof(float));
+    if (!mix_l || !mix_r) {
+        if (mix_l) free(mix_l);
+        if (mix_r) free(mix_r);
+        return NULL;
+    }
+
+    // Melodia Heroica de The Minish Cap (Lead Square 50% com vibrato suave)
+    static const NoteEvent s_title_melody[] = {
+        // Compasso 1 (Dó/Ré maior majestoso)
+        { 62, 1.5f }, { 66, 0.5f }, { 69, 1.0f }, { 74, 1.0f }, // D4, F#4, A4, D5
+        // Compasso 2
+        { 73, 1.0f }, { 71, 1.0f }, { 69, 1.5f }, { 67, 0.5f }, // C#5, B4, A4, G4
+        // Compasso 3
+        { 66, 1.0f }, { 67, 1.0f }, { 69, 1.5f }, { 71, 0.5f }, // F#4, G4, A4, B4
+        // Compasso 4
+        { 69, 2.0f }, { 0,  2.0f },                               // A4, pausa
+        // Compasso 5
+        { 74, 1.5f }, { 73, 0.5f }, { 71, 1.0f }, { 69, 1.0f }, // D5, C#5, B4, A4
+        // Compasso 6
+        { 71, 1.0f }, { 74, 1.0f }, { 76, 2.0f },               // B4, D5, E5
+        // Compasso 7
+        { 78, 1.5f }, { 76, 0.5f }, { 74, 1.0f }, { 73, 1.0f }, // F#5, E5, D5, C#5
+        // Compasso 8
+        { 74, 3.0f }, { 0,  1.0f }                                // D5 resolucao
+    };
+    int num_notes = (int)(sizeof(s_title_melody) / sizeof(s_title_melody[0]));
+
+    float current_time = 0.0f;
+    for (int n = 0; n < num_notes; n++) {
+        float note_dur = s_title_melody[n].duration * beat_sec;
+        u8 note = s_title_melody[n].note;
+        if (note > 0) {
+            float f = note_to_freq(note);
+            u32 start_f = (u32)(current_time * AUDIO_SAMPLE_RATE);
+            u32 len_f = (u32)(note_dur * AUDIO_SAMPLE_RATE);
+            float phase = 0.0f;
+            for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                float vib = 1.0f + 0.012f * sinf(2.0f * PI_F * 5.5f * t);
+                phase += (f * vib) / (float)AUDIO_SAMPLE_RATE;
+                float env = 1.0f;
+                if (t < 0.03f) env = t / 0.03f;
+                else if (t > note_dur * 0.85f) env = 1.0f - (t - note_dur * 0.85f) / (note_dur * 0.15f);
+                float sample = synth_square_wave(phase, 0.50f) * env * 0.24f;
+                mix_l[start_f + i] += sample * 0.52f;
+                mix_r[start_f + i] += sample * 0.48f;
+            }
+        }
+        current_time += note_dur;
+    }
+
+    // Harpa / Arpejos celestiais (Pulse 25% stereo ping-pong)
+    static const u8 s_arp_chords[8][4] = {
+        { 62, 66, 69, 74 }, // D
+        { 59, 62, 66, 71 }, // Bm
+        { 55, 59, 62, 67 }, // G
+        { 57, 61, 64, 69 }, // A
+        { 59, 62, 66, 71 }, // Bm
+        { 55, 59, 62, 67 }, // G
+        { 57, 61, 64, 69 }, // A
+        { 62, 66, 69, 74 }  // D
+    };
+    for (int bar = 0; bar < 8; bar++) {
+        for (int step = 0; step < 16; step++) {
+            float step_time = bar * 4.0f * beat_sec + step * (beat_sec * 0.25f);
+            u32 start_f = (u32)(step_time * AUDIO_SAMPLE_RATE);
+            u32 len_f = (u32)(beat_sec * 0.25f * AUDIO_SAMPLE_RATE);
+            u8 note = s_arp_chords[bar][step % 4] + ((step >= 8) ? 12 : 0);
+            float f = note_to_freq(note);
+            float phase = 0.0f;
+            for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                phase += f / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-18.0f * t);
+                float sample = synth_square_wave(phase, 0.25f) * env * 0.12f;
+                float pan = 0.5f + 0.35f * sinf(step * 0.8f);
+                mix_l[start_f + i] += sample * pan;
+                mix_r[start_f + i] += sample * (1.0f - pan);
+            }
+        }
+    }
+
+    // Baixo Nobre (Triângulo encorpado)
+    static const u8 s_bass_notes[8] = { 38, 35, 31, 33, 35, 31, 33, 38 }; // D, B, G, A...
+    for (int bar = 0; bar < 8; bar++) {
+        for (int b = 0; b < 2; b++) {
+            float beat_time = bar * 4.0f * beat_sec + b * 2.0f * beat_sec;
+            u32 start_f = (u32)(beat_time * AUDIO_SAMPLE_RATE);
+            u32 len_f = (u32)(1.8f * beat_sec * AUDIO_SAMPLE_RATE);
+            float f = note_to_freq(s_bass_notes[bar]);
+            float phase = 0.0f;
+            for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                phase += f / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-2.5f * t);
+                float sample = synth_triangle_wave(phase) * env * 0.26f;
+                mix_l[start_f + i] += sample * 0.50f;
+                mix_r[start_f + i] += sample * 0.50f;
+            }
+        }
+    }
+
+    // Saída estéreo PCM 16-bit
+    s16* out_buf = (s16*)malloc(total_frames * 2 * sizeof(s16));
+    if (!out_buf) {
+        free(mix_l);
+        free(mix_r);
+        return NULL;
+    }
+    for (u32 i = 0; i < total_frames; i++) {
+        float l = mix_l[i] * 28000.0f;
+        float r = mix_r[i] * 28000.0f;
+        if (l > 32767.0f)  l = 32767.0f;
+        if (l < -32768.0f) l = -32768.0f;
+        if (r > 32767.0f)  r = 32767.0f;
+        if (r < -32768.0f) r = -32768.0f;
+        out_buf[i * 2 + 0] = (s16)l;
+        out_buf[i * 2 + 1] = (s16)r;
+    }
+    free(mix_l);
+    free(mix_r);
+    *out_total_frames = total_frames;
+    return out_buf;
+}
+
+static s16* synth_generate_file_select(u32* out_total_frames) {
+    float bpm = 104.0f;
+    float beat_sec = 60.0f / bpm;
+    int total_bars = 4;
+    float total_seconds = total_bars * 4.0f * beat_sec;
+    u32 total_frames = (u32)(total_seconds * AUDIO_SAMPLE_RATE);
+
+    float* mix_l = (float*)calloc(total_frames, sizeof(float));
+    float* mix_r = (float*)calloc(total_frames, sizeof(float));
+    if (!mix_l || !mix_r) {
+        if (mix_l) free(mix_l);
+        if (mix_r) free(mix_r);
+        return NULL;
+    }
+
+    // Tema da Grande Fada (Great Fairy Fountain): Cascata contínua de arpejos de harpa
+    static const u8 s_fairy_arps[4][16] = {
+        // Compasso 1: D Menor (D4, F4, A4, D5, F5, A5, D6, A5, F5, D5, A4, F4, D4, F4, A4, D5)
+        { 62, 65, 69, 74, 77, 81, 86, 81, 77, 74, 69, 65, 62, 65, 69, 74 },
+        // Compasso 2: Bb Maior (Bb3, D4, F4, Bb4, D5, F5, Bb5, F5, D5, Bb4, F4, D4, Bb3, D4, F4, Bb4)
+        { 58, 62, 65, 70, 74, 77, 82, 77, 74, 70, 65, 62, 58, 62, 65, 70 },
+        // Compasso 3: G Menor (G3, Bb3, D4, G4, Bb4, D5, G5, D5, Bb4, G4, D4, Bb3, G3, Bb3, D4, G4)
+        { 55, 58, 62, 67, 70, 74, 79, 74, 70, 67, 62, 58, 55, 58, 62, 67 },
+        // Compasso 4: A Maior (A3, C#4, E4, A4, C#5, E5, A5, E5, C#5, A4, E4, C#4, A3, C#4, E4, A4)
+        { 57, 61, 64, 69, 73, 76, 81, 76, 73, 69, 64, 61, 57, 61, 64, 69 }
+    };
+
+    for (int bar = 0; bar < 4; bar++) {
+        for (int note_idx = 0; note_idx < 16; note_idx++) {
+            float note_time = bar * 4.0f * beat_sec + note_idx * (beat_sec * 0.25f);
+            u32 start_f = (u32)(note_time * AUDIO_SAMPLE_RATE);
+            u32 len_f = (u32)(0.32f * AUDIO_SAMPLE_RATE);
+            u8 note = s_fairy_arps[bar][note_idx];
+            float f = note_to_freq(note);
+            float phase1 = 0.0f, phase2 = 0.0f;
+            for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                phase1 += f / (float)AUDIO_SAMPLE_RATE;
+                phase2 += (f * 2.0f) / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-10.5f * t);
+                float harp = (sinf(2.0f * PI_F * phase1) * 0.70f + sinf(2.0f * PI_F * phase2) * 0.30f) * env * 0.22f;
+                float pan = 0.5f + 0.35f * sinf(note_idx * 0.45f + bar);
+                mix_l[start_f + i] += harp * pan;
+                mix_r[start_f + i] += harp * (1.0f - pan);
+            }
+        }
+    }
+
+    // Melodia de Flauta Suave / Lead Místico sustentado
+    static const NoteEvent s_fairy_melody[] = {
+        { 74, 2.0f }, { 77, 2.0f }, // D5, F5
+        { 70, 2.0f }, { 74, 2.0f }, // Bb4, D5
+        { 67, 2.0f }, { 70, 2.0f }, // G4, Bb4
+        { 69, 3.5f }, { 0,  0.5f }  // A4
+    };
+    int num_f_notes = (int)(sizeof(s_fairy_melody) / sizeof(s_fairy_melody[0]));
+    float f_time = 0.0f;
+    for (int n = 0; n < num_f_notes; n++) {
+        float note_dur = s_fairy_melody[n].duration * beat_sec;
+        u8 note = s_fairy_melody[n].note;
+        if (note > 0) {
+            float f = note_to_freq(note);
+            u32 start_f = (u32)(f_time * AUDIO_SAMPLE_RATE);
+            u32 len_f = (u32)(note_dur * AUDIO_SAMPLE_RATE);
+            float phase = 0.0f;
+            for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                float vib = 1.0f + 0.008f * sinf(2.0f * PI_F * 5.0f * t);
+                phase += (f * vib) / (float)AUDIO_SAMPLE_RATE;
+                float env = 1.0f;
+                if (t < 0.15f) env = t / 0.15f;
+                else if (t > note_dur * 0.75f) env = 1.0f - (t - note_dur * 0.75f) / (note_dur * 0.25f);
+                float sample = synth_square_wave(phase, 0.40f) * env * 0.15f;
+                mix_l[start_f + i] += sample * 0.50f;
+                mix_r[start_f + i] += sample * 0.50f;
+            }
+        }
+        f_time += note_dur;
+    }
+
+    // Saída estéreo PCM 16-bit
+    s16* out_buf = (s16*)malloc(total_frames * 2 * sizeof(s16));
+    if (!out_buf) {
+        free(mix_l);
+        free(mix_r);
+        return NULL;
+    }
+    for (u32 i = 0; i < total_frames; i++) {
+        float l = mix_l[i] * 28000.0f;
+        float r = mix_r[i] * 28000.0f;
+        if (l > 32767.0f)  l = 32767.0f;
+        if (l < -32768.0f) l = -32768.0f;
+        if (r > 32767.0f)  r = 32767.0f;
+        if (r < -32768.0f) r = -32768.0f;
+        out_buf[i * 2 + 0] = (s16)l;
+        out_buf[i * 2 + 1] = (s16)r;
+    }
+    free(mix_l);
+    free(mix_r);
+    *out_total_frames = total_frames;
+    return out_buf;
+}
+
 const char* hal_audio_get_bgm_name(BgmTrack track) {
     switch (track) {
         case BGM_MINISH_WOODS:     return "Minish Woods (Deepwood)";
@@ -2712,6 +3027,8 @@ const char* hal_audio_get_bgm_name(BgmTrack track) {
         case BGM_BOSS_BATTLE:      return "Boss Battle (Big Green ChuChu)";
         case BGM_HYRULE_TOWN:      return "Hyrule Town (Hub Central)";
         case BGM_MINISH_VILLAGE:   return "Minish Village (Vila dos Picori)";
+        case BGM_TITLE_THEME:      return "Title Screen (The Minish Cap Abertura)";
+        case BGM_FILE_SELECT:      return "File Select (Great Fairy Fountain)";
         case BGM_NONE:
         default:                   return "Mudo / Silencio";
     }
@@ -2733,7 +3050,7 @@ void hal_audio_play_bgm(BgmTrack track) {
 
     // 1. Suporte a mods de audio: verifica se existe arquivo WAV customizado em assets/audio/
     char mod_path[256];
-    const char* track_tags[] = { "none", "minish_woods", "hyrule_overworld", "deepwood_shrine", "boss_battle", "hyrule_town", "minish_village" };
+    const char* track_tags[] = { "none", "minish_woods", "hyrule_overworld", "deepwood_shrine", "boss_battle", "hyrule_town", "minish_village", "title_theme", "file_select" };
     snprintf(mod_path, sizeof(mod_path), "assets/audio/%s.wav", track_tags[track]);
 
     if (hal_audio_play_music(mod_path, 0.75f, true)) {
@@ -2758,6 +3075,10 @@ void hal_audio_play_bgm(BgmTrack track) {
         samples = synth_generate_hyrule_town(&total_frames);
     } else if (track == BGM_MINISH_VILLAGE) {
         samples = synth_generate_minish_village(&total_frames);
+    } else if (track == BGM_TITLE_THEME) {
+        samples = synth_generate_title_theme(&total_frames);
+    } else if (track == BGM_FILE_SELECT) {
+        samples = synth_generate_file_select(&total_frames);
     }
 
     if (!samples || total_frames == 0) return;

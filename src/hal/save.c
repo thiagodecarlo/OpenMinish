@@ -128,3 +128,13 @@ bool save_delete(int slot) {
     get_save_path(slot, path, sizeof(path));
     return (remove(path) == 0);
 }
+
+bool save_copy(int src_slot, int dst_slot) {
+    if (src_slot < 1 || src_slot > MAX_SAVE_SLOTS) return false;
+    if (dst_slot < 1 || dst_slot > MAX_SAVE_SLOTS) return false;
+    if (src_slot == dst_slot) return false;
+
+    SaveData data;
+    if (!load_game(src_slot, &data)) return false;
+    return save_game(dst_slot, &data);
+}

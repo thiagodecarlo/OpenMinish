@@ -64,6 +64,9 @@ typedef enum {
     SOUND_FIRE,            // Labareda e chamas ardentes da Flame Lantern
     SOUND_ROCS_JUMP,       // Salto acrobático impulsionado pela Capa de Roc (Roc's Cape)
     SOUND_ROCS_GLIDE,      // Tremular suave e planar no ar com a Capa de Roc
+    SOUND_CAPCOM_CHIME,    // Jingle brilhante harmônico de abertura da Capcom
+    SOUND_TITLE_SWORD,     // Golpe reluzente de espada e chime mágico ao pressionar START no título
+    SOUND_MENU_CURSOR,     // Clique sutil ao navegar nos slots do menu de arquivos
     SOUND_COUNT
 } SoundEffect;
 
@@ -76,6 +79,8 @@ typedef enum {
     BGM_BOSS_BATTLE,      // Batalha urgente e épica contra o Chefe (Boss Battle)
     BGM_HYRULE_TOWN,      // O tema alegre, festivo e vibrante da Cidade de Hyrule (Hyrule Town Hub)
     BGM_MINISH_VILLAGE,   // O tema acolhedor, bucólico e mágico da Vila dos Minish (Picori Village)
+    BGM_TITLE_THEME,      // O tema triunfante e épico de abertura (Title Screen de The Minish Cap)
+    BGM_FILE_SELECT,      // O tema celestial da Grande Fada / Seleção de Arquivo (Fairy Fountain Harp)
     BGM_COUNT
 } BgmTrack;
 
