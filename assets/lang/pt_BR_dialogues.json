@@ -1541,7 +1541,7 @@
           "id": 8,
           "global_id": 1032,
           "hex_id": "0x0408",
-          "text": "Bombas de Controle\nRemoto"
+          "text": "Bombas Remotas"
         },
         {
           "id": 9,
@@ -2299,7 +2299,7 @@
           "id": 8,
           "global_id": 1288,
           "hex_id": "0x0508",
-          "text": "{04:10:0E}Você obteve as {Color:Red}Bombas\ncom Controle Remoto{Color:White}!\nColoque a bomba e\n\naperte\n\no botão novamente para\ndetoná-la."
+          "text": "{04:10:0E}Você obteve as {Color:Red}Bombas\nRemotas{Color:White}! Coloque uma\nbomba e aperte o botão\n\nde novo\n\npara detoná-la!"
         },
         {
           "id": 9,
@@ -4483,7 +4483,7 @@
           "id": 75,
           "global_id": 2123,
           "hex_id": "0x084B",
-          "text": "Keese"
+          "text": "Morci"
         },
         {
           "id": 76,
@@ -4537,7 +4537,7 @@
           "id": 84,
           "global_id": 2132,
           "hex_id": "0x0854",
-          "text": "Chuchu de Pedra"
+          "text": "Chulchul de Pedra"
         },
         {
           "id": 85,
@@ -4669,19 +4669,19 @@
           "id": 106,
           "global_id": 2154,
           "hex_id": "0x086A",
-          "text": "Wizzrobe"
+          "text": "Feitiçano"
         },
         {
           "id": 107,
           "global_id": 2155,
           "hex_id": "0x086B",
-          "text": "Wizzrobe de Fogo"
+          "text": "Feitiçano de Fogo"
         },
         {
           "id": 108,
           "global_id": 2156,
           "hex_id": "0x086C",
-          "text": "Wizzrobe de Gelo"
+          "text": "Feitiçano de Gelo"
         },
         {
           "id": 109,
@@ -4693,13 +4693,13 @@
           "id": 110,
           "global_id": 2158,
           "hex_id": "0x086E",
-          "text": "Octorok"
+          "text": "Octoroc"
         },
         {
           "id": 111,
           "global_id": 2159,
           "hex_id": "0x086F",
-          "text": "Octorok Dourado"
+          "text": "Octoroc Dourado"
         },
         {
           "id": 112,
@@ -4741,7 +4741,7 @@
           "id": 118,
           "global_id": 2166,
           "hex_id": "0x0876",
-          "text": "Chuchu Verde"
+          "text": "Chulchul Verde"
         },
         {
           "id": 119,
@@ -4771,13 +4771,13 @@
           "id": 123,
           "global_id": 2171,
           "hex_id": "0x087B",
-          "text": "Chuchu Espinhoso"
+          "text": "Chulchul Espinhoso"
         },
         {
           "id": 124,
           "global_id": 2172,
           "hex_id": "0x087C",
-          "text": "Grande Octorok"
+          "text": "Grande Octoroc"
         },
         {
           "id": 125,
@@ -4795,7 +4795,7 @@
           "id": 127,
           "global_id": 2175,
           "hex_id": "0x087F",
-          "text": "Grande Chuchu Verde"
+          "text": "Grande Chulchul Verde"
         },
         {
           "id": 128,
@@ -4813,7 +4813,7 @@
           "id": 130,
           "global_id": 2178,
           "hex_id": "0x0882",
-          "text": "Grande Chuchu Azul"
+          "text": "Grande Chulchul Azul"
         },
         {
           "id": 131,
@@ -5319,7 +5319,7 @@
           "id": 75,
           "global_id": 2379,
           "hex_id": "0x094B",
-          "text": "Aparece por tudo o\njogo, em mazmorras e\ncavernas. Não se mueve\n\ncom rapidez, assim que\naprovecha que você sim\npode para atacar."
+          "text": "Aparece por todo o\njogo, em cavernas e\nmasmorras. O Morci é\n\nimprevisível,\n\nentão ataque à\ndistância para ficar em\nsegurança!"
         },
         {
           "id": 76,
@@ -5373,7 +5373,7 @@
           "id": 84,
           "global_id": 2388,
           "hex_id": "0x0954",
-          "text": "Aparece em varios\nlugares. É um Chuchu\ncom uma rocha sobre a\n\ncabeza. Está bem\nprotegido, assim que o\nprimeiro que deve fazer\n\né romperla."
+          "text": "Aparece em vários\nlugares. É um Chulchul\ncom uma rocha na\n\ncabeça. Seu\n\ncorpo é protegido,\nentão tire a pedra\nantes de atacá-lo!"
         },
         {
           "id": 85,
@@ -5505,19 +5505,19 @@
           "id": 106,
           "global_id": 2410,
           "hex_id": "0x096A",
-          "text": "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule tomado pelas\n\nsombras. É muito hábil\ndesde longe. Observa\ncomo se mueve, e ataca!"
+          "text": "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule. Dispara magias\n\nde longe. Ataque assim\nque aparecer para que\nnão lance outro\n\nfeitiço!"
         },
         {
           "id": 107,
           "global_id": 2411,
           "hex_id": "0x096B",
-          "text": "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule tomado pelas\n\nsombras. Ataca com\nfogo. Observa como se\nmueve, e ataca!"
+          "text": "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule. Ataca com fogo.\n\nGolpeie-o logo ao\nsurgir para cancelar\nseu feitiço!"
         },
         {
           "id": 108,
           "global_id": 2412,
           "hex_id": "0x096C",
-          "text": "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule tomado pelas\n\nsombras. Ataca com\nhielo. Observa como se\nmueve, e ataca!"
+          "text": "Aparece no Palácio dos\nVentos e no Castelo de\nHyrule. Usa magia de\n\ngelo.\n\nÉ fraco contra o fogo,\nentão ataque com chamas\npara vencer depressa!"
         },
         {
           "id": 109,
@@ -5529,13 +5529,13 @@
           "id": 110,
           "global_id": 2414,
           "hex_id": "0x096E",
-          "text": "Aparece em varios\nlugares. São vermelhos\ne azuis, e aparecen em\n\ntodos os jogos de\nZelda. Cuidado com as\nrochas que lançam!"
+          "text": "Aparece em vários\nlugares. Há tipos\nvermelhos e azuis em\n\nquase todos os jogos\n\nde Zelda. Cuidado com\nas pedras que eles\ncospem!"
         },
         {
           "id": 111,
           "global_id": 2415,
           "hex_id": "0x096F",
-          "text": "Não sabemos onde\naparece. Este inimigo é\num fantasma. Dizem que\n\nlança rochas que são\nfantasmas também. Não\nse sabe nada mais..."
+          "text": "Não sabemos onde ele\naparece! O lendário {Color:Red}\nOctoroc Dourado{Color:White}.\n\nDizem que ele cospe\npepitas de ouro puro!\nMas nada foi\n\nconfirmado..."
         },
         {
           "id": 112,
@@ -5577,7 +5577,7 @@
           "id": 118,
           "global_id": 2422,
           "hex_id": "0x0976",
-          "text": "Aparecen em varios\nlugares. Há Chuchu de\nmuchos cores e\n\ndistintas\ncaracterísticas. O\nmais eficaz é uma\n\nherramienta para\npular."
+          "text": "Aparecem em vários\nlugares. Há Chulchuls\nde várias cores, cada\n\num\n\ncom traços diferentes.\nArmas de longo alcance\nfuncionam bem em todos!"
         },
         {
           "id": 119,
@@ -5607,13 +5607,13 @@
           "id": 123,
           "global_id": 2427,
           "hex_id": "0x097B",
-          "text": "Aparece em varios\nlugares. Este Chuchu\nsaca os espinhos se\n\nsente perigo. Suele\natacar em grupo, assim\nque usa {Color:Red}bombas{Color:White} para\n\nacabar com varios!"
+          "text": "Aparece em vários\nlugares. Este Chulchul\nergue espinhos se sente\n\nperigo.\n\nCostuma atacar em\ngrupo, então use bombas\npara acertar vários de\n\numa vez!"
         },
         {
           "id": 124,
           "global_id": 2428,
           "hex_id": "0x097C",
-          "text": "Aparece no Templo das\nGotas. Levava muito\ntempo congelado pela\n\nForça do Elemento da\nÁgua. Agora tem mucha\nhambre..."
+          "text": "Aparece no Templo das\nGotas. Ficou congelado\npor muito tempo pelo\n\npoder do\n\nElemento da Água. Agora\nele está com uma fome\ninsaciável!"
         },
         {
           "id": 125,
@@ -5631,7 +5631,7 @@
           "id": 127,
           "global_id": 2431,
           "hex_id": "0x097F",
-          "text": "Aparece no Santuário\nDeepwood. Chuchu\ncorriente e moliente,\n\nmas, quando tenha o\ntamanho de um Minish,\nserá um inimigo gigante\n\npara você."
+          "text": "Aparece no Santuário\nDeepwood. É um Chulchul\ncomum, mas quando você\n\nestá no tamanho Minish,\nele se torna um monstro\ngigantesco!"
         },
         {
           "id": 128,
@@ -5649,7 +5649,7 @@
           "id": 130,
           "global_id": 2434,
           "hex_id": "0x0982",
-          "text": "Aparece no Templo das\nGotas. Chuchu normal e\ncorriente, mas serio\n\ninimigo quando é\ndiminuto. Procura que\nnão te dê calambre..."
+          "text": "Aparece no Templo das\nGotas. Um Chulchul azul\ncomum, mas terrível no\n\ntamanho Minish.\nCuidado com seus\nchoques elétricos!"
         },
         {
           "id": 131,
@@ -6247,7 +6247,7 @@
           "id": 68,
           "global_id": 2884,
           "hex_id": "0x0B44",
-          "text": "{Sound:00:8D}Que acontece aqui?\n\nEsse fantasma se tem\nlevado nosso {Color:Red}elemento{Color:White}!\nEi, {Player}, não podemos\n\nnos ficar olhando como\nse o leve! A por ele!\nRápido!"
+          "text": "{Sound:00:8D}O quê!? O que é isso?!\n\nAquele Octoroc idiota\nroubou nosso {Color:Red}elemento{Color:White}!\n\nNão fique aí parado!\nTemos que pegá-lo! {Player}\n! Agora!"
         },
         {
           "id": 69,
@@ -12311,31 +12311,31 @@
           "id": 14,
           "global_id": 7950,
           "hex_id": "0x1F0E",
-          "text": "As tenho! {Color:Red}Bombas de\nControle Remoto{Color:White}!\nHazlas explotar quando\n\nqueira! Se prefieres as\nbombas normais, vale,\nmas e se experimenta\n\nmeu novo invento? Quer {Color:Red}\nBombas de Controle\nRemoto{Color:White}? {Choice:FF}Venha, as\n\nprobaré. {Choice:1F:10}Melhor não."
+          "text": "Finalmente completei!\nAs {Color:Red}Bombas Remotas{Color:White}! Elas\nexplodem na hora que\n\nvocê quiser! Se você\nfaz questão das\nnormais, tudo bem, mas\n\nnão quer\n\ntestar minha invenção?\nQuer as {Color:Red}Bombas Remotas{Color:White}?\n{Choice:FF}Claro! {Choice:1F:10}Agora não."
         },
         {
           "id": 15,
           "global_id": 7951,
           "hex_id": "0x1F0F",
-          "text": "Agora tem {Color:Red}bombas com\ncontrol remoto{Color:White}! Ponha\numa e {Color:Blue}volta a\n\npressionar o botão{Color:White}\ncorrespondiente para\nque explote!"
+          "text": "Você trocou por {Color:Red}Bombas\nRemotas{Color:White}! Coloque uma e {Color:Blue}\naperte o botão de novo{Color:White}\n\npara detoná-la!"
         },
         {
           "id": 16,
           "global_id": 7952,
           "hex_id": "0x1F10",
-          "text": "Volta quando queira\ntentar as {Color:Red}Bombas de\nControle Remoto{Color:White}."
+          "text": "Se precisar das {Color:Red}Bombas\nRemotas{Color:White}, é só aparecer!"
         },
         {
           "id": 17,
           "global_id": 7953,
           "hex_id": "0x1F11",
-          "text": "Quer seus {Color:Red}bombas\nnormais{Color:White}? Mas então te\nquedarás sem bombas com\n\ncontrol remoto. Quer {Color:Blue}\ndevolver{Color:White} as {Color:Red}Bombas de\nControle Remoto{Color:White}? {Choice:FF}Sim {Choice:1F:13}\n\nNão"
+          "text": "Quer voltar para as {Color:Red}\nbombas normais{Color:White}? Mas aí\nterá que abrir mão das {Color:Red}\n\nBombas\n\nRemotas{Color:White}... Quer {Color:Blue}trocar{Color:White}\npara as {Color:Red}bombas normais{Color:White}?\n{Choice:FF}Sim {Choice:1F:13}Não"
         },
         {
           "id": 18,
           "global_id": 7954,
           "hex_id": "0x1F12",
-          "text": "Já tem seus {Color:Red}bombas\nnormais{Color:White} de novo! Volta\nquando queira usar as {Color:Red}\n\nbombas com control\nremoto{Color:White} de novo."
+          "text": "Você trocou pelas {Color:Red}\nbombas normais{Color:White}! Volte\nse quiser as {Color:Red}Bombas\n\nRemotas{Color:White} de novo!"
         },
         {
           "id": 19,
@@ -12347,7 +12347,7 @@
           "id": 20,
           "global_id": 7956,
           "hex_id": "0x1F14",
-          "text": "Se quer usar as {Color:Red}bombas\ncom control remoto{Color:White},\ndímelo e {Color:Blue}te as\n\ndevolveré{Color:White}. {Choice:FF}As quero. {Choice:1F:10}\nNão as quero."
+          "text": "Diga se quiser trocar\npelas {Color:Red}Bombas Remotas{Color:White}! {Choice:FF}\nEu quero. {Choice:1F:10}Não quero."
         },
         {
           "id": 21,
@@ -14591,13 +14591,13 @@
           "id": 5,
           "global_id": 11781,
           "hex_id": "0x2E05",
-          "text": "10 bombas control\nremoto 40 Rupees"
+          "text": "10 Bombas Remotas 40\nRupees"
         },
         {
           "id": 6,
           "global_id": 11782,
           "hex_id": "0x2E06",
-          "text": "30 bombas control\nremoto 100 Rupees"
+          "text": "30 Bombas Remotas 100\nRupees"
         },
         {
           "id": 7,

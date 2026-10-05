@@ -1544,14 +1544,14 @@
           "hex_id": "0x2E05",
           "en": "10 Remote Bombs 40 Rupees",
           "es_ref": "10 bombas control remoto 40 rupias",
-          "pt": "10 bombas control\nremoto 40 Rupees"
+          "pt": "10 Bombas Remotas 40\nRupees"
         },
         {
           "id": 6,
           "hex_id": "0x2E06",
           "en": "30 Remote Bombs 100 Rupees",
           "es_ref": "30 bombas control remoto 100 rupias",
-          "pt": "30 bombas control\nremoto 100 Rupees"
+          "pt": "30 Bombas Remotas 100\nRupees"
         },
         {
           "id": 7,
