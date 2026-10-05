@@ -31,6 +31,7 @@
 #include "hal/figurine_gallery.h"
 #include "hal/cucco_minigame.h"
 #include "hal/sword_dojo.h"
+#include "hal/intro_cutscene.h"
 #include <math.h>
 
 /*
@@ -1968,6 +1969,7 @@ int main(int argc, char* argv[]) {
     link.is_carrying_cucco = false;
     cucco_minigame_init();
     sword_dojo_init();
+    intro_cutscene_init();
 
     // Inicialização da Máquina de Estados de Abertura & Seleção de Save (Capcom, Nintendo, Title, File Select)
     startup_menu_init();
@@ -2565,6 +2567,16 @@ int main(int argc, char* argv[]) {
                             }
                             break;
                         }
+                        case SDLK_INSERT: {
+                            if (intro_cutscene_is_active()) {
+                                intro_cutscene_skip();
+                                printf("[DEBUG] [INS] Cutscene inicial pulada!\n");
+                            } else {
+                                intro_cutscene_start();
+                                printf("[DEBUG] [INS] Disparando Cutscene Inicial Canônica (Festival de Picori & Vaati)!\n");
+                            }
+                            break;
+                        }
                         default:
                             break;
                     }
@@ -2620,14 +2632,39 @@ int main(int argc, char* argv[]) {
                 camera.x = link.x - ((float)camera.viewport_w / 2.0f);
                 camera.y = link.y - ((float)camera.viewport_h / 2.0f);
 
-                // Inicia a música tema do ambiente carregado
-                if (s_in_town) {
-                    hal_audio_play_bgm(BGM_HYRULE_TOWN);
-                } else if (s_in_village) {
-                    hal_audio_play_bgm(BGM_MINISH_VILLAGE);
-                } else {
-                    hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
+                // Se for um Novo Jogo, dispara a introdução canônica (Torneio, Picori Blade & Petrificação de Zelda)
+                if (startup_menu_is_new_game()) {
+                    intro_cutscene_start();
                 }
+
+                // Inicia a música tema do ambiente carregado (se cutscene não estiver ativa)
+                if (!intro_cutscene_is_active()) {
+                    if (s_in_town) {
+                        hal_audio_play_bgm(BGM_HYRULE_TOWN);
+                    } else if (s_in_village) {
+                        hal_audio_play_bgm(BGM_MINISH_VILLAGE);
+                    } else {
+                        hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
+                    }
+                }
+            }
+
+            hal_video_render_frame();
+            continue;
+        }
+
+        // --------------------------------------------------------------------
+        // 1b2. GESTÃO DA CUTSCENE CANÔNICA DE INTRODUÇÃO (FESTIVAL & VAATI)
+        // --------------------------------------------------------------------
+        if (intro_cutscene_is_active()) {
+            intro_cutscene_update();
+            intro_cutscene_render();
+
+            if (!intro_cutscene_is_active()) {
+                // Cutscene encerrou: toca a música de Hyrule Town e ajusta câmera
+                hal_audio_play_bgm(BGM_HYRULE_TOWN);
+                camera.x = link.x - ((float)camera.viewport_w / 2.0f);
+                camera.y = link.y - ((float)camera.viewport_h / 2.0f);
             }
 
             hal_video_render_frame();
