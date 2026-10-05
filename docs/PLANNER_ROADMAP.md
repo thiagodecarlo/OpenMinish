@@ -131,13 +131,13 @@ flowchart TD
 
 ### Sprint 0: Fundação de Gameplay & Persistência [Concluído ✅]
 - **Objetivo**: Permitir gerenciamento de inventário autêntico de Game Boy Advance e salvamento do progresso em disco.
-- **Tarefas**:
-  1. `feature/pause-menu-inventory`:
+- **Tarefas Concluídas**:
+  1. `feature/pause-menu-inventory` (Merged ✅):
      - Menu acionado por `[ENTER]` ou `[START]`.
      - Congelamento total de entidades e física.
      - Grid clássico de inventário com seleção de itens e atribuição aos botões `[A]` e `[B]`.
      - Exibição de contadores (Rupees, Bombas, Chaves, Corações e Kinstones).
-  2. `feature/save-load-system`:
+  2. `feature/save-load-system` (Merged ✅):
      - Gravação atômica em disco de arquivos `save1.dat`, `save2.dat`, `save3.dat`.
      - Salvamento de coordenadas, HP, flags de quests e inventário.
      - Auto-save em transições de cenário.
@@ -145,29 +145,29 @@ flowchart TD
 ### Sprint 1: Ato I - O Fogo do Monte Crenel & O 2º Elemento [Concluído ✅]
 - **Objetivo**: Expandir o overworld para os campos centrais e escalar o Monte Crenel até a forja de Melari e a Caverna das Chamas.
 - **Tarefas Concluídas**:
-  1. `feature/hyrule-field-expansion` (Merged): North Hyrule Field, South Hyrule Field, entrada da Fazenda Lon Lon, Moblins e Peahats.
-  2. `feature/mount-crenel-grip-ring` (Merged): Paredões rochosos verticais, item Grip Ring para escalada, sementes de feijão mágico e fontes termais.
-  3. `feature/cane-of-pacci` (Merged): Item Cajado de Pacci para energizar buracos no chão (super salto vertical), virar carrinhos e Spiny Beetles.
-  4. `feature/melari-mines-white-sword` (Merged): Vilarejo subterrâneo dos Minish mineradores e forja da White Sword básica.
-  5. `feature/dungeon-cave-of-flames` (Merged): Dungeon 2 com trilhos, lava e Chefe Gleerok (virar carapaça e golpear o ponto vulnerável).
+  1. `feature/hyrule-field-expansion` (Merged ✅): North Hyrule Field, South Hyrule Field, entrada da Fazenda Lon Lon, Moblins e Peahats.
+  2. `feature/mount-crenel-grip-ring` (Merged ✅): Paredões rochosos verticais, item Grip Ring para escalada, sementes de feijão mágico e fontes termais.
+  3. `feature/cane-of-pacci` (Merged ✅): Item Cajado de Pacci para energizar buracos no chão (super salto vertical), virar carrinhos e Spiny Beetles.
+  4. `feature/melari-mines-white-sword` (Merged ✅): Vilarejo subterrâneo dos Minish mineradores e forja da White Sword básica.
+  5. `feature/dungeon-cave-of-flames` (Merged ✅): Dungeon 2 com trilhos, lava e Chefe Gleerok (virar carapaça e golpear o ponto vulnerável).
 
 ### Sprint 2: Ato II - O Vento, As Ruínas & A Four Sword (2 Clones) [Concluído ✅]
 - **Objetivo**: Desbloquear os primeiros clones e explorar o pântano e as ruínas antigas.
 - **Tarefas Concluídas**:
-  1. `feature/elemental-sanctuary-split2` (Merged): Santuário Elemental no pátio do castelo; infusão de Terra e Fogo desbloqueia 2 Clones simultâneos da Four Sword.
-  2. `feature/castor-wilds-pegasus-swamp` (Merged): Pântano com lodo movediço e obtenção do Arco e Flechas.
-  3. `feature/mole-mitts-digging` (Merged): Luvas de Toupeira com física de escavação em terra fofa.
-  4. `feature/wind-ruins-armos` (Merged): Minish entrando dentro de robôs Armos para acionar circuitos internos.
-  5. `feature/dungeon-fortress-of-winds` (Merged): Dungeon 3 e Chefe Mazaal (cabeça mecânica ancestral). Obtenção da Ocarina of Wind.
+  1. `feature/elemental-sanctuary-split2` (Merged ✅): Santuário Elemental no pátio do castelo; infusão de Terra e Fogo desbloqueia 2 Clones simultâneos da Four Sword.
+  2. `feature/castor-wilds-pegasus-swamp` (Merged ✅): Pântano com lodo movediço e obtenção do Arco e Flechas.
+  3. `feature/mole-mitts-digging` (Merged ✅): Luvas de Toupeira com física de escavação em terra fofa.
+  4. `feature/wind-ruins-armos` (Merged ✅): Minish entrando dentro de robôs Armos para acionar circuitos internos.
+  5. `feature/dungeon-fortress-of-winds` (Merged ✅): Dungeon 3 e Chefe Mazaal (cabeça mecânica ancestral). Obtenção da Ocarina of Wind.
 
 ### Sprint 3: Ato III - O Templo de Gelo & A Four Sword (3 Clones) [Concluído ✅]
 - **Objetivo**: Navegar o grande Lago Hylia, iluminar cavernas com a Lanterna de Fogo e conquistar o Elemento Água.
 - **Tarefas Concluídas**:
-  1. `feature/ocarina-fast-travel` (Merged): Chamada do pássaro Zeffa para transporte rápido até cristas de vento.
-  2. `feature/lake-hylia-library` (Merged): Exploração aquática com Flippers, quest dos livros gigantes da biblioteca de Hyrule Town.
-  3. `feature/flame-lantern` (Merged): Lanterna de Fogo com iluminação dinâmica circular, derretimento de gelo e acendimento de tochas.
-  4. `feature/dungeon-temple-of-droplets` (Merged): Dungeon 4 congelada com quebra-cabeças de reflexão de luz solar e Chefe Big Octo congelado.
-  5. `feature/elemental-sanctuary-split3` (Merged): Infusão do 3º Elemento: divisão em 3 Clones triangulares.
+  1. `feature/ocarina-fast-travel` (Merged ✅): Chamada do pássaro Zeffa para transporte rápido até cristas de vento.
+  2. `feature/lake-hylia-library` (Merged ✅): Exploração aquática com Flippers, quest dos livros gigantes da biblioteca de Hyrule Town.
+  3. `feature/flame-lantern` (Merged ✅): Lanterna de Fogo com iluminação dinâmica circular, derretimento de gelo e acendimento de tochas.
+  4. `feature/dungeon-temple-of-droplets` (Merged ✅): Dungeon 4 congelada com quebra-cabeças de reflexão de luz solar e Chefe Big Octo congelado.
+  5. `feature/elemental-sanctuary-split3` (Merged ✅): Infusão do 3º Elemento: divisão em 3 Clones triangulares.
 
 ### Sprint 4: Ato IV - As Nuvens & A Four Sword Forjada (4 Clones) [Em Andamento ⏳ - 50%]
 - **Objetivo**: Escalar as cachoeiras de Veil Falls, alcançar a Tribo dos Ventos no céu e forjar a lâmina quádrupla.
