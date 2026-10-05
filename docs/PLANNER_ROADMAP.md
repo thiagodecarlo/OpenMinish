@@ -108,7 +108,7 @@ flowchart TD
 | **Sprint 3: Ato III (Temple of Droplets)**| **Concluído** ✅ | 100% | Sprint 2 (Ocarina + Flippers) | `feature/temple-of-droplets` (Merged) |
 | **Sprint 4: Ato IV (Palace of Winds)** | **Concluído** ✅ | 100% | Sprint 3 (3 Elementos + Ocarina) | `feature/dungeon-palace-of-winds` (Merged) |
 | **Sprint 5: Ato V (Dark Hyrule Castle)** | **Concluído** ✅ | 100% | Sprint 4 (Four Sword Completa) | `feature/boss-vaati-climax` (Merged) |
-| **Sprint 6: Polimento & Extras** | **Em Andamento** ⏳ | 50% | Sprint 5 (Jogo Base Concluído) | `feature/anju-cucco-minigame` (Merged) |
+| **Sprint 6: Polimento & Extras** | **Em Andamento** ⏳ | 75% | Sprint 5 (Jogo Base Concluído) | `feature/sword-techniques-dojo` (Merged) |
 
 ---
 
@@ -189,7 +189,7 @@ flowchart TD
 - **Tarefas**:
   1. [x] `feature/figurine-gallery-gacha`: Galeria do Carlov com 136 miniaturas 3D colecionáveis via Mysterious Shells, chances dinâmicas de sorteio, rotação de troféus e Medalha de Carlov. (Merged ✅)
   2. [x] `feature/anju-cucco-minigame`: Minigame das galinhas Cucco de Anju em 10 níveis cronometrados, IA com 3 tipos de Cucco, física de transporte/arremesso e Heart Piece permanente. (Merged ✅)
-  3. [ ] `feature/sword-techniques-dojo`: Mestres Espadachins ensinando os 7 Tiger Scrolls restantes.
+  3. [x] `feature/sword-techniques-dojo`: Mestres Espadachins ensinando os 7 Tiger Scrolls restantes (8 no total), combate refinado (Sword Beam, Peril Beam, Rock Breaker, Roll Attack, Dash Attack, Down Thrust, Great Spin) e banners festivos. (Merged ✅)
   4. [ ] `feature/title-intro-cutscene`: Abertura com o Torneio de Esgrima, aparição de Vaati e petrificação de Zelda.
 
 ---

@@ -63,6 +63,7 @@ add_executable(zelda_port
     src/hal/boss_vaati.c
     src/hal/figurine_gallery.c
     src/hal/cucco_minigame.c
+    src/hal/sword_dojo.c
 )
 
 # Adiciona nossas pastas de cabeçalhos (.h) para que o C encontre #include "gba/types.h"
