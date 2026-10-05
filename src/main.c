@@ -24,6 +24,7 @@
 #include "hal/veil_clouds.h"
 #include "hal/rocs_cape.h"
 #include "hal/dungeon_palace.h"
+#include "hal/royal_valley.h"
 #include "hal/startup_menu.h"
 #include <math.h>
 
@@ -117,6 +118,8 @@ typedef struct {
     int  three_elements_banner_timer; // Temporizador do banner dos 3 Elementos
     bool has_four_sword;            // Four Sword Completa Forjada (4 Clones + Sword Beams)
     int  four_sword_banner_timer;   // Temporizador do banner da Four Sword Forjada
+    bool has_royal_kinstone;        // Royal Golden Kinstone (Rei Gustaf)
+    int  royal_kinstone_banner_timer; // Temporizador do banner da Kinstone Real
 
     // Regiões Canônicas: Quedas do Véu (Veil Falls) e Topo das Nuvens (Cloud Tops)
     bool has_veil_falls_unlocked;
@@ -1596,6 +1599,9 @@ static inline bool is_world_solid_for_player(const Tilemap* map, float wx, float
     if (sanctuary_is_active()) {
         return sanctuary_is_solid(wx, wy);
     }
+    if (royal_valley_is_active()) {
+        return royal_valley_is_solid(wx, wy);
+    }
     // Mecânica Salto do Cajado de Pacci: no ar (z > 4.0f) salta por cima de buracos e escarpas
     if (z > 4.0f) {
         return false;
@@ -1732,7 +1738,19 @@ static void apply_save_data(const SaveData* save, Player* link_ptr) {
         veil_clouds_enter_falls(&link_ptr->x, &link_ptr->y, &link_ptr->dir);
     } else if (save->current_map == 19) {
         veil_clouds_enter_clouds(&link_ptr->x, &link_ptr->y, &link_ptr->dir);
+    } else if (save->current_map == 20) {
+        royal_valley_enter_entrance(&link_ptr->x, &link_ptr->y, &link_ptr->dir);
+    } else if (save->current_map == 21) {
+        royal_valley_enter_maze(&link_ptr->x, &link_ptr->y, &link_ptr->dir);
+    } else if (save->current_map == 22) {
+        royal_valley_enter_dampe(&link_ptr->x, &link_ptr->y, &link_ptr->dir);
+    } else if (save->current_map == 23) {
+        royal_valley_enter_graveyard(&link_ptr->x, &link_ptr->y, &link_ptr->dir);
+    } else if (save->current_map == 24) {
+        royal_valley_enter_crypt(&link_ptr->x, &link_ptr->y, &link_ptr->dir);
     }
+    link_ptr->has_royal_kinstone = save->has_royal_kinstone;
+    royal_valley_restore_state(save->graveyard_gate_unlocked, save->dampe_met, save->tomb_pushed, save->king_gustaf_met, save->has_royal_kinstone);
     link_ptr->has_lantern = save->has_flame_lantern;
     lantern_set_lit(save->lantern_lit);
     if (link_ptr->has_lantern) inventory_unlock_item(INV_ITEM_LANTERN);
@@ -1914,6 +1932,9 @@ int main(int argc, char* argv[]) {
     link.has_rocs_cape = false;
     link.rocs_banner_timer = 0;
     rocs_cape_init();
+    link.has_royal_kinstone = false;
+    link.royal_kinstone_banner_timer = 0;
+    royal_valley_init();
 
     // Inicialização da Máquina de Estados de Abertura & Seleção de Save (Capcom, Nintendo, Title, File Select)
     startup_menu_init();
@@ -2002,7 +2023,8 @@ int main(int argc, char* argv[]) {
                                 current_save.player_y = link.y;
                                 current_save.player_dir = (int)link.dir;
                                 int cur_m = 0;
-                                if (veil_clouds_is_active()) {
+                                if (royal_valley_is_active()) cur_m = 20 + (int)royal_valley_get_scene();
+                                else if (veil_clouds_is_active()) {
                                     cur_m = (veil_clouds_get_scene() == VEIL_SCENE_FALLS_BASE || veil_clouds_get_scene() == VEIL_SCENE_FALLS_SUMMIT) ? 18 : 19;
                                 }
                                 else if (dungeon_fortress_is_active()) cur_m = 14;
@@ -2055,6 +2077,13 @@ int main(int argc, char* argv[]) {
                                 current_save.golden_kinstones_fused = veil_clouds_get_golden_kinstones();
                                 current_save.cloud_tornado_active = veil_clouds_is_tornado_active();
                                 current_save.has_rocs_cape = link.has_rocs_cape;
+                                RoyalValleyState* rv_st = royal_valley_get_state();
+                                current_save.royal_valley_unlocked = rv_st ? rv_st->is_active : false;
+                                current_save.graveyard_gate_unlocked = rv_st ? rv_st->graveyard_unlocked : false;
+                                current_save.dampe_met = rv_st ? rv_st->dampe_met : false;
+                                current_save.tomb_pushed = rv_st ? rv_st->tomb_pushed : false;
+                                current_save.king_gustaf_met = rv_st ? rv_st->king_gustaf_met : false;
+                                current_save.has_royal_kinstone = link.has_royal_kinstone;
                                 current_save.slot_a = (int)inventory_get_slot_a();
                                 current_save.slot_b = (int)inventory_get_slot_b();
                                 if (save_game(1, &current_save)) {
@@ -2401,6 +2430,23 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             break;
+                        case SDLK_F8:
+                            if (!dungeon_is_active() && !dungeon_flames_is_active() && !dungeon_fortress_is_active() && !dungeon_droplets_is_active() && !dungeon_palace_is_active() && !sanctuary_is_active()) {
+                                if (royal_valley_is_active()) {
+                                    RoyalValleySceneId next_sc = (royal_valley_get_scene() + 1) % ROYAL_SCENE_COUNT;
+                                    if (next_sc == ROYAL_SCENE_ENTRANCE) royal_valley_enter_entrance(&link.x, &link.y, &link.dir);
+                                    else if (next_sc == ROYAL_SCENE_MIST_MAZE) royal_valley_enter_maze(&link.x, &link.y, &link.dir);
+                                    else if (next_sc == ROYAL_SCENE_DAMPE_CABIN) royal_valley_enter_dampe(&link.x, &link.y, &link.dir);
+                                    else if (next_sc == ROYAL_SCENE_GRAVEYARD) royal_valley_enter_graveyard(&link.x, &link.y, &link.dir);
+                                    else if (next_sc == ROYAL_SCENE_ROYAL_CRYPT) royal_valley_enter_crypt(&link.x, &link.y, &link.dir);
+                                    printf("[DEBUG] [F8] Royal Valley cena alternada para %d!\n", next_sc);
+                                } else {
+                                    s_in_town = s_in_village = s_in_south_field = s_in_crenel_base = s_in_melari_mines = s_in_castor_wilds = s_in_mole_cave = s_in_wind_ruins = s_in_armos_interior = s_in_library = s_in_lake_hylia = s_in_north_field = false;
+                                    royal_valley_enter_entrance(&link.x, &link.y, &link.dir);
+                                    printf("[DEBUG] [F8] Entrada em Royal Valley!\n");
+                                }
+                            }
+                            break;
                         case SDLK_F10:
                             startup_menu_return_to_title();
                             printf("[STARTUP] [F10] Retornando a Tela de Titulo e Selecao de Save!\n");
@@ -2484,7 +2530,8 @@ int main(int argc, char* argv[]) {
         // 2. ATUALIZAÇÃO DA LÓGICA DO JOGADOR (INPUT -> FÍSICA)
         // --------------------------------------------------------------------
         const HalVideoContext* ctx = hal_video_get_context();
-        Tilemap* active_map = dungeon_palace_is_active() ? dungeon_palace_get_current_map() :
+        Tilemap* active_map = royal_valley_is_active() ? royal_valley_get_state()->maps[royal_valley_get_scene()] :
+                              (dungeon_palace_is_active() ? dungeon_palace_get_current_map() :
                               (veil_clouds_is_active() ? veil_clouds_get_current_map() :
                               (dungeon_droplets_is_active() ? dungeon_droplets_get_current_map() :
                               (s_in_armos_interior ? s_armos_interior_map :
@@ -2498,7 +2545,7 @@ int main(int argc, char* argv[]) {
                               (s_in_village ? s_village_map :
                               (s_in_town ? s_town_map :
                               (s_in_south_field ? s_south_field_map :
-                              (s_in_north_field ? s_north_field_map : world_map))))))))))))));
+                              (s_in_north_field ? s_north_field_map : world_map)))))))))))))));
 
         if (inventory_is_paused()) {
             if (hal_input_is_pressed(KEY_UP))    inventory_cursor_move(0, -1);
@@ -2599,6 +2646,9 @@ int main(int argc, char* argv[]) {
             if (link.four_sword_banner_timer > 0) {
                 link.four_sword_banner_timer--;
             }
+            if (link.royal_kinstone_banner_timer > 0) {
+                link.royal_kinstone_banner_timer--;
+            }
             if (subweapon_get_current() == ITEM_BOW && !link.has_bow) {
                 link.has_bow = true;
                 inventory_unlock_item(INV_ITEM_BOW);
@@ -2694,6 +2744,17 @@ int main(int argc, char* argv[]) {
                     } else if (veil_clouds_is_active()) {
                         if (veil_clouds_interact(link.x, link.y, link.dir)) {
                             link.golden_kinstones_fused = veil_clouds_get_golden_kinstones();
+                        } else {
+                            link.is_attacking = true;
+                            link.attack_timer = 12;
+                            hal_audio_play_sound(SOUND_SWORD_SLASH, 1.0f, 1.0f);
+                        }
+                    } else if (royal_valley_is_active()) {
+                        if (royal_valley_interact(link.x, link.y, link.dir, &link.hearts)) {
+                            if (royal_valley_has_royal_kinstone() && !link.has_royal_kinstone) {
+                                link.has_royal_kinstone = true;
+                                link.royal_kinstone_banner_timer = 240;
+                            }
                         } else {
                             link.is_attacking = true;
                             link.attack_timer = 12;
@@ -2870,6 +2931,9 @@ int main(int argc, char* argv[]) {
                 }
                 if (dungeon_palace_is_active()) {
                     dungeon_palace_check_sword_hit(hit_x, hit_y, hit_w, hit_h, sword_dmg, link.dir);
+                }
+                if (royal_valley_is_active()) {
+                    royal_valley_check_sword_hit(hit_x, hit_y, hit_w, hit_h, sword_dmg, link.dir);
                 }
 
                 // Disparo de Raio da Four Sword com HP cheio no início do golpe
@@ -3559,11 +3623,21 @@ int main(int argc, char* argv[]) {
 
         static bool s_was_sanctuary_active = false;
         if (s_was_sanctuary_active && !sanctuary_is_active()) {
-            s_in_north_field = true;
-            spawn_north_field_entities();
-            hal_audio_play_bgm(BGM_MINISH_WOODS);
+            if (!royal_valley_is_active()) {
+                s_in_north_field = true;
+                spawn_north_field_entities();
+                hal_audio_play_bgm(BGM_MINISH_WOODS);
+            }
         }
         s_was_sanctuary_active = sanctuary_is_active();
+
+        static bool s_was_royal_valley_active = false;
+        if (s_was_royal_valley_active && !royal_valley_is_active()) {
+            sanctuary_enter(&link.x, &link.y, &link.dir);
+            link.y = 2.0f * TILE_SIZE;
+            link.dir = DIR_DOWN;
+        }
+        s_was_royal_valley_active = royal_valley_is_active();
 
         static bool s_was_dungeon_fortress_active = false;
         if (s_was_dungeon_fortress_active && !dungeon_fortress_is_active()) {
@@ -3608,6 +3682,10 @@ int main(int argc, char* argv[]) {
                 link.two_elements_banner_timer = 240;
                 hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.3f);
                 printf("[FOUR SWORD] White Sword infundida com Terra e Fogo! Divisao em 2 Clones!\n");
+            }
+            if (sanctuary_has_stepped_in_secret_exit(link.x, link.y)) {
+                sanctuary_exit(&link.x, &link.y, &link.dir);
+                royal_valley_enter_entrance(&link.x, &link.y, &link.dir);
             }
         } else if (dungeon_fortress_is_active()) {
             bool warp_to_surface = false;
@@ -3656,6 +3734,16 @@ int main(int argc, char* argv[]) {
                 link.wind_element_banner_timer = 240;
                 link.dungeon_palace_cleared = true;
                 hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.5f);
+            }
+        } else if (royal_valley_is_active()) {
+            royal_valley_update(&link.x, &link.y, &link.dir, link.is_moving,
+                                &link.hearts, link.max_hearts, &link.rupees,
+                                link.is_charging_spin, link.spin_ready,
+                                link.is_attacking, link.attack_timer,
+                                link.has_four_sword, link.has_lantern, lantern_is_lit());
+            if (royal_valley_has_royal_kinstone() && !link.has_royal_kinstone) {
+                link.has_royal_kinstone = true;
+                link.royal_kinstone_banner_timer = 240;
             }
         }
 
@@ -3831,6 +3919,11 @@ int main(int argc, char* argv[]) {
             subweapon_render(&camera);
         } else if (veil_clouds_is_active()) {
             veil_clouds_render(&camera, link.x, link.y);
+            entity_manager_render(&camera);
+            draw_link(&link, &camera);
+            subweapon_render(&camera);
+        } else if (royal_valley_is_active()) {
+            royal_valley_render(&camera, link.x, link.y, link.dir, link.is_minish);
             entity_manager_render(&camera);
             draw_link(&link, &camera);
             subweapon_render(&camera);
@@ -4120,6 +4213,27 @@ int main(int argc, char* argv[]) {
 
             font_draw_text(ban_x + 30, ban_y + 6, "FOUR SWORD COMPLETA FORJADA!", 0xFDE047FF, true);
             font_draw_text(ban_x + 30, ban_y + 18, "4 HEROIS & SWORD BEAMS ATIVOS!", 0x38BDF8FF, true);
+        }
+
+        // 6d4. Banner Festivo da ROYAL GOLDEN KINSTONE (Rei Gustaf / Cripta Real)
+        if (link.royal_kinstone_banner_timer > 0 && !royal_valley_is_active()) {
+            int ban_w = 236;
+            int ban_h = 32;
+            int ban_x = (ctx->render_width - ban_w) / 2;
+            int ban_y = 64;
+
+            draw_rect(ban_x - 2, ban_y - 2, ban_w + 4, ban_h + 4, 0x0F172AEE);
+            draw_rect(ban_x - 1, ban_y - 1, ban_w + 2, ban_h + 2, 0xF59E0BFF);
+            draw_rect(ban_x, ban_y, ban_w, ban_h, 0x1E1B4BFF);
+            draw_rect(ban_x + 2, ban_y + 2, ban_w - 4, ban_h - 4, 0x0F172AEE);
+
+            // Ícone da Golden Kinstone Real
+            draw_rect(ban_x + 6, ban_y + 8, 12, 16, 0xF59E0BFF);
+            draw_rect(ban_x + 9, ban_y + 11, 6, 10, 0xFDE047FF);
+            hal_video_put_pixel(ban_x + 12, ban_y + 16, 0xFFFFFFFF);
+
+            font_draw_text(ban_x + 26, ban_y + 6, "ROYAL GOLDEN KINSTONE OBTIDA!", 0xFDE047FF, true);
+            font_draw_text(ban_x + 26, ban_y + 18, "O ESPIRITO DO REI GUSTAF O ABENCOA!", 0x38BDF8FF, true);
         }
 
         // 6e. Banner Festivo de Aquisição do Arco e Flechas (Bow & Arrow)
