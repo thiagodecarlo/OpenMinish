@@ -3,8 +3,11 @@
 #include "hal/audio.h"
 #include "hal/font.h"
 #include "hal/subweapon.h"
+#include "hal/texture.h"
 #include <stdio.h>
 #include <string.h>
+
+static Texture* s_inv_hud_tex = NULL;
 
 #define GRID_COLS 4
 #define GRID_ROWS 3
@@ -227,6 +230,38 @@ void inventory_assign_to_slot_b(void) {
 
 // Renderizador dos ícones em miniatura de cada item (14x14)
 static void draw_item_icon(int x, int y, InventoryItem item) {
+    if (!s_inv_hud_tex) {
+        s_inv_hud_tex = texture_load_bmp("assets/ui/hud_items.bmp");
+        if (!s_inv_hud_tex) s_inv_hud_tex = texture_load_bmp("assets/regions/usa/hud_items.bmp");
+    }
+
+    if (s_inv_hud_tex && s_inv_hud_tex->pixels) {
+        int col = -1, row = -1;
+        switch (item) {
+            case INV_ITEM_SWORD:
+                col = s_has_four_sword ? 2 : (s_has_white_sword ? 1 : 0);
+                row = 1;
+                break;
+            case INV_ITEM_BOOMERANG:     col = 0; row = 2; break;
+            case INV_ITEM_GUST_JAR:      col = 6; row = 2; break;
+            case INV_ITEM_BOMBS:         col = 2; row = 2; break;
+            case INV_ITEM_PEGASUS_BOOTS: col = 7; row = 2; break;
+            case INV_ITEM_FLIPPERS:      col = 8; row = 2; break;
+            case INV_ITEM_CANE_OF_PACCI: col = 3; row = 3; break;
+            case INV_ITEM_MOLE_MITTS:    col = 0; row = 3; break;
+            case INV_ITEM_LANTERN:       col = 2; row = 3; break;
+            case INV_ITEM_ROCS_CAPE:     col = 1; row = 3; break;
+            case INV_ITEM_BOW:           col = 4; row = 2; break;
+            case INV_ITEM_GRIP_RING:     col = 9; row = 2; break;
+            case INV_ITEM_OCARINA:       col = 4; row = 3; break;
+            default: break;
+        }
+        if (col >= 0 && row >= 0) {
+            texture_draw(s_inv_hud_tex, col * 16, row * 16, 16, 16, x - 1, y - 1);
+            return;
+        }
+    }
+
     switch (item) {
         case INV_ITEM_SWORD:
             if (s_has_white_sword) {

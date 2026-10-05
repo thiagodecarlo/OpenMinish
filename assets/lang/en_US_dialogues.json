@@ -1,9 +1,7 @@
 {
   "locale": "en_US",
   "language_name": "English (United States)",
-  "source_version": "USA",
   "total_groups": 80,
-  "total_messages": 3699,
   "groups": [
     {
       "group_id": 0,
@@ -12752,7 +12750,7 @@
     {
       "group_id": 33,
       "group_hex": "0x21",
-      "name": "Diálogos e Missões (Grupo 0x21)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 79,
       "messages": [
         {
@@ -13234,7 +13232,7 @@
     {
       "group_id": 34,
       "group_hex": "0x22",
-      "name": "Diálogos e Missões (Grupo 0x22)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 4,
       "messages": [
         {
@@ -13266,7 +13264,7 @@
     {
       "group_id": 35,
       "group_hex": "0x23",
-      "name": "Diálogos e Missões (Grupo 0x23)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 22,
       "messages": [
         {
@@ -13406,7 +13404,7 @@
     {
       "group_id": 36,
       "group_hex": "0x24",
-      "name": "Diálogos e Missões (Grupo 0x24)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 17,
       "messages": [
         {
@@ -13516,7 +13514,7 @@
     {
       "group_id": 37,
       "group_hex": "0x25",
-      "name": "Diálogos e Missões (Grupo 0x25)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 40,
       "messages": [
         {
@@ -13764,7 +13762,7 @@
     {
       "group_id": 38,
       "group_hex": "0x26",
-      "name": "Diálogos e Missões (Grupo 0x26)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 1,
       "messages": [
         {
@@ -13778,7 +13776,7 @@
     {
       "group_id": 39,
       "group_hex": "0x27",
-      "name": "Diálogos e Missões (Grupo 0x27)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 2,
       "messages": [
         {
@@ -13798,7 +13796,7 @@
     {
       "group_id": 40,
       "group_hex": "0x28",
-      "name": "Diálogos e Missões (Grupo 0x28)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 11,
       "messages": [
         {
@@ -13872,7 +13870,7 @@
     {
       "group_id": 41,
       "group_hex": "0x29",
-      "name": "Diálogos e Missões (Grupo 0x29)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 23,
       "messages": [
         {
@@ -14018,7 +14016,7 @@
     {
       "group_id": 42,
       "group_hex": "0x2A",
-      "name": "Diálogos e Missões (Grupo 0x2A)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 1,
       "messages": [
         {
@@ -14032,7 +14030,7 @@
     {
       "group_id": 43,
       "group_hex": "0x2B",
-      "name": "Diálogos e Missões (Grupo 0x2B)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 31,
       "messages": [
         {
@@ -14226,7 +14224,7 @@
     {
       "group_id": 44,
       "group_hex": "0x2C",
-      "name": "Diálogos e Missões (Grupo 0x2C)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 38,
       "messages": [
         {
@@ -14462,7 +14460,7 @@
     {
       "group_id": 45,
       "group_hex": "0x2D",
-      "name": "Diálogos e Missões (Grupo 0x2D)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 14,
       "messages": [
         {
@@ -14554,7 +14552,7 @@
     {
       "group_id": 46,
       "group_hex": "0x2E",
-      "name": "Diálogos e Missões (Grupo 0x2E)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 26,
       "messages": [
         {
@@ -14718,7 +14716,7 @@
     {
       "group_id": 47,
       "group_hex": "0x2F",
-      "name": "Diálogos e Missões (Grupo 0x2F)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 27,
       "messages": [
         {
@@ -14888,7 +14886,7 @@
     {
       "group_id": 48,
       "group_hex": "0x30",
-      "name": "Diálogos e Missões (Grupo 0x30)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 21,
       "messages": [
         {
@@ -15022,7 +15020,7 @@
     {
       "group_id": 49,
       "group_hex": "0x31",
-      "name": "Diálogos e Missões (Grupo 0x31)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 51,
       "messages": [
         {
@@ -15336,7 +15334,7 @@
     {
       "group_id": 50,
       "group_hex": "0x32",
-      "name": "Diálogos e Missões (Grupo 0x32)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 12,
       "messages": [
         {
@@ -15416,7 +15414,7 @@
     {
       "group_id": 51,
       "group_hex": "0x33",
-      "name": "Diálogos e Missões (Grupo 0x33)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 3,
       "messages": [
         {
@@ -15442,7 +15440,7 @@
     {
       "group_id": 52,
       "group_hex": "0x34",
-      "name": "Diálogos e Missões (Grupo 0x34)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 61,
       "messages": [
         {
@@ -15816,7 +15814,7 @@
     {
       "group_id": 53,
       "group_hex": "0x35",
-      "name": "Diálogos e Missões (Grupo 0x35)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 64,
       "messages": [
         {
@@ -16208,7 +16206,7 @@
     {
       "group_id": 54,
       "group_hex": "0x36",
-      "name": "Diálogos e Missões (Grupo 0x36)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 67,
       "messages": [
         {
@@ -16618,7 +16616,7 @@
     {
       "group_id": 55,
       "group_hex": "0x37",
-      "name": "Diálogos e Missões (Grupo 0x37)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 66,
       "messages": [
         {
@@ -17022,7 +17020,7 @@
     {
       "group_id": 56,
       "group_hex": "0x38",
-      "name": "Diálogos e Missões (Grupo 0x38)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 68,
       "messages": [
         {
@@ -17438,7 +17436,7 @@
     {
       "group_id": 57,
       "group_hex": "0x39",
-      "name": "Diálogos e Missões (Grupo 0x39)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 55,
       "messages": [
         {
@@ -17776,7 +17774,7 @@
     {
       "group_id": 58,
       "group_hex": "0x3A",
-      "name": "Diálogos e Missões (Grupo 0x3A)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 20,
       "messages": [
         {
@@ -17904,7 +17902,7 @@
     {
       "group_id": 59,
       "group_hex": "0x3B",
-      "name": "Diálogos e Missões (Grupo 0x3B)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 20,
       "messages": [
         {
@@ -18032,7 +18030,7 @@
     {
       "group_id": 60,
       "group_hex": "0x3C",
-      "name": "Diálogos e Missões (Grupo 0x3C)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 13,
       "messages": [
         {
@@ -18118,7 +18116,7 @@
     {
       "group_id": 61,
       "group_hex": "0x3D",
-      "name": "Diálogos e Missões (Grupo 0x3D)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 29,
       "messages": [
         {
@@ -18300,7 +18298,7 @@
     {
       "group_id": 62,
       "group_hex": "0x3E",
-      "name": "Diálogos e Missões (Grupo 0x3E)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 13,
       "messages": [
         {
@@ -18386,7 +18384,7 @@
     {
       "group_id": 63,
       "group_hex": "0x3F",
-      "name": "Diálogos e Missões (Grupo 0x3F)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 61,
       "messages": [
         {
@@ -18760,7 +18758,7 @@
     {
       "group_id": 64,
       "group_hex": "0x40",
-      "name": "Diálogos e Missões (Grupo 0x40)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 19,
       "messages": [
         {
@@ -18882,7 +18880,7 @@
     {
       "group_id": 65,
       "group_hex": "0x41",
-      "name": "Diálogos e Missões (Grupo 0x41)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 6,
       "messages": [
         {
@@ -18926,7 +18924,7 @@
     {
       "group_id": 66,
       "group_hex": "0x42",
-      "name": "Diálogos e Missões (Grupo 0x42)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 41,
       "messages": [
         {
@@ -19180,7 +19178,7 @@
     {
       "group_id": 67,
       "group_hex": "0x43",
-      "name": "Diálogos e Missões (Grupo 0x43)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 51,
       "messages": [
         {
@@ -19494,7 +19492,7 @@
     {
       "group_id": 68,
       "group_hex": "0x44",
-      "name": "Diálogos e Missões (Grupo 0x44)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 38,
       "messages": [
         {
@@ -19730,7 +19728,7 @@
     {
       "group_id": 69,
       "group_hex": "0x45",
-      "name": "Diálogos e Missões (Grupo 0x45)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 48,
       "messages": [
         {
@@ -20026,7 +20024,7 @@
     {
       "group_id": 70,
       "group_hex": "0x46",
-      "name": "Diálogos e Missões (Grupo 0x46)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 104,
       "messages": [
         {
@@ -20658,7 +20656,7 @@
     {
       "group_id": 71,
       "group_hex": "0x47",
-      "name": "Diálogos e Missões (Grupo 0x47)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 46,
       "messages": [
         {
@@ -20942,7 +20940,7 @@
     {
       "group_id": 72,
       "group_hex": "0x48",
-      "name": "Diálogos e Missões (Grupo 0x48)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 9,
       "messages": [
         {
@@ -21004,7 +21002,7 @@
     {
       "group_id": 73,
       "group_hex": "0x49",
-      "name": "Diálogos e Missões (Grupo 0x49)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 23,
       "messages": [
         {
@@ -21150,7 +21148,7 @@
     {
       "group_id": 74,
       "group_hex": "0x4A",
-      "name": "Diálogos e Missões (Grupo 0x4A)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 40,
       "messages": [
         {
@@ -21398,7 +21396,7 @@
     {
       "group_id": 75,
       "group_hex": "0x4B",
-      "name": "Diálogos e Missões (Grupo 0x4B)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 41,
       "messages": [
         {
@@ -21652,7 +21650,7 @@
     {
       "group_id": 76,
       "group_hex": "0x4C",
-      "name": "Diálogos e Missões (Grupo 0x4C)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 23,
       "messages": [
         {
@@ -21798,7 +21796,7 @@
     {
       "group_id": 77,
       "group_hex": "0x4D",
-      "name": "Diálogos e Missões (Grupo 0x4D)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 16,
       "messages": [
         {
@@ -21902,7 +21900,7 @@
     {
       "group_id": 78,
       "group_hex": "0x4E",
-      "name": "Diálogos e Missões (Grupo 0x4E)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 52,
       "messages": [
         {
@@ -22222,7 +22220,7 @@
     {
       "group_id": 79,
       "group_hex": "0x4F",
-      "name": "Diálogos e Missões (Grupo 0x4F)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 102,
       "messages": [
         {

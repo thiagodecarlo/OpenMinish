@@ -1,9 +1,7 @@
 {
   "locale": "fr_FR",
   "language_name": "Français (France)",
-  "source_version": "French",
   "total_groups": 80,
-  "total_messages": 3693,
   "groups": [
     {
       "group_id": 0,
@@ -1449,7 +1447,7 @@
           "id": 35,
           "global_id": 803,
           "hex_id": "0x0323",
-          "text": "\"Les rumeurs d'Hyrule\"\nDes {Color:Red}Bombes{Color:White} à l'œil.\nVous vous souvenez des Bombes Soldats\ndont je vous parlais dans le volume 3?\nIl paraît qu'elles laissent souvent\ntomber des {Color:Red}Bombes{Color:White} une fois vaincues!\nMais ce n'est qu'une rumeur...\nIl ne tient qu'à vous de la vérifier...\n  {Choice:03:24} Lire la suite.  {Choice:FF} J'en ai assez lu."
+          "text": "\"Les rumeurs d'Hyrule\"\nDes {Color:Red}Bombes{Color:White} à l'il.\nVous vous souvenez des Bombes Soldats\ndont je vous parlais dans le volume 3?\nIl paraît qu'elles laissent souvent\ntomber des {Color:Red}Bombes{Color:White} une fois vaincues!\nMais ce n'est qu'une rumeur...\nIl ne tient qu'à vous de la vérifier...\n  {Choice:03:24} Lire la suite.  {Choice:FF} J'en ai assez lu."
         },
         {
           "id": 36,
@@ -1467,7 +1465,7 @@
           "id": 38,
           "global_id": 806,
           "hex_id": "0x0326",
-          "text": "\"Les bons conseils de Maître Tesshin\"\nUne Statue d'Eyegore sur votre chemin?\nDécochez-lui une {Color:Red}Flèche{Color:White} dans son œil\nunique, elle aura soudain la bougeotte!\nN'hésitez pas à les cribler de {Color:Red}Flèches{Color:White}:\n{Color:Blue}elles en ont souvent plein sur elles{Color:White}!\n  {Choice:03:27} Lire la suite.  {Choice:FF} J'en ai assez lu."
+          "text": "\"Les bons conseils de Maître Tesshin\"\nUne Statue d'Eyegore sur votre chemin?\nDécochez-lui une {Color:Red}Flèche{Color:White} dans son il\nunique, elle aura soudain la bougeotte!\nN'hésitez pas à les cribler de {Color:Red}Flèches{Color:White}:\n{Color:Blue}elles en ont souvent plein sur elles{Color:White}!\n  {Choice:03:27} Lire la suite.  {Choice:FF} J'en ai assez lu."
         },
         {
           "id": 39,
@@ -2063,7 +2061,7 @@
           "id": 95,
           "global_id": 1119,
           "hex_id": "0x045F",
-          "text": "Cœur"
+          "text": "Cur"
         },
         {
           "id": 96,
@@ -2081,13 +2079,13 @@
           "id": 98,
           "global_id": 1122,
           "hex_id": "0x0462",
-          "text": "Réceptacle de Cœur"
+          "text": "Réceptacle de Cur"
         },
         {
           "id": 99,
           "global_id": 1123,
           "hex_id": "0x0463",
-          "text": "Quarts de Cœur"
+          "text": "Quarts de Cur"
         },
         {
           "id": 100,
@@ -2219,7 +2217,7 @@
           "id": 121,
           "global_id": 1145,
           "hex_id": "0x0479",
-          "text": "{Color:Red}Lame Rayonnante{Color:White}\nBrandis ton {Color:Red}Epée{Color:White} lorsque\ntu as tous tes cœurs!\n(Kusshin)"
+          "text": "{Color:Red}Lame Rayonnante{Color:White}\nBrandis ton {Color:Red}Epée{Color:White} lorsque\ntu as tous tes curs!\n(Kusshin)"
         },
         {
           "id": 122,
@@ -2237,7 +2235,7 @@
           "id": 124,
           "global_id": 1148,
           "hex_id": "0x047C",
-          "text": "{Color:Red}Rayon de Ténacité{Color:White}\nBrandis désespérément ton\n{Color:Red}Epée {Color:White}quand tu n'as plus\nqu'un seul cœur! (Hasshin)"
+          "text": "{Color:Red}Rayon de Ténacité{Color:White}\nBrandis désespérément ton\n{Color:Red}Epée {Color:White}quand tu n'as plus\nqu'un seul cur! (Hasshin)"
         }
       ]
     },
@@ -2395,25 +2393,25 @@
           "id": 24,
           "global_id": 1304,
           "hex_id": "0x0518",
-          "text": "Vous recevez un {Color:Red}Quart de Cœur{Color:White}!\nQuatre quarts forment un réceptacle.\nFormer un réceptacle complet permet\nd'{Color:Blue}augmenter votre énergie vitale!"
+          "text": "Vous recevez un {Color:Red}Quart de Cur{Color:White}!\nQuatre quarts forment un réceptacle.\nFormer un réceptacle complet permet\nd'{Color:Blue}augmenter votre énergie vitale!"
         },
         {
           "id": 25,
           "global_id": 1305,
           "hex_id": "0x0519",
-          "text": "Vous recevez un {Color:Red}Quart de Cœur{Color:White}!\nVous en avez maintenant 2 sur 4!\n{Color:Blue}Plus que 2{Color:White} pour former un réceptacle\net augmenter votre énergie vitale!"
+          "text": "Vous recevez un {Color:Red}Quart de Cur{Color:White}!\nVous en avez maintenant 2 sur 4!\n{Color:Blue}Plus que 2{Color:White} pour former un réceptacle\net augmenter votre énergie vitale!"
         },
         {
           "id": 26,
           "global_id": 1306,
           "hex_id": "0x051A",
-          "text": "Vous recevez un {Color:Red}Quart de Cœur{Color:White}!\nVous en avez maintenant 3 sur 4!\n{Color:Blue}Plus qu'un{Color:White} pour former un réceptacle\net augmenter votre énergie vitale!"
+          "text": "Vous recevez un {Color:Red}Quart de Cur{Color:White}!\nVous en avez maintenant 3 sur 4!\n{Color:Blue}Plus qu'un{Color:White} pour former un réceptacle\net augmenter votre énergie vitale!"
         },
         {
           "id": 27,
           "global_id": 1307,
           "hex_id": "0x051B",
-          "text": "Vous recevez un {Color:Red}Quart de Cœur{Color:White}!\nVous en avez maintenant 4!\nLes 4 quarts forment un réceptacle!\n{Color:Blue}Votre énergie vitale augmente!"
+          "text": "Vous recevez un {Color:Red}Quart de Cur{Color:White}!\nVous en avez maintenant 4!\nLes 4 quarts forment un réceptacle!\n{Color:Blue}Votre énergie vitale augmente!"
         },
         {
           "id": 28,
@@ -2497,7 +2495,7 @@
           "id": 41,
           "global_id": 1321,
           "hex_id": "0x0529",
-          "text": "{04:10:0E}Vous recevez du {Color:Red}Nectar Rouge!\n{Color:White}\nSi vous le buvez, vous trouverez\nplus de {Color:Red}Cœurs{Color:White}!"
+          "text": "{04:10:0E}Vous recevez du {Color:Red}Nectar Rouge!\n{Color:White}\nSi vous le buvez, vous trouverez\nplus de {Color:Red}Curs{Color:White}!"
         },
         {
           "id": 42,
@@ -2821,7 +2819,7 @@
           "id": 95,
           "global_id": 1375,
           "hex_id": "0x055F",
-          "text": "Vous avez trouvé un {Color:Red}Cœur{Color:White}!\nIl vous redonne un peu d'énergie!"
+          "text": "Vous avez trouvé un {Color:Red}Cur{Color:White}!\nIl vous redonne un peu d'énergie!"
         },
         {
           "id": 96,
@@ -2839,7 +2837,7 @@
           "id": 98,
           "global_id": 1378,
           "hex_id": "0x0562",
-          "text": "Vous obtenez un {Color:Red}Réceptacle de Cœur{Color:White}!\nVotre énergie vitale augmente!"
+          "text": "Vous obtenez un {Color:Red}Réceptacle de Cur{Color:White}!\nVotre énergie vitale augmente!"
         },
         {
           "id": 99,
@@ -5145,7 +5143,7 @@
           "id": 46,
           "global_id": 2350,
           "hex_id": "0x092E",
-          "text": "Vaati, sous sa forme normale de Minish,\navant sa transformation en sorcier.\nIl était fasciné par le côté sombre\ndu cœur des humains."
+          "text": "Vaati, sous sa forme normale de Minish,\navant sa transformation en sorcier.\nIl était fasciné par le côté sombre\ndu cur des humains."
         },
         {
           "id": 47,
@@ -5211,19 +5209,19 @@
           "id": 57,
           "global_id": 2361,
           "hex_id": "0x0939",
-          "text": "Série nº1 de la collection\n\"Le paisible peuple d'Hyrule\"."
+          "text": "Série n°1 de la collection\n\"Le paisible peuple d'Hyrule\"."
         },
         {
           "id": 58,
           "global_id": 2362,
           "hex_id": "0x093A",
-          "text": "Série nº2 de la collection\n\"Le paisible peuple d'Hyrule\"."
+          "text": "Série n°2 de la collection\n\"Le paisible peuple d'Hyrule\"."
         },
         {
           "id": 59,
           "global_id": 2363,
           "hex_id": "0x093B",
-          "text": "Série nº3 de la collection\n\"Le paisible peuple d'Hyrule\"."
+          "text": "Série n°3 de la collection\n\"Le paisible peuple d'Hyrule\"."
         },
         {
           "id": 60,
@@ -5301,7 +5299,7 @@
           "id": 72,
           "global_id": 2376,
           "hex_id": "0x0948",
-          "text": "Habitat:\nMarais de Tabanta et Donjons.\nElles se mettent en mouvement quand\nelles reçoivent une flèche dans l'œil.\nSeules les flèches peuvent les abattre,\nmais vous pouvez aussi les contourner."
+          "text": "Habitat:\nMarais de Tabanta et Donjons.\nElles se mettent en mouvement quand\nelles reçoivent une flèche dans l'il.\nSeules les flèches peuvent les abattre,\nmais vous pouvez aussi les contourner."
         },
         {
           "id": 73,
@@ -5673,7 +5671,7 @@
           "id": 134,
           "global_id": 2438,
           "hex_id": "0x0986",
-          "text": "Vaati sous la forme qu'il a prise en\nacquérant le pouvoir de la Force.\nSes sorts et le rayon de l'œil qui vole\nautour de lui sont très puissants."
+          "text": "Vaati sous la forme qu'il a prise en\nacquérant le pouvoir de la Force.\nSes sorts et le rayon de l'il qui vole\nautour de lui sont très puissants."
         },
         {
           "id": 135,
@@ -5685,7 +5683,7 @@
           "id": 136,
           "global_id": 2440,
           "hex_id": "0x0988",
-          "text": "L'ultime transformation de Vaati: une\nconcentration de ténèbres du cœur.\nIl n'a plus qu'une seule idée en tête:\néliminer {Player}.\nIl faut toucher son point faible à l'aide\nde l'Epée de Quatre pour le vaincre."
+          "text": "L'ultime transformation de Vaati: une\nconcentration de ténèbres du cur.\nIl n'a plus qu'une seule idée en tête:\néliminer {Player}.\nIl faut toucher son point faible à l'aide\nde l'Epée de Quatre pour le vaincre."
         },
         {
           "id": 137,
@@ -5723,7 +5721,7 @@
           "id": 0,
           "global_id": 2560,
           "hex_id": "0x0A00",
-          "text": "{Symbol:0B}{Symbol:0C}{Symbol:07}{Symbol:08}{Symbol:09}{Symbol:0A}\n !\"{Symbol:10}{Symbol:11}{Symbol:12}{Symbol:0D}'(){Symbol:13}{Symbol:14},-.{Symbol:15}\n0123456789:{Symbol:16}{Symbol:17}{Symbol:18}{Symbol:19}?\n{Symbol:1A}ABCDEFGHIJKLMNO\nPQRSTUVWXYZ{Symbol:1B}{Symbol:1C}{Symbol:1D}{Symbol:1E}{Symbol:1F}\n`abcdefghijklmno\npqrstuvwxyz{Symbol:20}{Symbol:21}{Symbol:22}{Symbol:23}\n\nTMsÿ\n¡♪\rÉª\rÊ\n´¿\nÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏ\nĐÑÒÓÔÕÖ×ØÙÚÛÜÝÞß\nàáâãäåæçèéêëìíîï\nðñòóôõö÷øùúûüýþÿ"
+          "text": "{Symbol:0B}{Symbol:0C}{Symbol:07}{Symbol:08}{Symbol:09}{Symbol:0A}\n !\"{Symbol:10}{Symbol:11}{Symbol:12}{Symbol:0D}'(){Symbol:13}{Symbol:14},-.{Symbol:15}\n0123456789:{Symbol:16}{Symbol:17}{Symbol:18}{Symbol:19}?\n{Symbol:1A}ABCDEFGHIJKLMNO\nPQRSTUVWXYZ{Symbol:1B}{Symbol:1C}{Symbol:1D}{Symbol:1E}{Symbol:1F}\n`abcdefghijklmno\npqrstuvwxyz{Symbol:20}{Symbol:21}{Symbol:22}{Symbol:23}\n\nTMsÿ\n¡♪ÉªÊ\n·¿\nÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏ\nÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞß\nàáâãäåæçèéêëìíîï\nðñòóôõö÷øùúûüýþÿ"
         },
         {
           "id": 1,
@@ -6121,7 +6119,7 @@
           "id": 47,
           "global_id": 2863,
           "hex_id": "0x0B2F",
-          "text": "{Sound:00:92}Cette statue me fait froid dans le dos.\nElle nous regarde d'un drôle d'{Color:Blue}œil{Color:White}..."
+          "text": "{Sound:00:92}Cette statue me fait froid dans le dos.\nElle nous regarde d'un drôle d'{Color:Blue}il{Color:White}..."
         },
         {
           "id": 48,
@@ -6319,7 +6317,7 @@
           "id": 80,
           "global_id": 2896,
           "hex_id": "0x0B50",
-          "text": "{Sound:00:8F}Regarde! Un {Color:Red}Quart de Cœur{Color:White}!"
+          "text": "{Sound:00:8F}Regarde! Un {Color:Red}Quart de Cur{Color:White}!"
         },
         {
           "id": 81,
@@ -6361,7 +6359,7 @@
           "id": 87,
           "global_id": 2903,
           "hex_id": "0x0B57",
-          "text": "{Sound:00:8E}Il a l'air d'y avoir plein de livres\nintéressants dans cette bibliothèque...\n{Color:Blue}\"Gagnez 100 Rubis en 10 jours!\"{Color:White}\n{Color:Blue}\"Dur dur d'être un garçon!\"{Color:White} de Mama.\n{Color:Blue}\"Les sursauts du cœur\"{Color:White} de Poemoon.\n{Color:Blue}\"Histoires à dormir debout\"{Color:White} de Sopor.\nQue de titres évocateurs!\nOn ne sait pas par lequel commencer!"
+          "text": "{Sound:00:8E}Il a l'air d'y avoir plein de livres\nintéressants dans cette bibliothèque...\n{Color:Blue}\"Gagnez 100 Rubis en 10 jours!\"{Color:White}\n{Color:Blue}\"Dur dur d'être un garçon!\"{Color:White} de Mama.\n{Color:Blue}\"Les sursauts du cur\"{Color:White} de Poemoon.\n{Color:Blue}\"Histoires à dormir debout\"{Color:White} de Sopor.\nQue de titres évocateurs!\nOn ne sait pas par lequel commencer!"
         },
         {
           "id": 88,
@@ -6585,7 +6583,7 @@
           "id": 14,
           "global_id": 3086,
           "hex_id": "0x0C0E",
-          "text": "{Sound:00:8D}Quoi? Tu n'avais jamais vu de {Color:Green}Minish{Color:White}?!\n\nRemarque, on dit que seuls les gens\nau cœur pur peuvent les voir.\nC'est pas étonnant, après tout..."
+          "text": "{Sound:00:8D}Quoi? Tu n'avais jamais vu de {Color:Green}Minish{Color:White}?!\n\nRemarque, on dit que seuls les gens\nau cur pur peuvent les voir.\nC'est pas étonnant, après tout..."
         },
         {
           "id": 15,
@@ -6687,13 +6685,13 @@
           "id": 31,
           "global_id": 3103,
           "hex_id": "0x0C1F",
-          "text": "{Sound:00:90}Pfff... Quelle galère!\n\nMais où peut-il bien se trouver, ce\n{Color:Green}Melta{Color:White}-qui-sait-réparer-les-épées?!\n{Sound:00:92}Faut dire aussi qu'il est tellement petit\nqu'il peut se cacher n'importe où...\nOuvre l'œil, gamin! Et le bon!"
+          "text": "{Sound:00:90}Pfff... Quelle galère!\n\nMais où peut-il bien se trouver, ce\n{Color:Green}Melta{Color:White}-qui-sait-réparer-les-épées?!\n{Sound:00:92}Faut dire aussi qu'il est tellement petit\nqu'il peut se cacher n'importe où...\nOuvre l'il, gamin! Et le bon!"
         },
         {
           "id": 32,
           "global_id": 3104,
           "hex_id": "0x0C20",
-          "text": "{Sound:00:92}Qu'est-ce qu'il y a, gamin?\nTu ne sais plus où aller?\nMême ce qui {Color:Blue}semble être une impasse{Color:White}\nmérite parfois qu'on s'y attarde.\nElle pourrait cacher un \"chemin\" qu'on\nne remarque pas au premier coup d'œil."
+          "text": "{Sound:00:92}Qu'est-ce qu'il y a, gamin?\nTu ne sais plus où aller?\nMême ce qui {Color:Blue}semble être une impasse{Color:White}\nmérite parfois qu'on s'y attarde.\nElle pourrait cacher un \"chemin\" qu'on\nne remarque pas au premier coup d'il."
         },
         {
           "id": 33,
@@ -6909,7 +6907,7 @@
           "id": 68,
           "global_id": 3140,
           "hex_id": "0x0C44",
-          "text": "{Sound:00:92}Les {Color:Blue}statues avec le gros œil{Color:White} dans le\n{Color:Green}marais{Color:White} me donnent la chair de poule.\nMais je suis prêt à parier qu'il y a\nquelque chose à faire avec cet œil..."
+          "text": "{Sound:00:92}Les {Color:Blue}statues avec le gros il{Color:White} dans le\n{Color:Green}marais{Color:White} me donnent la chair de poule.\nMais je suis prêt à parier qu'il y a\nquelque chose à faire avec cet il..."
         },
         {
           "id": 69,
@@ -7077,7 +7075,7 @@
           "id": 96,
           "global_id": 3168,
           "hex_id": "0x0C60",
-          "text": "{Sound:00:91}Ouf! C'est une sacrée expérience\nde rencontrer le fantôme d'un roi!\nJe sais qu'il ne pensait pas à mal, mais\nj'ai cru que mon cœur allait s'arrêter!\nIl a bien dit qu'il fallait qu'on aille\nà \"{Color:Green}la source des eaux{Color:White}\"?\nHmmm...\nOù est-ce que ça peut bien être?"
+          "text": "{Sound:00:91}Ouf! C'est une sacrée expérience\nde rencontrer le fantôme d'un roi!\nJe sais qu'il ne pensait pas à mal, mais\nj'ai cru que mon cur allait s'arrêter!\nIl a bien dit qu'il fallait qu'on aille\nà \"{Color:Green}la source des eaux{Color:White}\"?\nHmmm...\nOù est-ce que ça peut bien être?"
         },
         {
           "id": 97,
@@ -7095,7 +7093,7 @@
           "id": 99,
           "global_id": 3171,
           "hex_id": "0x0C63",
-          "text": "{Sound:00:90}La \"{Color:Green}source des eaux{Color:White}\" désignait donc\nla {Color:Green}Source Sera{Color:White}!\nJe ne sais pas ce qui nous attend\nlà-bas...\nMais je suis sûr que le dernier {Color:Red}Elément{Color:White}\nest au bout du chemin!\n{Sound:00:8D}En avant, {Player}! Haut les cœurs!"
+          "text": "{Sound:00:90}La \"{Color:Green}source des eaux{Color:White}\" désignait donc\nla {Color:Green}Source Sera{Color:White}!\nJe ne sais pas ce qui nous attend\nlà-bas...\nMais je suis sûr que le dernier {Color:Red}Elément{Color:White}\nest au bout du chemin!\n{Sound:00:8D}En avant, {Player}! Haut les curs!"
         },
         {
           "id": 100,
@@ -7203,7 +7201,7 @@
           "id": 117,
           "global_id": 3189,
           "hex_id": "0x0C75",
-          "text": "{Sound:00:92}{Color:Green}Vaati{Color:White} est prêt à tout pour s'emparer\nde la {Color:Red}Force{Color:White}.\nSi elle se trouve dans le cœur de {Color:Green}Zelda{Color:White},\nje crains le pire...\n{Sound:00:8D}{Player}! Dépêchons-nous!\nIl faut à tout prix arrêter {Color:Green}Vaati{Color:White}!"
+          "text": "{Sound:00:92}{Color:Green}Vaati{Color:White} est prêt à tout pour s'emparer\nde la {Color:Red}Force{Color:White}.\nSi elle se trouve dans le cur de {Color:Green}Zelda{Color:White},\nje crains le pire...\n{Sound:00:8D}{Player}! Dépêchons-nous!\nIl faut à tout prix arrêter {Color:Green}Vaati{Color:White}!"
         },
         {
           "id": 118,
@@ -7215,7 +7213,7 @@
           "id": 119,
           "global_id": 3191,
           "hex_id": "0x0C77",
-          "text": "{Sound:00:91}Le Château d'Hyrule tombé aux mains\ndes ténèbres est un triste spectacle...\nC'est le reflet du cœur de l'homme\nqui fut autrefois mon disciple...\n...{01:0A}\n\nQu'est-ce qu'il y a, {Player}?\nMais non, je ne suis pas triste!\n{Sound:00:8D}Ne t'inquiète pas pour moi!"
+          "text": "{Sound:00:91}Le Château d'Hyrule tombé aux mains\ndes ténèbres est un triste spectacle...\nC'est le reflet du cur de l'homme\nqui fut autrefois mon disciple...\n...{01:0A}\n\nQu'est-ce qu'il y a, {Player}?\nMais non, je ne suis pas triste!\n{Sound:00:8D}Ne t'inquiète pas pour moi!"
         },
         {
           "id": 120,
@@ -7389,7 +7387,7 @@
           "id": 148,
           "global_id": 3220,
           "hex_id": "0x0C94",
-          "text": "{Sound:00:92}Hmm?! Snif! Snif! Tu ne trouves pas\nque ça sent une drôle d'odeur?\nMince!!!\nJe suis vraiment désolé, {Player}!\nJ'avais oublié que j'avais un œuf dans\nma poche! {Sound:00:91}Ça fait un mois qu'il est là..."
+          "text": "{Sound:00:92}Hmm?! Snif! Snif! Tu ne trouves pas\nque ça sent une drôle d'odeur?\nMince!!!\nJe suis vraiment désolé, {Player}!\nJ'avais oublié que j'avais un uf dans\nma poche! {Sound:00:91}Ça fait un mois qu'il est là..."
         },
         {
           "id": 149,
@@ -8769,7 +8767,7 @@
           "id": 6,
           "global_id": 3846,
           "hex_id": "0x0F06",
-          "text": "Et la Lumière d'or, la Force, se logea\ndans le cœur de la Princesse\nd'où elle éclaira le Royaume d'Hyrule\nde génération en génération."
+          "text": "Et la Lumière d'or, la Force, se logea\ndans le cur de la Princesse\nd'où elle éclaira le Royaume d'Hyrule\nde génération en génération."
         },
         {
           "id": 7,
@@ -8999,7 +8997,7 @@
           "id": 35,
           "global_id": 4131,
           "hex_id": "0x1023",
-          "text": "Une jolie {Color:Red}Pierre en forme de Cœur{Color:White}!\nOu bien..."
+          "text": "Une jolie {Color:Red}Pierre en forme de Cur{Color:White}!\nOu bien..."
         },
         {
           "id": 36,
@@ -9017,7 +9015,7 @@
           "id": 38,
           "global_id": 4134,
           "hex_id": "0x1026",
-          "text": "Alors, qu'est-ce que vous choisissez?\n\nLe joyau, j'imagine?\nLe cœur n'est pas mal non plus.\nMais prenez ce qui vous plaît!\n"
+          "text": "Alors, qu'est-ce que vous choisissez?\n\nLe joyau, j'imagine?\nLe cur n'est pas mal non plus.\nMais prenez ce qui vous plaît!\n"
         },
         {
           "id": 39,
@@ -9029,7 +9027,7 @@
           "id": 40,
           "global_id": 4136,
           "hex_id": "0x1028",
-          "text": "Comment?! Vous êtes sûre?!\nMais pourquoi?!\nQue feriez-vous d'un bouclier\naussi disgracieux?!\nRegardez plutôt cette pierre en forme\nde cœur! N'est-elle pas mignonne?\nEt ce gros joyau!\nN'est-il pas splendide?\nC'est tout de même bien mieux\nqu'un ridicule petit bouclier, non?"
+          "text": "Comment?! Vous êtes sûre?!\nMais pourquoi?!\nQue feriez-vous d'un bouclier\naussi disgracieux?!\nRegardez plutôt cette pierre en forme\nde cur! N'est-elle pas mignonne?\nEt ce gros joyau!\nN'est-il pas splendide?\nC'est tout de même bien mieux\nqu'un ridicule petit bouclier, non?"
         },
         {
           "id": 41,
@@ -9601,7 +9599,7 @@
           "id": 19,
           "global_id": 4371,
           "hex_id": "0x1113",
-          "text": "Mais où vas-tu?!\nTu n'aurais donc pas de cœur?!"
+          "text": "Mais où vas-tu?!\nTu n'aurais donc pas de cur?!"
         },
         {
           "id": 20,
@@ -10517,7 +10515,7 @@
           "id": 5,
           "global_id": 4869,
           "hex_id": "0x1305",
-          "text": "Un {Color:Red}chapeau{Color:White} qui exauce les vœux de\nson porteur... Quel objet formidable!\nGrâce à lui, je suis devenu un être\nexceptionnel! Un {Color:Blue}sorcier{Color:White} invincible!\nMaintenant, il ne me reste plus\nqu'à trouver la {Color:Red}Force{Color:White}!\nC'est à vous que je le dois. Acceptez\nce modeste gage de ma gratitude!"
+          "text": "Un {Color:Red}chapeau{Color:White} qui exauce les vux de\nson porteur... Quel objet formidable!\nGrâce à lui, je suis devenu un être\nexceptionnel! Un {Color:Blue}sorcier{Color:White} invincible!\nMaintenant, il ne me reste plus\nqu'à trouver la {Color:Red}Force{Color:White}!\nC'est à vous que je le dois. Acceptez\nce modeste gage de ma gratitude!"
         },
         {
           "id": 6,
@@ -10559,7 +10557,7 @@
           "id": 12,
           "global_id": 4876,
           "hex_id": "0x130C",
-          "text": "Maudit {Color:Green}Vaati{Color:White}!\nQu'est-ce qu'il mijote encore?!\n{Player}, je crois que je te dois\nquelques explications...\n{Color:Green}Vaati{Color:White} et moi sommes des {Color:Green}Minish{Color:White}.\n\nJe suis un sage renommé dans notre\nmonde. {Color:Green}Vaati{Color:White} était mon disciple.\nIl était fasciné par le {Color:Blue}côté obscur\ndu cœur{Color:White} des humains.\nUn jour, il a volé le {Color:Red}chapeau{Color:White} à vœux\nque j'avais fabriqué pour les humains."
+          "text": "Maudit {Color:Green}Vaati{Color:White}!\nQu'est-ce qu'il mijote encore?!\n{Player}, je crois que je te dois\nquelques explications...\n{Color:Green}Vaati{Color:White} et moi sommes des {Color:Green}Minish{Color:White}.\n\nJe suis un sage renommé dans notre\nmonde. {Color:Green}Vaati{Color:White} était mon disciple.\nIl était fasciné par le {Color:Blue}côté obscur\ndu cur{Color:White} des humains.\nUn jour, il a volé le {Color:Red}chapeau{Color:White} à vux\nque j'avais fabriqué pour les humains."
         },
         {
           "id": 13,
@@ -10913,7 +10911,7 @@
           "id": 2,
           "global_id": 5634,
           "hex_id": "0x1602",
-          "text": "{Sound:01:E8}{04:10:0E}Ha ha ha ha ha!\nVous êtes vraiment trop bon, Maître!\nVous m'avez procuré le {Color:Red}chapeau à vœux{Color:White}\net maintenant vous me conduisez ici!\nMalheureusement pour vous deux,\nje n'ai plus besoin de vous!"
+          "text": "{Sound:01:E8}{04:10:0E}Ha ha ha ha ha!\nVous êtes vraiment trop bon, Maître!\nVous m'avez procuré le {Color:Red}chapeau à vux{Color:White}\net maintenant vous me conduisez ici!\nMalheureusement pour vous deux,\nje n'ai plus besoin de vous!"
         },
         {
           "id": 3,
@@ -10931,7 +10929,7 @@
           "id": 5,
           "global_id": 5637,
           "hex_id": "0x1605",
-          "text": "{Sound:00:8E}{Color:Green}Vaati{Color:White} a dû prendre l'apparence du roi\npour trouver plus facilement la {Color:Red}Force{Color:White}.\nIl a appris l'existence du Sanctuaire\net a attendu qu'on crée l'{Color:Red}Epée Sacrée{Color:White}.\nSi ces vitraux disent vrai, {Color:Blue}la Force se\ntrouve dans le cœur de la princesse{Color:White}.\nEt {Color:Green}Vaati{Color:White} ne reculera devant rien pour\ns'en emparer.\nS'il y parvenait, nous ne pourrions plus\njamais libérer {Color:Green}Zelda{Color:White} de son triste sort!\nDépêchons-nous, {Player}!\nIl faut à tout prix arrêter {Color:Green}Vaati{Color:White}!"
+          "text": "{Sound:00:8E}{Color:Green}Vaati{Color:White} a dû prendre l'apparence du roi\npour trouver plus facilement la {Color:Red}Force{Color:White}.\nIl a appris l'existence du Sanctuaire\net a attendu qu'on crée l'{Color:Red}Epée Sacrée{Color:White}.\nSi ces vitraux disent vrai, {Color:Blue}la Force se\ntrouve dans le cur de la princesse{Color:White}.\nEt {Color:Green}Vaati{Color:White} ne reculera devant rien pour\ns'en emparer.\nS'il y parvenait, nous ne pourrions plus\njamais libérer {Color:Green}Zelda{Color:White} de son triste sort!\nDépêchons-nous, {Player}!\nIl faut à tout prix arrêter {Color:Green}Vaati{Color:White}!"
         },
         {
           "id": 6,
@@ -11447,25 +11445,25 @@
           "id": 91,
           "global_id": 5723,
           "hex_id": "0x165B",
-          "text": "Mon nom est {Color:Green}Exelo{Color:White}.\nJe suis le gardien du savoir des Minish.\nC'est moi qui ai créé le {Color:Red}chapeau\nmagique{Color:White} que portait {Color:Green}Vaati{Color:White}.\nA cause de moi, les humains ont subi\nde nombreux tourments...\nJe vous demande pardon...\n\nBeaucoup de gens nous ont quittés\net le château est très endommagé.\nMais il ne faut pas perdre espoir!\n\nLa {Color:Red}Force{Color:White} est toujours là, dans le cœur\nde {Color:Green}Zelda{Color:White}, et nous avons le {Color:Red}chapeau{Color:White}."
+          "text": "Mon nom est {Color:Green}Exelo{Color:White}.\nJe suis le gardien du savoir des Minish.\nC'est moi qui ai créé le {Color:Red}chapeau\nmagique{Color:White} que portait {Color:Green}Vaati{Color:White}.\nA cause de moi, les humains ont subi\nde nombreux tourments...\nJe vous demande pardon...\n\nBeaucoup de gens nous ont quittés\net le château est très endommagé.\nMais il ne faut pas perdre espoir!\n\nLa {Color:Red}Force{Color:White} est toujours là, dans le cur\nde {Color:Green}Zelda{Color:White}, et nous avons le {Color:Red}chapeau{Color:White}."
         },
         {
           "id": 92,
           "global_id": 5724,
           "hex_id": "0x165C",
-          "text": "C'est porté par une personne au cœur\npur qu'il révèle son véritable pouvoir..."
+          "text": "C'est porté par une personne au cur\npur qu'il révèle son véritable pouvoir..."
         },
         {
           "id": 93,
           "global_id": 5725,
           "hex_id": "0x165D",
-          "text": "C'est à vous de jouer, {Color:Green}Princesse Zelda{Color:White}!\nFaites un {Color:Red}vœu{Color:White} et pensez-y très fort!"
+          "text": "C'est à vous de jouer, {Color:Green}Princesse Zelda{Color:White}!\nFaites un {Color:Red}vu{Color:White} et pensez-y très fort!"
         },
         {
           "id": 94,
           "global_id": 5726,
           "hex_id": "0x165E",
-          "text": "{Sound:01:E6}Voilà, très bien!\n\nQuel flux d'énergie vitale!\nSi puissant qu'il consume le chapeau!\nC'est un {Color:Red}chapeau à vœux{Color:White}. Son pouvoir\nmatérialise les pensées de son porteur.\nLe cœur de {Color:Green}Vaati{Color:White} était trop sombre.\nIl l'a changé en sorcier maléfique.\nMais celui de {Color:Green}Zelda{Color:White}, empli d'amour et\ncombiné à la {Color:Red}Force{Color:White}, a créé un miracle."
+          "text": "{Sound:01:E6}Voilà, très bien!\n\nQuel flux d'énergie vitale!\nSi puissant qu'il consume le chapeau!\nC'est un {Color:Red}chapeau à vux{Color:White}. Son pouvoir\nmatérialise les pensées de son porteur.\nLe cur de {Color:Green}Vaati{Color:White} était trop sombre.\nIl l'a changé en sorcier maléfique.\nMais celui de {Color:Green}Zelda{Color:White}, empli d'amour et\ncombiné à la {Color:Red}Force{Color:White}, a créé un miracle."
         },
         {
           "id": 95,
@@ -12169,7 +12167,7 @@
           "id": 11,
           "global_id": 7435,
           "hex_id": "0x1D0B",
-          "text": "{Sound:01:B8}Mmmh! Slurp!\nC'est vraiment un régal!\nMerci beaucoup, petit!\n\nGrâce à toi, j'ai pu me délecter de ce\ngoût exquis dont on m'a tant parlé.\nC'est un peu à contre-cœur,\nmais je te rends ton {Color:Red}Bouclier{Color:White}.\nTiens, prends-le, je vais le recracher."
+          "text": "{Sound:01:B8}Mmmh! Slurp!\nC'est vraiment un régal!\nMerci beaucoup, petit!\n\nGrâce à toi, j'ai pu me délecter de ce\ngoût exquis dont on m'a tant parlé.\nC'est un peu à contre-cur,\nmais je te rends ton {Color:Red}Bouclier{Color:White}.\nTiens, prends-le, je vais le recracher."
         },
         {
           "id": 12,
@@ -12728,7 +12726,7 @@
     {
       "group_id": 33,
       "group_hex": "0x21",
-      "name": "Diálogos e Missões (Grupo 0x21)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 79,
       "messages": [
         {
@@ -13210,7 +13208,7 @@
     {
       "group_id": 34,
       "group_hex": "0x22",
-      "name": "Diálogos e Missões (Grupo 0x22)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 4,
       "messages": [
         {
@@ -13242,7 +13240,7 @@
     {
       "group_id": 35,
       "group_hex": "0x23",
-      "name": "Diálogos e Missões (Grupo 0x23)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 22,
       "messages": [
         {
@@ -13321,13 +13319,13 @@
           "id": 12,
           "global_id": 8972,
           "hex_id": "0x230C",
-          "text": "Bonjour!\nJe suis Poemoon, grand poète d'Hyrule.\nJe crois savoir que tu t'appelles\n{Player}, n'est-ce pas?\nJ'ai parcouru le royaume tout en\ncomposant des poèmes en chemin.\nJe voulais rentrer chez moi après ce\nlong périple, mais la route est bloquée.\nEn plus, j'ai trouvé {Color:Red}deux fragments qui\ns'emboîtaient{Color:White}, mais j'en ai perdu un!\nJ'ai dû le perdre à {Color:Blue}l'auberge{Color:White} hier soir.\nJe n'ai vraiment pas de chance!\nOh et puis flûte! Je craque! Il faut que\nj'exprime ma peine avec un poème!\n{Color:Blue}  Tu m'as quitté, petit fragment\n  Plongeant mon cœur dans le tourment\n  Inaccessible, tel les étoiles\n  Qui de la nuit égayent la toile"
+          "text": "Bonjour!\nJe suis Poemoon, grand poète d'Hyrule.\nJe crois savoir que tu t'appelles\n{Player}, n'est-ce pas?\nJ'ai parcouru le royaume tout en\ncomposant des poèmes en chemin.\nJe voulais rentrer chez moi après ce\nlong périple, mais la route est bloquée.\nEn plus, j'ai trouvé {Color:Red}deux fragments qui\ns'emboîtaient{Color:White}, mais j'en ai perdu un!\nJ'ai dû le perdre à {Color:Blue}l'auberge{Color:White} hier soir.\nJe n'ai vraiment pas de chance!\nOh et puis flûte! Je craque! Il faut que\nj'exprime ma peine avec un poème!\n{Color:Blue}  Tu m'as quitté, petit fragment\n  Plongeant mon cur dans le tourment\n  Inaccessible, tel les étoiles\n  Qui de la nuit égayent la toile"
         },
         {
           "id": 13,
           "global_id": 8973,
           "hex_id": "0x230D",
-          "text": "La route qui mène à ma maison est\ncomplètement bloquée!\nEt j'ai perdu {Color:Red}un des deux fragments{Color:White}\nque j'ai trouvés lors de mon voyage!\nJ'ai dû le perdre à {Color:Blue}l'auberge{Color:White} hier soir.\nJe n'ai vraiment pas de chance!\nTrop c'est trop! J'ai besoin d'exprimer\nma détresse à travers un poème!\n{Color:Blue}  Tu m'as quitté, petit fragment\n  Plongeant mon cœur dans le tourment\n  Inaccessible, tel les étoiles\n  Qui de la nuit égayent la toile"
+          "text": "La route qui mène à ma maison est\ncomplètement bloquée!\nEt j'ai perdu {Color:Red}un des deux fragments{Color:White}\nque j'ai trouvés lors de mon voyage!\nJ'ai dû le perdre à {Color:Blue}l'auberge{Color:White} hier soir.\nJe n'ai vraiment pas de chance!\nTrop c'est trop! J'ai besoin d'exprimer\nma détresse à travers un poème!\n{Color:Blue}  Tu m'as quitté, petit fragment\n  Plongeant mon cur dans le tourment\n  Inaccessible, tel les étoiles\n  Qui de la nuit égayent la toile"
         },
         {
           "id": 14,
@@ -13345,19 +13343,19 @@
           "id": 16,
           "global_id": 8976,
           "hex_id": "0x2310",
-          "text": "Ils se sont emboîtés à la perfection!\n\nC'est formidable! C'est l'extase!\nL'inspiration me vient!\n{Color:Blue}  Amants que le destin sépare\n  Les fragments cherchent leur moitié\n  Tel mon cœur qui sans écart\n  Marche vers son amour secret"
+          "text": "Ils se sont emboîtés à la perfection!\n\nC'est formidable! C'est l'extase!\nL'inspiration me vient!\n{Color:Blue}  Amants que le destin sépare\n  Les fragments cherchent leur moitié\n  Tel mon cur qui sans écart\n  Marche vers son amour secret"
         },
         {
           "id": 17,
           "global_id": 8977,
           "hex_id": "0x2311",
-          "text": "Ah! Mon petit {Player}!\nEcoute un peu ce qui m'arrive!\nEnfin de retour dans mon tendre logis,\nj'y ai trouvé avec surprise un inconnu!\nJe suis bien trop timide pour vivre avec\nquelqu'un que je ne connais pas!\nIl faut que j'exprime ce sentiment à\ntravers un poème!\n{Color:Blue}  J'ai laissé ma maison en proie\n  A un bien espiègle voleur\n  Il peut s'emparer de mon toit\n  Mais il n'aura jamais mon cœur"
+          "text": "Ah! Mon petit {Player}!\nEcoute un peu ce qui m'arrive!\nEnfin de retour dans mon tendre logis,\nj'y ai trouvé avec surprise un inconnu!\nJe suis bien trop timide pour vivre avec\nquelqu'un que je ne connais pas!\nIl faut que j'exprime ce sentiment à\ntravers un poème!\n{Color:Blue}  J'ai laissé ma maison en proie\n  A un bien espiègle voleur\n  Il peut s'emparer de mon toit\n  Mais il n'aura jamais mon cur"
         },
         {
           "id": 18,
           "global_id": 8978,
           "hex_id": "0x2312",
-          "text": "Mon petit {Player}! Grâce à toi\nj'ai enfin pu retourner chez moi!\nLa décoration a beaucoup changé,\nmais ce n'est pas si mal, finalement.\nJe tiens à t'exprimer ma\nreconnaissance par un poème.\n{Color:Blue}  De mon logis j'ai retrouvé\n  La quiétude et la solitude\n  Mon cœur est quelque peu serré\n  Mais il te doit sa gratitude"
+          "text": "Mon petit {Player}! Grâce à toi\nj'ai enfin pu retourner chez moi!\nLa décoration a beaucoup changé,\nmais ce n'est pas si mal, finalement.\nJe tiens à t'exprimer ma\nreconnaissance par un poème.\n{Color:Blue}  De mon logis j'ai retrouvé\n  La quiétude et la solitude\n  Mon cur est quelque peu serré\n  Mais il te doit sa gratitude"
         },
         {
           "id": 19,
@@ -13382,7 +13380,7 @@
     {
       "group_id": 36,
       "group_hex": "0x24",
-      "name": "Diálogos e Missões (Grupo 0x24)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 17,
       "messages": [
         {
@@ -13461,7 +13459,7 @@
           "id": 12,
           "global_id": 9228,
           "hex_id": "0x240C",
-          "text": "{Player}!\n\nC'est toi qui m'as délivré de ce sort?\nTu as bien changé. Un vrai petit homme!\nOn dirait qu'il s'est passé beaucoup de\nchoses ici pendant que j'étais pétrifié.\nJe suppose que c'est l'œuvre de {Color:Green}Vaati{Color:White}?\nEn tant que roi, j'aimerais le châtier.\nMais je me sens bien affaibli.\nJe ne ferais que te retarder.\n{Player}, tu possèdes l'{Color:Red}Epée Sacrée{Color:White}.\nTu es notre seul espoir!\nJe t'en prie, sauve ma petite {Color:Green}Zelda{Color:White}!\nUtilise cette {Color:Red}Clé{Color:White} pour sortir d'ici."
+          "text": "{Player}!\n\nC'est toi qui m'as délivré de ce sort?\nTu as bien changé. Un vrai petit homme!\nOn dirait qu'il s'est passé beaucoup de\nchoses ici pendant que j'étais pétrifié.\nJe suppose que c'est l'uvre de {Color:Green}Vaati{Color:White}?\nEn tant que roi, j'aimerais le châtier.\nMais je me sens bien affaibli.\nJe ne ferais que te retarder.\n{Player}, tu possèdes l'{Color:Red}Epée Sacrée{Color:White}.\nTu es notre seul espoir!\nJe t'en prie, sauve ma petite {Color:Green}Zelda{Color:White}!\nUtilise cette {Color:Red}Clé{Color:White} pour sortir d'ici."
         },
         {
           "id": 13,
@@ -13492,7 +13490,7 @@
     {
       "group_id": 37,
       "group_hex": "0x25",
-      "name": "Diálogos e Missões (Grupo 0x25)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 40,
       "messages": [
         {
@@ -13661,7 +13659,7 @@
           "id": 27,
           "global_id": 9499,
           "hex_id": "0x251B",
-          "text": "On a bien fait de venir de si loin avec\nma sœur pour voir la {Color:Blue}fête des Minish{Color:White}!"
+          "text": "On a bien fait de venir de si loin avec\nma sur pour voir la {Color:Blue}fête des Minish{Color:White}!"
         },
         {
           "id": 28,
@@ -13733,14 +13731,14 @@
           "id": 39,
           "global_id": 9511,
           "hex_id": "0x2527",
-          "text": "Je suis venue de très loin avec ma\npetite sœur pour voir cette fête!\nLa légende dit que les {Color:Green}Minish{Color:White} ne sont\npas plus hauts qu'un pouce.\nJe me demande s'ils existent\nvraiment..."
+          "text": "Je suis venue de très loin avec ma\npetite sur pour voir cette fête!\nLa légende dit que les {Color:Green}Minish{Color:White} ne sont\npas plus hauts qu'un pouce.\nJe me demande s'ils existent\nvraiment..."
         }
       ]
     },
     {
       "group_id": 38,
       "group_hex": "0x26",
-      "name": "Diálogos e Missões (Grupo 0x26)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 1,
       "messages": [
         {
@@ -13754,7 +13752,7 @@
     {
       "group_id": 39,
       "group_hex": "0x27",
-      "name": "Diálogos e Missões (Grupo 0x27)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 2,
       "messages": [
         {
@@ -13774,7 +13772,7 @@
     {
       "group_id": 40,
       "group_hex": "0x28",
-      "name": "Diálogos e Missões (Grupo 0x28)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 11,
       "messages": [
         {
@@ -13848,7 +13846,7 @@
     {
       "group_id": 41,
       "group_hex": "0x29",
-      "name": "Diálogos e Missões (Grupo 0x29)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 23,
       "messages": [
         {
@@ -13994,7 +13992,7 @@
     {
       "group_id": 42,
       "group_hex": "0x2A",
-      "name": "Diálogos e Missões (Grupo 0x2A)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 1,
       "messages": [
         {
@@ -14008,7 +14006,7 @@
     {
       "group_id": 43,
       "group_hex": "0x2B",
-      "name": "Diálogos e Missões (Grupo 0x2B)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 31,
       "messages": [
         {
@@ -14021,7 +14019,7 @@
           "id": 1,
           "global_id": 11009,
           "hex_id": "0x2B01",
-          "text": "Le {Color:Red}Nectar Rouge{Color:White} permet de trouver\nplus de {Color:Red}Cœurs{Color:White}!\n{07:2B:0F}"
+          "text": "Le {Color:Red}Nectar Rouge{Color:White} permet de trouver\nplus de {Color:Red}Curs{Color:White}!\n{07:2B:0F}"
         },
         {
           "id": 2,
@@ -14063,7 +14061,7 @@
           "id": 8,
           "global_id": 11016,
           "hex_id": "0x2B08",
-          "text": "Tu es sûr?\nJette un œil aux autres."
+          "text": "Tu es sûr?\nJette un il aux autres."
         },
         {
           "id": 9,
@@ -14202,7 +14200,7 @@
     {
       "group_id": 44,
       "group_hex": "0x2C",
-      "name": "Diálogos e Missões (Grupo 0x2C)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 37,
       "messages": [
         {
@@ -14432,7 +14430,7 @@
     {
       "group_id": 45,
       "group_hex": "0x2D",
-      "name": "Diálogos e Missões (Grupo 0x2D)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 13,
       "messages": [
         {
@@ -14518,7 +14516,7 @@
     {
       "group_id": 46,
       "group_hex": "0x2E",
-      "name": "Diálogos e Missões (Grupo 0x2E)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 26,
       "messages": [
         {
@@ -14682,7 +14680,7 @@
     {
       "group_id": 47,
       "group_hex": "0x2F",
-      "name": "Diálogos e Missões (Grupo 0x2F)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 27,
       "messages": [
         {
@@ -14821,13 +14819,13 @@
           "id": 22,
           "global_id": 12054,
           "hex_id": "0x2F16",
-          "text": "Ça alors! Tu es un terrien, mais tu\narrives à marcher sur les nuages?!\nMais au fait!\nTu pourrais peut-être m'aider!\nMa sœur et moi, nous sommes\nallées à la {Color:Blue}fête des Minish{Color:White}.\nMais on a eu la mauvaise surprise de\ntrouver des monstres en revenant ici!\nD'habitude, on fait un {Color:Blue}assemblage{Color:White} avec\nles {Color:Red}Fragments du Bonheur{Color:White} des nuages.\nÇa fait alors souffler un vent\nqui nous ramène chez nous.\nMais avec tous ces monstres, on ne\npeut pas chercher de {Color:Red}fragments{Color:White}.\nOn ne peut même pas aller vers\nles autres {Color:Blue}nuages à fragment{Color:White}.\nTu as l'air très fort.\n\nTu veux bien chercher des {Color:Red}fragments\n{Color:White}et les assembler pour nous?"
+          "text": "Ça alors! Tu es un terrien, mais tu\narrives à marcher sur les nuages?!\nMais au fait!\nTu pourrais peut-être m'aider!\nMa sur et moi, nous sommes\nallées à la {Color:Blue}fête des Minish{Color:White}.\nMais on a eu la mauvaise surprise de\ntrouver des monstres en revenant ici!\nD'habitude, on fait un {Color:Blue}assemblage{Color:White} avec\nles {Color:Red}Fragments du Bonheur{Color:White} des nuages.\nÇa fait alors souffler un vent\nqui nous ramène chez nous.\nMais avec tous ces monstres, on ne\npeut pas chercher de {Color:Red}fragments{Color:White}.\nOn ne peut même pas aller vers\nles autres {Color:Blue}nuages à fragment{Color:White}.\nTu as l'air très fort.\n\nTu veux bien chercher des {Color:Red}fragments\n{Color:White}et les assembler pour nous?"
         },
         {
           "id": 23,
           "global_id": 12055,
           "hex_id": "0x2F17",
-          "text": "On est bien embêtées maintenant...\n\nOh! Mais tu marches sur les nuages!\n\nC'est très étonnant pour un terrien!\nTu dois vraiment avoir un cœur pur!\nMais dis-moi, peut-être pourrais-tu\nnous aider, ma petite sœur et moi?\nNous revenons de la {Color:Blue}fête des Minish{Color:White},\nmais le vent s'est arrêté de souffler.\nDu coup, nous ne pouvons plus\nretourner chez nous..."
+          "text": "On est bien embêtées maintenant...\n\nOh! Mais tu marches sur les nuages!\n\nC'est très étonnant pour un terrien!\nTu dois vraiment avoir un cur pur!\nMais dis-moi, peut-être pourrais-tu\nnous aider, ma petite sur et moi?\nNous revenons de la {Color:Blue}fête des Minish{Color:White},\nmais le vent s'est arrêté de souffler.\nDu coup, nous ne pouvons plus\nretourner chez nous..."
         },
         {
           "id": 24,
@@ -14852,7 +14850,7 @@
     {
       "group_id": 48,
       "group_hex": "0x30",
-      "name": "Diálogos e Missões (Grupo 0x30)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 21,
       "messages": [
         {
@@ -14986,7 +14984,7 @@
     {
       "group_id": 49,
       "group_hex": "0x31",
-      "name": "Diálogos e Missões (Grupo 0x31)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 51,
       "messages": [
         {
@@ -15300,7 +15298,7 @@
     {
       "group_id": 50,
       "group_hex": "0x32",
-      "name": "Diálogos e Missões (Grupo 0x32)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 12,
       "messages": [
         {
@@ -15380,7 +15378,7 @@
     {
       "group_id": 51,
       "group_hex": "0x33",
-      "name": "Diálogos e Missões (Grupo 0x33)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 3,
       "messages": [
         {
@@ -15399,14 +15397,14 @@
           "id": 2,
           "global_id": 13058,
           "hex_id": "0x3302",
-          "text": "(Nº{04:15}{Var:1}{04:14})  {Color:Blue}{Key:DUp}{Symbol:15}{Key:DDown}{Color:White}: Choix du morceau\n               {Color:Blue}A{Color:White}: Jouer{Symbol:15}Arrêter{Color:Blue} B{Color:White}: Quitter"
+          "text": "(N°{04:15}{Var:1}{04:14})  {Color:Blue}{Key:DUp}{Symbol:15}{Key:DDown}{Color:White}: Choix du morceau\n               {Color:Blue}A{Color:White}: Jouer{Symbol:15}Arrêter{Color:Blue} B{Color:White}: Quitter"
         }
       ]
     },
     {
       "group_id": 52,
       "group_hex": "0x34",
-      "name": "Diálogos e Missões (Grupo 0x34)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 61,
       "messages": [
         {
@@ -15443,7 +15441,7 @@
           "id": 5,
           "global_id": 13317,
           "hex_id": "0x3405",
-          "text": "Cette ville a beau être paisible, les\nalentours sont pleins de monstres.\nTu devrais jeter un œil dans\nla {Color:Green}boutique de Fouyaya{Color:White} pour t'équiper."
+          "text": "Cette ville a beau être paisible, les\nalentours sont pleins de monstres.\nTu devrais jeter un il dans\nla {Color:Green}boutique de Fouyaya{Color:White} pour t'équiper."
         },
         {
           "id": 6,
@@ -15780,7 +15778,7 @@
     {
       "group_id": 53,
       "group_hex": "0x35",
-      "name": "Diálogos e Missões (Grupo 0x35)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 64,
       "messages": [
         {
@@ -16123,7 +16121,7 @@
           "id": 56,
           "global_id": 13624,
           "hex_id": "0x3538",
-          "text": "On dit que la {Color:Red}Force {Color:White}peut exaucer tous\nles vœux!\nLe {Color:Green}roi {Color:White}souhaite certainement l'utiliser\nà des fins pacifiques."
+          "text": "On dit que la {Color:Red}Force {Color:White}peut exaucer tous\nles vux!\nLe {Color:Green}roi {Color:White}souhaite certainement l'utiliser\nà des fins pacifiques."
         },
         {
           "id": 57,
@@ -16172,7 +16170,7 @@
     {
       "group_id": 54,
       "group_hex": "0x36",
-      "name": "Diálogos e Missões (Grupo 0x36)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 67,
       "messages": [
         {
@@ -16582,7 +16580,7 @@
     {
       "group_id": 55,
       "group_hex": "0x37",
-      "name": "Diálogos e Missões (Grupo 0x37)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 66,
       "messages": [
         {
@@ -16986,7 +16984,7 @@
     {
       "group_id": 56,
       "group_hex": "0x38",
-      "name": "Diálogos e Missões (Grupo 0x38)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 68,
       "messages": [
         {
@@ -17402,7 +17400,7 @@
     {
       "group_id": 57,
       "group_hex": "0x39",
-      "name": "Diálogos e Missões (Grupo 0x39)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 55,
       "messages": [
         {
@@ -17740,7 +17738,7 @@
     {
       "group_id": 58,
       "group_hex": "0x3A",
-      "name": "Diálogos e Missões (Grupo 0x3A)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 20,
       "messages": [
         {
@@ -17868,7 +17866,7 @@
     {
       "group_id": 59,
       "group_hex": "0x3B",
-      "name": "Diálogos e Missões (Grupo 0x3B)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 20,
       "messages": [
         {
@@ -17996,7 +17994,7 @@
     {
       "group_id": 60,
       "group_hex": "0x3C",
-      "name": "Diálogos e Missões (Grupo 0x3C)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 13,
       "messages": [
         {
@@ -18082,7 +18080,7 @@
     {
       "group_id": 61,
       "group_hex": "0x3D",
-      "name": "Diálogos e Missões (Grupo 0x3D)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 29,
       "messages": [
         {
@@ -18264,7 +18262,7 @@
     {
       "group_id": 62,
       "group_hex": "0x3E",
-      "name": "Diálogos e Missões (Grupo 0x3E)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 13,
       "messages": [
         {
@@ -18350,7 +18348,7 @@
     {
       "group_id": 63,
       "group_hex": "0x3F",
-      "name": "Diálogos e Missões (Grupo 0x3F)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 61,
       "messages": [
         {
@@ -18724,7 +18722,7 @@
     {
       "group_id": 64,
       "group_hex": "0x40",
-      "name": "Diálogos e Missões (Grupo 0x40)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 19,
       "messages": [
         {
@@ -18827,7 +18825,7 @@
           "id": 16,
           "global_id": 16400,
           "hex_id": "0x4010",
-          "text": "En un clin d'œil, le courrier est là!\nDe la livraison, le {Color:Green}facteur {Color:White}est roi!"
+          "text": "En un clin d'il, le courrier est là!\nDe la livraison, le {Color:Green}facteur {Color:White}est roi!"
         },
         {
           "id": 17,
@@ -18846,7 +18844,7 @@
     {
       "group_id": 65,
       "group_hex": "0x41",
-      "name": "Diálogos e Missões (Grupo 0x41)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 6,
       "messages": [
         {
@@ -18890,7 +18888,7 @@
     {
       "group_id": 66,
       "group_hex": "0x42",
-      "name": "Diálogos e Missões (Grupo 0x42)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 41,
       "messages": [
         {
@@ -19144,7 +19142,7 @@
     {
       "group_id": 67,
       "group_hex": "0x43",
-      "name": "Diálogos e Missões (Grupo 0x43)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 51,
       "messages": [
         {
@@ -19458,7 +19456,7 @@
     {
       "group_id": 68,
       "group_hex": "0x44",
-      "name": "Diálogos e Missões (Grupo 0x44)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 38,
       "messages": [
         {
@@ -19694,7 +19692,7 @@
     {
       "group_id": 69,
       "group_hex": "0x45",
-      "name": "Diálogos e Missões (Grupo 0x45)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 48,
       "messages": [
         {
@@ -19990,7 +19988,7 @@
     {
       "group_id": 70,
       "group_hex": "0x46",
-      "name": "Diálogos e Missões (Grupo 0x46)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 104,
       "messages": [
         {
@@ -20267,7 +20265,7 @@
           "id": 45,
           "global_id": 17965,
           "hex_id": "0x462D",
-          "text": "Ecoute bien! Voici la très pratique mais\nun peu lâche {Color:Red}Lame Rayonnante{Color:White}!\n{Color:Blue}Premièrement!!\n{Color:White}Lorsque tu as tous tes cœurs...\n{Color:Blue}Deuxièmement!!\n{Color:White}Dégaine simplement ton épée!!\nEt voilà!\n\nTu as compris?\n  {Choice:FF} Oui  {Choice:46:2D} Non"
+          "text": "Ecoute bien! Voici la très pratique mais\nun peu lâche {Color:Red}Lame Rayonnante{Color:White}!\n{Color:Blue}Premièrement!!\n{Color:White}Lorsque tu as tous tes curs...\n{Color:Blue}Deuxièmement!!\n{Color:White}Dégaine simplement ton épée!!\nEt voilà!\n\nTu as compris?\n  {Choice:FF} Oui  {Choice:46:2D} Non"
         },
         {
           "id": 46,
@@ -20321,7 +20319,7 @@
           "id": 54,
           "global_id": 17974,
           "hex_id": "0x4636",
-          "text": "Ecoute bien! Voici le {Color:Red}Rayon de Ténacité{Color:White}!\n\nC'est une technique dangereuse à\nlaquelle il vaut mieux éviter de recourir!\n{Color:Blue}Premièrement!!{Color:White}\nQuand il ne te reste plus qu'un cœur...\n{Color:Blue}Deuxièmement!!\n{Color:White}Brandis désespérément ton épée!\nEt voilà!\n\nTu as compris?\n  {Choice:FF} Oui  {Choice:46:36} Non"
+          "text": "Ecoute bien! Voici le {Color:Red}Rayon de Ténacité{Color:White}!\n\nC'est une technique dangereuse à\nlaquelle il vaut mieux éviter de recourir!\n{Color:Blue}Premièrement!!{Color:White}\nQuand il ne te reste plus qu'un cur...\n{Color:Blue}Deuxièmement!!\n{Color:White}Brandis désespérément ton épée!\nEt voilà!\n\nTu as compris?\n  {Choice:FF} Oui  {Choice:46:36} Non"
         },
         {
           "id": 55,
@@ -20351,7 +20349,7 @@
           "id": 59,
           "global_id": 17979,
           "hex_id": "0x463B",
-          "text": "{Sound:00:D0}Moi, {Color:Green}Hasshin{Color:White}, je suis par bien des\naspects le meilleur épéiste d'Hyrule!\nSi tu suis l'{Color:Blue}entraînement{Color:White} de mon dojo,\ntu es certain de progresser à l'épée!\nMais???\n\nApparemment, il est encore trop tôt\npour que tu suives mon entraînement.\nReviens me voir lorsque tu auras\n{Color:Red}au moins 10 cœurs{Color:White}!!"
+          "text": "{Sound:00:D0}Moi, {Color:Green}Hasshin{Color:White}, je suis par bien des\naspects le meilleur épéiste d'Hyrule!\nSi tu suis l'{Color:Blue}entraînement{Color:White} de mon dojo,\ntu es certain de progresser à l'épée!\nMais???\n\nApparemment, il est encore trop tôt\npour que tu suives mon entraînement.\nReviens me voir lorsque tu auras\n{Color:Red}au moins 10 curs{Color:White}!!"
         },
         {
           "id": 60,
@@ -20417,7 +20415,7 @@
           "id": 70,
           "global_id": 17990,
           "hex_id": "0x4646",
-          "text": "{Sound:00:D0}Dans un combat à l'épée, la volonté\nfait autant que la technique.\nJe m'appelle {Color:Green}Gorô{Color:White}, et je suis le meilleur\n(ou le deuxième...) épéiste d'Hyrule!\nSi tu suis l'{Color:Blue}entraînement{Color:White} de mon dojo,\ntu feras des progrès en un clin d'œil!"
+          "text": "{Sound:00:D0}Dans un combat à l'épée, la volonté\nfait autant que la technique.\nJe m'appelle {Color:Green}Gorô{Color:White}, et je suis le meilleur\n(ou le deuxième...) épéiste d'Hyrule!\nSi tu suis l'{Color:Blue}entraînement{Color:White} de mon dojo,\ntu feras des progrès en un clin d'il!"
         },
         {
           "id": 71,
@@ -20555,7 +20553,7 @@
           "id": 93,
           "global_id": 18013,
           "hex_id": "0x465D",
-          "text": "Haha!!...\n\nMaintenant, tu peux exécuter la\nGrande Tornade bien plus longtemps!\n...\nC'est vrai, je t'assure!\nLe doute s'installe lorsque ton cœur\ns'obscurcit. Purifie ton esprit!"
+          "text": "Haha!!...\n\nMaintenant, tu peux exécuter la\nGrande Tornade bien plus longtemps!\n...\nC'est vrai, je t'assure!\nLe doute s'installe lorsque ton cur\ns'obscurcit. Purifie ton esprit!"
         },
         {
           "id": 94,
@@ -20603,13 +20601,13 @@
           "id": 101,
           "global_id": 18021,
           "hex_id": "0x4665",
-          "text": "Lorsque tu as tous tes cœurs,\ndégaine ton épée!!"
+          "text": "Lorsque tu as tous tes curs,\ndégaine ton épée!!"
         },
         {
           "id": 102,
           "global_id": 18022,
           "hex_id": "0x4666",
-          "text": "Quand tu n'as plus qu'un seul cœur,\nbrandis désespérément ton épée!!"
+          "text": "Quand tu n'as plus qu'un seul cur,\nbrandis désespérément ton épée!!"
         },
         {
           "id": 103,
@@ -20622,7 +20620,7 @@
     {
       "group_id": 71,
       "group_hex": "0x47",
-      "name": "Diálogos e Missões (Grupo 0x47)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 46,
       "messages": [
         {
@@ -20906,7 +20904,7 @@
     {
       "group_id": 72,
       "group_hex": "0x48",
-      "name": "Diálogos e Missões (Grupo 0x48)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 9,
       "messages": [
         {
@@ -20968,7 +20966,7 @@
     {
       "group_id": 73,
       "group_hex": "0x49",
-      "name": "Diálogos e Missões (Grupo 0x49)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 23,
       "messages": [
         {
@@ -21114,7 +21112,7 @@
     {
       "group_id": 74,
       "group_hex": "0x4A",
-      "name": "Diálogos e Missões (Grupo 0x4A)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 40,
       "messages": [
         {
@@ -21362,7 +21360,7 @@
     {
       "group_id": 75,
       "group_hex": "0x4B",
-      "name": "Diálogos e Missões (Grupo 0x4B)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 41,
       "messages": [
         {
@@ -21616,7 +21614,7 @@
     {
       "group_id": 76,
       "group_hex": "0x4C",
-      "name": "Diálogos e Missões (Grupo 0x4C)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 23,
       "messages": [
         {
@@ -21762,7 +21760,7 @@
     {
       "group_id": 77,
       "group_hex": "0x4D",
-      "name": "Diálogos e Missões (Grupo 0x4D)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 16,
       "messages": [
         {
@@ -21866,7 +21864,7 @@
     {
       "group_id": 78,
       "group_hex": "0x4E",
-      "name": "Diálogos e Missões (Grupo 0x4E)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 52,
       "messages": [
         {
@@ -21879,7 +21877,7 @@
           "id": 1,
           "global_id": 19969,
           "hex_id": "0x4E01",
-          "text": "Bonjour!\nTu veux quelque chose?\nMa petite sœur n'est pas là,\nelle est à l'école."
+          "text": "Bonjour!\nTu veux quelque chose?\nMa petite sur n'est pas là,\nelle est à l'école."
         },
         {
           "id": 2,
@@ -21909,7 +21907,7 @@
           "id": 6,
           "global_id": 19974,
           "hex_id": "0x4E06",
-          "text": "Ma petite sœur est rentrée!\nJe préfère la savoir à la maison."
+          "text": "Ma petite sur est rentrée!\nJe préfère la savoir à la maison."
         },
         {
           "id": 7,
@@ -22186,7 +22184,7 @@
     {
       "group_id": 79,
       "group_hex": "0x4F",
-      "name": "Diálogos e Missões (Grupo 0x4F)",
+      "name": "Diálogos de Missões e NPCs",
       "message_count": 102,
       "messages": [
         {
@@ -22433,7 +22431,7 @@
           "id": 40,
           "global_id": 20264,
           "hex_id": "0x4F28",
-          "text": "Je parle au mur avec mon cœur.\n\nMais il ne me répond pas..."
+          "text": "Je parle au mur avec mon cur.\n\nMais il ne me répond pas..."
         },
         {
           "id": 41,
@@ -22571,7 +22569,7 @@
           "id": 63,
           "global_id": 20287,
           "hex_id": "0x4F3F",
-          "text": "Je suis sûre que tu deviendras un\nvrai bourreau des cœurs. Hi hi hi..."
+          "text": "Je suis sûre que tu deviendras un\nvrai bourreau des curs. Hi hi hi..."
         },
         {
           "id": 64,
