@@ -600,6 +600,69 @@ def cmd_export_game_json(template_path, out_path="assets/lang/pt_BR.json"):
     return True
 
 
+def cmd_fetch_all_languages(out_dir="assets/lang"):
+    """Extrai e gera os bancos de diálogos completos para todos os 6 idiomas oficiais."""
+    os.makedirs(out_dir, exist_ok=True)
+    languages = [
+        ("USA", "en_US_dialogues.json", "en_US", "English (United States)"),
+        ("English", "en_EUR_dialogues.json", "en_GB", "English (Europe)"),
+        ("Spanish", "es_ES_dialogues.json", "es_ES", "Español (España)"),
+        ("French", "fr_FR_dialogues.json", "fr_FR", "Français (France)"),
+        ("German", "de_DE_dialogues.json", "de_DE", "Deutsch (Deutschland)"),
+        ("Italian", "it_IT_dialogues.json", "it_IT", "Italiano (Italia)"),
+    ]
+
+    print("=" * 80)
+    print("   EXTRAÇÃO GLOBAL DE IDIOMAS OFICIAIS (USA & EUROPA)")
+    print("=" * 80)
+
+    for src_name, filename, code, desc in languages:
+        url = f"https://raw.githubusercontent.com/zeldaret/tmc/master/translations/{src_name}.json"
+        dest = os.path.join(out_dir, filename)
+        print(f"Baixando e estruturando {desc} ({src_name})...")
+        try:
+            with urllib.request.urlopen(url) as r:
+                raw_data = json.loads(r.read().decode("utf-8"))
+
+            structured = {
+                "locale": code,
+                "language_name": desc,
+                "source_version": src_name,
+                "total_groups": len(raw_data),
+                "total_messages": sum(len(g) for g in raw_data),
+                "groups": []
+            }
+
+            for g_idx, group in enumerate(raw_data):
+                group_obj = {
+                    "group_id": g_idx,
+                    "group_hex": f"0x{g_idx:02X}",
+                    "name": get_group_name(g_idx),
+                    "message_count": len(group),
+                    "messages": []
+                }
+                for m_idx, text in enumerate(group):
+                    global_id = (g_idx << 8) | m_idx
+                    group_obj["messages"].append({
+                        "id": m_idx,
+                        "global_id": global_id,
+                        "hex_id": f"0x{global_id:04X}",
+                        "text": text
+                    })
+                structured["groups"].append(group_obj)
+
+            with open(dest, "w", encoding="utf-8") as f:
+                json.dump(structured, f, ensure_ascii=False, indent=2)
+
+            print(f"  -> Concluído: '{dest}' ({structured['total_messages']} mensagens em {structured['total_groups']} grupos).")
+        except Exception as e:
+            print(f"  [ERRO] Falha ao processar {src_name}: {e}")
+
+    print("=" * 80)
+    print("TODOS OS IDIOMAS FORAM EXTRAÍDOS COM SUCESSO!")
+    print("=" * 80)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Ferramenta de Textos e Localização do OpenMinish")
     subparsers = parser.add_subparsers(dest="command")
@@ -609,6 +672,10 @@ def main():
     p_extract.add_argument("rom", help="Caminho do arquivo de ROM (.gba)")
     p_extract.add_argument("--lang", default=None, help="Idioma específico (usa, eur_en, eur_es, etc.)")
     p_extract.add_argument("--out", default=None, help="Caminho de saída JSON")
+
+    # Comando: fetch-all
+    p_fetch = subparsers.add_parser("fetch-all", help="Extrai e gera arquivos JSON para todos os idiomas oficiais")
+    p_fetch.add_argument("--out-dir", default="assets/lang", help="Diretório de saída para os arquivos JSON")
 
     # Comando: init-template
     p_init = subparsers.add_parser("init-template", help="Gera o template oficial para tradução PT-BR")
@@ -631,6 +698,8 @@ def main():
 
     if args.command == "extract":
         cmd_extract(args.rom, args.lang, args.out)
+    elif args.command == "fetch-all":
+        cmd_fetch_all_languages(args.out_dir)
     elif args.command == "init-template":
         cmd_init_template(args.out)
     elif args.command == "stats":
