@@ -36,6 +36,11 @@
 
 static DungeonFortressState s_fortress = { 0 };
 static int s_fort_anim_timer = 0;
+static const Texture* s_fortress_bosses_tex = NULL;
+
+void dungeon_fortress_set_bosses_texture(const Texture* tex) {
+    s_fortress_bosses_tex = tex;
+}
 
 static inline u32 blend_colors(u32 dst, u32 src) {
     u32 sa = src & 0xFF;
@@ -705,19 +710,24 @@ void dungeon_fortress_render(const Camera* cam, bool is_minish, float link_x, fl
             int hx = (int)h->x - ox - 12;
             int hy = (int)h->y - oy - 12;
 
-            u32 brass = h->stunned ? 0x475569FF : 0xD97706FF;
-            u32 slate = h->stunned ? 0x334155FF : 0x64748BFF;
-
-            // Dedos articulados e palma
-            draw_filled_rect(hx + 2, hy + 2, 20, 20, slate);
-            draw_filled_rect(hx + 4, hy + 4, 16, 16, brass);
-
-            // Olho sensor na palma da mão
-            if (!h->stunned) {
-                draw_filled_rect(hx + 8, hy + 8, 8, 8, 0x0284C7FF); // Olho azul
-                draw_filled_rect(hx + 10, hy + 10, 4, 4, 0xFFFFFFFF);
+            if (s_fortress_bosses_tex && s_fortress_bosses_tex->pixels) {
+                int src_x = h->stunned ? 176 : 128;
+                texture_draw(s_fortress_bosses_tex, src_x, 32, 24, 24, hx, hy);
             } else {
-                draw_filled_rect(hx + 8, hy + 8, 8, 8, 0x0F172AFF); // Olho apagado
+                u32 brass = h->stunned ? 0x475569FF : 0xD97706FF;
+                u32 slate = h->stunned ? 0x334155FF : 0x64748BFF;
+
+                // Dedos articulados e palma
+                draw_filled_rect(hx + 2, hy + 2, 20, 20, slate);
+                draw_filled_rect(hx + 4, hy + 4, 16, 16, brass);
+
+                // Olho sensor na palma da mão
+                if (!h->stunned) {
+                    draw_filled_rect(hx + 8, hy + 8, 8, 8, 0x0284C7FF); // Olho azul
+                    draw_filled_rect(hx + 10, hy + 10, 4, 4, 0xFFFFFFFF);
+                } else {
+                    draw_filled_rect(hx + 8, hy + 8, 8, 8, 0x0F172AFF); // Olho apagado
+                }
             }
         }
 
@@ -726,37 +736,42 @@ void dungeon_fortress_render(const Camera* cam, bool is_minish, float link_x, fl
             int mx = (int)mh->x - ox - 24;
             int my = (int)mh->y - oy - 18;
 
-            u32 head_col = mh->stunned ? 0x475569FF : 0x64748BFF;
-            u32 brass_col = mh->stunned ? 0x78350FFF : 0xD97706FF;
-
-            // Crânio de pedra com chifres e glifos
-            draw_filled_rect(mx, my, 48, 36, head_col);
-            draw_filled_rect(mx + 4, my - 4, 8, 6, brass_col); // Chifre esquerdo
-            draw_filled_rect(mx + 36, my - 4, 8, 6, brass_col); // Chifre direito
-
-            // Faixas douradas
-            draw_filled_rect(mx + 6, my + 6, 36, 4, brass_col);
-
-            // Olhos vermelhos brilhantes
-            if (!mh->stunned) {
-                draw_filled_rect(mx + 10, my + 14, 8, 6, 0xEF4444FF);
-                draw_filled_rect(mx + 30, my + 14, 8, 6, 0xEF4444FF);
-                draw_filled_rect(mx + 13, my + 15, 2, 4, 0xFFFFFFFF);
-                draw_filled_rect(mx + 33, my + 15, 2, 4, 0xFFFFFFFF);
+            if (s_fortress_bosses_tex && s_fortress_bosses_tex->pixels) {
+                int src_x = (mh->mouth_open || mh->stunned) ? 48 : 0;
+                texture_draw(s_fortress_bosses_tex, src_x, 32, 48, 36, mx, my);
             } else {
-                draw_filled_rect(mx + 10, my + 14, 8, 6, 0x1E293BFF); // Apagados
-                draw_filled_rect(mx + 30, my + 14, 8, 6, 0x1E293BFF);
-            }
+                u32 head_col = mh->stunned ? 0x475569FF : 0x64748BFF;
+                u32 brass_col = mh->stunned ? 0x78350FFF : 0xD97706FF;
 
-            // Boca: fechada se ativo, escancarada se atordoado!
-            if (!mh->mouth_open) {
-                draw_filled_rect(mx + 14, my + 26, 20, 4, 0x0F172AFF);
-            } else {
-                draw_filled_rect(mx + 12, my + 24, 24, 10, 0x050811FF); // Entrada escura da boca
-                // Núcleo vermelho/ciano exposto no fundo da garganta!
-                u32 core_c = ((s_fort_anim_timer / 4) % 2 == 0) ? 0xEF4444FF : 0x38BDF8FF;
-                draw_filled_rect(mx + 20, my + 26, 8, 6, core_c);
-                draw_filled_rect(mx + 22, my + 27, 4, 4, 0xFFFFFFFF);
+                // Crânio de pedra com chifres e glifos
+                draw_filled_rect(mx, my, 48, 36, head_col);
+                draw_filled_rect(mx + 4, my - 4, 8, 6, brass_col); // Chifre esquerdo
+                draw_filled_rect(mx + 36, my - 4, 8, 6, brass_col); // Chifre direito
+
+                // Faixas douradas
+                draw_filled_rect(mx + 6, my + 6, 36, 4, brass_col);
+
+                // Olhos vermelhos brilhantes
+                if (!mh->stunned) {
+                    draw_filled_rect(mx + 10, my + 14, 8, 6, 0xEF4444FF);
+                    draw_filled_rect(mx + 30, my + 14, 8, 6, 0xEF4444FF);
+                    draw_filled_rect(mx + 13, my + 15, 2, 4, 0xFFFFFFFF);
+                    draw_filled_rect(mx + 33, my + 15, 2, 4, 0xFFFFFFFF);
+                } else {
+                    draw_filled_rect(mx + 10, my + 14, 8, 6, 0x1E293BFF); // Apagados
+                    draw_filled_rect(mx + 30, my + 14, 8, 6, 0x1E293BFF);
+                }
+
+                // Boca: fechada se ativo, escancarada se atordoado!
+                if (!mh->mouth_open) {
+                    draw_filled_rect(mx + 14, my + 26, 20, 4, 0x0F172AFF);
+                } else {
+                    draw_filled_rect(mx + 12, my + 24, 24, 10, 0x050811FF); // Entrada escura da boca
+                    // Núcleo vermelho/ciano exposto no fundo da garganta!
+                    u32 core_c = ((s_fort_anim_timer / 4) % 2 == 0) ? 0xEF4444FF : 0x38BDF8FF;
+                    draw_filled_rect(mx + 20, my + 26, 8, 6, core_c);
+                    draw_filled_rect(mx + 22, my + 27, 4, 4, 0xFFFFFFFF);
+                }
             }
         }
 

@@ -40,6 +40,11 @@
 
 static DungeonPalaceState s_palace = { 0 };
 static int s_palace_anim_timer = 0;
+static const Texture* s_palace_bosses_tex = NULL;
+
+void dungeon_palace_set_bosses_texture(const Texture* tex) {
+    s_palace_bosses_tex = tex;
+}
 
 static inline u32 blend_colors(u32 dst, u32 src) {
     u32 sa = src & 0xFF;
@@ -819,51 +824,74 @@ void dungeon_palace_render(const Camera* camera, float player_x, float player_y,
             // 1. RENDERIZAÇÃO DA GRANDE ARRAIA AZUL (Fêmea)
             int bx = ox + (int)b->blue_x;
             int by = oy + (int)b->blue_y;
-            u32 blue_c = (b->blue_hit_stun > 0) ? 0xFFFFFFFF : C_GYORG_BLUE;
 
-            // Corpo elíptico e asas majestosas
-            for (int dy = -26; dy <= 26; dy++) {
-                for (int dx = -54; dx <= 54; dx++) {
-                    float ex = (float)dx / 54.0f;
-                    float ey = (float)dy / 26.0f;
-                    if (ex * ex + ey * ey <= 1.0f) {
-                        hal_video_put_pixel(bx + dx, by + dy, blue_c);
+            if (s_palace_bosses_tex && s_palace_bosses_tex->pixels) {
+                texture_draw(s_palace_bosses_tex, 0, 120, 64, 36, bx - 32, by - 18);
+                float eye_offsets[3][2] = { { -18.0f, -4.0f }, { 0.0f, -8.0f }, { 18.0f, -4.0f } };
+                for (int i = 0; i < 3; i++) {
+                    int ex = bx + (int)eye_offsets[i][0];
+                    int ey = by + (int)eye_offsets[i][1];
+                    if (b->blue_eyes_open[i]) {
+                        texture_draw(s_palace_bosses_tex, 64, 120, 8, 8, ex - 4, ey - 4);
+                    } else {
+                        texture_draw(s_palace_bosses_tex, 64, 128, 8, 8, ex - 4, ey - 4);
                     }
                 }
-            }
+            } else {
+                u32 blue_c = (b->blue_hit_stun > 0) ? 0xFFFFFFFF : C_GYORG_BLUE;
 
-            // 3 Olhos na Arraia Azul
-            float eye_offsets[3][2] = { { -28.0f, -4.0f }, { 0.0f, -12.0f }, { 28.0f, -4.0f } };
-            for (int i = 0; i < 3; i++) {
-                int ex = bx + (int)eye_offsets[i][0];
-                int ey = by + (int)eye_offsets[i][1];
-                if (b->blue_eyes_open[i]) {
-                    draw_rect_blend(ex - 4, ey - 4, 8, 8, C_GYORG_EYE);
-                    draw_rect_blend(ex - 2, ey - 2, 4, 4, C_GYORG_PUPIL);
-                } else {
-                    draw_rect_blend(ex - 3, ey - 1, 6, 2, 0x1E3A8AFF); // Olho fechado
+                // Corpo elíptico e asas majestosas
+                for (int dy = -26; dy <= 26; dy++) {
+                    for (int dx = -54; dx <= 54; dx++) {
+                        float ex = (float)dx / 54.0f;
+                        float ey = (float)dy / 26.0f;
+                        if (ex * ex + ey * ey <= 1.0f) {
+                            hal_video_put_pixel(bx + dx, by + dy, blue_c);
+                        }
+                    }
+                }
+
+                // 3 Olhos na Arraia Azul
+                float eye_offsets[3][2] = { { -28.0f, -4.0f }, { 0.0f, -12.0f }, { 28.0f, -4.0f } };
+                for (int i = 0; i < 3; i++) {
+                    int ex = bx + (int)eye_offsets[i][0];
+                    int ey = by + (int)eye_offsets[i][1];
+                    if (b->blue_eyes_open[i]) {
+                        draw_rect_blend(ex - 4, ey - 4, 8, 8, C_GYORG_EYE);
+                        draw_rect_blend(ex - 2, ey - 2, 4, 4, C_GYORG_PUPIL);
+                    } else {
+                        draw_rect_blend(ex - 3, ey - 1, 6, 2, 0x1E3A8AFF); // Olho fechado
+                    }
                 }
             }
 
             // 2. RENDERIZAÇÃO DA ARRAIA VERMELHA (Macho)
             int rx = ox + (int)b->red_x;
             int ry = oy + (int)b->red_y;
-            u32 red_c = (b->red_hit_stun > 0) ? 0xFFFFFFFF : C_GYORG_RED;
 
-            for (int dy = -18; dy <= 18; dy++) {
-                for (int dx = -32; dx <= 32; dx++) {
-                    float ex = (float)dx / 32.0f;
-                    float ey = (float)dy / 18.0f;
-                    if (ex * ex + ey * ey <= 1.0f) {
-                        hal_video_put_pixel(rx + dx, ry + dy, red_c);
+            if (s_palace_bosses_tex && s_palace_bosses_tex->pixels) {
+                texture_draw(s_palace_bosses_tex, 80, 120, 48, 28, rx - 24, ry - 14);
+                if (b->red_eye_open) {
+                    texture_draw(s_palace_bosses_tex, 64, 120, 8, 8, rx - 4, ry - 8);
+                }
+            } else {
+                u32 red_c = (b->red_hit_stun > 0) ? 0xFFFFFFFF : C_GYORG_RED;
+
+                for (int dy = -18; dy <= 18; dy++) {
+                    for (int dx = -32; dx <= 32; dx++) {
+                        float ex = (float)dx / 32.0f;
+                        float ey = (float)dy / 18.0f;
+                        if (ex * ex + ey * ey <= 1.0f) {
+                            hal_video_put_pixel(rx + dx, ry + dy, red_c);
+                        }
                     }
                 }
-            }
 
-            // Olho central na Arraia Vermelha
-            if (b->red_eye_open) {
-                draw_rect_blend(rx - 4, ry - 7, 8, 8, C_GYORG_EYE);
-                draw_rect_blend(rx - 2, ry - 5, 4, 4, C_GYORG_PUPIL);
+                // Olho central na Arraia Vermelha
+                if (b->red_eye_open) {
+                    draw_rect_blend(rx - 4, ry - 7, 8, 8, C_GYORG_EYE);
+                    draw_rect_blend(rx - 2, ry - 5, 4, 4, C_GYORG_PUPIL);
+                }
             }
 
             // Cauda chicoteante
@@ -876,8 +904,12 @@ void dungeon_palace_render(const Camera* camera, float player_x, float player_y,
                 if (b->balls[i].active) {
                     int px = ox + (int)b->balls[i].x;
                     int py = oy + (int)b->balls[i].y;
-                    draw_rect_blend(px - 4, py - 4, 8, 8, 0x38BDF8FF);
-                    draw_rect_blend(px - 2, py - 2, 4, 4, 0xFFFFFFFF);
+                    if (s_palace_bosses_tex && s_palace_bosses_tex->pixels) {
+                        texture_draw(s_palace_bosses_tex, 136, 128, 8, 8, px - 4, py - 4);
+                    } else {
+                        draw_rect_blend(px - 4, py - 4, 8, 8, 0x38BDF8FF);
+                        draw_rect_blend(px - 2, py - 2, 4, 4, 0xFFFFFFFF);
+                    }
                 }
             }
         }
