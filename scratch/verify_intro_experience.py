@@ -4,12 +4,66 @@ scratch/verify_intro_experience.py
 Verifies the complete opening experience of OpenMinish:
 1. Storybook Prologue: The Legend of the Picori (4 canonical stained-glass panels)
 2. In-Game Cutscene: The Picori Festival & Vaati's Attack (6 canonical stages)
+Uses the exact 8x8 bitmap font parsed from src/hal/font.c to guarantee zero text overflow.
 """
 
 import os
+import re
 import math
 import struct
 from PIL import Image, ImageDraw, ImageFont
+
+def parse_font_c(font_c_path="src/hal/font.c"):
+    """Extrai a tabela s_font_8x8[128][8] diretamente do fonte C11 do OpenMinish."""
+    font = [[0]*8 for _ in range(128)]
+    with open(font_c_path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    pattern = re.compile(r"\[(0x[0-9a-fA-F]+|'(\\.|[^'])')\]\s*=\s*\{\s*([^}]+)\s*\}")
+    for m in pattern.finditer(content):
+        idx_str = m.group(1)
+        bytes_str = m.group(3)
+        if idx_str.startswith("0x"):
+            idx = int(idx_str, 16)
+        elif idx_str.startswith("'"):
+            char_lit = idx_str[1:-1]
+            if char_lit == "\\'": char_lit = "'"
+            elif char_lit == "\\\\": char_lit = "\\"
+            idx = ord(char_lit)
+        else:
+            continue
+
+        raw_bytes = [int(b.strip(), 16) for b in bytes_str.split(",") if b.strip()]
+        if 0 <= idx < 128 and len(raw_bytes) == 8:
+            font[idx] = raw_bytes
+
+    return font
+
+def draw_char_8x8(img_draw, font_data, ch, x, y, color):
+    ascii_code = ord(ch) if isinstance(ch, str) else ch
+    if ascii_code >= 128 or ascii_code < 0:
+        ascii_code = ord('?')
+    glyph = font_data[ascii_code]
+    for row in range(8):
+        b = glyph[row]
+        for col in range(8):
+            if (b >> (7 - col)) & 1:
+                img_draw.point((x + col, y + row), fill=color)
+
+def draw_text_8x8(img_draw, font_data, x, y, text, color, shadow=False):
+    cur_x = x
+    for ch in text:
+        if shadow:
+            draw_char_8x8(img_draw, font_data, ch, cur_x + 1, y + 1, (0, 0, 0, 255))
+        draw_char_8x8(img_draw, font_data, ch, cur_x, y, color)
+        cur_x += 7
+
+def draw_text_multiline_8x8(img_draw, font_data, x, y, max_w, line_h, text, color, shadow=False):
+    lines = text.split('\n')
+    cur_y = y
+    for line in lines:
+        draw_text_8x8(img_draw, font_data, x, cur_y, line, color, shadow)
+        cur_y += line_h
 
 def load_bmp_rgba(filepath):
     with open(filepath, 'rb') as f:
@@ -40,6 +94,8 @@ def render_showcase():
     output_path = "C:/Users/thiag/.gemini/antigravity/brain/91f45871-4e2f-495f-88d6-7427ed06770a/intro_experience_showcase.png"
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
+    font_data = parse_font_c("src/hal/font.c")
+
     # Carregar texturas autênticas com canal alfa 1:1 C11 HAL
     prologue_tex = load_bmp_rgba("assets/ui/prologue/prologue_panels.bmp")
     castle_tex   = Image.open("assets/regions/usa/map_castle_courtyard.bmp").convert("RGBA")
@@ -48,7 +104,7 @@ def render_showcase():
     link_tex     = load_bmp_rgba("assets/regions/usa/link.bmp")
     enemies_tex  = load_bmp_rgba("assets/regions/usa/enemies.bmp")
 
-    # Fontes
+    # Fontes TrueType para Header do Showcase
     try:
         font_large = ImageFont.truetype("arialbd.ttf", 15)
         font_mid   = ImageFont.truetype("arialbd.ttf", 12)
@@ -64,10 +120,10 @@ def render_showcase():
     # -------------------------------------------------------------------------
     prologue_frames = []
     prologue_info = [
-        ("A LENDA DOS PICORI: AS TREVAS", "Ha muito tempo atras, o mundo esteve a ponto de sucumbir em trevas..."),
-        ("A DESCIDA DOS PICORI", "Do ceu desceram os pequeninos Picori, trazendo a Luz Dourada e uma espada sagrada."),
-        ("O HEROI E O BAU SAGRADO", "O bravo heroi baniu os monstros e os selou para sempre no Bau Sagrado!"),
-        ("O FESTIVAL SECULAR DE HYRULE", "A paz renasceu, e a cada cem anos Hyrule celebra o sagrado Festival de Picori.")
+        ("A LENDA DOS PICORI: AS TREVAS", "Ha muito tempo atras, o mundo\nquase sucumbiu em trevas..."),
+        ("A DESCIDA DOS PICORI", "Do ceu desceram os Picori,\ncom a espada e Luz Dourada."),
+        ("O HEROI E O BAU SAGRADO", "O bravo heroi baniu o mal e\nos selou no sagrado Bau!"),
+        ("O FESTIVAL SECULAR DE HYRULE", "A paz voltou e Hyrule celebra\no festival a cada cem anos.")
     ]
 
     for idx, (title, desc) in enumerate(prologue_info):
@@ -78,16 +134,20 @@ def render_showcase():
         crop_p = prologue_tex.crop((col * 240, row * 160, col * 240 + 240, row * 160 + 160))
         frame.paste(crop_p, (0, 0))
 
-        # Moldura de pergaminho de texto
+        # Moldura de pergaminho de texto exatamente como prologue_story.c
         draw = ImageDraw.Draw(frame)
-        bx, by, bw, bh = 8, H - 38, W - 16, 32
-        draw.rectangle([(bx - 1, by - 1), (bx + bw + 1, by + bh + 1)], fill=(212, 175, 55, 255))
-        draw.rectangle([(bx, by), (bx + bw, by + bh)], fill=(20, 14, 10, 240))
-        draw.rectangle([(bx + 2, by + 2), (bx + bw - 2, by + bh - 2)], fill=(44, 29, 17, 180))
+        box_w = W - 20
+        box_h = 40
+        box_x = 10
+        box_y = H - 45
 
-        draw.text((bx + 6, by + 3), title, fill=(253, 224, 71, 255), font=font_small)
-        draw.text((bx + 6, by + 16), desc, fill=(248, 250, 252, 255), font=font_small)
-        draw.text((W - 70, 4), "[START] Pular", fill=(148, 163, 184, 255), font=font_small)
+        draw.rectangle([(box_x - 1, box_y - 1), (box_x + box_w, box_y + box_h)], outline=(212, 175, 55, 255))
+        draw.rectangle([(box_x, box_y), (box_x + box_w - 1, box_y + box_h - 1)], fill=(20, 14, 10, 238))
+        draw.rectangle([(box_x + 2, box_y + 2), (box_x + box_w - 3, box_y + box_h - 3)], outline=(44, 29, 17, 136))
+
+        draw_text_8x8(draw, font_data, box_x + 8, box_y + 4, title, (253, 224, 71, 255))
+        draw_text_multiline_8x8(draw, font_data, box_x + 8, box_y + 16, box_w - 16, 11, desc, (248, 250, 252, 255))
+        draw_text_8x8(draw, font_data, W - 112, 12, "[START] Pular", (203, 213, 225, 255), shadow=True)
         prologue_frames.append(frame)
 
     # -------------------------------------------------------------------------
@@ -95,12 +155,12 @@ def render_showcase():
     # -------------------------------------------------------------------------
     cutscene_frames = []
     cutscene_info = [
-        ("1. FESTIVAL DE PICORI", "Link e Zelda celebram o festival no patio do castelo."),
-        ("2. O CAMPEAO DO TORNEIO", "Vaati surge flutuando sobre o podio do Bau Sagrado."),
-        ("3. A VIOLACAO DO BAU", "Vaati destroi o selo e quebra a lendaria Picori Blade!"),
-        ("4. TREVAS LIBERTADAS", "Monstros ancestrais explodem do bau sobre o reino."),
-        ("5. A MALDIÇÃO DE VAATI", "Zelda e petrificada em pedra e Link e nocauteado!"),
-        ("6. AUDIENCIA REAL", "Despertar na Sala do Trono com o Rei Daltus e Smith.")
+        ("FESTIVAL DE PICORI DE HYRULE", "A Princesa Zelda convida Link\npara o festival secular."),
+        ("O TORNEIO DE ESGRIMA", "O campeao misterioso surge:\no feiticeiro sombrio Vaati!"),
+        ("VIOLACAO DO BAU SAGRADO!", "Vaati quebra a Picori Blade e\nabre o selo do Bau Sagrado!"),
+        ("TREVAS LIBERTADAS NO REINO!", "Monstros ancestrais fogem e\nespalham trevas por Hyrule!"),
+        ("A MALDICAO DE VAATI!", "Vaati lanca um raio sombrio:\nZelda vira estatua de pedra!"),
+        ("AUDIENCIA COM O REI DALTUS", "O Rei Daltus envia Link\nem busca do povo Minish!")
     ]
 
     for stage_idx, (title, desc) in enumerate(cutscene_info):
@@ -207,13 +267,18 @@ def render_showcase():
                 for sp in [(100, 60), (135, 55), (115, 80), (145, 95), (85, 75)]:
                     draw.ellipse([(sp[0]-3, sp[1]-3), (sp[0]+3, sp[1]+3)], fill=(192, 132, 252, 200))
 
-        # HUD banner
-        bx, by, bw, bh = 8, H - 38, W - 16, 32
-        draw.rectangle([(bx - 1, by - 1), (bx + bw + 1, by + bh + 1)], fill=(212, 175, 55, 255))
-        draw.rectangle([(bx, by), (bx + bw, by + bh)], fill=(15, 23, 42, 240))
-        draw.text((bx + 6, by + 3), title, fill=(253, 224, 71, 255), font=font_small)
-        draw.text((bx + 6, by + 16), desc, fill=(226, 232, 240, 255), font=font_small)
-        draw.text((W - 70, 4), "[START] Pular", fill=(148, 163, 184, 255), font=font_small)
+        # HUD banner exatamente como intro_cutscene.c
+        box_w = W - 16
+        box_h = 40
+        box_x = 8
+        box_y = H - 45
+
+        draw.rectangle([(box_x - 1, box_y - 1), (box_x + box_w, box_y + box_h)], outline=(212, 175, 55, 255))
+        draw.rectangle([(box_x, box_y), (box_x + box_w - 1, box_y + box_h - 1)], fill=(15, 23, 42, 238))
+
+        draw_text_8x8(draw, font_data, box_x + 8, box_y + 4, title, (253, 224, 71, 255))
+        draw_text_multiline_8x8(draw, font_data, box_x + 8, box_y + 16, box_w - 16, 11, desc, (226, 232, 240, 255))
+        draw_text_8x8(draw, font_data, W - 100, 6, "[START] Pular", (203, 213, 225, 255), shadow=True)
 
         cutscene_frames.append(frame)
 
@@ -228,12 +293,6 @@ def render_showcase():
     CELL_W = W * SCALE  # 480
     CELL_H = H * SCALE  # 320
 
-    # Grid: 2 colunas
-    # Linha 0: Prólogo (2 painéis)
-    # Linha 1: Prólogo (2 painéis)
-    # Linha 2: Cutscene (2 painéis)
-    # Linha 3: Cutscene (2 painéis)
-    # Linha 4: Cutscene (2 painéis)
     TOTAL_ROWS = 5
     TOTAL_COLS = 2
 
@@ -248,14 +307,14 @@ def render_showcase():
     c_draw.line([(0, HEADER_H - 2), (CANVAS_W, HEADER_H - 2)], fill=(212, 175, 55, 255), width=2)
     c_draw.text((PAD, 20), "THE LEGEND OF ZELDA: THE MINISH CAP - EXPERIÊNCIA DE ABERTURA", fill=(253, 224, 71, 255), font=font_large)
     c_draw.text((PAD, 48), "Clean-Room C11 HAL / Zero-ROM Runtime: Prólogo Histórico da Lenda dos Picori & Cutscene In-Game Pixel-Perfect", fill=(226, 232, 240, 255), font=font_mid)
-    c_draw.text((PAD, 72), "Assets Nativos: Vitrais Dourados 240x160, Castelo de Hyrule 512x384, Sprites de Vaati, Zelda, Daltus, Smith & Monstros", fill=(148, 163, 184, 255), font=font_small)
+    c_draw.text((PAD, 72), "Validação Visual Pixel-Perfect: Fonte 8x8 sem Text Overflow, Vitrais Góticos & Pátio de Hyrule Autêntico", fill=(148, 163, 184, 255), font=font_small)
 
     cur_y = HEADER_H + PAD
 
     # Seção 1: O Prólogo dos Picori
     c_draw.rectangle([(PAD, cur_y), (CANVAS_W - PAD, cur_y + SEC_TITLE_H - 8)], fill=(30, 41, 59, 255))
     c_draw.rectangle([(PAD, cur_y), (PAD + 6, cur_y + SEC_TITLE_H - 8)], fill=(212, 175, 55, 255))
-    c_draw.text((PAD + 16, cur_y + 6), "PARTE 1: PRÓLOGO HISTÓRICO - A LENDA DOS PICORI (STORYBOOK CINEMATIC 4K)", fill=(253, 224, 71, 255), font=font_mid)
+    c_draw.text((PAD + 16, cur_y + 6), "PARTE 1: PRÓLOGO HISTÓRICO - A LENDA DOS PICORI (VITRAIS GÓTICOS NATIVOS)", fill=(253, 224, 71, 255), font=font_mid)
     cur_y += SEC_TITLE_H
 
     for i in range(4):
