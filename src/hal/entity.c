@@ -24,6 +24,7 @@
 static Entity s_entities[MAX_ENTITIES];
 static const Texture* s_octo_tex = NULL;
 static const Texture* s_enemies_tex = NULL;
+static const Texture* s_npcs_tex = NULL;
 static float s_last_link_x = 0.0f;
 static float s_last_link_y = 0.0f;
 static int   s_screen_shake_timer = 0;
@@ -43,6 +44,10 @@ void entity_set_texture(const Texture* tex) {
 
 void entity_set_enemies_texture(const Texture* tex) {
     s_enemies_tex = tex;
+}
+
+void entity_set_npcs_texture(const Texture* tex) {
+    s_npcs_tex = tex;
 }
 
 static inline void put_pixel_safe(int x, int y, u32 color) {
@@ -3518,63 +3523,80 @@ void entity_manager_render(const Camera* cam) {
             int breathe = ((e->animTimer / 18) % 2 == 1) ? 1 : 0;
             int sy_b = sy - breathe;
 
-            u32 c_fur       = 0x7A6A5AFF; // Pelo canino marrom-acinzentado do mestre
-            u32 c_fur_dk    = 0x544638FF;
-            u32 c_muzzle    = 0xC2B2A0FF;
-            u32 c_nose      = 0x1C140FFF;
-            u32 c_band      = 0xDC2626FF; // Faixa vermelha marcial
-            u32 c_band_dk   = 0x991B1BFF;
-            u32 c_gi        = 0x1E3324FF; // Gi verde floresta dojo
-            u32 c_belt      = 0xE5E7EBFF; // Faixa branca
-            u32 c_wood      = 0x92400EFF; // Espada de madeira de treino (Bokken)
-            u32 c_wood_hi   = 0xD97706FF;
+            if (s_npcs_tex && s_npcs_tex->pixels) {
+                int src_x = 0;
+                bool flip_h = false;
+                if (e->dir == DIR_DOWN) {
+                    src_x = 0 * 16;
+                } else if (e->dir == DIR_UP) {
+                    src_x = 2 * 16;
+                } else if (e->dir == DIR_RIGHT) {
+                    src_x = 1 * 16;
+                    flip_h = false;
+                } else { // DIR_LEFT
+                    src_x = 1 * 16;
+                    flip_h = true;
+                }
+                texture_draw_ex(s_npcs_tex, src_x, 0 * 16, 16, 16, sx, sy_b, flip_h);
+            } else {
+                u32 c_fur       = 0x7A6A5AFF; // Pelo canino marrom-acinzentado do mestre
+                u32 c_fur_dk    = 0x544638FF;
+                u32 c_muzzle    = 0xC2B2A0FF;
+                u32 c_nose      = 0x1C140FFF;
+                u32 c_band      = 0xDC2626FF; // Faixa vermelha marcial
+                u32 c_band_dk   = 0x991B1BFF;
+                u32 c_gi        = 0x1E3324FF; // Gi verde floresta dojo
+                u32 c_belt      = 0xE5E7EBFF; // Faixa branca
+                u32 c_wood      = 0x92400EFF; // Espada de madeira de treino (Bokken)
+                u32 c_wood_hi   = 0xD97706FF;
 
-            // Orelhas caninas
-            put_pixel_safe(sx + 4, sy_b + 0, c_fur);
-            put_pixel_safe(sx + 5, sy_b + 1, c_fur);
-            put_pixel_safe(sx + 10, sy_b + 1, c_fur);
-            put_pixel_safe(sx + 11, sy_b + 0, c_fur);
+                // Orelhas caninas
+                put_pixel_safe(sx + 4, sy_b + 0, c_fur);
+                put_pixel_safe(sx + 5, sy_b + 1, c_fur);
+                put_pixel_safe(sx + 10, sy_b + 1, c_fur);
+                put_pixel_safe(sx + 11, sy_b + 0, c_fur);
 
-            // Cabeça
-            draw_filled_rect(sx + 4, sy_b + 2, 8, 5, c_fur);
+                // Cabeça
+                draw_filled_rect(sx + 4, sy_b + 2, 8, 5, c_fur);
 
-            // Faixa vermelha marcial na testa
-            draw_filled_rect(sx + 3, sy_b + 3, 10, 2, c_band);
-            put_pixel_safe(sx + 2, sy_b + 4, c_band_dk); // Nó
-            put_pixel_safe(sx + 1, sy_b + 5, c_band);    // Fita pendente
+                // Faixa vermelha marcial na testa
+                draw_filled_rect(sx + 3, sy_b + 3, 10, 2, c_band);
+                put_pixel_safe(sx + 2, sy_b + 4, c_band_dk); // Nó
+                put_pixel_safe(sx + 1, sy_b + 5, c_band);    // Fita pendente
 
-            // Olhos e focinho
-            if (e->dir == DIR_DOWN) {
-                put_pixel_safe(sx + 5, sy_b + 5, 0x111111FF);
-                put_pixel_safe(sx + 10, sy_b + 5, 0x111111FF);
-                draw_filled_rect(sx + 6, sy_b + 6, 4, 2, c_muzzle);
-                put_pixel_safe(sx + 7, sy_b + 6, c_nose);
-                put_pixel_safe(sx + 8, sy_b + 6, c_nose);
-            } else if (e->dir == DIR_LEFT) {
-                put_pixel_safe(sx + 4, sy_b + 5, 0x111111FF);
-                draw_filled_rect(sx + 3, sy_b + 6, 3, 2, c_muzzle);
-                put_pixel_safe(sx + 3, sy_b + 6, c_nose);
-            } else if (e->dir == DIR_RIGHT) {
-                put_pixel_safe(sx + 11, sy_b + 5, 0x111111FF);
-                draw_filled_rect(sx + 10, sy_b + 6, 3, 2, c_muzzle);
-                put_pixel_safe(sx + 12, sy_b + 6, c_nose);
-            } else { // DIR_UP
-                put_pixel_safe(sx + 8, sy_b + 4, c_band);
-                put_pixel_safe(sx + 9, sy_b + 5, c_band_dk);
+                // Olhos e focinho
+                if (e->dir == DIR_DOWN) {
+                    put_pixel_safe(sx + 5, sy_b + 5, 0x111111FF);
+                    put_pixel_safe(sx + 10, sy_b + 5, 0x111111FF);
+                    draw_filled_rect(sx + 6, sy_b + 6, 4, 2, c_muzzle);
+                    put_pixel_safe(sx + 7, sy_b + 6, c_nose);
+                    put_pixel_safe(sx + 8, sy_b + 6, c_nose);
+                } else if (e->dir == DIR_LEFT) {
+                    put_pixel_safe(sx + 4, sy_b + 5, 0x111111FF);
+                    draw_filled_rect(sx + 3, sy_b + 6, 3, 2, c_muzzle);
+                    put_pixel_safe(sx + 3, sy_b + 6, c_nose);
+                } else if (e->dir == DIR_RIGHT) {
+                    put_pixel_safe(sx + 11, sy_b + 5, 0x111111FF);
+                    draw_filled_rect(sx + 10, sy_b + 6, 3, 2, c_muzzle);
+                    put_pixel_safe(sx + 12, sy_b + 6, c_nose);
+                } else { // DIR_UP
+                    put_pixel_safe(sx + 8, sy_b + 4, c_band);
+                    put_pixel_safe(sx + 9, sy_b + 5, c_band_dk);
+                }
+
+                // Corpo / Kimono do Mestre
+                draw_filled_rect(sx + 4, sy_b + 8, 8, 5, c_gi);
+                draw_filled_rect(sx + 4, sy_b + 11, 8, 2, c_belt);
+
+                // Pernas / Calças
+                draw_filled_rect(sx + 4, sy_b + 13, 3, 3, c_gi);
+                draw_filled_rect(sx + 9, sy_b + 13, 3, 3, c_gi);
+
+                // Espada de madeira de treino (Bokken)
+                draw_filled_rect(sx + 12, sy_b + 7, 2, 7, c_wood);
+                put_pixel_safe(sx + 12, sy_b + 6, c_wood_hi);
+                put_pixel_safe(sx + 13, sy_b + 6, c_wood_hi);
             }
-
-            // Corpo / Kimono do Mestre
-            draw_filled_rect(sx + 4, sy_b + 8, 8, 5, c_gi);
-            draw_filled_rect(sx + 4, sy_b + 11, 8, 2, c_belt);
-
-            // Pernas / Calças
-            draw_filled_rect(sx + 4, sy_b + 13, 3, 3, c_gi);
-            draw_filled_rect(sx + 9, sy_b + 13, 3, 3, c_gi);
-
-            // Espada de madeira de treino (Bokken)
-            draw_filled_rect(sx + 12, sy_b + 7, 2, 7, c_wood);
-            put_pixel_safe(sx + 12, sy_b + 6, c_wood_hi);
-            put_pixel_safe(sx + 13, sy_b + 6, c_wood_hi);
 
             // Balão de interação [A] Treinar quando Link se aproxima
             float dx = s_last_link_x - e->x;
@@ -3596,48 +3618,53 @@ void entity_manager_render(const Camera* cam) {
             int breathe = ((e->animTimer / 16) % 2 == 1) ? 1 : 0;
             int sy_b = sy - breathe;
 
-            u32 c_cap       = 0x4A148CFF; // Boina roxa do comerciante
-            u32 c_cap_trim  = 0xF1C40FFF; // Fita dourada na boina
-            u32 c_skin      = 0xFDE8CDFF; // Pele clara
-            u32 c_hair      = 0x5D4037FF; // Cabelo castanho
-            u32 c_glasses   = 0xF59E0BFF; // Óculos redondos dourados
-            u32 c_lens      = 0xE0F2FEFF; // Vidro dos óculos
-            u32 c_apron     = 0x059669FF; // Avental verde esmeralda
-            u32 c_shirt     = 0xFFFFFFFF; // Camisa branca
-            u32 c_tie       = 0xDC2626FF; // Gravata borboleta vermelha
+            if (s_npcs_tex && s_npcs_tex->pixels) {
+                int anim = (e->animTimer / 30) % 3;
+                texture_draw(s_npcs_tex, anim * 16, 6 * 16, 16, 16, sx, sy_b);
+            } else {
+                u32 c_cap       = 0x4A148CFF; // Boina roxa do comerciante
+                u32 c_cap_trim  = 0xF1C40FFF; // Fita dourada na boina
+                u32 c_skin      = 0xFDE8CDFF; // Pele clara
+                u32 c_hair      = 0x5D4037FF; // Cabelo castanho
+                u32 c_glasses   = 0xF59E0BFF; // Óculos redondos dourados
+                u32 c_lens      = 0xE0F2FEFF; // Vidro dos óculos
+                u32 c_apron     = 0x059669FF; // Avental verde esmeralda
+                u32 c_shirt     = 0xFFFFFFFF; // Camisa branca
+                u32 c_tie       = 0xDC2626FF; // Gravata borboleta vermelha
 
-            draw_filled_rect(sx + 3, sy + 13, 10, 3, 0x05100766);
+                draw_filled_rect(sx + 3, sy + 13, 10, 3, 0x05100766);
 
-            // Boina mercantil
-            draw_filled_rect(sx + 4, sy_b + 0, 8, 3, c_cap);
-            draw_filled_rect(sx + 3, sy_b + 2, 10, 2, c_cap);
-            draw_filled_rect(sx + 4, sy_b + 3, 8, 1, c_cap_trim);
+                // Boina mercantil
+                draw_filled_rect(sx + 4, sy_b + 0, 8, 3, c_cap);
+                draw_filled_rect(sx + 3, sy_b + 2, 10, 2, c_cap);
+                draw_filled_rect(sx + 4, sy_b + 3, 8, 1, c_cap_trim);
 
-            // Rosto
-            draw_filled_rect(sx + 4, sy_b + 4, 8, 5, c_skin);
-            put_pixel_safe(sx + 3, sy_b + 4, c_hair);
-            put_pixel_safe(sx + 12, sy_b + 4, c_hair);
+                // Rosto
+                draw_filled_rect(sx + 4, sy_b + 4, 8, 5, c_skin);
+                put_pixel_safe(sx + 3, sy_b + 4, c_hair);
+                put_pixel_safe(sx + 12, sy_b + 4, c_hair);
 
-            // Óculos redondos de Stockwell
-            if (e->dir != DIR_UP) {
-                put_pixel_safe(sx + 5, sy_b + 5, c_glasses);
-                put_pixel_safe(sx + 6, sy_b + 5, c_lens);
-                put_pixel_safe(sx + 7, sy_b + 5, c_glasses);
-                put_pixel_safe(sx + 9, sy_b + 5, c_glasses);
-                put_pixel_safe(sx + 10, sy_b + 5, c_lens);
-                put_pixel_safe(sx + 11, sy_b + 5, c_glasses);
-                put_pixel_safe(sx + 8, sy_b + 5, c_glasses);
-                put_pixel_safe(sx + 7, sy_b + 7, c_hair);
-                put_pixel_safe(sx + 8, sy_b + 7, c_hair);
+                // Óculos redondos de Stockwell
+                if (e->dir != DIR_UP) {
+                    put_pixel_safe(sx + 5, sy_b + 5, c_glasses);
+                    put_pixel_safe(sx + 6, sy_b + 5, c_lens);
+                    put_pixel_safe(sx + 7, sy_b + 5, c_glasses);
+                    put_pixel_safe(sx + 9, sy_b + 5, c_glasses);
+                    put_pixel_safe(sx + 10, sy_b + 5, c_lens);
+                    put_pixel_safe(sx + 11, sy_b + 5, c_glasses);
+                    put_pixel_safe(sx + 8, sy_b + 5, c_glasses);
+                    put_pixel_safe(sx + 7, sy_b + 7, c_hair);
+                    put_pixel_safe(sx + 8, sy_b + 7, c_hair);
+                }
+
+                // Camisa branca e gravata
+                draw_filled_rect(sx + 5, sy_b + 9, 6, 2, c_shirt);
+                put_pixel_safe(sx + 7, sy_b + 9, c_tie);
+                put_pixel_safe(sx + 8, sy_b + 9, c_tie);
+
+                // Avental verde
+                draw_filled_rect(sx + 4, sy_b + 11, 8, 4, c_apron);
             }
-
-            // Camisa branca e gravata
-            draw_filled_rect(sx + 5, sy_b + 9, 6, 2, c_shirt);
-            put_pixel_safe(sx + 7, sy_b + 9, c_tie);
-            put_pixel_safe(sx + 8, sy_b + 9, c_tie);
-
-            // Avental verde
-            draw_filled_rect(sx + 4, sy_b + 11, 8, 4, c_apron);
 
             // Prompt de compras da loja quando Link se aproxima
             float dx = s_last_link_x - e->x;
@@ -3659,39 +3686,53 @@ void entity_manager_render(const Camera* cam) {
             int breathe = ((e->animTimer / 18) % 2 == 1) ? 1 : 0;
             int cy = sy - breathe;
 
-            u32 c_bonnet   = 0xF472B6FF; // Touca rosa
-            u32 c_bonnet_lt= 0xFBCFE8FF;
-            u32 c_skin     = 0xFDE8CDFF; // Pele clara
-            u32 c_hair     = 0xD97706FF; // Cabelos ruivos
-            u32 c_blush    = 0xFCA5A5FF; // Bochechas
-            u32 c_dress    = 0x38BDF8FF; // Vestido azul
-            u32 c_apron    = 0xFFFFFFFF; // Avental branco
+            if (s_npcs_tex && s_npcs_tex->pixels) {
+                int src_x = 0;
+                bool flip_h = false;
+                if (e->dir == DIR_RIGHT) {
+                    src_x = 1 * 16;
+                } else if (e->dir == DIR_LEFT) {
+                    src_x = 1 * 16;
+                    flip_h = true;
+                } else {
+                    src_x = (e->hasKinstone && !e->kinstoneFused) ? (2 * 16) : 0;
+                }
+                texture_draw_ex(s_npcs_tex, src_x, 7 * 16, 16, 16, sx, cy, flip_h);
+            } else {
+                u32 c_bonnet   = 0xF472B6FF; // Touca rosa
+                u32 c_bonnet_lt= 0xFBCFE8FF;
+                u32 c_skin     = 0xFDE8CDFF; // Pele clara
+                u32 c_hair     = 0xD97706FF; // Cabelos ruivos
+                u32 c_blush    = 0xFCA5A5FF; // Bochechas
+                u32 c_dress    = 0x38BDF8FF; // Vestido azul
+                u32 c_apron    = 0xFFFFFFFF; // Avental branco
 
-            draw_filled_rect(sx + 3, sy + 13, 10, 3, 0x05100766);
+                draw_filled_rect(sx + 3, sy + 13, 10, 3, 0x05100766);
 
-            // Touca / Chapéu com laço
-            draw_filled_rect(sx + 4, cy + 1, 8, 3, c_bonnet);
-            draw_filled_rect(sx + 3, cy + 3, 10, 2, c_bonnet_lt);
+                // Touca / Chapéu com laço
+                draw_filled_rect(sx + 4, cy + 1, 8, 3, c_bonnet);
+                draw_filled_rect(sx + 3, cy + 3, 10, 2, c_bonnet_lt);
 
-            // Cabelos
-            draw_filled_rect(sx + 4, cy + 4, 8, 2, c_hair);
-            put_pixel_safe(sx + 3, cy + 5, c_hair);
-            put_pixel_safe(sx + 12, cy + 5, c_hair);
+                // Cabelos
+                draw_filled_rect(sx + 4, cy + 4, 8, 2, c_hair);
+                put_pixel_safe(sx + 3, cy + 5, c_hair);
+                put_pixel_safe(sx + 12, cy + 5, c_hair);
 
-            // Rosto e olhos
-            draw_filled_rect(sx + 4, cy + 6, 8, 4, c_skin);
-            if (e->dir != DIR_UP) {
-                put_pixel_safe(sx + 5, cy + 7, 0x111111FF);
-                put_pixel_safe(sx + 10, cy + 7, 0x111111FF);
-                put_pixel_safe(sx + 4, cy + 8, c_blush);
-                put_pixel_safe(sx + 11, cy + 8, c_blush);
-                put_pixel_safe(sx + 7, cy + 8, 0xE11D48FF);
-                put_pixel_safe(sx + 8, cy + 8, 0xE11D48FF);
+                // Rosto e olhos
+                draw_filled_rect(sx + 4, cy + 6, 8, 4, c_skin);
+                if (e->dir != DIR_UP) {
+                    put_pixel_safe(sx + 5, cy + 7, 0x111111FF);
+                    put_pixel_safe(sx + 10, cy + 7, 0x111111FF);
+                    put_pixel_safe(sx + 4, cy + 8, c_blush);
+                    put_pixel_safe(sx + 11, cy + 8, c_blush);
+                    put_pixel_safe(sx + 7, cy + 8, 0xE11D48FF);
+                    put_pixel_safe(sx + 8, cy + 8, 0xE11D48FF);
+                }
+
+                // Vestido azul e avental branco
+                draw_filled_rect(sx + 4, cy + 10, 8, 5, c_dress);
+                draw_filled_rect(sx + 6, cy + 10, 4, 4, c_apron);
             }
-
-            // Vestido azul e avental branco
-            draw_filled_rect(sx + 4, cy + 10, 8, 5, c_dress);
-            draw_filled_rect(sx + 6, cy + 10, 4, 4, c_apron);
 
             // Balão flutuante de Kinstone se pendente
             if (e->hasKinstone && !e->kinstoneFused) {
@@ -3731,40 +3772,56 @@ void entity_manager_render(const Camera* cam) {
 
         // 11. NPC: GUARDA REAL DO CASTELO DE HYRULE
         else if (e->type == ENTITY_NPC_TOWN_GUARD) {
-            u32 c_steel     = 0xD1D5DBFF; // Aço brilhante
-            u32 c_steel_dk  = 0x6B7280FF; // Sombra do metal
-            u32 c_plume     = 0xDC2626FF; // Pluma vermelha no elmo
-            u32 c_tunic     = 0x1E3A8AFF; // Azul real
-            u32 c_visor     = 0x111827FF; // Viseira
-            u32 c_spear     = 0x78350FFF; // Lança
-            u32 c_blade     = 0xF3F4F6FF; // Ponta de aço
+            if (s_npcs_tex && s_npcs_tex->pixels) {
+                int src_x = 0;
+                bool flip_h = false;
+                if (e->dir == DIR_RIGHT) {
+                    src_x = 1 * 16;
+                } else if (e->dir == DIR_LEFT) {
+                    src_x = 1 * 16;
+                    flip_h = true;
+                } else {
+                    float gdx = s_last_link_x - e->x;
+                    float gdy = s_last_link_y - e->y;
+                    src_x = (gdx * gdx + gdy * gdy <= 28.0f * 28.0f) ? (2 * 16) : 0;
+                }
+                texture_draw_ex(s_npcs_tex, src_x, 8 * 16, 16, 16, sx, sy, flip_h);
+            } else {
+                u32 c_steel     = 0xD1D5DBFF; // Aço brilhante
+                u32 c_steel_dk  = 0x6B7280FF; // Sombra do metal
+                u32 c_plume     = 0xDC2626FF; // Pluma vermelha no elmo
+                u32 c_tunic     = 0x1E3A8AFF; // Azul real
+                u32 c_visor     = 0x111827FF; // Viseira
+                u32 c_spear     = 0x78350FFF; // Lança
+                u32 c_blade     = 0xF3F4F6FF; // Ponta de aço
 
-            draw_filled_rect(sx + 3, sy + 14, 10, 3, 0x05100766);
+                draw_filled_rect(sx + 3, sy + 14, 10, 3, 0x05100766);
 
-            // Pluma vermelha
-            draw_filled_rect(sx + 7, sy - 2, 3, 4, c_plume);
-            put_pixel_safe(sx + 6, sy - 1, c_plume);
+                // Pluma vermelha
+                draw_filled_rect(sx + 7, sy - 2, 3, 4, c_plume);
+                put_pixel_safe(sx + 6, sy - 1, c_plume);
 
-            // Elmo de ferro
-            draw_filled_rect(sx + 4, sy + 2, 8, 6, c_steel);
-            draw_filled_rect(sx + 5, sy + 1, 6, 2, c_steel);
-            put_pixel_safe(sx + 4, sy + 7, c_steel_dk);
-            put_pixel_safe(sx + 11, sy + 7, c_steel_dk);
+                // Elmo de ferro
+                draw_filled_rect(sx + 4, sy + 2, 8, 6, c_steel);
+                draw_filled_rect(sx + 5, sy + 1, 6, 2, c_steel);
+                put_pixel_safe(sx + 4, sy + 7, c_steel_dk);
+                put_pixel_safe(sx + 11, sy + 7, c_steel_dk);
 
-            if (e->dir != DIR_UP) {
-                draw_filled_rect(sx + 5, sy + 4, 6, 2, c_visor);
-                put_pixel_safe(sx + 7, sy + 4, 0x60A5FAFF);
+                if (e->dir != DIR_UP) {
+                    draw_filled_rect(sx + 5, sy + 4, 6, 2, c_visor);
+                    put_pixel_safe(sx + 7, sy + 4, 0x60A5FAFF);
+                }
+
+                // Armadura e manto
+                draw_filled_rect(sx + 4, sy + 8, 8, 5, c_steel);
+                draw_filled_rect(sx + 5, sy + 9, 6, 3, c_steel_dk);
+                draw_filled_rect(sx + 4, sy + 13, 8, 2, c_tunic);
+
+                // Alabarda em prontidão
+                draw_filled_rect(sx + 13, sy - 4, 1, 19, c_spear);
+                draw_filled_rect(sx + 12, sy - 7, 3, 4, c_blade);
+                put_pixel_safe(sx + 13, sy - 8, 0xFFFFFFFF);
             }
-
-            // Armadura e manto
-            draw_filled_rect(sx + 4, sy + 8, 8, 5, c_steel);
-            draw_filled_rect(sx + 5, sy + 9, 6, 3, c_steel_dk);
-            draw_filled_rect(sx + 4, sy + 13, 8, 2, c_tunic);
-
-            // Alabarda em prontidão
-            draw_filled_rect(sx + 13, sy - 4, 1, 19, c_spear);
-            draw_filled_rect(sx + 12, sy - 7, 3, 4, c_blade);
-            put_pixel_safe(sx + 13, sy - 8, 0xFFFFFFFF);
 
             // Prompt se próximo
             float dx = s_last_link_x - e->x;
@@ -4152,6 +4209,22 @@ void entity_manager_render(const Camera* cam) {
             int breathe = ((e->animTimer / 16) % 2 == 1) ? 1 : 0;
             int my = sy - breathe;
 
+            if (s_npcs_tex && s_npcs_tex->pixels) {
+                int src_x = 0;
+                bool flip_h = false;
+                if (e->dir == DIR_RIGHT) {
+                    src_x = 1 * 16;
+                } else if (e->dir == DIR_LEFT) {
+                    src_x = 1 * 16;
+                    flip_h = true;
+                } else {
+                    float mdx = s_last_link_x - e->x;
+                    float mdy = s_last_link_y - e->y;
+                    src_x = (mdx * mdx + mdy * mdy <= 28.0f * 28.0f) ? (2 * 16) : (((e->animTimer / 60) % 2 == 0) ? 0 : (3 * 16));
+                }
+                texture_draw_ex(s_npcs_tex, src_x, 4 * 16, 16, 16, sx, my, flip_h);
+            } else {
+
             u32 c_hair    = 0xEA580CFF; // Cabelos ruivos ondulados
             u32 c_bandana = 0xFACC15FF; // Faixa amarela no cabelo
             u32 c_skin    = 0xFDE8CDFF; // Pele clara
@@ -4178,6 +4251,7 @@ void entity_manager_render(const Camera* cam) {
             // Botas
             draw_filled_rect(sx + 5, my + 14, 2, 2, 0x78350FFF);
             draw_filled_rect(sx + 9, my + 14, 2, 2, 0x78350FFF);
+            }
 
             // Balão de Fusão de Kinstone Azul (se não fundida)
             if (e->hasKinstone && !e->kinstoneFused) {
@@ -4370,35 +4444,47 @@ void entity_manager_render(const Camera* cam) {
 
         // 22. NPC: BUSINESS SCRUB (DEKU SCRUB COMERCIANTE DO MONTE CRENEL)
         else if (e->type == ENTITY_NPC_BUSINESS_SCRUB) {
-            u32 c_bush    = 0x16A34AFF; // Folhagem verde
-            u32 c_bush_dk = 0x15803DFF;
-            u32 c_scrub   = 0x78350FFF; // Madeira Deku
-            u32 c_snout   = 0x9A3412FF; // Bico de trombeta
-            u32 c_eyes    = 0xFDE047FF; // Olhos amarelos
-            u32 c_leaves  = 0x22C55EFF;
-
-            // Arbusto ao redor
-            draw_filled_rect(sx + 2, sy + 9, 12, 6, c_bush);
-            draw_filled_rect(sx + 4, sy + 7, 8, 4, c_bush);
-            put_pixel_safe(sx + 3, sy + 10, c_bush_dk);
-            put_pixel_safe(sx + 12, sy + 10, c_bush_dk);
-
-            // Cabeça do Deku Scrub espiando do arbusto
             int bob = ((e->animTimer / 12) % 2 == 1) ? 1 : 0;
             int by = sy - bob;
 
-            draw_filled_rect(sx + 5, by + 3, 6, 6, c_scrub);
-            // Coroa de folhas
-            draw_filled_rect(sx + 4, by + 1, 8, 2, c_leaves);
-            put_pixel_safe(sx + 7, by, 0x86EFACFF);
+            if (s_npcs_tex && s_npcs_tex->pixels) {
+                float sdx = s_last_link_x - e->x;
+                float sdy = s_last_link_y - e->y;
+                int src_x = (0 * 16); // hiding in bush
+                if (sdx * sdx + sdy * sdy <= 36.0f * 36.0f) {
+                    src_x = (bob == 1) ? (2 * 16) : (3 * 16);
+                } else if (sdx * sdx + sdy * sdy <= 60.0f * 60.0f) {
+                    src_x = (1 * 16);
+                }
+                texture_draw(s_npcs_tex, src_x, 5 * 16, 16, 16, sx, by);
+            } else {
+                u32 c_bush    = 0x16A34AFF; // Folhagem verde
+                u32 c_bush_dk = 0x15803DFF;
+                u32 c_scrub   = 0x78350FFF; // Madeira Deku
+                u32 c_snout   = 0x9A3412FF; // Bico de trombeta
+                u32 c_eyes    = 0xFDE047FF; // Olhos amarelos
+                u32 c_leaves  = 0x22C55EFF;
 
-            // Olhos amarelos
-            put_pixel_safe(sx + 6, by + 4, c_eyes);
-            put_pixel_safe(sx + 9, by + 4, c_eyes);
+                // Arbusto ao redor
+                draw_filled_rect(sx + 2, sy + 9, 12, 6, c_bush);
+                draw_filled_rect(sx + 4, sy + 7, 8, 4, c_bush);
+                put_pixel_safe(sx + 3, sy + 10, c_bush_dk);
+                put_pixel_safe(sx + 12, sy + 10, c_bush_dk);
 
-            // Focinho de madeira
-            draw_filled_rect(sx + 6, by + 6, 4, 3, c_snout);
-            put_pixel_safe(sx + 7, by + 7, 0x451A03FF);
+                // Cabeça do Deku Scrub espiando do arbusto
+                draw_filled_rect(sx + 5, by + 3, 6, 6, c_scrub);
+                // Coroa de folhas
+                draw_filled_rect(sx + 4, by + 1, 8, 2, c_leaves);
+                put_pixel_safe(sx + 7, by, 0x86EFACFF);
+
+                // Olhos amarelos
+                put_pixel_safe(sx + 6, by + 4, c_eyes);
+                put_pixel_safe(sx + 9, by + 4, c_eyes);
+
+                // Focinho de madeira
+                draw_filled_rect(sx + 6, by + 6, 4, 3, c_snout);
+                put_pixel_safe(sx + 7, by + 7, 0x451A03FF);
+            }
 
             // Prompt de interação [A] Falar (Comerciante)
             float dx = s_last_link_x - e->x;
@@ -4420,48 +4506,52 @@ void entity_manager_render(const Camera* cam) {
             int strike = (e->animTimer / 15) % 4; // Ciclo de forja com o martelo
             int my = sy;
 
-            u32 c_skin   = 0xFDE8CDFF;
-            u32 c_beard  = 0xE2E8F0FF;
-            u32 c_goggle = 0x92400EFF;
-            u32 c_lens   = 0xF97316FF;
-            u32 c_shirt  = 0xDC2626FF;
-            u32 c_apron  = 0x78350FFF;
-            u32 c_hammer = 0x64748BFF;
-            u32 c_gold   = 0xFACC15FF;
-
-            // Rosto e barba espessa
-            draw_filled_rect(sx + 5, my + 4, 6, 4, c_skin);
-            // Óculos de proteção na testa
-            draw_filled_rect(sx + 4, my + 2, 8, 2, c_goggle);
-            put_pixel_safe(sx + 5, my + 2, c_lens);
-            put_pixel_safe(sx + 8, my + 2, c_lens);
-
-            // Olhos e sobrancelha
-            put_pixel_safe(sx + 6, my + 5, 0x0F172AFF);
-            put_pixel_safe(sx + 9, my + 5, 0x0F172AFF);
-
-            // Barba branca cheia de ferreiro
-            draw_filled_rect(sx + 5, my + 7, 6, 4, c_beard);
-            draw_filled_rect(sx + 6, my + 11, 4, 2, c_beard);
-
-            // Corpo com avental de couro
-            draw_filled_rect(sx + 4, my + 8, 8, 7, c_shirt);
-            draw_filled_rect(sx + 5, my + 9, 6, 6, c_apron);
-
-            // Martelo de ferreiro em movimento
-            if (strike == 0 || strike == 1) {
-                // Martelo erguido alto
-                draw_filled_rect(sx + 12, my, 4, 3, c_hammer);
-                put_pixel_safe(sx + 13, my - 1, c_gold);
-                draw_filled_rect(sx + 11, my + 3, 2, 6, 0x78350FFF); // Cabo
+            if (s_npcs_tex && s_npcs_tex->pixels) {
+                texture_draw(s_npcs_tex, 0 * 16, 9 * 16, 16, 16, sx, my);
             } else {
-                // Martelo golpeando a bigorna com faíscas
-                draw_filled_rect(sx + 12, my + 9, 4, 3, c_hammer);
-                draw_filled_rect(sx + 11, my + 7, 2, 4, 0x78350FFF);
-                // Faíscas douradas e brancas do impacto
-                put_pixel_safe(sx + 14, my + 8, 0xFACC15FF);
-                put_pixel_safe(sx + 15, my + 7, 0xFFFFFFFF);
-                put_pixel_safe(sx + 13, my + 6, 0xF97316FF);
+                u32 c_skin   = 0xFDE8CDFF;
+                u32 c_beard  = 0xE2E8F0FF;
+                u32 c_goggle = 0x92400EFF;
+                u32 c_lens   = 0xF97316FF;
+                u32 c_shirt  = 0xDC2626FF;
+                u32 c_apron  = 0x78350FFF;
+                u32 c_hammer = 0x64748BFF;
+                u32 c_gold   = 0xFACC15FF;
+
+                // Rosto e barba espessa
+                draw_filled_rect(sx + 5, my + 4, 6, 4, c_skin);
+                // Óculos de proteção na testa
+                draw_filled_rect(sx + 4, my + 2, 8, 2, c_goggle);
+                put_pixel_safe(sx + 5, my + 2, c_lens);
+                put_pixel_safe(sx + 8, my + 2, c_lens);
+
+                // Olhos e sobrancelha
+                put_pixel_safe(sx + 6, my + 5, 0x0F172AFF);
+                put_pixel_safe(sx + 9, my + 5, 0x0F172AFF);
+
+                // Barba branca cheia de ferreiro
+                draw_filled_rect(sx + 5, my + 7, 6, 4, c_beard);
+                draw_filled_rect(sx + 6, my + 11, 4, 2, c_beard);
+
+                // Corpo com avental de couro
+                draw_filled_rect(sx + 4, my + 8, 8, 7, c_shirt);
+                draw_filled_rect(sx + 5, my + 9, 6, 6, c_apron);
+
+                // Martelo de ferreiro em movimento
+                if (strike == 0 || strike == 1) {
+                    // Martelo erguido alto
+                    draw_filled_rect(sx + 12, my, 4, 3, c_hammer);
+                    put_pixel_safe(sx + 13, my - 1, c_gold);
+                    draw_filled_rect(sx + 11, my + 3, 2, 6, 0x78350FFF); // Cabo
+                } else {
+                    // Martelo golpeando a bigorna com faíscas
+                    draw_filled_rect(sx + 12, my + 9, 4, 3, c_hammer);
+                    draw_filled_rect(sx + 11, my + 7, 2, 4, 0x78350FFF);
+                    // Faíscas douradas e brancas do impacto
+                    put_pixel_safe(sx + 14, my + 8, 0xFACC15FF);
+                    put_pixel_safe(sx + 15, my + 7, 0xFFFFFFFF);
+                    put_pixel_safe(sx + 13, my + 6, 0xF97316FF);
+                }
             }
 
             // Prompt de interação [A] Melari
@@ -5007,15 +5097,31 @@ void entity_manager_render(const Camera* cam) {
         // 34. PREFEITO HAGEN (CABANA DE LAKE HYLIA)
         else if (e->type == ENTITY_NPC_MAYOR_HAGEN) {
             draw_filled_rect(sx - 6, sy + 10, 12, 3, 0x05100766); // Sombra
-            // Chapéu azul com pluma vermelha
-            draw_filled_rect(sx - 6, sy - 10, 12, 4, 0x1E40AFFF);
-            draw_filled_rect(sx - 3, sy - 13, 3, 4, 0xDC2626FF); // Pluma
-            // Rosto redondo e bigode castanho
-            draw_filled_rect(sx - 5, sy - 6, 10, 6, 0xFDE8CDFF);
-            draw_filled_rect(sx - 4, sy - 2, 8, 2, 0x78350FFF); // Bigode
-            // Colete dourado e casaco azul
-            draw_filled_rect(sx - 6, sy, 12, 8, 0x1E3A8AFF);
-            draw_filled_rect(sx - 3, sy + 1, 6, 6, 0xFACC15FF); // Colete
+
+            if (s_npcs_tex && s_npcs_tex->pixels) {
+                int src_x = 0;
+                bool flip_h = false;
+                if (e->dir == DIR_RIGHT) {
+                    src_x = 1 * 16;
+                } else if (e->dir == DIR_LEFT) {
+                    src_x = 1 * 16;
+                    flip_h = true;
+                } else {
+                    int anim = (e->animTimer / 30) % 3;
+                    src_x = (anim == 0) ? (0 * 16) : ((anim == 1) ? (2 * 16) : (3 * 16));
+                }
+                texture_draw_ex(s_npcs_tex, src_x, 3 * 16, 16, 16, sx - 8, sy - 6, flip_h);
+            } else {
+                // Chapéu azul com pluma vermelha
+                draw_filled_rect(sx - 6, sy - 10, 12, 4, 0x1E40AFFF);
+                draw_filled_rect(sx - 3, sy - 13, 3, 4, 0xDC2626FF); // Pluma
+                // Rosto redondo e bigode castanho
+                draw_filled_rect(sx - 5, sy - 6, 10, 6, 0xFDE8CDFF);
+                draw_filled_rect(sx - 4, sy - 2, 8, 2, 0x78350FFF); // Bigode
+                // Colete dourado e casaco azul
+                draw_filled_rect(sx - 6, sy, 12, 8, 0x1E3A8AFF);
+                draw_filled_rect(sx - 3, sy + 1, 6, 6, 0xFACC15FF); // Colete
+            }
         }
     }
 }

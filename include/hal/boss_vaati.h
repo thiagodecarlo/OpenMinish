@@ -33,7 +33,10 @@
 #include "gba/types.h"
 #include "hal/map.h"
 #include "hal/entity.h"
+#include "hal/texture.h"
 #include <stdbool.h>
+
+void boss_vaati_set_npcs_texture(const Texture* tex);
 
 typedef enum {
     VAATI_PHASE_1_REBORN = 0,       // Fase 1: Feiticeiro Vaati com 4 Orbs

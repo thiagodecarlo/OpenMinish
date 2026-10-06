@@ -37,6 +37,11 @@
 #define C_HOLY_LIGHT        0xFEF08AFF // Luz dourada de cura
 
 static VaatiBoss s_vaati = { 0 };
+static const Texture* s_vaati_npcs_tex = NULL;
+
+void boss_vaati_set_npcs_texture(const Texture* tex) {
+    s_vaati_npcs_tex = tex;
+}
 
 static inline u32 blend_colors(u32 dst, u32 src) {
     u32 sa = src & 0xFF;
@@ -664,9 +669,13 @@ void vaati_boss_render(const Camera* cam, float link_x, float link_y, bool is_mi
         // Princesa Zelda no centro (curada)
         int zx = ox + 140;
         int zy = oy + 90;
-        draw_filled_rect(zx - 5, zy - 4, 10, 14, C_ZELDA_DRESS);
-        draw_filled_rect(zx - 4, zy - 12, 8, 8, 0xFDE8CDFF); // Rosto
-        draw_filled_rect(zx - 5, zy - 14, 10, 4, 0xFDE047FF); // Cabelo loiro
+        if (s_vaati_npcs_tex && s_vaati_npcs_tex->pixels) {
+            texture_draw(s_vaati_npcs_tex, 0 * 16, 2 * 16, 16, 16, zx - 8, zy - 12);
+        } else {
+            draw_filled_rect(zx - 5, zy - 4, 10, 14, C_ZELDA_DRESS);
+            draw_filled_rect(zx - 4, zy - 12, 8, 8, 0xFDE8CDFF); // Rosto
+            draw_filled_rect(zx - 5, zy - 14, 10, 4, 0xFDE047FF); // Cabelo loiro
+        }
         font_draw_text(zx - 20, zy + 14, "ZELDA", 0xF472B6FF, true);
 
         // Sábio Minish Ezlo em forma real
