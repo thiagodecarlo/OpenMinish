@@ -34,7 +34,9 @@ typedef enum {
     SPEAKER_MALON,           // Malon da Fazenda Lon Lon (Moça do campo)
     SPEAKER_BUSINESS_SCRUB,  // Deku Scrub comerciante do Monte Crenel
     SPEAKER_MELARI,          // Mestre Ferreiro Melari (Chefe dos Mountain Minish)
-    SPEAKER_MOUNTAIN_MINISH  // Minerador / Aprendiz das Minas de Melari
+    SPEAKER_MOUNTAIN_MINISH, // Minerador / Aprendiz das Minas de Melari
+    SPEAKER_SMITH,           // Mestre Ferreiro Smith (Avô de Link)
+    SPEAKER_MAYOR_HAGEN      // Prefeito Hagen da Cidade de Hyrule
 } DialogueSpeaker;
 
 typedef enum {
@@ -89,6 +91,16 @@ void dialogue_trigger_town_citizen_talk(void);
  * Inicia um diálogo com o Guarda Real que vigia o Portão do Castelo.
  */
 void dialogue_trigger_town_guard_talk(void);
+
+/*
+ * Inicia um diálogo acolhedor com Mestre Ferreiro Smith (avô de Link).
+ */
+void dialogue_trigger_smith_talk(void);
+
+/*
+ * Inicia o diálogo cívico com o Prefeito Hagen da Cidade de Hyrule.
+ */
+void dialogue_trigger_mayor_hagen_talk(void);
 
 /*
  * Inicia o diálogo sagrado com o Ancião Gentari na Vila Minish.
