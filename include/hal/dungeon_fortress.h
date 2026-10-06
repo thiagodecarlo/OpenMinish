@@ -26,7 +26,10 @@
 #include "gba/types.h"
 #include "hal/map.h"
 #include "hal/entity.h"
+#include "hal/texture.h"
 #include <stdbool.h>
+
+void dungeon_fortress_set_bosses_texture(const Texture* tex);
 
 #define FORTRESS_ROOM_W 16
 #define FORTRESS_ROOM_H 10

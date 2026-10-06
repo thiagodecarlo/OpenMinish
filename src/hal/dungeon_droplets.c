@@ -35,6 +35,11 @@
 
 static DungeonDropletsState s_droplets = { 0 };
 static int s_drop_anim_timer = 0;
+static const Texture* s_droplets_bosses_tex = NULL;
+
+void dungeon_droplets_set_bosses_texture(const Texture* tex) {
+    s_droplets_bosses_tex = tex;
+}
 
 static inline u32 blend_colors(u32 dst, u32 src) {
     u32 sa = src & 0xFF;
@@ -628,36 +633,48 @@ void dungeon_droplets_render(const Camera* camera, bool is_minish, float player_
             // Cauda (congelada ou em chamas)
             int tx = (int)(b->tail_x - camera->x);
             int ty = (int)(b->tail_y - camera->y);
-            u32 tail_col = b->tail_frozen ? 0x7DD3FCFF : 0xEA580CFF;
-            for (int dy = -6; dy <= 6; dy++) {
-                for (int dx = -6; dx <= 6; dx++) {
-                    if (dx*dx + dy*dy <= 36) {
-                        hal_video_put_pixel(tx + dx, ty + dy, tail_col);
-                    }
-                }
-            }
 
-            // Corpo maciço do Big Octorok (32x32 pixels)
-            u32 body_c = (b->phase == OCTO_PHASE_BURNING) ? 0xF97316FF : 0x0284C7FF;
-            u32 snout_c = (b->phase == OCTO_PHASE_STUNNED) ? 0xFDE047FF : 0x38BDF8FF;
-            for (int dy = -16; dy <= 16; dy++) {
-                for (int dx = -16; dx <= 16; dx++) {
-                    if (dx*dx + dy*dy <= 256) {
-                        hal_video_put_pixel(ox + dx, oy + dy, body_c);
+            if (s_droplets_bosses_tex && s_droplets_bosses_tex->pixels) {
+                // Cauda (16x16 em Y=80)
+                int tail_src_x = (b->phase == OCTO_PHASE_BURNING) ? 112 : 96;
+                texture_draw(s_droplets_bosses_tex, tail_src_x, 80, 16, 16, tx - 8, ty - 8);
+
+                // Corpo maciço (32x32 em Y=80)
+                int body_src_x = (b->phase == OCTO_PHASE_BURNING) ? 64 :
+                                 (b->phase == OCTO_PHASE_STUNNED) ? 32 : 0;
+                texture_draw(s_droplets_bosses_tex, body_src_x, 80, 32, 32, ox - 16, oy - 16);
+            } else {
+                u32 tail_col = b->tail_frozen ? 0x7DD3FCFF : 0xEA580CFF;
+                for (int dy = -6; dy <= 6; dy++) {
+                    for (int dx = -6; dx <= 6; dx++) {
+                        if (dx*dx + dy*dy <= 36) {
+                            hal_video_put_pixel(tx + dx, ty + dy, tail_col);
+                        }
                     }
                 }
-            }
-            // Focinho/boca proeminente
-            for (int dy = 4; dy <= 16; dy++) {
-                for (int dx = -6; dx <= 6; dx++) {
-                    hal_video_put_pixel(ox + dx, oy + dy, snout_c);
+
+                // Corpo maciço do Big Octorok (32x32 pixels)
+                u32 body_c = (b->phase == OCTO_PHASE_BURNING) ? 0xF97316FF : 0x0284C7FF;
+                u32 snout_c = (b->phase == OCTO_PHASE_STUNNED) ? 0xFDE047FF : 0x38BDF8FF;
+                for (int dy = -16; dy <= 16; dy++) {
+                    for (int dx = -16; dx <= 16; dx++) {
+                        if (dx*dx + dy*dy <= 256) {
+                            hal_video_put_pixel(ox + dx, oy + dy, body_c);
+                        }
+                    }
                 }
+                // Focinho/boca proeminente
+                for (int dy = 4; dy <= 16; dy++) {
+                    for (int dx = -6; dx <= 6; dx++) {
+                        hal_video_put_pixel(ox + dx, oy + dy, snout_c);
+                    }
+                }
+                // Olhos
+                hal_video_put_pixel(ox - 8, oy - 4, 0xFFFFFFFF);
+                hal_video_put_pixel(ox - 7, oy - 4, 0x0F172AFF);
+                hal_video_put_pixel(ox + 8, oy - 4, 0xFFFFFFFF);
+                hal_video_put_pixel(ox + 7, oy - 4, 0x0F172AFF);
             }
-            // Olhos
-            hal_video_put_pixel(ox - 8, oy - 4, 0xFFFFFFFF);
-            hal_video_put_pixel(ox - 7, oy - 4, 0x0F172AFF);
-            hal_video_put_pixel(ox + 8, oy - 4, 0xFFFFFFFF);
-            hal_video_put_pixel(ox + 7, oy - 4, 0x0F172AFF);
         }
 
         // Pedras arremessadas
@@ -666,11 +683,16 @@ void dungeon_droplets_render(const Camera* camera, bool is_minish, float player_
             if (r->is_active) {
                 int rx = (int)(r->x - camera->x);
                 int ry = (int)(r->y - camera->y);
-                u32 rc = r->reflected ? 0xFDE047FF : 0x475569FF;
-                for (int dy = -4; dy <= 4; dy++) {
-                    for (int dx = -4; dx <= 4; dx++) {
-                        if (dx*dx + dy*dy <= 16) {
-                            hal_video_put_pixel(rx + dx, ry + dy, rc);
+                if (s_droplets_bosses_tex && s_droplets_bosses_tex->pixels) {
+                    int rock_src_x = r->reflected ? 136 : 128;
+                    texture_draw(s_droplets_bosses_tex, rock_src_x, 80, 8, 8, rx - 4, ry - 4);
+                } else {
+                    u32 rc = r->reflected ? 0xFDE047FF : 0x475569FF;
+                    for (int dy = -4; dy <= 4; dy++) {
+                        for (int dx = -4; dx <= 4; dx++) {
+                            if (dx*dx + dy*dy <= 16) {
+                                hal_video_put_pixel(rx + dx, ry + dy, rc);
+                            }
                         }
                     }
                 }

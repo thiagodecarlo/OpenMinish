@@ -25,6 +25,7 @@ static Entity s_entities[MAX_ENTITIES];
 static const Texture* s_octo_tex = NULL;
 static const Texture* s_enemies_tex = NULL;
 static const Texture* s_npcs_tex = NULL;
+static const Texture* s_bosses_tex = NULL;
 static float s_last_link_x = 0.0f;
 static float s_last_link_y = 0.0f;
 static int   s_screen_shake_timer = 0;
@@ -48,6 +49,10 @@ void entity_set_enemies_texture(const Texture* tex) {
 
 void entity_set_npcs_texture(const Texture* tex) {
     s_npcs_tex = tex;
+}
+
+void entity_set_bosses_texture(const Texture* tex) {
+    s_bosses_tex = tex;
 }
 
 static inline void put_pixel_safe(int x, int y, u32 color) {
@@ -4658,120 +4663,158 @@ void entity_manager_render(const Camera* cam) {
             bool flash = (e->invulnerableTimer > 0 && (e->invulnerableTimer / 2) % 2 == 1);
             int neck_sway = (int)(sinf((float)e->animTimer * 0.08f) * 4.0f);
 
-            u32 c_rock_base  = flash ? 0xFFFFFFFF : 0x292524FF;
-            u32 c_rock_crust = flash ? 0xFEE2E2FF : 0x44403CFF;
-            u32 c_rock_dark  = flash ? 0xE2E8F0FF : 0x1C1917FF;
-            u32 c_magma_seam = flash ? 0xFDE047FF : 0xDC2626FF;
-            u32 c_magma_glow = flash ? 0xFFFFFFFF : 0xF97316FF;
-            u32 c_ruby       = flash ? 0xFFFFFFFF : 0xEF4444FF;
-            u32 c_ruby_glow  = flash ? 0xFFFFFFFF : 0xFDE047FF;
-            u32 c_horn       = flash ? 0xFDE047FF : 0xD97706FF;
+            if (s_bosses_tex && s_bosses_tex->pixels && !flash) {
+                if (e->action == 3) {
+                    // ESTADO TOPPLED (VULNERAVEL): CARAPACA INVERTIDA & PESCOCO COMO PONTE
+                    int ramp_x = sx + 12;
+                    int ramp_y = sy + 26;
+                    texture_draw(s_bosses_tex, 192, 0, 32, 32, ramp_x, ramp_y);
 
-            if (e->action == 3) {
-                // ESTADO TOPPLED (VULNERÁVEL): CARAPAÇA INVERTIDA & PESCOÇO COMO PONTE
-                // 1. Pescoço estendido no piso formando rampa de acesso
-                int ramp_x = sx + 20;
-                int ramp_y = sy + 28;
-                draw_filled_rect(ramp_x, ramp_y, 16, 12, c_rock_dark);
-                draw_filled_rect(ramp_x + 2, ramp_y + 2, 12, 8, c_rock_crust);
-                draw_filled_rect(ramp_x + 4, ramp_y + 4, 8, 4, 0x78350FFF); // Caminho de escamas
+                    int body_x = sx - 4;
+                    int body_y = sy + 2;
+                    texture_draw(s_bosses_tex, 128, 0, 64, 32, body_x, body_y);
+                } else if (e->action == 5) {
+                    // MORTE CLIMATICA: AFUNDAMENTO NA LAVA
+                    int sink = e->bossDeathTimer / 4;
+                    int body_x = sx - 4;
+                    int body_y = sy + 2 + sink;
+                    texture_draw(s_bosses_tex, 0, 0, 64, 32, body_x, body_y);
 
-                // Cabeça adormecida / atordoada no solo
-                int hx = ramp_x - 4;
-                int hy = ramp_y + 8;
-                draw_filled_rect(hx, hy, 14, 10, c_rock_dark);
-                draw_filled_rect(hx + 2, hy + 2, 10, 6, c_rock_base);
-                put_pixel_safe(hx + 3, hy + 4, 0x1E293BFF); // Olho fechado / em X
-                put_pixel_safe(hx + 5, hy + 4, 0x1E293BFF);
-
-                // 2. Carapaça virada ao avesso (expondo o grande Núcleo de Rubi)
-                int body_x = sx + 4;
-                int body_y = sy + 4;
-                draw_filled_rect(body_x, body_y, 48, 26, c_rock_dark);
-                draw_filled_rect(body_x + 2, body_y + 2, 44, 22, c_rock_base);
-                draw_filled_rect(body_x + 4, body_y + 4, 40, 18, c_rock_crust);
-
-                // Núcleo de Rubi pulsante
-                int core_x = body_x + 15;
-                int core_y = body_y + 5;
-                int pulse = (int)(sinf((float)e->animTimer * 0.2f) * 2.0f);
-                draw_rect_blend(core_x - 4, core_y - 4, 26, 22, 0xDC262655);
-                draw_filled_rect(core_x - pulse, core_y - pulse, 18 + pulse * 2, 14 + pulse * 2, c_ruby);
-                draw_filled_rect(core_x + 3, core_y + 2, 12, 10, c_magma_glow);
-                draw_filled_rect(core_x + 6, core_y + 4, 6, 6, c_ruby_glow);
-                put_pixel_safe(core_x + 8, core_y + 5, 0xFFFFFFFF); // Brilho de reflexo da joia
-
-                // Garras adormecidas nos lados
-                draw_filled_rect(body_x - 3, body_y + 8, 4, 8, c_horn);
-                draw_filled_rect(body_x + 47, body_y + 8, 4, 8, c_horn);
-            } else if (e->action == 5) {
-                // MORTE CLIMÁTICA: EXPLOSÕES E AFUNDAMENTO NA LAVA
-                int sink = e->bossDeathTimer / 4;
-                int body_x = sx + 4;
-                int body_y = sy + 4 + sink;
-
-                draw_filled_rect(body_x, body_y, 48, 28, c_rock_dark);
-                draw_filled_rect(body_x + 4, body_y + 2, 40, 24, c_rock_base);
-
-                // Círculos de explosão e clarões de destruição
-                int ex_phase = (e->bossDeathTimer / 6) % 4;
-                int ex_x = body_x + 6 + (ex_phase * 10);
-                int ex_y = body_y + 4 + ((ex_phase % 2) * 10);
-                draw_filled_rect(ex_x - 6, ex_y - 6, 12, 12, 0xFDE047CC);
-                draw_filled_rect(ex_x - 3, ex_y - 3, 6, 6, 0xFFFFFFFF);
-            } else {
-                // ESTADO ATIVO / PATRULHA / ATAQUE DE FOGO (Action 0, 1, 4)
-                // 1. Carapaça blindada de basalto com fissuras de magma
-                int body_x = sx + 4;
-                int body_y = sy + 8;
-                draw_filled_rect(body_x, body_y, 48, 28, c_rock_dark);
-                draw_filled_rect(body_x + 2, body_y + 2, 44, 24, c_rock_base);
-                draw_filled_rect(body_x + 4, body_y + 4, 40, 20, c_rock_crust);
-
-                // Fissuras de magma incandescente na rocha
-                for (int f = 0; f < 3; f++) {
-                    int fx = body_x + 10 + (f * 12);
-                    int fy = body_y + 6;
-                    draw_filled_rect(fx, fy, 4, 16, c_magma_seam);
-                    draw_filled_rect(fx + 1, fy + 2, 2, 12, c_magma_glow);
-                    put_pixel_safe(fx + 1, fy + 6, 0xFFFFFFFF);
-                }
-
-                // Chifres e espigões rochosos da couraça
-                draw_filled_rect(body_x + 2, body_y - 4, 6, 6, c_horn);
-                draw_filled_rect(body_x + 40, body_y - 4, 6, 6, c_horn);
-                draw_filled_rect(body_x + 21, body_y - 5, 6, 6, c_horn);
-
-                // 2. Pescoço serpentino de dragão ondulando
-                int neck_x = body_x + 18 + neck_sway;
-                int neck_y = body_y + 16;
-                draw_filled_rect(neck_x, neck_y, 12, 14, c_rock_dark);
-                draw_filled_rect(neck_x + 2, neck_y, 8, 14, c_rock_base);
-                draw_filled_rect(neck_x + 4, neck_y + 2, 4, 10, c_magma_seam);
-
-                // 3. Cabeça de Dragão com mandíbula e olhos
-                int head_x = neck_x - 3;
-                int head_y = neck_y + 10;
-                draw_filled_rect(head_x, head_y, 18, 14, c_rock_dark);
-                draw_filled_rect(head_x + 2, head_y + 2, 14, 10, c_rock_base);
-
-                // Grandes Chifres de Dragão
-                draw_filled_rect(head_x - 3, head_y + 1, 4, 5, c_horn);
-                draw_filled_rect(head_x + 17, head_y + 1, 4, 5, c_horn);
-
-                // Olhos amarelos flamejantes
-                draw_filled_rect(head_x + 3, head_y + 4, 3, 3, 0xFDE047FF);
-                draw_filled_rect(head_x + 12, head_y + 4, 3, 3, 0xFDE047FF);
-                put_pixel_safe(head_x + 4, head_y + 5, 0xDC2626FF); // Pupila rubi
-                put_pixel_safe(head_x + 13, head_y + 5, 0xDC2626FF);
-
-                // Boca / Focinho cuspindo fogo ou fumaça
-                if (e->bossFireTimer < 35) {
-                    draw_filled_rect(head_x + 5, head_y + 9, 8, 5, c_magma_glow);
-                    draw_filled_rect(head_x + 6, head_y + 10, 6, 3, 0xFDE047FF);
-                    put_pixel_safe(head_x + 8, head_y + 11, 0xFFFFFFFF);
+                    int ex_phase = (e->bossDeathTimer / 6) % 4;
+                    int ex_x = body_x + 14 + (ex_phase * 10);
+                    int ex_y = body_y + 4 + ((ex_phase % 2) * 10);
+                    draw_filled_rect(ex_x - 6, ex_y - 6, 12, 12, 0xFDE047CC);
+                    draw_filled_rect(ex_x - 3, ex_y - 3, 6, 6, 0xFFFFFFFF);
                 } else {
-                    draw_filled_rect(head_x + 6, head_y + 10, 6, 3, c_rock_dark);
+                    // ESTADO ATIVO / PATRULHA / ATAQUE DE FOGO
+                    int body_x = sx - 4;
+                    int body_y = sy + 4;
+                    texture_draw(s_bosses_tex, 0, 0, 64, 32, body_x, body_y);
+
+                    int neck_x = body_x + 16 + neck_sway;
+                    int neck_y = body_y + 12;
+                    if (e->bossFireTimer < 35) {
+                        texture_draw(s_bosses_tex, 96, 0, 32, 32, neck_x, neck_y);
+                    } else {
+                        texture_draw(s_bosses_tex, 64, 0, 32, 32, neck_x, neck_y);
+                    }
+                }
+            } else {
+                u32 c_rock_base  = flash ? 0xFFFFFFFF : 0x292524FF;
+                u32 c_rock_crust = flash ? 0xFEE2E2FF : 0x44403CFF;
+                u32 c_rock_dark  = flash ? 0xE2E8F0FF : 0x1C1917FF;
+                u32 c_magma_seam = flash ? 0xFDE047FF : 0xDC2626FF;
+                u32 c_magma_glow = flash ? 0xFFFFFFFF : 0xF97316FF;
+                u32 c_ruby       = flash ? 0xFFFFFFFF : 0xEF4444FF;
+                u32 c_ruby_glow  = flash ? 0xFFFFFFFF : 0xFDE047FF;
+                u32 c_horn       = flash ? 0xFDE047FF : 0xD97706FF;
+
+                if (e->action == 3) {
+                    // ESTADO TOPPLED (VULNERÁVEL): CARAPAÇA INVERTIDA & PESCOÇO COMO PONTE
+                    // 1. Pescoço estendido no piso formando rampa de acesso
+                    int ramp_x = sx + 20;
+                    int ramp_y = sy + 28;
+                    draw_filled_rect(ramp_x, ramp_y, 16, 12, c_rock_dark);
+                    draw_filled_rect(ramp_x + 2, ramp_y + 2, 12, 8, c_rock_crust);
+                    draw_filled_rect(ramp_x + 4, ramp_y + 4, 8, 4, 0x78350FFF); // Caminho de escamas
+
+                    // Cabeça adormecida / atordoada no solo
+                    int hx = ramp_x - 4;
+                    int hy = ramp_y + 8;
+                    draw_filled_rect(hx, hy, 14, 10, c_rock_dark);
+                    draw_filled_rect(hx + 2, hy + 2, 10, 6, c_rock_base);
+                    put_pixel_safe(hx + 3, hy + 4, 0x1E293BFF); // Olho fechado / em X
+                    put_pixel_safe(hx + 5, hy + 4, 0x1E293BFF);
+
+                    // 2. Carapaça virada ao avesso (expondo o grande Núcleo de Rubi)
+                    int body_x = sx + 4;
+                    int body_y = sy + 4;
+                    draw_filled_rect(body_x, body_y, 48, 26, c_rock_dark);
+                    draw_filled_rect(body_x + 2, body_y + 2, 44, 22, c_rock_base);
+                    draw_filled_rect(body_x + 4, body_y + 4, 40, 18, c_rock_crust);
+
+                    // Núcleo de Rubi pulsante
+                    int core_x = body_x + 15;
+                    int core_y = body_y + 5;
+                    int pulse = (int)(sinf((float)e->animTimer * 0.2f) * 2.0f);
+                    draw_rect_blend(core_x - 4, core_y - 4, 26, 22, 0xDC262655);
+                    draw_filled_rect(core_x - pulse, core_y - pulse, 18 + pulse * 2, 14 + pulse * 2, c_ruby);
+                    draw_filled_rect(core_x + 3, core_y + 2, 12, 10, c_magma_glow);
+                    draw_filled_rect(core_x + 6, core_y + 4, 6, 6, c_ruby_glow);
+                    put_pixel_safe(core_x + 8, core_y + 5, 0xFFFFFFFF); // Brilho de reflexo da joia
+
+                    // Garras adormecidas nos lados
+                    draw_filled_rect(body_x - 3, body_y + 8, 4, 8, c_horn);
+                    draw_filled_rect(body_x + 47, body_y + 8, 4, 8, c_horn);
+                } else if (e->action == 5) {
+                    // MORTE CLIMÁTICA: EXPLOSÕES E AFUNDAMENTO NA LAVA
+                    int sink = e->bossDeathTimer / 4;
+                    int body_x = sx + 4;
+                    int body_y = sy + 4 + sink;
+
+                    draw_filled_rect(body_x, body_y, 48, 28, c_rock_dark);
+                    draw_filled_rect(body_x + 4, body_y + 2, 40, 24, c_rock_base);
+
+                    // Círculos de explosão e clarões de destruição
+                    int ex_phase = (e->bossDeathTimer / 6) % 4;
+                    int ex_x = body_x + 6 + (ex_phase * 10);
+                    int ex_y = body_y + 4 + ((ex_phase % 2) * 10);
+                    draw_filled_rect(ex_x - 6, ex_y - 6, 12, 12, 0xFDE047CC);
+                    draw_filled_rect(ex_x - 3, ex_y - 3, 6, 6, 0xFFFFFFFF);
+                } else {
+                    // ESTADO ATIVO / PATRULHA / ATAQUE DE FOGO (Action 0, 1, 4)
+                    // 1. Carapaça blindada de basalto com fissuras de magma
+                    int body_x = sx + 4;
+                    int body_y = sy + 8;
+                    draw_filled_rect(body_x, body_y, 48, 28, c_rock_dark);
+                    draw_filled_rect(body_x + 2, body_y + 2, 44, 24, c_rock_base);
+                    draw_filled_rect(body_x + 4, body_y + 4, 40, 20, c_rock_crust);
+
+                    // Fissuras de magma incandescente na rocha
+                    for (int f = 0; f < 3; f++) {
+                        int fx = body_x + 10 + (f * 12);
+                        int fy = body_y + 6;
+                        draw_filled_rect(fx, fy, 4, 16, c_magma_seam);
+                        draw_filled_rect(fx + 1, fy + 2, 2, 12, c_magma_glow);
+                        put_pixel_safe(fx + 1, fy + 6, 0xFFFFFFFF);
+                    }
+
+                    // Chifres e espigões rochosos da couraça
+                    draw_filled_rect(body_x + 2, body_y - 4, 6, 6, c_horn);
+                    draw_filled_rect(body_x + 40, body_y - 4, 6, 6, c_horn);
+                    draw_filled_rect(body_x + 21, body_y - 5, 6, 6, c_horn);
+
+                    // 2. Pescoço serpentino de dragão ondulando
+                    int neck_x = body_x + 18 + neck_sway;
+                    int neck_y = body_y + 16;
+                    draw_filled_rect(neck_x, neck_y, 12, 14, c_rock_dark);
+                    draw_filled_rect(neck_x + 2, neck_y, 8, 14, c_rock_base);
+                    draw_filled_rect(neck_x + 4, neck_y + 2, 4, 10, c_magma_seam);
+
+                    // 3. Cabeça de Dragão com mandíbula e olhos
+                    int head_x = neck_x - 3;
+                    int head_y = neck_y + 10;
+                    draw_filled_rect(head_x, head_y, 18, 14, c_rock_dark);
+                    draw_filled_rect(head_x + 2, head_y + 2, 14, 10, c_rock_base);
+
+                    // Grandes Chifres de Dragão
+                    draw_filled_rect(head_x - 3, head_y + 1, 4, 5, c_horn);
+                    draw_filled_rect(head_x + 17, head_y + 1, 4, 5, c_horn);
+
+                    // Olhos amarelos flamejantes
+                    draw_filled_rect(head_x + 3, head_y + 4, 3, 3, 0xFDE047FF);
+                    draw_filled_rect(head_x + 12, head_y + 4, 3, 3, 0xFDE047FF);
+                    put_pixel_safe(head_x + 4, head_y + 5, 0xDC2626FF); // Pupila rubi
+                    put_pixel_safe(head_x + 13, head_y + 5, 0xDC2626FF);
+
+                    // Boca / Focinho cuspindo fogo ou fumaça
+                    if (e->bossFireTimer < 35) {
+                        draw_filled_rect(head_x + 5, head_y + 9, 8, 5, c_magma_glow);
+                        draw_filled_rect(head_x + 6, head_y + 10, 6, 3, 0xFDE047FF);
+                        put_pixel_safe(head_x + 8, head_y + 11, 0xFFFFFFFF);
+                    } else {
+                        draw_filled_rect(head_x + 6, head_y + 10, 6, 3, c_rock_dark);
+                    }
                 }
             }
 

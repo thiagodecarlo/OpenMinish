@@ -37,7 +37,10 @@
 #include "gba/types.h"
 #include "hal/map.h"
 #include "hal/entity.h"
+#include "hal/texture.h"
 #include <stdbool.h>
+
+void dungeon_palace_set_bosses_texture(const Texture* tex);
 
 #define PALACE_ROOM_W 16
 #define PALACE_ROOM_H 10
