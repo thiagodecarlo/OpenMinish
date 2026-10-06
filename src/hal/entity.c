@@ -23,6 +23,7 @@
 
 static Entity s_entities[MAX_ENTITIES];
 static const Texture* s_octo_tex = NULL;
+static const Texture* s_enemies_tex = NULL;
 static float s_last_link_x = 0.0f;
 static float s_last_link_y = 0.0f;
 static int   s_screen_shake_timer = 0;
@@ -38,6 +39,10 @@ static inline bool entity_is_solid(const Tilemap* map, float wx, float wy) {
 
 void entity_set_texture(const Texture* tex) {
     s_octo_tex = tex;
+}
+
+void entity_set_enemies_texture(const Texture* tex) {
+    s_enemies_tex = tex;
 }
 
 static inline void put_pixel_safe(int x, int y, u32 color) {
@@ -2803,40 +2808,56 @@ void entity_manager_render(const Camera* cam) {
                 continue;
             }
 
-            if (s_octo_tex && s_octo_tex->pixels) {
+            const Texture* use_tex = s_enemies_tex ? s_enemies_tex : s_octo_tex;
+            if (use_tex && use_tex->pixels) {
                 int src_x = 0;
                 int src_y = 0;
                 bool flip_h = false;
 
-                if (e->action == 2) {
-                    // Antecipação de tiro (bochechas inchadas)
-                    if (e->dir == DIR_DOWN) {
-                        src_x = 0; src_y = 16;
-                    } else if (e->dir == DIR_UP) {
-                        src_x = 16; src_y = 0;
-                    } else if (e->dir == DIR_RIGHT) {
-                        src_x = 32; src_y = 16;
-                    } else if (e->dir == DIR_LEFT) {
-                        src_x = 32; src_y = 16;
-                        flip_h = true;
+                if (s_enemies_tex) {
+                    if (e->action == 2) {
+                        if (e->dir == DIR_DOWN)       src_x = 4 * 16;
+                        else if (e->dir == DIR_UP)    src_x = 1 * 16;
+                        else if (e->dir == DIR_RIGHT) src_x = 5 * 16;
+                        else if (e->dir == DIR_LEFT)  { src_x = 5 * 16; flip_h = true; }
+                    } else {
+                        if (e->dir == DIR_DOWN)       src_x = 0 * 16;
+                        else if (e->dir == DIR_UP)    src_x = 1 * 16;
+                        else if (e->dir == DIR_RIGHT) src_x = (e->animFrame == 0) ? 2 * 16 : 3 * 16;
+                        else if (e->dir == DIR_LEFT)  { src_x = (e->animFrame == 0) ? 2 * 16 : 3 * 16; flip_h = true; }
                     }
+                    src_y = 0;
                 } else {
-                    // Movimento / Patrulha (alterna passos)
-                    if (e->dir == DIR_DOWN) {
-                        src_x = 0; src_y = 0;
-                    } else if (e->dir == DIR_UP) {
-                        src_x = 16; src_y = 0;
-                    } else if (e->dir == DIR_RIGHT) {
-                        src_x = (e->animFrame == 0) ? 32 : 48;
-                        src_y = 0;
-                    } else if (e->dir == DIR_LEFT) {
-                        src_x = (e->animFrame == 0) ? 32 : 48;
-                        src_y = 0;
-                        flip_h = true;
+                    if (e->action == 2) {
+                        // Antecipação de tiro (bochechas inchadas)
+                        if (e->dir == DIR_DOWN) {
+                            src_x = 0; src_y = 16;
+                        } else if (e->dir == DIR_UP) {
+                            src_x = 16; src_y = 0;
+                        } else if (e->dir == DIR_RIGHT) {
+                            src_x = 32; src_y = 16;
+                        } else if (e->dir == DIR_LEFT) {
+                            src_x = 32; src_y = 16;
+                            flip_h = true;
+                        }
+                    } else {
+                        // Movimento / Patrulha (alterna passos)
+                        if (e->dir == DIR_DOWN) {
+                            src_x = 0; src_y = 0;
+                        } else if (e->dir == DIR_UP) {
+                            src_x = 16; src_y = 0;
+                        } else if (e->dir == DIR_RIGHT) {
+                            src_x = (e->animFrame == 0) ? 32 : 48;
+                            src_y = 0;
+                        } else if (e->dir == DIR_LEFT) {
+                            src_x = (e->animFrame == 0) ? 32 : 48;
+                            src_y = 0;
+                            flip_h = true;
+                        }
                     }
                 }
 
-                texture_draw_ex(s_octo_tex, src_x, src_y, 16, 16, sx, sy, flip_h);
+                texture_draw_ex(use_tex, src_x, src_y, 16, 16, sx, sy, flip_h);
             } else {
                 // Fallback Procedural caso o arquivo octorok.bmp não esteja presente
                 u32 red_body   = 0xDE3030FF;
@@ -2881,7 +2902,9 @@ void entity_manager_render(const Camera* cam) {
 
         // 2. PROJÉTIL: PEDRA
         else if (e->type == ENTITY_PROJECTILE_ROCK) {
-            if (s_octo_tex && s_octo_tex->pixels) {
+            if (s_enemies_tex && s_enemies_tex->pixels) {
+                texture_draw(s_enemies_tex, 6 * 16, 0, 16, 16, sx, sy);
+            } else if (s_octo_tex && s_octo_tex->pixels) {
                 // Sprite canônico da pedra: 8x8 pixels em (48, 32)
                 texture_draw(s_octo_tex, 48, 32, 8, 8, sx + 4, sy + 4);
             } else {
@@ -3018,8 +3041,12 @@ void entity_manager_render(const Camera* cam) {
         // 6. INIMIGO: KEESE & FIRE KEESE (MORCEGO VOADOR / EM CHAMAS)
         else if (e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_FIRE_KEESE) {
             // Sombra oval no chão (projeção de altitude 3D no terreno)
-            draw_filled_rect(sx + 3, sy + 12, 10, 3, 0x05100766);
-            draw_filled_rect(sx + 4, sy + 11, 8, 4, 0x05100766);
+            if (s_enemies_tex && s_enemies_tex->pixels) {
+                texture_draw(s_enemies_tex, 5 * 16, 2 * 16, 16, 16, sx, sy);
+            } else {
+                draw_filled_rect(sx + 3, sy + 12, 10, 3, 0x05100766);
+                draw_filled_rect(sx + 4, sy + 11, 8, 4, 0x05100766);
+            }
 
             // Piscar ao receber dano da espada
             if (e->invulnerableTimer > 0 && ((e->invulnerableTimer / 3) % 2 == 0)) {
@@ -3027,51 +3054,57 @@ void entity_manager_render(const Camera* cam) {
             }
 
             int by = sy - (int)e->z;
-
             bool is_fire = (e->type == ENTITY_ENEMY_FIRE_KEESE);
-            u32 c_body  = is_fire ? 0x7F1D1DFF : 0x2A0E3DFF; // Vermelho escuro ou Roxo escuro do corpo
-            u32 c_wing  = is_fire ? 0xEA580CFF : 0x58247DFF; // Asas laranja-fogo ou violeta
-            u32 c_rib   = is_fire ? 0xFBBF24FF : 0x8239B5FF; // Nervuras douradas de chama ou nervuras das asas
-            u32 c_eye   = is_fire ? 0xFEF08AFF : 0xFFD700FF; // Olhos amarelos incandescentes
-            u32 c_pupil = 0xEE1100FF; // Íris vermelha
 
-            // Partículas de fagulhas de fogo para o Fire Keese
-            if (is_fire) {
-                int f_tick = (e->animTimer / 3) % 4;
-                put_pixel_safe(sx + 2 + f_tick, by - 2 + (f_tick % 2), 0xFDE047FF);
-                put_pixel_safe(sx + 12 - f_tick, by - 1 - (f_tick % 2), 0xEF4444FF);
-                put_pixel_safe(sx + 7 + ((f_tick * 3) % 5) - 2, by + 10, 0xF97316FF);
-            }
-
-            // Corpo e cabeça central do morcego
-            draw_filled_rect(sx + 6, by + 4, 4, 6, c_body);
-            put_pixel_safe(sx + 6, by + 3, c_body); // Orelha esq
-            put_pixel_safe(sx + 9, by + 3, c_body); // Orelha dir
-
-            // Olhos brilhantes
-            put_pixel_safe(sx + 6, by + 5, c_eye);
-            put_pixel_safe(sx + 9, by + 5, c_eye);
-            put_pixel_safe(sx + 7, by + 6, c_pupil);
-            put_pixel_safe(sx + 8, by + 6, c_pupil);
-
-            // Presas brancas
-            put_pixel_safe(sx + 6, by + 8, 0xFFFFFFFF);
-            put_pixel_safe(sx + 9, by + 8, 0xFFFFFFFF);
-
-            // Animação de bater asas (Wings Up / Wings Down)
-            bool wings_up = ((e->animTimer / 6) % 2 == 0);
-            if (wings_up) {
-                // Asas apontadas para cima
-                draw_filled_rect(sx + 2, by + 1, 4, 4, c_wing);
-                draw_filled_rect(sx + 10, by + 1, 4, 4, c_wing);
-                put_pixel_safe(sx + 1, by, c_rib);
-                put_pixel_safe(sx + 14, by, c_rib);
+            if (s_enemies_tex && s_enemies_tex->pixels) {
+                bool wings_up = ((e->animTimer / 6) % 2 == 0);
+                int src_x = is_fire ? (wings_up ? 3 * 16 : 4 * 16) : (wings_up ? 0 * 16 : 1 * 16);
+                texture_draw(s_enemies_tex, src_x, 2 * 16, 16, 16, sx, by);
             } else {
-                // Asas apontadas para baixo/horizontal
-                draw_filled_rect(sx + 1, by + 5, 5, 4, c_wing);
-                draw_filled_rect(sx + 10, by + 5, 5, 4, c_wing);
-                put_pixel_safe(sx, by + 8, c_rib);
-                put_pixel_safe(sx + 15, by + 8, c_rib);
+                u32 c_body  = is_fire ? 0x7F1D1DFF : 0x2A0E3DFF; // Vermelho escuro ou Roxo escuro do corpo
+                u32 c_wing  = is_fire ? 0xEA580CFF : 0x58247DFF; // Asas laranja-fogo ou violeta
+                u32 c_rib   = is_fire ? 0xFBBF24FF : 0x8239B5FF; // Nervuras douradas de chama ou nervuras das asas
+                u32 c_eye   = is_fire ? 0xFEF08AFF : 0xFFD700FF; // Olhos amarelos incandescentes
+                u32 c_pupil = 0xEE1100FF; // Íris vermelha
+
+                // Partículas de fagulhas de fogo para o Fire Keese
+                if (is_fire) {
+                    int f_tick = (e->animTimer / 3) % 4;
+                    put_pixel_safe(sx + 2 + f_tick, by - 2 + (f_tick % 2), 0xFDE047FF);
+                    put_pixel_safe(sx + 12 - f_tick, by - 1 - (f_tick % 2), 0xEF4444FF);
+                    put_pixel_safe(sx + 7 + ((f_tick * 3) % 5) - 2, by + 10, 0xF97316FF);
+                }
+
+                // Corpo e cabeça central do morcego
+                draw_filled_rect(sx + 6, by + 4, 4, 6, c_body);
+                put_pixel_safe(sx + 6, by + 3, c_body); // Orelha esq
+                put_pixel_safe(sx + 9, by + 3, c_body); // Orelha dir
+
+                // Olhos brilhantes
+                put_pixel_safe(sx + 6, by + 5, c_eye);
+                put_pixel_safe(sx + 9, by + 5, c_eye);
+                put_pixel_safe(sx + 7, by + 6, c_pupil);
+                put_pixel_safe(sx + 8, by + 6, c_pupil);
+
+                // Presas brancas
+                put_pixel_safe(sx + 6, by + 8, 0xFFFFFFFF);
+                put_pixel_safe(sx + 9, by + 8, 0xFFFFFFFF);
+
+                // Animação de bater asas (Wings Up / Wings Down)
+                bool wings_up = ((e->animTimer / 6) % 2 == 0);
+                if (wings_up) {
+                    // Asas apontadas para cima
+                    draw_filled_rect(sx + 2, by + 1, 4, 4, c_wing);
+                    draw_filled_rect(sx + 10, by + 1, 4, 4, c_wing);
+                    put_pixel_safe(sx + 1, by, c_rib);
+                    put_pixel_safe(sx + 14, by, c_rib);
+                } else {
+                    // Asas apontadas para baixo/horizontal
+                    draw_filled_rect(sx + 1, by + 5, 5, 4, c_wing);
+                    draw_filled_rect(sx + 10, by + 5, 5, 4, c_wing);
+                    put_pixel_safe(sx, by + 8, c_rib);
+                    put_pixel_safe(sx + 15, by + 8, c_rib);
+                }
             }
         }
 
@@ -3082,55 +3115,72 @@ void entity_manager_render(const Camera* cam) {
                 continue;
             }
 
-            u32 c_jelly = 0x26C437FF; // Verde translúcido
-            u32 c_dark  = 0x146B1EFF; // Base escura
-            u32 c_shine = 0x88FFAAFF; // Brilho de gelatina
-            u32 c_white = 0xFFFFFFFF; // Olhos brancos
-            u32 c_pupil = 0x111111FF; // Pupilas
+            if (s_enemies_tex && s_enemies_tex->pixels) {
+                int src_x = 2 * 16; // Standing
+                int draw_cy = sy;
+                if (e->action == 0) {
+                    src_x = 0 * 16; // Puddle
+                } else if (e->action == 1) {
+                    src_x = 1 * 16; // Emerging
+                } else if (e->action == 2 || e->action == 4) {
+                    src_x = (e->action == 4) ? 5 * 16 : 3 * 16; // Wobble / Squash
+                } else if (e->action == 3) {
+                    src_x = 4 * 16; // Stretch jump
+                    draw_cy = sy - (int)e->z;
+                    texture_draw(s_enemies_tex, 5 * 16, 2 * 16, 16, 16, sx, sy);
+                }
+                texture_draw(s_enemies_tex, src_x, 1 * 16, 16, 16, sx, draw_cy);
+            } else {
+                u32 c_jelly = 0x26C437FF; // Verde translúcido
+                u32 c_dark  = 0x146B1EFF; // Base escura
+                u32 c_shine = 0x88FFAAFF; // Brilho de gelatina
+                u32 c_white = 0xFFFFFFFF; // Olhos brancos
+                u32 c_pupil = 0x111111FF; // Pupilas
 
-            // Estado 0: Poça camuflada no solo
-            if (e->action == 0) {
-                draw_filled_rect(sx + 2, sy + 13, 12, 3, c_jelly);
-                draw_filled_rect(sx + 4, sy + 12, 8, 1, c_shine);
-                put_pixel_safe(sx + 3, sy + 14, c_dark);
-                put_pixel_safe(sx + 12, sy + 14, c_dark);
-            }
-            // Estado 1: Emergindo da terra
-            else if (e->action == 1) {
-                int h = 4 + (20 - e->aiTimer) / 2;
-                if (h > 12) h = 12;
-                draw_filled_rect(sx + 3, sy + 16 - h, 10, h, c_jelly);
-                draw_filled_rect(sx + 5, sy + 16 - h, 6, 2, c_shine);
-            }
-            // Estado 2: Agachado (Squash) preparando salto
-            else if (e->action == 2 || e->action == 4) {
-                int wobble = (e->action == 4) ? ((e->animTimer % 2 == 0) ? 1 : -1) : 0;
-                draw_filled_rect(sx + 1 + wobble, sy + 7, 14, 8, c_jelly);
-                draw_filled_rect(sx + 2 + wobble, sy + 14, 12, 2, c_dark);
-                draw_filled_rect(sx + 3 + wobble, sy + 6, 10, 2, c_shine);
+                // Estado 0: Poça camuflada no solo
+                if (e->action == 0) {
+                    draw_filled_rect(sx + 2, sy + 13, 12, 3, c_jelly);
+                    draw_filled_rect(sx + 4, sy + 12, 8, 1, c_shine);
+                    put_pixel_safe(sx + 3, sy + 14, c_dark);
+                    put_pixel_safe(sx + 12, sy + 14, c_dark);
+                }
+                // Estado 1: Emergindo da terra
+                else if (e->action == 1) {
+                    int h = 4 + (20 - e->aiTimer) / 2;
+                    if (h > 12) h = 12;
+                    draw_filled_rect(sx + 3, sy + 16 - h, 10, h, c_jelly);
+                    draw_filled_rect(sx + 5, sy + 16 - h, 6, 2, c_shine);
+                }
+                // Estado 2: Agachado (Squash) preparando salto
+                else if (e->action == 2 || e->action == 4) {
+                    int wobble = (e->action == 4) ? ((e->animTimer % 2 == 0) ? 1 : -1) : 0;
+                    draw_filled_rect(sx + 1 + wobble, sy + 7, 14, 8, c_jelly);
+                    draw_filled_rect(sx + 2 + wobble, sy + 14, 12, 2, c_dark);
+                    draw_filled_rect(sx + 3 + wobble, sy + 6, 10, 2, c_shine);
 
-                // Olhos cômicos esbugalhados
-                draw_filled_rect(sx + 4 + wobble, sy + 8, 3, 4, c_white);
-                draw_filled_rect(sx + 9 + wobble, sy + 8, 3, 4, c_white);
-                put_pixel_safe(sx + 5 + wobble, sy + 9, c_pupil);
-                put_pixel_safe(sx + 10 + wobble, sy + 9, c_pupil);
-            }
-            // Estado 3: Salto balístico no ar
-            else if (e->action == 3) {
-                // Sombra no chão durante o salto
-                draw_filled_rect(sx + 3, sy + 13, 10, 3, 0x05100766);
+                    // Olhos cômicos esbugalhados
+                    draw_filled_rect(sx + 4 + wobble, sy + 8, 3, 4, c_white);
+                    draw_filled_rect(sx + 9 + wobble, sy + 8, 3, 4, c_white);
+                    put_pixel_safe(sx + 5 + wobble, sy + 9, c_pupil);
+                    put_pixel_safe(sx + 10 + wobble, sy + 9, c_pupil);
+                }
+                // Estado 3: Salto balístico no ar
+                else if (e->action == 3) {
+                    // Sombra no chão durante o salto
+                    draw_filled_rect(sx + 3, sy + 13, 10, 3, 0x05100766);
 
-                int cy = sy - (int)e->z;
-                // Formato alongado de gota d'água / lágrima
-                draw_filled_rect(sx + 3, cy + 2, 10, 13, c_jelly);
-                draw_filled_rect(sx + 5, cy, 6, 3, c_shine);
-                draw_filled_rect(sx + 4, cy + 14, 8, 2, c_dark);
+                    int cy = sy - (int)e->z;
+                    // Formato alongado de gota d'água / lágrima
+                    draw_filled_rect(sx + 3, cy + 2, 10, 13, c_jelly);
+                    draw_filled_rect(sx + 5, cy, 6, 3, c_shine);
+                    draw_filled_rect(sx + 4, cy + 14, 8, 2, c_dark);
 
-                // Olhos abertos no ar
-                draw_filled_rect(sx + 4, cy + 5, 3, 4, c_white);
-                draw_filled_rect(sx + 9, cy + 5, 3, 4, c_white);
-                put_pixel_safe(sx + 5, cy + 7, c_pupil);
-                put_pixel_safe(sx + 10, cy + 7, c_pupil);
+                    // Olhos abertos no ar
+                    draw_filled_rect(sx + 4, cy + 5, 3, 4, c_white);
+                    draw_filled_rect(sx + 9, cy + 5, 3, 4, c_white);
+                    put_pixel_safe(sx + 5, cy + 7, c_pupil);
+                    put_pixel_safe(sx + 10, cy + 7, c_pupil);
+                }
             }
         }
 
@@ -3281,37 +3331,41 @@ void entity_manager_render(const Camera* cam) {
 
             // AÇÃO 3: Desabado no chão (Toppled & Vulnerable)
             if (e->action == 3) {
-                // Poça espalmada no piso (58x24 px)
-                int pw = 58;
-                int ph = 24;
-                int wobble = (int)(sinf((float)e->animTimer * 0.25f) * 2.0f);
-                pw += wobble;
+                if (s_enemies_tex && s_enemies_tex->pixels) {
+                    texture_draw(s_enemies_tex, 3 * 32, 6 * 16, 32, 32, boss_cx - 16, boss_cy - 12);
+                } else {
+                    // Poça espalmada no piso (58x24 px)
+                    int pw = 58;
+                    int ph = 24;
+                    int wobble = (int)(sinf((float)e->animTimer * 0.25f) * 2.0f);
+                    pw += wobble;
 
-                draw_filled_rect(boss_cx - pw / 2, boss_cy - 8, pw, ph, c_jelly_dark);
-                draw_filled_rect(boss_cx - (pw - 6) / 2, boss_cy - 12, pw - 6, ph, c_jelly_base);
-                draw_filled_rect(boss_cx - (pw - 14) / 2, boss_cy - 16, pw - 14, ph - 4, c_jelly_lite);
-                draw_filled_rect(boss_cx - 16, boss_cy - 14, 12, 4, c_jelly_mint);
-                draw_filled_rect(boss_cx + 4, boss_cy - 14, 12, 4, c_jelly_mint);
+                    draw_filled_rect(boss_cx - pw / 2, boss_cy - 8, pw, ph, c_jelly_dark);
+                    draw_filled_rect(boss_cx - (pw - 6) / 2, boss_cy - 12, pw - 6, ph, c_jelly_base);
+                    draw_filled_rect(boss_cx - (pw - 14) / 2, boss_cy - 16, pw - 14, ph - 4, c_jelly_lite);
+                    draw_filled_rect(boss_cx - 16, boss_cy - 14, 12, 4, c_jelly_mint);
+                    draw_filled_rect(boss_cx + 4, boss_cy - 14, 12, 4, c_jelly_mint);
 
-                // Núcleo gelatinoso vulnerável exposto (pulsando)
-                int n_pulse = (int)(sinf((float)e->animTimer * 0.35f) * 2.0f);
-                draw_filled_rect(boss_cx - 8 - n_pulse, boss_cy - 4 - n_pulse, 16 + n_pulse * 2, 12 + n_pulse * 2, 0xA3E635FF);
-                draw_filled_rect(boss_cx - 4, boss_cy - 2, 8, 8, 0xBEF264FF);
-                draw_filled_rect(boss_cx - 2, boss_cy, 4, 4, c_white);
+                    // Núcleo gelatinoso vulnerável exposto (pulsando)
+                    int n_pulse = (int)(sinf((float)e->animTimer * 0.35f) * 2.0f);
+                    draw_filled_rect(boss_cx - 8 - n_pulse, boss_cy - 4 - n_pulse, 16 + n_pulse * 2, 12 + n_pulse * 2, 0xA3E635FF);
+                    draw_filled_rect(boss_cx - 4, boss_cy - 2, 8, 8, 0xBEF264FF);
+                    draw_filled_rect(boss_cx - 2, boss_cy, 4, 4, c_white);
 
-                // Olhos tontos / em espiral (Dizzy eyes)
-                int eye_y = boss_cy - 4;
-                int ex1 = boss_cx - 14;
-                int ex2 = boss_cx + 8;
-                draw_filled_rect(ex1, eye_y, 7, 7, c_white);
-                draw_filled_rect(ex2, eye_y, 7, 7, c_white);
+                    // Olhos tontos / em espiral (Dizzy eyes)
+                    int eye_y = boss_cy - 4;
+                    int ex1 = boss_cx - 14;
+                    int ex2 = boss_cx + 8;
+                    draw_filled_rect(ex1, eye_y, 7, 7, c_white);
+                    draw_filled_rect(ex2, eye_y, 7, 7, c_white);
 
-                // Cruz/espiral de tontura nos olhos
-                int spin = (e->animTimer / 6) % 4;
-                int ox[4] = { 2, 4, 2, 0 };
-                int oy[4] = { 0, 2, 4, 2 };
-                draw_filled_rect(ex1 + ox[spin], eye_y + oy[spin], 3, 3, c_pupil);
-                draw_filled_rect(ex2 + ox[(spin + 2) % 4], eye_y + oy[(spin + 2) % 4], 3, 3, c_pupil);
+                    // Cruz/espiral de tontura nos olhos
+                    int spin = (e->animTimer / 6) % 4;
+                    int ox[4] = { 2, 4, 2, 0 };
+                    int oy[4] = { 0, 2, 4, 2 };
+                    draw_filled_rect(ex1 + ox[spin], eye_y + oy[spin], 3, 3, c_pupil);
+                    draw_filled_rect(ex2 + ox[(spin + 2) % 4], eye_y + oy[(spin + 2) % 4], 3, 3, c_pupil);
+                }
             }
             // AÇÃO 5: Explosão de Morte
             else if (e->action == 5) {
@@ -3337,82 +3391,96 @@ void entity_manager_render(const Camera* cam) {
             }
             // AÇÃO 1, 2 e 4: Em pé / Pulando / Sendo sugado
             else {
-                // Cálculo de Squash & Stretch dinâmico
-                int bw = 46;
-                int bh = 62;
+                if (s_enemies_tex && s_enemies_tex->pixels) {
+                    int src_col = 0; // Col 0: Idle
+                    if (e->bossEnraged) {
+                        src_col = 2; // Col 2: Shock / Enraged
+                    } else if (e->subAction == 0 && e->aiTimer < 14) {
+                        src_col = 1; // Col 1: Squash
+                    }
+                    int wobble_x = 0;
+                    if (e->action == 2) {
+                        wobble_x = (int)(sinf((float)e->animTimer * 0.55f) * 6.0f);
+                    }
+                    texture_draw(s_enemies_tex, src_col * 32, 6 * 16, 32, 32, boss_cx - 16 + wobble_x, boss_cy - 16);
+                } else {
+                    // Cálculo de Squash & Stretch dinâmico
+                    int bw = 46;
+                    int bh = 62;
 
-                if (e->z > 2.0f) {
-                    // No ar: estica verticalmente (Stretch)
-                    bw = 38;
-                    bh = 68;
-                } else if (e->subAction == 0 && e->aiTimer < 14) {
-                    // Agachando antes de saltar (Squash)
-                    bw = 54;
-                    bh = 50;
-                }
+                    if (e->z > 2.0f) {
+                        // No ar: estica verticalmente (Stretch)
+                        bw = 38;
+                        bh = 68;
+                    } else if (e->subAction == 0 && e->aiTimer < 14) {
+                        // Agachando antes de saltar (Squash)
+                        bw = 54;
+                        bh = 50;
+                    }
 
-                // Efeito do Pote Mágico sugando a base:
-                // Wobble lateral violento
-                int wobble_x = 0;
-                if (e->action == 2) {
-                    wobble_x = (int)(sinf((float)e->animTimer * 0.55f) * 6.0f);
-                }
+                    // Efeito do Pote Mágico sugando a base:
+                    // Wobble lateral violento
+                    int wobble_x = 0;
+                    if (e->action == 2) {
+                        wobble_x = (int)(sinf((float)e->animTimer * 0.55f) * 6.0f);
+                    }
 
-                int draw_x = boss_cx + wobble_x;
-                int draw_y = boss_cy;
+                    int draw_x = boss_cx + wobble_x;
+                    int draw_y = boss_cy;
 
-                // Desenho do Corpo Gelatinoso Gigante (3 camadas de profundidade)
-                int body_top = draw_y - bh + 16;
+                    // Desenho do Corpo Gelatinoso Gigante (3 camadas de profundidade)
+                    int body_top = draw_y - bh + 16;
 
-                // 1. Cúpula e Base Externa
-                draw_filled_rect(draw_x - bw / 2, body_top, bw, bh, c_jelly_dark);
-                draw_filled_rect(draw_x - (bw - 6) / 2, body_top - 4, bw - 6, bh + 4, c_jelly_dark);
+                    // 1. Cúpula e Base Externa
+                    draw_filled_rect(draw_x - bw / 2, body_top, bw, bh, c_jelly_dark);
+                    draw_filled_rect(draw_x - (bw - 6) / 2, body_top - 4, bw - 6, bh + 4, c_jelly_dark);
 
-                // 2. Volume Interno Translúcido
-                draw_filled_rect(draw_x - (bw - 4) / 2, body_top + 2, bw - 4, bh - 6, c_jelly_base);
-                draw_filled_rect(draw_x - (bw - 10) / 2, body_top - 2, bw - 10, bh, c_jelly_lite);
+                    // 2. Volume Interno Translúcido
+                    draw_filled_rect(draw_x - (bw - 4) / 2, body_top + 2, bw - 4, bh - 6, c_jelly_base);
+                    draw_filled_rect(draw_x - (bw - 10) / 2, body_top - 2, bw - 10, bh, c_jelly_lite);
 
-                // 3. Brilho especular curvado do topo gelatinoso
-                draw_filled_rect(draw_x - 14, body_top + 2, 8, 6, c_jelly_mint);
-                draw_filled_rect(draw_x - 12, body_top + 4, 4, 3, c_white);
+                    // 3. Brilho especular curvado do topo gelatinoso
+                    draw_filled_rect(draw_x - 14, body_top + 2, 8, 6, c_jelly_mint);
+                    draw_filled_rect(draw_x - 12, body_top + 4, 4, 3, c_white);
 
-                // Pés / Base: largura escala com bossBaseScale!
-                int base_w = (int)((float)bw * e->bossBaseScale);
-                if (base_w < 8) base_w = 8;
-                draw_filled_rect(draw_x - base_w / 2, draw_y + 10, base_w, 6, c_jelly_dark);
-                draw_filled_rect(draw_x - (base_w - 4) / 2, draw_y + 8, base_w - 4, 4, c_jelly_base);
+                    // Pés / Base: largura escala com bossBaseScale!
+                    int base_w = (int)((float)bw * e->bossBaseScale);
+                    if (base_w < 8) base_w = 8;
+                    draw_filled_rect(draw_x - base_w / 2, draw_y + 10, base_w, 6, c_jelly_dark);
+                    draw_filled_rect(draw_x - (base_w - 4) / 2, draw_y + 8, base_w - 4, 4, c_jelly_base);
 
-                // Olhos Gigantescos Expressivos (Rastreiam a posição do Link)
-                int eye_center_y = body_top + 22;
-                int eye_spacing  = 12;
+                    // Olhos Gigantescos Expressivos (Rastreiam a posição do Link)
+                    int eye_center_y = body_top + 22;
+                    int eye_spacing  = 12;
 
-                // Direção do olhar para o Link
-                float edx = s_last_link_x - e->x;
-                float edy = s_last_link_y - e->y;
-                int look_ox = (edx > 15.0f) ? 2 : ((edx < -15.0f) ? -2 : 0);
-                int look_oy = (edy > 15.0f) ? 2 : ((edy < -15.0f) ? -2 : 0);
+                    // Direção do olhar para o Link
+                    float edx = s_last_link_x - e->x;
+                    float edy = s_last_link_y - e->y;
+                    int look_ox = (edx > 15.0f) ? 2 : ((edx < -15.0f) ? -2 : 0);
+                    int look_oy = (edy > 15.0f) ? 2 : ((edy < -15.0f) ? -2 : 0);
 
-                // Olho Esquerdo
-                int ex1 = draw_x - eye_spacing - 4;
-                draw_filled_rect(ex1 - 1, eye_center_y - 1, 9, 11, c_jelly_dark);
-                draw_filled_rect(ex1, eye_center_y, 7, 9, c_white);
-                draw_filled_rect(ex1 + 1 + look_ox, eye_center_y + 2 + look_oy, 4, 5, c_pupil);
-                put_pixel_safe(ex1 + 2 + look_ox, eye_center_y + 2 + look_oy, c_iris);
-                put_pixel_safe(ex1 + 1, eye_center_y + 1, c_white); // Reflexo
+                    // Olho Esquerdo
+                    int ex1 = draw_x - eye_spacing - 4;
+                    draw_filled_rect(ex1 - 1, eye_center_y - 1, 9, 11, c_jelly_dark);
+                    draw_filled_rect(ex1, eye_center_y, 7, 9, c_white);
+                    draw_filled_rect(ex1 + 1 + look_ox, eye_center_y + 2 + look_oy, 4, 5, c_pupil);
+                    put_pixel_safe(ex1 + 2 + look_ox, eye_center_y + 2 + look_oy, c_iris);
+                    put_pixel_safe(ex1 + 1, eye_center_y + 1, c_white); // Reflexo
 
-                // Olho Direito
-                int ex2 = draw_x + eye_spacing - 4;
-                draw_filled_rect(ex2 - 1, eye_center_y - 1, 9, 11, c_jelly_dark);
-                draw_filled_rect(ex2, eye_center_y, 7, 9, c_white);
-                draw_filled_rect(ex2 + 1 + look_ox, eye_center_y + 2 + look_oy, 4, 5, c_pupil);
-                put_pixel_safe(ex2 + 2 + look_ox, eye_center_y + 2 + look_oy, c_iris);
-                put_pixel_safe(ex2 + 1, eye_center_y + 1, c_white); // Reflexo
+                    // Olho Direito
+                    int ex2 = draw_x + eye_spacing - 4;
+                    draw_filled_rect(ex2 - 1, eye_center_y - 1, 9, 11, c_jelly_dark);
+                    draw_filled_rect(ex2, eye_center_y, 7, 9, c_white);
+                    draw_filled_rect(ex2 + 1 + look_ox, eye_center_y + 2 + look_oy, 4, 5, c_pupil);
+                    put_pixel_safe(ex2 + 2 + look_ox, eye_center_y + 2 + look_oy, c_iris);
+                    put_pixel_safe(ex2 + 1, eye_center_y + 1, c_white); // Reflexo
 
-                // Sobrancelhas furiosas se em Fase 2 (Enraged)
-                if (e->bossEnraged) {
-                    for (int b = 0; b < 6; b++) {
-                        put_pixel_safe(ex1 + b, eye_center_y - 2 + (b / 2), 0x991B1BFF);
-                        put_pixel_safe(ex2 + 5 - b, eye_center_y - 2 + (b / 2), 0x991B1BFF);
+                    // Sobrancelhas furiosas se em Fase 2 (Enraged)
+                    if (e->bossEnraged) {
+                        for (int b = 0; b < 6; b++) {
+                            put_pixel_safe(ex1 + b, eye_center_y - 2 + (b / 2), 0x991B1BFF);
+                            put_pixel_safe(ex2 + 5 - b, eye_center_y - 2 + (b / 2), 0x991B1BFF);
+                        }
                     }
                 }
             }
@@ -3966,6 +4034,22 @@ void entity_manager_render(const Camera* cam) {
         else if (e->type == ENTITY_ENEMY_MOBLIN) {
             if (e->invulnerableTimer > 0 && (e->invulnerableTimer % 4 < 2)) {
                 draw_filled_rect(sx, sy, 16, 16, 0xFFFFFFFF);
+            } else if (s_enemies_tex && s_enemies_tex->pixels) {
+                int walk_frame = (e->animFrame == 1) ? 1 : 0;
+                int src_x = 0;
+                bool flip_h = false;
+                if (e->dir == DIR_DOWN) {
+                    src_x = walk_frame * 16;
+                } else if (e->dir == DIR_UP) {
+                    src_x = (1 - walk_frame) * 16;
+                } else if (e->dir == DIR_RIGHT) {
+                    src_x = (e->action == 2) ? (4 * 16) : ((2 + walk_frame) * 16);
+                    flip_h = false;
+                } else { // DIR_LEFT
+                    src_x = (e->action == 2) ? (4 * 16) : ((2 + walk_frame) * 16);
+                    flip_h = true;
+                }
+                texture_draw_ex(s_enemies_tex, src_x, 3 * 16, 16, 16, sx, sy, flip_h);
             } else {
                 int walk_bob = (e->animFrame == 1) ? 1 : 0;
                 int my = sy - walk_bob;
@@ -4022,36 +4106,45 @@ void entity_manager_render(const Camera* cam) {
         else if (e->type == ENTITY_ENEMY_PEAHAT) {
             // Sombra no solo se estiver voando
             if (e->z > 0.0f) {
-                draw_filled_rect(sx + 4, sy + 12, 8, 3, 0x00000044);
+                if (s_enemies_tex && s_enemies_tex->pixels) {
+                    texture_draw(s_enemies_tex, 5 * 16, 2 * 16, 16, 16, sx, sy);
+                } else {
+                    draw_filled_rect(sx + 4, sy + 12, 8, 3, 0x00000044);
+                }
             }
 
             int py = sy - (int)e->z;
-            u32 c_bulb  = 0xEAB308FF; // Miolo dourado
-            u32 c_petal = 0x22C55EFF; // Pétalas verdes giratórias
-            u32 c_root  = 0x78350FFF; // Raízes inferiores
-
-            // Bulbo central
-            draw_filled_rect(sx + 5, py + 5, 6, 6, c_bulb);
-            put_pixel_safe(sx + 7, py + 7, 0xFEF08AFF); // Brilho
-
-            // Hélices/Pétalas rotativas em 4 direções baseadas na animação
-            int rot = (e->animTimer / 2) % 4;
-            if (rot == 0 || rot == 2) {
-                draw_filled_rect(sx + 1, py + 7, 4, 2, c_petal); // Oeste
-                draw_filled_rect(sx + 11, py + 7, 4, 2, c_petal); // Leste
-                draw_filled_rect(sx + 7, py + 1, 2, 4, c_petal); // Norte
-                draw_filled_rect(sx + 7, py + 11, 2, 4, c_petal); // Sul
+            if (s_enemies_tex && s_enemies_tex->pixels) {
+                int src_x = (e->z > 0.0f) ? (3 * 16) : (2 * 16);
+                texture_draw(s_enemies_tex, src_x, 4 * 16, 16, 16, sx, py);
             } else {
-                draw_filled_rect(sx + 2, py + 2, 3, 3, c_petal); // Noroeste
-                draw_filled_rect(sx + 11, py + 2, 3, 3, c_petal); // Nordeste
-                draw_filled_rect(sx + 2, py + 11, 3, 3, c_petal); // Sudoeste
-                draw_filled_rect(sx + 11, py + 11, 3, 3, c_petal); // Sudeste
-            }
+                u32 c_bulb  = 0xEAB308FF; // Miolo dourado
+                u32 c_petal = 0x22C55EFF; // Pétalas verdes giratórias
+                u32 c_root  = 0x78350FFF; // Raízes inferiores
 
-            // Raízes suspensas
-            put_pixel_safe(sx + 6, py + 11, c_root);
-            put_pixel_safe(sx + 7, py + 12, c_root);
-            put_pixel_safe(sx + 9, py + 11, c_root);
+                // Bulbo central
+                draw_filled_rect(sx + 5, py + 5, 6, 6, c_bulb);
+                put_pixel_safe(sx + 7, py + 7, 0xFEF08AFF); // Brilho
+
+                // Hélices/Pétalas rotativas em 4 direções baseadas na animação
+                int rot = (e->animTimer / 2) % 4;
+                if (rot == 0 || rot == 2) {
+                    draw_filled_rect(sx + 1, py + 7, 4, 2, c_petal); // Oeste
+                    draw_filled_rect(sx + 11, py + 7, 4, 2, c_petal); // Leste
+                    draw_filled_rect(sx + 7, py + 1, 2, 4, c_petal); // Norte
+                    draw_filled_rect(sx + 7, py + 11, 2, 4, c_petal); // Sul
+                } else {
+                    draw_filled_rect(sx + 2, py + 2, 3, 3, c_petal); // Noroeste
+                    draw_filled_rect(sx + 11, py + 2, 3, 3, c_petal); // Nordeste
+                    draw_filled_rect(sx + 2, py + 11, 3, 3, c_petal); // Sudoeste
+                    draw_filled_rect(sx + 11, py + 11, 3, 3, c_petal); // Sudeste
+                }
+
+                // Raízes suspensas
+                put_pixel_safe(sx + 6, py + 11, c_root);
+                put_pixel_safe(sx + 7, py + 12, c_root);
+                put_pixel_safe(sx + 9, py + 11, c_root);
+            }
         }
 
         // 19. NPC: MALON (MOÇA DA FAZENDA LON LON)
@@ -4120,137 +4213,158 @@ void entity_manager_render(const Camera* cam) {
         // 20. INIMIGO: TEKTITE (ARACNÍDEO SALTITANTE DO MONTE CRENEL)
         else if (e->type == ENTITY_ENEMY_TEKTITE) {
             if (e->z > 0.0f) {
-                draw_filled_rect(sx + 4, sy + 13, 8, 3, 0x00000044); // Sombra no solo
+                if (s_enemies_tex && s_enemies_tex->pixels) {
+                    texture_draw(s_enemies_tex, 5 * 16, 2 * 16, 16, 16, sx, sy);
+                } else {
+                    draw_filled_rect(sx + 4, sy + 13, 8, 3, 0x00000044); // Sombra no solo
+                }
             }
 
             int ty = sy - (int)e->z;
-            u32 c_chitin    = (e->invulnerableTimer > 0 && ((e->invulnerableTimer / 3) % 2 == 1)) ? 0xFFFFFFFF : 0xDC2626FF;
-            u32 c_chitin_dk = 0x991B1BFF;
-            u32 c_eye       = 0xFEF08AFF;
-            u32 c_pupil     = 0x111111FF;
-            u32 c_leg       = 0x78350FFF;
-
-            // Carapaça vermelha arredondada
-            draw_filled_rect(sx + 5, ty + 4, 6, 6, c_chitin);
-            draw_filled_rect(sx + 6, ty + 3, 4, 8, c_chitin);
-            put_pixel_safe(sx + 6, ty + 4, c_chitin_dk);
-            put_pixel_safe(sx + 9, ty + 4, c_chitin_dk);
-
-            // Olho central amarelo
-            put_pixel_safe(sx + 7, ty + 6, c_eye);
-            put_pixel_safe(sx + 8, ty + 6, c_eye);
-            put_pixel_safe(sx + 7, ty + 7, c_pupil);
-
-            // 4 Patas articuladas de aracnídeo
-            if (e->z <= 0.0f) {
-                // No chão: patas abertas para estabilidade
-                put_pixel_safe(sx + 4, ty + 5, c_leg);
-                put_pixel_safe(sx + 3, ty + 4, c_leg);
-                put_pixel_safe(sx + 2, ty + 7, c_leg);
-                put_pixel_safe(sx + 1, ty + 9, c_leg);
-
-                put_pixel_safe(sx + 11, ty + 5, c_leg);
-                put_pixel_safe(sx + 12, ty + 4, c_leg);
-                put_pixel_safe(sx + 13, ty + 7, c_leg);
-                put_pixel_safe(sx + 14, ty + 9, c_leg);
-
-                put_pixel_safe(sx + 4, ty + 8, c_leg);
-                put_pixel_safe(sx + 3, ty + 10, c_leg);
-                put_pixel_safe(sx + 2, ty + 12, c_leg);
-
-                put_pixel_safe(sx + 11, ty + 8, c_leg);
-                put_pixel_safe(sx + 12, ty + 10, c_leg);
-                put_pixel_safe(sx + 13, ty + 12, c_leg);
+            if (e->invulnerableTimer > 0 && ((e->invulnerableTimer / 3) % 2 == 1)) {
+                draw_filled_rect(sx + 2, ty + 2, 12, 12, 0xFFFFFFFF);
+            } else if (s_enemies_tex && s_enemies_tex->pixels) {
+                int src_x = (e->z > 0.0f) ? (1 * 16) : (0 * 16);
+                texture_draw(s_enemies_tex, src_x, 4 * 16, 16, 16, sx, ty);
             } else {
-                // No ar: patas dobradas balísticas
-                put_pixel_safe(sx + 4, ty + 7, c_leg);
-                put_pixel_safe(sx + 3, ty + 9, c_leg);
-                put_pixel_safe(sx + 4, ty + 11, c_leg);
+                u32 c_chitin    = (e->invulnerableTimer > 0 && ((e->invulnerableTimer / 3) % 2 == 1)) ? 0xFFFFFFFF : 0xDC2626FF;
+                u32 c_chitin_dk = 0x991B1BFF;
+                u32 c_eye       = 0xFEF08AFF;
+                u32 c_pupil     = 0x111111FF;
+                u32 c_leg       = 0x78350FFF;
 
-                put_pixel_safe(sx + 11, ty + 7, c_leg);
-                put_pixel_safe(sx + 12, ty + 9, c_leg);
-                put_pixel_safe(sx + 11, ty + 11, c_leg);
+                // Carapaça vermelha arredondada
+                draw_filled_rect(sx + 5, ty + 4, 6, 6, c_chitin);
+                draw_filled_rect(sx + 6, ty + 3, 4, 8, c_chitin);
+                put_pixel_safe(sx + 6, ty + 4, c_chitin_dk);
+                put_pixel_safe(sx + 9, ty + 4, c_chitin_dk);
+
+                // Olho central amarelo
+                put_pixel_safe(sx + 7, ty + 6, c_eye);
+                put_pixel_safe(sx + 8, ty + 6, c_eye);
+                put_pixel_safe(sx + 7, ty + 7, c_pupil);
+
+                // 4 Patas articuladas de aracnídeo
+                if (e->z <= 0.0f) {
+                    // No chão: patas abertas para estabilidade
+                    put_pixel_safe(sx + 4, ty + 5, c_leg);
+                    put_pixel_safe(sx + 3, ty + 4, c_leg);
+                    put_pixel_safe(sx + 2, ty + 7, c_leg);
+                    put_pixel_safe(sx + 1, ty + 9, c_leg);
+
+                    put_pixel_safe(sx + 11, ty + 5, c_leg);
+                    put_pixel_safe(sx + 12, ty + 4, c_leg);
+                    put_pixel_safe(sx + 13, ty + 7, c_leg);
+                    put_pixel_safe(sx + 14, ty + 9, c_leg);
+
+                    put_pixel_safe(sx + 4, ty + 8, c_leg);
+                    put_pixel_safe(sx + 3, ty + 10, c_leg);
+                    put_pixel_safe(sx + 2, ty + 12, c_leg);
+
+                    put_pixel_safe(sx + 11, ty + 8, c_leg);
+                    put_pixel_safe(sx + 12, ty + 10, c_leg);
+                    put_pixel_safe(sx + 13, ty + 12, c_leg);
+                } else {
+                    // No ar: patas dobradas balísticas
+                    put_pixel_safe(sx + 4, ty + 7, c_leg);
+                    put_pixel_safe(sx + 3, ty + 9, c_leg);
+                    put_pixel_safe(sx + 4, ty + 11, c_leg);
+
+                    put_pixel_safe(sx + 11, ty + 7, c_leg);
+                    put_pixel_safe(sx + 12, ty + 9, c_leg);
+                    put_pixel_safe(sx + 11, ty + 11, c_leg);
+                }
             }
         }
 
         // 21. INIMIGO: SPINY BEETLE (BESOURO COM CARAPAÇA DE ROCHA ESPINHOSA)
         else if (e->type == ENTITY_ENEMY_SPINY_BEETLE) {
-            u32 c_rock    = (e->invulnerableTimer > 0 && ((e->invulnerableTimer / 3) % 2 == 1)) ? 0xFFFFFFFF : 0x64748BFF;
-            u32 c_rock_dk = 0x334155FF;
-            u32 c_rock_hi = 0x94A3B8FF;
-            u32 c_spike   = 0xCBD5E1FF;
-            u32 c_eyes    = 0xEF4444FF;
-            u32 c_leg     = 0x1E293BFF;
-
-            if (e->action == 3) {
-                // VIRADO DE CABEÇA PARA BAIXO PELO CAJADO DE PACCI!
-                // Carapaça rochosa no chão (invertida)
-                draw_filled_rect(sx + 3, sy + 7, 10, 6, c_rock);
-                draw_filled_rect(sx + 4, sy + 6, 8, 7, c_rock);
-                put_pixel_safe(sx + 3, sy + 10, c_rock_dk);
-                put_pixel_safe(sx + 12, sy + 10, c_rock_dk);
-
-                // Barriga mole e vulnerável exposta para cima
-                u32 c_belly = (e->invulnerableTimer > 0 && ((e->invulnerableTimer / 2) % 2 == 1)) ? 0xFFFFFFFF : 0xFDE68AFF;
-                draw_filled_rect(sx + 4, sy + 4, 8, 3, c_belly);
-                draw_filled_rect(sx + 5, sy + 3, 6, 2, c_belly);
-                put_pixel_safe(sx + 6, sy + 5, 0xD97706FF); // Nervura central
-                put_pixel_safe(sx + 9, sy + 5, 0xD97706FF);
-
-                // Patinhas para o ar esperneando freneticamente
-                int kick = (e->animTimer / 3) % 2;
-                put_pixel_safe(sx + 2, sy + 2 + kick, c_leg);
-                put_pixel_safe(sx + 1, sy + 1 + kick, c_leg);
-                put_pixel_safe(sx + 13, sy + 2 + (1 - kick), c_leg);
-                put_pixel_safe(sx + 14, sy + 1 + (1 - kick), c_leg);
-                put_pixel_safe(sx + 4, sy + 1 + (1 - kick), c_leg);
-                put_pixel_safe(sx + 11, sy + 1 + kick, c_leg);
-
-                // Estrelas de tontura flutuando
-                int star_x = sx + 7 + (int)(cosf((float)e->animTimer * 0.18f) * 6.0f);
-                int star_y = sy - 2 + (int)(sinf((float)e->animTimer * 0.18f) * 2.5f);
-                put_pixel_safe(star_x, star_y, 0xFDE047FF);
-                continue;
-            }
-
-            // Patas de inseto scurrying
-            int leg_anim = (e->animTimer / 4) % 2;
-            if (leg_anim == 0) {
-                put_pixel_safe(sx + 2, sy + 6, c_leg);
-                put_pixel_safe(sx + 1, sy + 7, c_leg);
-                put_pixel_safe(sx + 2, sy + 10, c_leg);
-                put_pixel_safe(sx + 1, sy + 11, c_leg);
-                put_pixel_safe(sx + 13, sy + 6, c_leg);
-                put_pixel_safe(sx + 14, sy + 7, c_leg);
-                put_pixel_safe(sx + 13, sy + 10, c_leg);
-                put_pixel_safe(sx + 14, sy + 11, c_leg);
+            if (e->action != 3 && s_enemies_tex && s_enemies_tex->pixels) {
+                if (e->invulnerableTimer > 0 && ((e->invulnerableTimer / 3) % 2 == 1)) {
+                    draw_filled_rect(sx + 2, sy + 2, 12, 12, 0xFFFFFFFF);
+                } else {
+                    int src_x = (e->action == 0) ? (2 * 16) : (3 * 16);
+                    bool flip_h = (e->dir == DIR_LEFT);
+                    texture_draw_ex(s_enemies_tex, src_x, 5 * 16, 16, 16, sx, sy, flip_h);
+                }
             } else {
-                put_pixel_safe(sx + 2, sy + 5, c_leg);
-                put_pixel_safe(sx + 1, sy + 6, c_leg);
-                put_pixel_safe(sx + 2, sy + 9, c_leg);
-                put_pixel_safe(sx + 1, sy + 10, c_leg);
-                put_pixel_safe(sx + 13, sy + 5, c_leg);
-                put_pixel_safe(sx + 14, sy + 6, c_leg);
-                put_pixel_safe(sx + 13, sy + 9, c_leg);
-                put_pixel_safe(sx + 14, sy + 10, c_leg);
-            }
+                u32 c_rock    = (e->invulnerableTimer > 0 && ((e->invulnerableTimer / 3) % 2 == 1)) ? 0xFFFFFFFF : 0x64748BFF;
+                u32 c_rock_dk = 0x334155FF;
+                u32 c_rock_hi = 0x94A3B8FF;
+                u32 c_spike   = 0xCBD5E1FF;
+                u32 c_eyes    = 0xEF4444FF;
+                u32 c_leg     = 0x1E293BFF;
 
-            // Carapaça rochosa pontiaguda
-            draw_filled_rect(sx + 3, sy + 3, 10, 9, c_rock);
-            draw_filled_rect(sx + 4, sy + 2, 8, 11, c_rock);
+                if (e->action == 3) {
+                    // VIRADO DE CABEÇA PARA BAIXO PELO CAJADO DE PACCI!
+                    // Carapaça rochosa no chão (invertida)
+                    draw_filled_rect(sx + 3, sy + 7, 10, 6, c_rock);
+                    draw_filled_rect(sx + 4, sy + 6, 8, 7, c_rock);
+                    put_pixel_safe(sx + 3, sy + 10, c_rock_dk);
+                    put_pixel_safe(sx + 12, sy + 10, c_rock_dk);
 
-            // Espinhos e relevos de pedra
-            put_pixel_safe(sx + 7, sy + 1, c_spike);
-            put_pixel_safe(sx + 8, sy + 1, c_spike);
-            put_pixel_safe(sx + 2, sy + 5, c_rock_hi);
-            put_pixel_safe(sx + 13, sy + 6, c_rock_hi);
-            put_pixel_safe(sx + 6, sy + 6, c_rock_dk);
-            put_pixel_safe(sx + 9, sy + 7, c_rock_dk);
+                    // Barriga mole e vulnerável exposta para cima
+                    u32 c_belly = (e->invulnerableTimer > 0 && ((e->invulnerableTimer / 2) % 2 == 1)) ? 0xFFFFFFFF : 0xFDE68AFF;
+                    draw_filled_rect(sx + 4, sy + 4, 8, 3, c_belly);
+                    draw_filled_rect(sx + 5, sy + 3, 6, 2, c_belly);
+                    put_pixel_safe(sx + 6, sy + 5, 0xD97706FF); // Nervura central
+                    put_pixel_safe(sx + 9, sy + 5, 0xD97706FF);
 
-            // Olhos vermelhos ameaçadores espreitando por baixo da rocha
-            if (e->action == 2 || e->dir == DIR_DOWN) {
-                put_pixel_safe(sx + 5, sy + 11, c_eyes);
-                put_pixel_safe(sx + 10, sy + 11, c_eyes);
+                    // Patinhas para o ar esperneando freneticamente
+                    int kick = (e->animTimer / 3) % 2;
+                    put_pixel_safe(sx + 2, sy + 2 + kick, c_leg);
+                    put_pixel_safe(sx + 1, sy + 1 + kick, c_leg);
+                    put_pixel_safe(sx + 13, sy + 2 + (1 - kick), c_leg);
+                    put_pixel_safe(sx + 14, sy + 1 + (1 - kick), c_leg);
+                    put_pixel_safe(sx + 4, sy + 1 + (1 - kick), c_leg);
+                    put_pixel_safe(sx + 11, sy + 1 + kick, c_leg);
+
+                    // Estrelas de tontura flutuando
+                    int star_x = sx + 7 + (int)(cosf((float)e->animTimer * 0.18f) * 6.0f);
+                    int star_y = sy - 2 + (int)(sinf((float)e->animTimer * 0.18f) * 2.5f);
+                    put_pixel_safe(star_x, star_y, 0xFDE047FF);
+                    continue;
+                }
+
+                // Patas de inseto scurrying
+                int leg_anim = (e->animTimer / 4) % 2;
+                if (leg_anim == 0) {
+                    put_pixel_safe(sx + 2, sy + 6, c_leg);
+                    put_pixel_safe(sx + 1, sy + 7, c_leg);
+                    put_pixel_safe(sx + 2, sy + 10, c_leg);
+                    put_pixel_safe(sx + 1, sy + 11, c_leg);
+                    put_pixel_safe(sx + 13, sy + 6, c_leg);
+                    put_pixel_safe(sx + 14, sy + 7, c_leg);
+                    put_pixel_safe(sx + 13, sy + 10, c_leg);
+                    put_pixel_safe(sx + 14, sy + 11, c_leg);
+                } else {
+                    put_pixel_safe(sx + 2, sy + 5, c_leg);
+                    put_pixel_safe(sx + 1, sy + 6, c_leg);
+                    put_pixel_safe(sx + 2, sy + 9, c_leg);
+                    put_pixel_safe(sx + 1, sy + 10, c_leg);
+                    put_pixel_safe(sx + 13, sy + 5, c_leg);
+                    put_pixel_safe(sx + 14, sy + 6, c_leg);
+                    put_pixel_safe(sx + 13, sy + 9, c_leg);
+                    put_pixel_safe(sx + 14, sy + 10, c_leg);
+                }
+
+                // Carapaça rochosa pontiaguda
+                draw_filled_rect(sx + 3, sy + 3, 10, 9, c_rock);
+                draw_filled_rect(sx + 4, sy + 2, 8, 11, c_rock);
+
+                // Espinhos e relevos de pedra
+                put_pixel_safe(sx + 7, sy + 1, c_spike);
+                put_pixel_safe(sx + 8, sy + 1, c_spike);
+                put_pixel_safe(sx + 2, sy + 5, c_rock_hi);
+                put_pixel_safe(sx + 13, sy + 6, c_rock_hi);
+                put_pixel_safe(sx + 6, sy + 6, c_rock_dk);
+                put_pixel_safe(sx + 9, sy + 7, c_rock_dk);
+
+                // Olhos vermelhos ameaçadores espreitando por baixo da rocha
+                if (e->action == 2 || e->dir == DIR_DOWN) {
+                    put_pixel_safe(sx + 5, sy + 11, c_eyes);
+                    put_pixel_safe(sx + 10, sy + 11, c_eyes);
+                }
             }
         }
 
@@ -4605,78 +4719,85 @@ void entity_manager_render(const Camera* cam) {
                 continue;
             }
 
-            u32 c_skin_main = 0xD97706FF; // Pele de cobra âmbar/laranja
-            u32 c_skin_dark = 0x78350FFF; // Manchas escuras / escamas dorsais
-            u32 c_skin_hi   = 0xF59E0BFF; // Destaque dorsal
-            u32 c_belly     = 0xFEF08AFF; // Ventre amarelo claro
-            u32 c_eye       = 0xDC2626FF; // Olhos vermelhos brilhantes
-            u32 c_tongue    = 0xEF4444FF; // Língua bífida
+            if (s_enemies_tex && s_enemies_tex->pixels) {
+                int frame = (e->animTimer / 6) % 2;
+                int src_x = frame * 16;
+                bool flip_h = (e->dir == DIR_LEFT);
+                texture_draw_ex(s_enemies_tex, src_x, 5 * 16, 16, 16, sx, sy, flip_h);
+            } else {
+                u32 c_skin_main = 0xD97706FF; // Pele de cobra âmbar/laranja
+                u32 c_skin_dark = 0x78350FFF; // Manchas escuras / escamas dorsais
+                u32 c_skin_hi   = 0xF59E0BFF; // Destaque dorsal
+                u32 c_belly     = 0xFEF08AFF; // Ventre amarelo claro
+                u32 c_eye       = 0xDC2626FF; // Olhos vermelhos brilhantes
+                u32 c_tongue    = 0xEF4444FF; // Língua bífida
 
-            // Se em Investida rápida (Action 2), olhos incandescentes
-            if (e->action == 2) {
-                c_eye = 0xFFFFFFFF;
-            }
+                // Se em Investida rápida (Action 2), olhos incandescentes
+                if (e->action == 2) {
+                    c_eye = 0xFFFFFFFF;
+                }
 
-            int wag = ((e->animTimer / 4) % 2 == 0) ? 1 : -1;
+                int wag = ((e->animTimer / 4) % 2 == 0) ? 1 : -1;
 
-            if (e->dir == DIR_DOWN) {
-                // Cabeça triangular
-                draw_filled_rect(sx + 3, sy + 6, 6, 5, c_skin_main);
-                draw_filled_rect(sx + 4, sy + 5, 4, 1, c_skin_hi);
-                draw_filled_rect(sx + 4, sy + 9, 4, 3, c_skin_main);
-                // Olhos
-                put_pixel_safe(sx + 3, sy + 7, c_eye);
-                put_pixel_safe(sx + 8, sy + 7, c_eye);
-                // Língua bifurcada
-                if ((e->animTimer / 5) % 2 == 0) {
-                    put_pixel_safe(sx + 5, sy + 12, c_tongue);
-                    put_pixel_safe(sx + 6, sy + 12, c_tongue);
-                    put_pixel_safe(sx + 4, sy + 13, c_tongue);
-                    put_pixel_safe(sx + 7, sy + 13, c_tongue);
+                if (e->dir == DIR_DOWN) {
+                    // Cabeça triangular
+                    draw_filled_rect(sx + 3, sy + 6, 6, 5, c_skin_main);
+                    draw_filled_rect(sx + 4, sy + 5, 4, 1, c_skin_hi);
+                    draw_filled_rect(sx + 4, sy + 9, 4, 3, c_skin_main);
+                    // Olhos
+                    put_pixel_safe(sx + 3, sy + 7, c_eye);
+                    put_pixel_safe(sx + 8, sy + 7, c_eye);
+                    // Língua bifurcada
+                    if ((e->animTimer / 5) % 2 == 0) {
+                        put_pixel_safe(sx + 5, sy + 12, c_tongue);
+                        put_pixel_safe(sx + 6, sy + 12, c_tongue);
+                        put_pixel_safe(sx + 4, sy + 13, c_tongue);
+                        put_pixel_safe(sx + 7, sy + 13, c_tongue);
+                    }
+                    // Corpo ondulante (cauda para cima)
+                    draw_filled_rect(sx + 4 + wag, sy + 2, 4, 4, c_skin_main);
+                    draw_filled_rect(sx + 5 - wag, sy - 1, 3, 3, c_skin_dark);
+                    put_pixel_safe(sx + 5 + wag, sy + 3, c_skin_dark);
+                } else if (e->dir == DIR_UP) {
+                    // Cabeça voltada para cima
+                    draw_filled_rect(sx + 3, sy + 2, 6, 5, c_skin_main);
+                    draw_filled_rect(sx + 4, sy + 1, 4, 2, c_skin_main);
+                    put_pixel_safe(sx + 3, sy + 3, c_eye);
+                    put_pixel_safe(sx + 8, sy + 3, c_eye);
+                    if ((e->animTimer / 5) % 2 == 0) {
+                        put_pixel_safe(sx + 5, sy - 1, c_tongue);
+                        put_pixel_safe(sx + 6, sy - 1, c_tongue);
+                    }
+                    // Corpo para baixo
+                    draw_filled_rect(sx + 4 + wag, sy + 7, 4, 4, c_skin_main);
+                    draw_filled_rect(sx + 5 - wag, sy + 11, 3, 3, c_skin_dark);
+                } else if (e->dir == DIR_LEFT) {
+                    // Cabeça para a esquerda
+                    draw_filled_rect(sx + 1, sy + 4, 5, 5, c_skin_main);
+                    draw_filled_rect(sx, sy + 5, 2, 3, c_skin_main);
+                    put_pixel_safe(sx + 2, sy + 4, c_eye);
+                    if ((e->animTimer / 5) % 2 == 0) {
+                        put_pixel_safe(sx - 2, sy + 6, c_tongue);
+                        put_pixel_safe(sx - 1, sy + 6, c_tongue);
+                    }
+                    // Corpo ondulante para a direita
+                    draw_filled_rect(sx + 6, sy + 4 + wag, 4, 4, c_skin_main);
+                    draw_filled_rect(sx + 10, sy + 5 - wag, 4, 3, c_skin_dark);
+                    put_pixel_safe(sx + 8, sy + 5 + wag, c_belly);
+                } else { // DIR_RIGHT
+                    // Cabeça para a direita
+                    draw_filled_rect(sx + 6, sy + 4, 5, 5, c_skin_main);
+                    draw_filled_rect(sx + 10, sy + 5, 2, 3, c_skin_main);
+                    put_pixel_safe(sx + 9, sy + 4, c_eye);
+                    if ((e->animTimer / 5) % 2 == 0) {
+                        put_pixel_safe(sx + 12, sy + 6, c_tongue);
+                        put_pixel_safe(sx + 13, sy + 6, c_tongue);
+                    }
+                    // Corpo ondulante para a esquerda
+                    draw_filled_rect(sx + 2, sy + 4 + wag, 4, 4, c_skin_main);
+                    draw_filled_rect(sx - 2, sy + 5 - wag, 4, 3, c_skin_dark);
+                    put_pixel_safe(sx + 4, sy + 5 + wag, c_belly);
                 }
-                // Corpo ondulante (cauda para cima)
-                draw_filled_rect(sx + 4 + wag, sy + 2, 4, 4, c_skin_main);
-                draw_filled_rect(sx + 5 - wag, sy - 1, 3, 3, c_skin_dark);
-                put_pixel_safe(sx + 5 + wag, sy + 3, c_skin_dark);
-            } else if (e->dir == DIR_UP) {
-                // Cabeça voltada para cima
-                draw_filled_rect(sx + 3, sy + 2, 6, 5, c_skin_main);
-                draw_filled_rect(sx + 4, sy + 1, 4, 2, c_skin_main);
-                put_pixel_safe(sx + 3, sy + 3, c_eye);
-                put_pixel_safe(sx + 8, sy + 3, c_eye);
-                if ((e->animTimer / 5) % 2 == 0) {
-                    put_pixel_safe(sx + 5, sy - 1, c_tongue);
-                    put_pixel_safe(sx + 6, sy - 1, c_tongue);
-                }
-                // Corpo para baixo
-                draw_filled_rect(sx + 4 + wag, sy + 7, 4, 4, c_skin_main);
-                draw_filled_rect(sx + 5 - wag, sy + 11, 3, 3, c_skin_dark);
-            } else if (e->dir == DIR_LEFT) {
-                // Cabeça para a esquerda
-                draw_filled_rect(sx + 1, sy + 4, 5, 5, c_skin_main);
-                draw_filled_rect(sx, sy + 5, 2, 3, c_skin_main);
-                put_pixel_safe(sx + 2, sy + 4, c_eye);
-                if ((e->animTimer / 5) % 2 == 0) {
-                    put_pixel_safe(sx - 2, sy + 6, c_tongue);
-                    put_pixel_safe(sx - 1, sy + 6, c_tongue);
-                }
-                // Corpo ondulante para a direita
-                draw_filled_rect(sx + 6, sy + 4 + wag, 4, 4, c_skin_main);
-                draw_filled_rect(sx + 10, sy + 5 - wag, 4, 3, c_skin_dark);
-                put_pixel_safe(sx + 8, sy + 5 + wag, c_belly);
-            } else { // DIR_RIGHT
-                // Cabeça para a direita
-                draw_filled_rect(sx + 6, sy + 4, 5, 5, c_skin_main);
-                draw_filled_rect(sx + 10, sy + 5, 2, 3, c_skin_main);
-                put_pixel_safe(sx + 9, sy + 4, c_eye);
-                if ((e->animTimer / 5) % 2 == 0) {
-                    put_pixel_safe(sx + 12, sy + 6, c_tongue);
-                    put_pixel_safe(sx + 13, sy + 6, c_tongue);
-                }
-                // Corpo ondulante para a esquerda
-                draw_filled_rect(sx + 2, sy + 4 + wag, 4, 4, c_skin_main);
-                draw_filled_rect(sx - 2, sy + 5 - wag, 4, 3, c_skin_dark);
-                put_pixel_safe(sx + 4, sy + 5 + wag, c_belly);
             }
         }
 
