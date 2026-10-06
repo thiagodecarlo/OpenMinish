@@ -191,9 +191,9 @@ void prologue_story_render(void) {
 
     // 2. Caixa de Texto Narrativa estilo Pergaminho Imperial
     int box_w = W - 20;
-    int box_h = 36;
+    int box_h = 40;
     int box_x = 10;
-    int box_y = H - 42;
+    int box_y = H - 45;
 
     // Moldura ornamentada dourada e interior translúcido
     draw_box(box_x - 1, box_y - 1, box_w + 2, box_h + 2, 0xD4AF37FF);
@@ -206,29 +206,29 @@ void prologue_story_render(void) {
     switch (s_prologue.current_panel) {
         case 0:
             title = "A LENDA DOS PICORI: AS TREVAS";
-            text  = "Ha muito tempo atras, o mundo esteve a ponto de sucumbir em trevas...";
+            text  = "Ha muito tempo atras, o mundo\nquase sucumbiu em trevas...";
             break;
         case 1:
             title = "A DESCIDA DOS PICORI";
-            text  = "Do ceu desceram os pequeninos Picori, trazendo a Luz Dourada e uma espada sagrada.";
+            text  = "Do ceu desceram os Picori,\ncom a espada e Luz Dourada.";
             break;
         case 2:
             title = "O HEROI E O BAU SAGRADO";
-            text  = "O bravo heroi baniu os monstros e os selou para sempre no Bau Sagrado!";
+            text  = "O bravo heroi baniu o mal e\nos selou no sagrado Bau!";
             break;
         case 3:
             title = "O FESTIVAL SECULAR DE HYRULE";
-            text  = "A paz renasceu, e a cada cem anos Hyrule celebra o sagrado Festival de Picori.";
+            text  = "A paz voltou e Hyrule celebra\no festival a cada cem anos.";
             break;
         default:
             break;
     }
 
-    font_draw_text(box_x + 8, box_y + 5, title, 0xFDE047FF, false);
-    font_draw_text(box_x + 8, box_y + 19, text, 0xF8FAFCFF, false);
+    font_draw_text(box_x + 8, box_y + 4, title, 0xFDE047FF, false);
+    font_draw_text_multiline(box_x + 8, box_y + 16, box_w - 16, 11, text, 0xF8FAFCFF, false);
 
     // Indicador sutil de avanço [A] / [START]
-    font_draw_text(W - 74, 4, "[START] Pular", 0x94A3B8FF, false);
+    font_draw_text(W - 112, 12, "[START] Pular", 0xCBD5E1FF, true);
 
     // 3. Efeito de Fade suave na transição
     if (s_prologue.fade_alpha > 0.0f) {

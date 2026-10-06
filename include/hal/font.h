@@ -48,4 +48,11 @@ int font_draw_text_len(int x, int y, const char* text, int max_chars, u32 color,
  */
 int font_get_text_width(const char* text);
 
+/*
+ * Renderiza texto com suporte a quebras de linha automáticas (word-wrap) e explícitas ('\n').
+ * Garante que o texto não ultrapasse a largura máxima especificada (max_w).
+ * Retorna o total de linhas impressas.
+ */
+int font_draw_text_multiline(int x, int y, int max_w, int line_h, const char* text, u32 color, bool shadow);
+
 #endif // HAL_FONT_H

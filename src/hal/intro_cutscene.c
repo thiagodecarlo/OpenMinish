@@ -485,9 +485,9 @@ void intro_cutscene_render(void) {
 
     // 2. Caixa de Texto Cinematográfica (Bottom HUD Banner)
     int box_w = W - 16;
-    int box_h = 36;
+    int box_h = 40;
     int box_x = 8;
-    int box_y = H - 42;
+    int box_y = H - 45;
 
     draw_rect_fast(box_x - 1, box_y - 1, box_w + 2, box_h + 2, 0xD4AF37FF); // Borda dourada
     draw_rect_fast(box_x, box_y, box_w, box_h, 0x0F172AEE);                 // Fundo escuro translúcido
@@ -497,38 +497,38 @@ void intro_cutscene_render(void) {
 
     switch (s_intro.stage) {
         case INTRO_STAGE_FESTIVAL_PARADE:
-            l1 = "FESTIVAL DE PICORI - HYRULE TOWN";
-            l2 = "A Princesa Zelda convida Link para o secular festival.";
+            l1 = "FESTIVAL DE PICORI DE HYRULE";
+            l2 = "A Princesa Zelda convida Link\npara o festival secular.";
             break;
         case INTRO_STAGE_TOURNAMENT_WIN:
-            l1 = "O TORNEIO DE ESGRIMA DE HYRULE";
-            l2 = "O campeao misterioso se aproxima: o mago Vaati!";
+            l1 = "O TORNEIO DE ESGRIMA";
+            l2 = "O campeao misterioso surge:\no feiticeiro sombrio Vaati!";
             break;
         case INTRO_STAGE_CHEST_CEREMONY:
-            l1 = "A VIOLACAO DO BAU SAGRADO!";
-            l2 = "Vaati quebra a Picori Blade sagrada em pedacos!";
+            l1 = "VIOLACAO DO BAU SAGRADO!";
+            l2 = "Vaati quebra a Picori Blade e\nabre o selo do Bau Sagrado!";
             break;
         case INTRO_STAGE_MONSTERS_RELEASED:
-            l1 = "TREVAS LIBERTADAS SOBRE O REINO!";
-            l2 = "Monstros ancestrais espalham-se por toda a terra.";
+            l1 = "TREVAS LIBERTADAS NO REINO!";
+            l2 = "Monstros ancestrais fogem e\nespalham trevas por Hyrule!";
             break;
         case INTRO_STAGE_ZELDA_CURSED:
-            l1 = "A MALDIÇÃO DE VAATI!";
-            l2 = "A Princesa Zelda e transformada em estatua de pedra!";
+            l1 = "A MALDICAO DE VAATI!";
+            l2 = "Vaati lanca um raio sombrio:\nZelda vira estatua de pedra!";
             break;
         case INTRO_STAGE_KING_AUDIENCE:
-            l1 = "AUDIENCIA REAL COM O REI DALTUS";
-            l2 = "Link recebe a missao de buscar o povo Minish na floresta!";
+            l1 = "AUDIENCIA COM O REI DALTUS";
+            l2 = "O Rei Daltus envia Link\nem busca do povo Minish!";
             break;
         default:
             break;
     }
 
-    font_draw_text(box_x + 8, box_y + 6, l1, 0xFDE047FF, false);
-    font_draw_text(box_x + 8, box_y + 20, l2, 0xE2E8F0FF, false);
+    font_draw_text(box_x + 8, box_y + 4, l1, 0xFDE047FF, false);
+    font_draw_text_multiline(box_x + 8, box_y + 16, box_w - 16, 11, l2, 0xE2E8F0FF, false);
 
     // Indicador de Pular com START
-    font_draw_text(W - 74, 4, "[START] Pular", 0x94A3B8FF, false);
+    font_draw_text(W - 100, 6, "[START] Pular", 0xCBD5E1FF, true);
 
     // Efeito de Flash na tela
     if (s_intro.flash_alpha > 0.0f) {

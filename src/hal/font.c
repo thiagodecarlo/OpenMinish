@@ -244,3 +244,68 @@ int font_get_text_width(const char* text) {
     }
     return width;
 }
+
+int font_draw_text_multiline(int x, int y, int max_w, int line_h, const char* text, u32 color, bool shadow) {
+    if (!text || max_w <= 0) return 0;
+
+    int cur_x = x;
+    int cur_y = y;
+    int lines_count = 1;
+    const char* p = text;
+
+    while (*p) {
+        if (*p == '\n') {
+            cur_x = x;
+            cur_y += line_h;
+            lines_count++;
+            p++;
+            continue;
+        }
+
+        // Pula espaços no início de nova linha
+        if (cur_x == x && *p == ' ') {
+            p++;
+            continue;
+        }
+
+        // Mede a extensão em pixels e bytes da próxima palavra
+        const char* word_start = p;
+        int word_w = 0;
+        int word_bytes = 0;
+
+        while (*p && *p != ' ' && *p != '\n') {
+            unsigned char c = (unsigned char)*p;
+            if (c == 0xC3 && *(p + 1)) {
+                word_w += 7;
+                word_bytes += 2;
+                p += 2;
+            } else {
+                word_w += (c == ' ') ? 4 : 7;
+                word_bytes += 1;
+                p += 1;
+            }
+        }
+
+        // Quebra automática se a palavra ultrapassar max_w
+        if (cur_x + word_w > x + max_w && cur_x > x) {
+            cur_x = x;
+            cur_y += line_h;
+            lines_count++;
+        }
+
+        // Renderiza a palavra
+        font_draw_text_len(cur_x, cur_y, word_start, word_bytes, color, shadow);
+        cur_x += word_w;
+
+        // Se o próximo caractere for espaço e couber na linha, avança
+        if (*p == ' ') {
+            if (cur_x + 4 <= x + max_w) {
+                cur_x += 4;
+            }
+            p++;
+        }
+    }
+
+    return lines_count;
+}
+
