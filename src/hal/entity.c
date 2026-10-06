@@ -538,6 +538,7 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
 
                 case ENTITY_NPC_LIBRARI:
                 case ENTITY_NPC_MAYOR_HAGEN:
+                case ENTITY_NPC_SMITH:
                     e->health        = 999;
                     e->maxHealth     = 999;
                     e->damage        = 0;
@@ -1392,7 +1393,7 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
 
         // 12. NPCS DA VILA DOS MINISH (GENTARI, FESTARI, MORADORES PICORI, LIBRARI, HAGEN)
         else if (e->type == ENTITY_NPC_GENTARI || e->type == ENTITY_NPC_FESTARI || e->type == ENTITY_NPC_VILLAGE_MINISH ||
-                 e->type == ENTITY_NPC_LIBRARI || e->type == ENTITY_NPC_MAYOR_HAGEN) {
+                 e->type == ENTITY_NPC_LIBRARI || e->type == ENTITY_NPC_MAYOR_HAGEN || e->type == ENTITY_NPC_SMITH) {
             e->animTimer++;
             if (e->type == ENTITY_NPC_VILLAGE_MINISH) {
                 e->bubbleBob += 0.08f;
@@ -5166,6 +5167,32 @@ void entity_manager_render(const Camera* cam) {
                 draw_filled_rect(sx - 3, sy + 1, 6, 6, 0xFACC15FF); // Colete
             }
         }
+
+        // 35. MESTRE FERREIRO SMITH (FERRARIA DE HYRULE)
+        else if (e->type == ENTITY_NPC_SMITH) {
+            draw_filled_rect(sx - 6, sy + 10, 12, 3, 0x05100766); // Sombra
+
+            if (s_npcs_tex && s_npcs_tex->pixels) {
+                int src_x = 0;
+                bool flip_h = false;
+                if (e->dir == DIR_RIGHT) {
+                    src_x = 1 * 16;
+                } else if (e->dir == DIR_LEFT) {
+                    src_x = 1 * 16;
+                    flip_h = true;
+                } else {
+                    int anim = (e->animTimer / 25) % 4;
+                    src_x = anim * 16;
+                }
+                texture_draw_ex(s_npcs_tex, src_x, 1 * 16, 16, 16, sx - 8, sy - 6, flip_h);
+            } else {
+                // Fallback procedural
+                draw_filled_rect(sx - 5, sy - 6, 10, 6, 0xFDE8CDFF);
+                draw_filled_rect(sx - 4, sy - 1, 8, 4, 0xF8FAFCFF); // Barba branca
+                draw_filled_rect(sx - 6, sy + 2, 12, 8, 0xB91C1CFF); // Camisa vermelha
+                draw_filled_rect(sx - 4, sy + 4, 8, 6, 0x475569FF);  // Avental
+            }
+        }
     }
 }
 
@@ -5585,6 +5612,26 @@ Entity* entity_find_nearby_mayor_hagen(float world_x, float world_y, float max_d
     for (int i = 0; i < MAX_ENTITIES; i++) {
         Entity* e = &s_entities[i];
         if (!e->is_active || e->type != ENTITY_NPC_MAYOR_HAGEN) continue;
+
+        float dx = e->x - world_x;
+        float dy = e->y - world_y;
+        float dist_sq = dx * dx + dy * dy;
+
+        if (dist_sq <= best_dist_sq) {
+            best_dist_sq = dist_sq;
+            best = e;
+        }
+    }
+    return best;
+}
+
+Entity* entity_find_nearby_smith(float world_x, float world_y, float max_dist) {
+    float best_dist_sq = max_dist * max_dist;
+    Entity* best = NULL;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* e = &s_entities[i];
+        if (!e->is_active || e->type != ENTITY_NPC_SMITH) continue;
 
         float dx = e->x - world_x;
         float dy = e->y - world_y;

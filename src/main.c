@@ -370,7 +370,19 @@ static void spawn_town_entities(void) {
     Entity* urn = entity_spawn(ENTITY_MINISH_STUMP, 216.0f, 280.0f);
     if (urn) urn->action = 1;
 
-    printf("[TOWN] Entidades de Hyrule Town spawnadas com sucesso (Stockwell, Chafariz, Cidadaos, Guardas, Vaso Minish)!\n");
+    // 6. Mestre Ferreiro Smith em sua oficina / ferraria
+    entity_spawn(ENTITY_NPC_SMITH, 120.0f, 200.0f);
+
+    // 7. Mestre Espadachim Swiftblade no Dojo de esgrima
+    entity_spawn(ENTITY_NPC_SWIFTBLADE, 360.0f, 140.0f);
+
+    // 8. Prefeito Hagen em frente à sua residência/prefeitura
+    entity_spawn(ENTITY_NPC_MAYOR_HAGEN, 180.0f, 100.0f);
+
+    // 9. Deku Business Scrub no mercado/beco de mercadorias raras
+    entity_spawn(ENTITY_NPC_BUSINESS_SCRUB, 300.0f, 280.0f);
+
+    printf("[TOWN] Entidades de Hyrule Town spawnadas com sucesso (Smith, Swiftblade, Hagen, Scrub, Stockwell, Chafariz, Cidadaos, Guardas)!\n");
 }
 
 static void transition_to_town(Player* link) {
@@ -3077,37 +3089,62 @@ int main(int argc, char* argv[]) {
                             cucco_minigame_start_level(next_lvl);
                             printf("[ANJU] Link conversou com Anju e aceitou a rodada %d do resgate de Cuccos!\n", next_lvl);
                         } else {
-                            Entity* shopkeeper = entity_find_nearby_shopkeeper(link.x, link.y, 40.0f);
-                            if (shopkeeper) {
-                                dialogue_trigger_shopkeeper_talk(link.rupees);
-                            // Se estiver perto do balcão de compras:
-                            if (link.x >= 420.0f && link.x <= 468.0f && link.y <= 136.0f) {
-                                if (link.hearts < link.max_hearts && link.rupees >= 30) {
-                                    entity_buy_shop_item(0, &link.rupees, &link.hearts, &link.max_hearts); // Poção Vermelha
-                                } else if (link.max_hearts < 6 && link.rupees >= 80) {
-                                    entity_buy_shop_item(1, &link.rupees, &link.hearts, &link.max_hearts); // Piece of Heart
-                                } else if (link.rupees >= 50) {
-                                    entity_buy_shop_item(2, &link.rupees, &link.hearts, &link.max_hearts); // Bolsa de Bombas
-                                }
-                            }
-                        } else {
-                            Entity* guard = entity_find_nearby_town_guard(link.x, link.y, 30.0f);
-                            if (guard) {
-                                dialogue_trigger_town_guard_talk();
+                            Entity* smith = entity_find_nearby_smith(link.x, link.y, 32.0f);
+                            if (smith) {
+                                dialogue_trigger_smith_talk();
                             } else {
-                                Entity* citizen = entity_find_nearby_town_citizen(link.x, link.y, 30.0f);
-                                if (citizen) {
-                                    dialogue_trigger_town_citizen_talk();
-                                    if (!library_has_book(BOOK_BESTIARY)) {
-                                        library_collect_book(BOOK_BESTIARY);
-                                    }
+                                Entity* swift = entity_find_nearby_swiftblade(link.x, link.y, 32.0f);
+                                if (swift) {
+                                    dialogue_trigger_swiftblade_talk(link.has_spin_attack);
                                 } else {
-                                    trigger_link_sword_attack(&link);
+                                    Entity* hagen = entity_find_nearby_mayor_hagen(link.x, link.y, 32.0f);
+                                    if (hagen) {
+                                        dialogue_trigger_mayor_hagen_talk();
+                                    } else {
+                                        Entity* scrub = entity_find_nearby_business_scrub(link.x, link.y, 32.0f);
+                                        if (scrub) {
+                                            dialogue_trigger_business_scrub_talk(link.rupees, link.has_grip_ring);
+                                            if (!link.has_grip_ring) {
+                                                if (entity_buy_grip_ring(&link.rupees, &link.has_grip_ring)) {
+                                                    inventory_unlock_item(INV_ITEM_GRIP_RING);
+                                                }
+                                            }
+                                        } else {
+                                            Entity* shopkeeper = entity_find_nearby_shopkeeper(link.x, link.y, 40.0f);
+                                            if (shopkeeper) {
+                                                dialogue_trigger_shopkeeper_talk(link.rupees);
+                                                // Se estiver perto do balcão de compras:
+                                                if (link.x >= 420.0f && link.x <= 468.0f && link.y <= 136.0f) {
+                                                    if (link.hearts < link.max_hearts && link.rupees >= 30) {
+                                                        entity_buy_shop_item(0, &link.rupees, &link.hearts, &link.max_hearts); // Poção Vermelha
+                                                    } else if (link.max_hearts < 6 && link.rupees >= 80) {
+                                                        entity_buy_shop_item(1, &link.rupees, &link.hearts, &link.max_hearts); // Piece of Heart
+                                                    } else if (link.rupees >= 50) {
+                                                        entity_buy_shop_item(2, &link.rupees, &link.hearts, &link.max_hearts); // Bolsa de Bombas
+                                                    }
+                                                }
+                                            } else {
+                                                Entity* guard = entity_find_nearby_town_guard(link.x, link.y, 30.0f);
+                                                if (guard) {
+                                                    dialogue_trigger_town_guard_talk();
+                                                } else {
+                                                    Entity* citizen = entity_find_nearby_town_citizen(link.x, link.y, 30.0f);
+                                                    if (citizen) {
+                                                        dialogue_trigger_town_citizen_talk();
+                                                        if (!library_has_book(BOOK_BESTIARY)) {
+                                                            library_collect_book(BOOK_BESTIARY);
+                                                        }
+                                                    } else {
+                                                        trigger_link_sword_attack(&link);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
-                    }
-                } else if (s_in_village) {
+                    } else if (s_in_village) {
                         Entity* gentari = entity_find_nearby_gentari(link.x, link.y, 30.0f);
                         if (gentari) {
                             dialogue_trigger_gentari_talk();
@@ -3139,6 +3176,7 @@ int main(int argc, char* argv[]) {
                     } else if (s_in_lake_hylia) {
                         Entity* hagen = entity_find_nearby_mayor_hagen(link.x, link.y, 32.0f);
                         if (hagen) {
+                            dialogue_trigger_mayor_hagen_talk();
                             library_collect_book(BOOK_PICORI_LEGEND);
                         } else if (entity_interact_chest(link.x, link.y, &link.rupees, &link.hearts)) {
                             // Bau do Lago aberto!

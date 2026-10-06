@@ -865,6 +865,145 @@ static void render_portrait_mountain_minish(int px, int py) {
     draw_rect_blend(px + 7, py + 24, 18, 7, c_cloth);
 }
 
+static void render_portrait_smith(int px, int py, bool is_talking) {
+    // Fundo quente de forja / carvalho rústico
+    draw_rect_blend(px, py, 32, 32, 0x1A1009FF);
+
+    u32 c_skin    = 0xFDE8CDFF; // Pele de ferreiro curtida
+    u32 c_skin_dk = 0xE2B991FF; // Sombra da pele
+    u32 c_hair    = 0xF8FAFCFF; // Cabelos e barba branca reluzente
+    u32 c_hair_dk = 0xCBD5E1FF; // Sombra dos fios brancos
+    u32 c_shirt   = 0xB91C1CFF; // Túnica vermelha de ferreiro
+    u32 c_strap   = 0x78350FFF; // Alças de couro
+    u32 c_gold    = 0xD4AF37FF; // Fivelas das alças
+    u32 c_black   = 0x111111FF; // Olhos
+
+    int talk_offset = (is_talking && ((s_anim_counter / 6) % 2 == 1)) ? 1 : 0;
+
+    // Cabelos brancos volumosos nas têmporas
+    draw_rect_blend(px + 5, py + 8, 4, 11, c_hair);
+    draw_rect_blend(px + 23, py + 8, 4, 11, c_hair);
+    draw_rect_blend(px + 4, py + 10, 2, 7, c_hair_dk);
+    draw_rect_blend(px + 26, py + 10, 2, 7, c_hair_dk);
+
+    // Cabeça e testa
+    draw_rect_blend(px + 8, py + 5, 16, 12, c_skin);
+    draw_rect_blend(px + 9, py + 4, 14, 2, c_skin_dk);
+
+    // Sobrancelhas grossas brancas de ferreiro
+    draw_rect_blend(px + 8, py + 8, 6, 2, c_hair);
+    draw_rect_blend(px + 18, py + 8, 6, 2, c_hair);
+    hal_video_put_pixel(px + 7, py + 9, c_hair_dk);
+    hal_video_put_pixel(px + 24, py + 9, c_hair_dk);
+
+    // Olhos escuros determinados
+    draw_rect_blend(px + 10, py + 11, 3, 2, c_black);
+    draw_rect_blend(px + 19, py + 11, 3, 2, c_black);
+    hal_video_put_pixel(px + 10, py + 11, 0xFFFFFFFF);
+    hal_video_put_pixel(px + 19, py + 11, 0xFFFFFFFF);
+
+    // Nariz forte
+    draw_rect_blend(px + 14, py + 11, 4, 4, c_skin);
+    draw_rect_blend(px + 13, py + 14, 6, 2, c_skin_dk);
+
+    // Bigode volumoso
+    draw_rect_blend(px + 9, py + 16, 14, 3, c_hair);
+    draw_rect_blend(px + 11, py + 18, 10, 2, c_hair_dk);
+
+    // Boca abrindo e fechando ao falar
+    if (talk_offset) {
+        draw_rect_blend(px + 14, py + 18, 4, 2, 0x450A0AFF);
+    }
+
+    // Barba branca majestosa cobrindo o queixo e peito
+    draw_rect_blend(px + 7, py + 19, 18, 7, c_hair);
+    draw_rect_blend(px + 9, py + 26, 14, 3, c_hair);
+    draw_rect_blend(px + 11, py + 29, 10, 2, c_hair_dk);
+    draw_rect_blend(px + 8, py + 22, 2, 5, c_hair_dk);
+    draw_rect_blend(px + 22, py + 22, 2, 5, c_hair_dk);
+
+    // Túnica vermelha de ferreiro e avental de couro
+    draw_rect_blend(px + 4, py + 25, 4, 6, c_shirt);
+    draw_rect_blend(px + 24, py + 25, 4, 6, c_shirt);
+    draw_rect_blend(px + 7, py + 26, 3, 5, c_strap);
+    draw_rect_blend(px + 22, py + 26, 3, 5, c_strap);
+    hal_video_put_pixel(px + 8, py + 27, c_gold);
+    hal_video_put_pixel(px + 23, py + 27, c_gold);
+}
+
+static void render_portrait_mayor_hagen(int px, int py, bool is_talking) {
+    // Fundo azul municipal de Hyrule
+    draw_rect_blend(px, py, 32, 32, 0x0F172AFF);
+
+    u32 c_skin     = 0xFDE8CDFF; // Pele distinta
+    u32 c_skin_dk  = 0xE2B991FF; // Sombra
+    u32 c_hat      = 0x1D4ED8FF; // Cartola azul cerúleo
+    u32 c_hat_dk   = 0x1E3A8AFF; // Sombra da cartola
+    u32 c_ribbon   = 0xFBBF24FF; // Fita dourada
+    u32 c_feather  = 0xDC2626FF; // Pluma vermelha
+    u32 c_monocle  = 0xFDE047FF; // Monóculo dourado
+    u32 c_glass    = 0x7DD3FCFF; // Lente do monóculo
+    u32 c_mustache = 0x78350FFF; // Bigode castanho vitoriano
+    u32 c_coat     = 0x1E3A8AFF; // Casaco nobre
+    u32 c_vest     = 0xD97706FF; // Colete dourado
+    u32 c_cravat   = 0xF8FAFCFF; // Lenço branco
+    u32 c_black    = 0x111111FF;
+
+    int talk_offset = (is_talking && ((s_anim_counter / 6) % 2 == 1)) ? 1 : 0;
+
+    // Cartola azul do Prefeito (copa alta)
+    draw_rect_blend(px + 10, py + 2, 12, 9, c_hat);
+    draw_rect_blend(px + 11, py + 2, 10, 2, 0x3B82F6FF);
+    // Fita dourada da cartola
+    draw_rect_blend(px + 10, py + 9, 12, 2, c_ribbon);
+    // Aba larga da cartola
+    draw_rect_blend(px + 6, py + 11, 20, 2, c_hat_dk);
+    // Pluma vermelha pomposa
+    draw_rect_blend(px + 7, py + 3, 3, 8, c_feather);
+    hal_video_put_pixel(px + 8, py + 2, 0xF87171FF);
+
+    // Rosto distinto
+    draw_rect_blend(px + 9, py + 13, 14, 11, c_skin);
+    draw_rect_blend(px + 8, py + 14, 2, 6, c_skin_dk);
+    draw_rect_blend(px + 22, py + 14, 2, 6, c_skin_dk);
+
+    // Olho direito normal
+    draw_rect_blend(px + 11, py + 15, 2, 2, c_black);
+    hal_video_put_pixel(px + 11, py + 15, 0xFFFFFFFF);
+
+    // Olho esquerdo com Monóculo Dourado
+    draw_rect_blend(px + 17, py + 14, 5, 5, c_monocle);
+    draw_rect_blend(px + 18, py + 15, 3, 3, c_glass);
+    hal_video_put_pixel(px + 18, py + 15, 0xFFFFFFFF);
+    hal_video_put_pixel(px + 19, py + 16, c_black);
+    // Correntinha dourada do monóculo
+    hal_video_put_pixel(px + 22, py + 17, c_monocle);
+    hal_video_put_pixel(px + 22, py + 19, c_monocle);
+    hal_video_put_pixel(px + 21, py + 21, c_monocle);
+
+    // Nariz ilustre
+    draw_rect_blend(px + 14, py + 15, 3, 3, c_skin_dk);
+
+    // Bigode aristocrático curvado
+    draw_rect_blend(px + 11, py + 19, 10, 2, c_mustache);
+    hal_video_put_pixel(px + 10, py + 18, c_mustache);
+    hal_video_put_pixel(px + 21, py + 18, c_mustache);
+
+    // Boca ao falar
+    if (talk_offset) {
+        draw_rect_blend(px + 14, py + 21, 4, 1, 0x881337FF);
+    }
+
+    // Queixo
+    draw_rect_blend(px + 13, py + 22, 6, 2, c_skin);
+
+    // Cravat / Lenço nobre branco e jaqueta cerúlea com colete
+    draw_rect_blend(px + 6, py + 24, 20, 7, c_coat);
+    draw_rect_blend(px + 11, py + 24, 10, 7, c_vest);
+    draw_rect_blend(px + 13, py + 24, 6, 5, c_cravat);
+    hal_video_put_pixel(px + 15, py + 27, c_ribbon);
+}
+
 // ----------------------------------------------------------------------------
 // INTERFACE PÚBLICA DO SISTEMA DE DIÁLOGO
 // ----------------------------------------------------------------------------
@@ -975,20 +1114,37 @@ void dialogue_trigger_swiftblade_talk(bool already_learned) {
     if (!already_learned) {
         s_swiftblade_reward_pending = true;
         static const char* swiftblade_training[] = {
-            "Saudações, jovem espadachim!\nEu sou Swiftblade, o Mestre\ndas Lâminas de Hyrule!",
-            "Reconheço verdadeiro talento\nem seus olhos. Vou lhe ensinar\no Pergaminho do Tigre nº 1:",
-            "O ATAQUE GIRATÓRIO (Spin Attack)!\nSegure o golpe com [A] para\nacumular o poder de sua lâmina...",
-            "...e solte para desferir um corte\nfurioso em 360 graus que devasta\ntodos os monstros e arbustos!",
-            "Tome este Pergaminho do Tigre!\nDomine o corte circular e traga\na paz ao reino de Hyrule!"
+            "Saudacoes, heroi!\nSou Mestre Swiftblade!",
+            "Treine a nobre arte:\no lendario Spin Attack!",
+            "Segure [A] para focar\ne solte para o Giro!",
+            "Tome este Pergaminho!\nDomine o corte circular!"
         };
-        dialogue_show(SPEAKER_SWIFTBLADE, "Swiftblade", swiftblade_training, 5);
+        dialogue_show(SPEAKER_SWIFTBLADE, "Swiftblade", swiftblade_training, 4);
     } else {
         static const char* swiftblade_reminder[] = {
-            "Continue treinando com afinco!\nSegure [A] para concentrar\nsua energia na lâmina...",
-            "Ao liberar com carga máxima,\nseu corte em 360 graus varrerá\ninimigos e arbustos com facilidade!"
+            "Treine com afinco!\nFoque a sua energia.",
+            "O corte em 360 graus\ne temido em Hyrule!"
         };
         dialogue_show(SPEAKER_SWIFTBLADE, "Swiftblade", swiftblade_reminder, 2);
     }
+}
+
+void dialogue_trigger_smith_talk(void) {
+    static const char* pages[] = {
+        "Link, meu rapaz!\nForjei a espada real.",
+        "Honre nossa ferraria!\nQue a coragem te guie."
+    };
+    dialogue_show(SPEAKER_SMITH, "Mestre Smith", pages, 2);
+    hal_audio_play_sound(SOUND_SWITCH_CLICK, 0.9f, 1.1f);
+}
+
+void dialogue_trigger_mayor_hagen_talk(void) {
+    static const char* pages[] = {
+        "Bem-vindo a Hyrule!\nSou o Prefeito Hagen.",
+        "O festival centenario\ntraz alegria ao reino!"
+    };
+    dialogue_show(SPEAKER_MAYOR_HAGEN, "Prefeito Hagen", pages, 2);
+    hal_audio_play_sound(SOUND_SECRET, 0.8f, 1.2f);
 }
 
 bool dialogue_is_swiftblade_reward_pending(void) {
@@ -1085,20 +1241,21 @@ void dialogue_trigger_business_scrub_talk(int link_rupees, bool has_grip_ring) {
     hal_audio_play_sound(SOUND_TEXT_ADVANCE, 0.85f, 1.10f);
     if (has_grip_ring) {
         static const char* bought_speech[] = {
-            "Aproveite bem o seu Grip Ring!\nCom suas garras voce escala os paredoes\nrochosos mais ingremes da montanha!"
+            "Aproveite o Grip Ring!\nEle escala paredoes.",
+            "Volte sempre para mais\nnegocios em Hyrule!"
         };
-        dialogue_show(SPEAKER_BUSINESS_SCRUB, "Business Scrub", bought_speech, 1);
+        dialogue_show(SPEAKER_BUSINESS_SCRUB, "Business Scrub", bought_speech, 2);
     } else if (link_rupees >= 40) {
         static const char* sell_speech[] = {
-            "Psst! Viajante! Quer subir a montanha?\nAs rochas sao lisas e escarpadas demais\npara maos comuns!",
-            "Eu tenho o lendario Grip Ring!\nEle possui garras de ferro para escalar\nqualquer paredao por apenas 40 Rupees!",
-            "Aproxime-se e pressione [A] para fechar\no negocio e levar o seu Grip Ring!"
+            "Psst! Bravo viajante!\nTrago itens raros!",
+            "Vendo o Grip Ring por\napenas 40 Rupees!",
+            "Aperte [A] para fechar\no melhor negocio!"
         };
         dialogue_show(SPEAKER_BUSINESS_SCRUB, "Business Scrub", sell_speech, 3);
     } else {
         static const char* poor_speech[] = {
-            "O Grip Ring de escalada custa 40 Rupees!\nVolte quando tiver economias suficientes!",
-            "Sem ele, voce jamais alcancara o topo\ndo Monte Crenel e as Minas de Melari!"
+            "O Grip Ring custa\napenas 40 Rupees!",
+            "Junte moedas e volte\npara negociar comigo!"
         };
         dialogue_show(SPEAKER_BUSINESS_SCRUB, "Business Scrub", poor_speech, 2);
     }
@@ -1276,7 +1433,9 @@ void dialogue_render(void) {
                        (s_speaker == SPEAKER_MALON) ? 0xFB923CFF :
                        (s_speaker == SPEAKER_BUSINESS_SCRUB) ? 0xF59E0BFF :
                        (s_speaker == SPEAKER_MELARI) ? 0xF97316FF :
-                       (s_speaker == SPEAKER_MOUNTAIN_MINISH) ? 0xFDE047FF : 0x77FF99FF;
+                       (s_speaker == SPEAKER_MOUNTAIN_MINISH) ? 0xFDE047FF :
+                       (s_speaker == SPEAKER_SMITH) ? 0xF87171FF :
+                       (s_speaker == SPEAKER_MAYOR_HAGEN) ? 0x60A5FAFF : 0x77FF99FF;
         font_draw_text(badge_x + 6, badge_y + 1, s_speaker_name, name_col, true);
     }
 
@@ -1322,6 +1481,12 @@ void dialogue_render(void) {
         render_portrait_melari(port_x, port_y, is_talking);
     } else if (s_speaker == SPEAKER_MOUNTAIN_MINISH) {
         render_portrait_mountain_minish(port_x, port_y);
+    } else if (s_speaker == SPEAKER_SMITH) {
+        bool is_talking = (s_state == DIALOGUE_STATE_TYPING);
+        render_portrait_smith(port_x, port_y, is_talking);
+    } else if (s_speaker == SPEAKER_MAYOR_HAGEN) {
+        bool is_talking = (s_state == DIALOGUE_STATE_TYPING);
+        render_portrait_mayor_hagen(port_x, port_y, is_talking);
     }
 
     // 6. Área de Texto com quebra de linhas (\n)

@@ -57,7 +57,8 @@ typedef enum {
     ENTITY_ARMOS,             // Robô / Estátua viva Armos de pedra das Wind Ruins
     ENTITY_ARMOS_SWITCH,      // Interruptor do circuito interno do Armos (acionável por Minish Link)
     ENTITY_NPC_LIBRARI,       // Ancião e Guardião da Biblioteca Real (Elder Librari)
-    ENTITY_NPC_MAYOR_HAGEN    // Prefeito Hagen (Cidade de Hyrule / Cabana de Lake Hylia)
+    ENTITY_NPC_MAYOR_HAGEN,   // Prefeito Hagen (Cidade de Hyrule / Cabana de Lake Hylia)
+    ENTITY_NPC_SMITH          // Mestre Ferreiro Smith (Avô de Link / Ferraria de Hyrule)
 } EntityType;
 
 // Caixa delimitadora de colisão e dano (Hitbox / Hurtbox)
@@ -331,6 +332,7 @@ void entity_clear_all(void);
  */
 Entity* entity_find_nearby_librari(float world_x, float world_y, float max_dist);
 Entity* entity_find_nearby_mayor_hagen(float world_x, float world_y, float max_dist);
+Entity* entity_find_nearby_smith(float world_x, float world_y, float max_dist);
 
 /*
  * Finaliza o subsistema de entidades.
