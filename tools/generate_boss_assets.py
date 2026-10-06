@@ -16,7 +16,7 @@ import os
 import struct
 
 WIDTH = 256
-HEIGHT = 180
+HEIGHT = 196
 
 def create_bmp_rgba(width, height):
     return [[(0, 0, 0, 0) for _ in range(width)] for _ in range(height)]
@@ -439,12 +439,150 @@ def draw_gyorg_pair(buf):
     fill_ellipse(buf, x3 + 10, y3 + 10, 3, 3, (125, 211, 252, 255))
     put_px(buf, x3 + 10, y3 + 10, C_WIND_CORE)
 
+def draw_vaati_and_relics(buf):
+    C_VAATI_ROBE      = (88, 28, 135, 255)
+    C_VAATI_ROBE_DK   = (59, 7, 100, 255)
+    C_VAATI_TRIM      = (245, 158, 11, 255)
+    C_VAATI_SKIN      = (237, 233, 254, 255)
+    C_VAATI_HAIR      = (216, 180, 254, 255)
+    C_VAATI_HAT       = (107, 33, 168, 255)
+    C_VAATI_EYE_RED   = (220, 38, 38, 255)
+    C_VAATI_MALICE    = (192, 132, 252, 255)
+    C_CHEST_WOOD      = (180, 83, 9, 255)
+    C_CHEST_DK        = (120, 53, 15, 255)
+    C_CHEST_GOLD      = (245, 158, 11, 255)
+    C_SWORD_BLADE     = (56, 189, 248, 255)
+    C_SWORD_CORE      = (240, 249, 255, 255)
+
+    base_y = 160
+
+    # 1. Vaati Idle Floating at (0, 160)
+    vx0 = 0
+    # Shadow
+    fill_ellipse(buf, vx0 + 16, base_y + 30, 8, 2, (15, 23, 42, 120))
+    # Robe / Cape
+    fill_rect(buf, vx0 + 10, base_y + 12, 12, 16, C_VAATI_ROBE)
+    fill_rect(buf, vx0 + 8, base_y + 16, 16, 12, C_VAATI_ROBE)
+    fill_rect(buf, vx0 + 7, base_y + 24, 18, 5, C_VAATI_ROBE_DK)
+    # Gold trim on hem
+    fill_rect(buf, vx0 + 7, base_y + 28, 18, 1, C_VAATI_TRIM)
+    # Head & Lavender Hair
+    fill_rect(buf, vx0 + 11, base_y + 6, 10, 8, C_VAATI_SKIN)
+    fill_rect(buf, vx0 + 9, base_y + 6, 3, 10, C_VAATI_HAIR)
+    fill_rect(buf, vx0 + 20, base_y + 6, 3, 10, C_VAATI_HAIR)
+    # Pointed Wizard Hat
+    fill_rect(buf, vx0 + 9, base_y + 4, 14, 3, C_VAATI_HAT)
+    fill_rect(buf, vx0 + 11, base_y + 1, 10, 3, C_VAATI_HAT)
+    put_px(buf, vx0 + 13, base_y + 0, C_VAATI_HAT)
+    put_px(buf, vx0 + 14, base_y + 0, C_VAATI_HAT)
+    put_px(buf, vx0 + 15, base_y + 3, C_VAATI_TRIM) # Hat gem
+    # Eyes
+    put_px(buf, vx0 + 13, base_y + 9, C_VAATI_EYE_RED)
+    put_px(buf, vx0 + 17, base_y + 9, C_VAATI_EYE_RED)
+
+    # 2. Vaati Casting Dark Spell at (32, 160)
+    vx1 = 32
+    fill_ellipse(buf, vx1 + 16, base_y + 30, 8, 2, (15, 23, 42, 120))
+    # Robe blowing
+    fill_rect(buf, vx1 + 10, base_y + 12, 12, 16, C_VAATI_ROBE)
+    fill_rect(buf, vx1 + 6, base_y + 16, 20, 12, C_VAATI_ROBE)
+    fill_rect(buf, vx1 + 5, base_y + 24, 22, 5, C_VAATI_ROBE_DK)
+    fill_rect(buf, vx1 + 5, base_y + 28, 22, 1, C_VAATI_TRIM)
+    # Raised arms with malice orbs
+    fill_rect(buf, vx1 + 4, base_y + 10, 6, 3, C_VAATI_SKIN)
+    fill_rect(buf, vx1 + 22, base_y + 10, 6, 3, C_VAATI_SKIN)
+    fill_ellipse(buf, vx1 + 4, base_y + 10, 4, 4, C_VAATI_MALICE)
+    fill_ellipse(buf, vx1 + 27, base_y + 10, 4, 4, C_VAATI_MALICE)
+    put_px(buf, vx1 + 4, base_y + 10, (255, 255, 255, 255))
+    put_px(buf, vx1 + 27, base_y + 10, (255, 255, 255, 255))
+    # Head & Hat
+    fill_rect(buf, vx1 + 11, base_y + 6, 10, 8, C_VAATI_SKIN)
+    fill_rect(buf, vx1 + 9, base_y + 5, 14, 3, C_VAATI_HAT)
+    fill_rect(buf, vx1 + 11, base_y + 1, 10, 4, C_VAATI_HAT)
+    put_px(buf, vx1 + 13, base_y + 8, C_VAATI_EYE_RED)
+    put_px(buf, vx1 + 14, base_y + 8, C_VAATI_EYE_RED)
+    put_px(buf, vx1 + 17, base_y + 8, C_VAATI_EYE_RED)
+    put_px(buf, vx1 + 18, base_y + 8, C_VAATI_EYE_RED)
+
+    # 3. Vaati Laughing / Smirking at (64, 160)
+    vx2 = 64
+    fill_ellipse(buf, vx2 + 16, base_y + 30, 8, 2, (15, 23, 42, 120))
+    fill_rect(buf, vx2 + 10, base_y + 12, 12, 16, C_VAATI_ROBE)
+    fill_rect(buf, vx2 + 8, base_y + 16, 16, 12, C_VAATI_ROBE)
+    fill_rect(buf, vx2 + 7, base_y + 24, 18, 5, C_VAATI_ROBE_DK)
+    fill_rect(buf, vx2 + 7, base_y + 28, 18, 1, C_VAATI_TRIM)
+    # Head tilted back
+    fill_rect(buf, vx2 + 11, base_y + 5, 10, 8, C_VAATI_SKIN)
+    fill_rect(buf, vx2 + 9, base_y + 2, 14, 3, C_VAATI_HAT)
+    fill_rect(buf, vx2 + 10, base_y - 1, 8, 3, C_VAATI_HAT)
+    put_px(buf, vx2 + 14, base_y + 8, C_VAATI_EYE_RED)
+    put_px(buf, vx2 + 18, base_y + 8, C_VAATI_EYE_RED)
+    # Smirking mouth
+    fill_rect(buf, vx2 + 14, base_y + 11, 4, 1, (120, 53, 15, 255))
+    put_px(buf, vx2 + 17, base_y + 10, (120, 53, 15, 255))
+
+    # 4. Vaati Dark Teleport / Sphere at (96, 160)
+    vx3 = 96
+    fill_ellipse(buf, vx3 + 16, base_y + 16, 14, 14, C_VAATI_ROBE_DK)
+    fill_ellipse(buf, vx3 + 16, base_y + 16, 11, 11, C_VAATI_HAT)
+    fill_ellipse(buf, vx3 + 16, base_y + 16, 8, 8, (15, 23, 42, 255))
+    fill_ellipse(buf, vx3 + 16, base_y + 16, 4, 4, C_VAATI_MALICE)
+    # Demonic Eye
+    put_px(buf, vx3 + 15, base_y + 16, C_VAATI_EYE_RED)
+    put_px(buf, vx3 + 16, base_y + 16, (255, 255, 255, 255))
+
+    # 5. The Bound Chest Intact with Picori Blade at (128, 160)
+    cx0 = 128
+    # Stone pedestal step
+    fill_rect(buf, cx0 + 2, base_y + 28, 28, 4, (100, 116, 139, 255))
+    fill_rect(buf, cx0 + 4, base_y + 26, 24, 2, (148, 163, 184, 255))
+    # Chest Box
+    fill_rect(buf, cx0 + 5, base_y + 14, 22, 12, C_CHEST_WOOD)
+    fill_rect(buf, cx0 + 4, base_y + 12, 24, 4, C_CHEST_DK) # Lid
+    # Gold bands and lock
+    fill_rect(buf, cx0 + 8, base_y + 12, 2, 14, C_CHEST_GOLD)
+    fill_rect(buf, cx0 + 22, base_y + 12, 2, 14, C_CHEST_GOLD)
+    fill_rect(buf, cx0 + 13, base_y + 15, 6, 5, C_CHEST_GOLD)
+    put_px(buf, cx0 + 15, base_y + 18, (0, 0, 0, 255)) # Keyhole
+    # Picori Blade sealing the chest
+    fill_rect(buf, cx0 + 15, base_y + 6, 2, 10, C_SWORD_BLADE)
+    put_px(buf, cx0 + 15, base_y + 7, C_SWORD_CORE)
+    put_px(buf, cx0 + 15, base_y + 10, C_SWORD_CORE)
+    fill_rect(buf, cx0 + 12, base_y + 5, 8, 2, C_CHEST_GOLD) # Guard
+    fill_rect(buf, cx0 + 15, base_y + 1, 2, 4, (34, 197, 94, 255)) # Green grip
+    put_px(buf, cx0 + 15, base_y + 0, C_CHEST_GOLD) # Pommel
+
+    # 6. Broken Picori Blade & Opened Chest at (160, 160)
+    cx1 = 160
+    fill_rect(buf, cx1 + 2, base_y + 28, 28, 4, (100, 116, 139, 255))
+    # Chest Open
+    fill_rect(buf, cx1 + 5, base_y + 16, 22, 12, C_CHEST_WOOD)
+    fill_rect(buf, cx1 + 6, base_y + 16, 20, 6, (15, 23, 42, 255)) # Dark void inside
+    # Lid open back
+    fill_rect(buf, cx1 + 3, base_y + 8, 26, 6, C_CHEST_DK)
+    fill_rect(buf, cx1 + 7, base_y + 8, 2, 6, C_CHEST_GOLD)
+    fill_rect(buf, cx1 + 23, base_y + 8, 2, 6, C_CHEST_GOLD)
+    # Malice smoke leaking
+    fill_ellipse(buf, cx1 + 16, base_y + 12, 6, 4, C_VAATI_MALICE)
+    fill_ellipse(buf, cx1 + 20, base_y + 9, 4, 3, C_VAATI_ROBE_DK)
+    # Broken Sword - Lower stump
+    fill_rect(buf, cx1 + 15, base_y + 15, 2, 4, C_SWORD_BLADE)
+    # Broken Sword - Shattered top piece flying
+    fill_rect(buf, cx1 + 18, base_y + 3, 2, 5, C_SWORD_BLADE)
+    fill_rect(buf, cx1 + 15, base_y + 2, 8, 2, C_CHEST_GOLD)
+    put_px(buf, cx1 + 19, base_y + 0, C_CHEST_GOLD)
+    # Sparks
+    put_px(buf, cx1 + 13, base_y + 10, (254, 240, 138, 255))
+    put_px(buf, cx1 + 17, base_y + 11, (56, 189, 248, 255))
+    put_px(buf, cx1 + 23, base_y + 13, (254, 240, 138, 255))
+
 def generate_all():
     buf = create_bmp_rgba(WIDTH, HEIGHT)
     draw_gleerok(buf)
     draw_mazaal(buf)
     draw_big_octorok(buf)
     draw_gyorg_pair(buf)
+    draw_vaati_and_relics(buf)
 
     master_path = "assets/regions/bosses_master.bmp"
     save_bmp_rgba32(buf, master_path)

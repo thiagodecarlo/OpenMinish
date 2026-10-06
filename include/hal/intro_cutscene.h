@@ -19,6 +19,11 @@
 #include <stdbool.h>
 
 void intro_cutscene_set_npcs_texture(const Texture* tex);
+void intro_cutscene_set_bosses_texture(const Texture* tex);
+void intro_cutscene_set_link_texture(const Texture* tex);
+void intro_cutscene_set_castle_texture(const Texture* tex);
+void intro_cutscene_set_hud_texture(const Texture* tex);
+void intro_cutscene_set_enemies_texture(const Texture* tex);
 
 typedef enum {
     INTRO_STAGE_FESTIVAL_PARADE = 0, // 1. Link e Princesa Zelda no Festival de Picori

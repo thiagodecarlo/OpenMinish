@@ -49,10 +49,35 @@ typedef struct {
 } IntroContext;
 
 static IntroContext s_intro;
-static const Texture* s_intro_npcs_tex = NULL;
+static const Texture* s_intro_npcs_tex    = NULL;
+static const Texture* s_intro_bosses_tex  = NULL;
+static const Texture* s_intro_link_tex    = NULL;
+static const Texture* s_intro_castle_tex  = NULL;
+static const Texture* s_intro_hud_tex     = NULL;
+static const Texture* s_intro_enemies_tex = NULL;
 
 void intro_cutscene_set_npcs_texture(const Texture* tex) {
     s_intro_npcs_tex = tex;
+}
+
+void intro_cutscene_set_bosses_texture(const Texture* tex) {
+    s_intro_bosses_tex = tex;
+}
+
+void intro_cutscene_set_link_texture(const Texture* tex) {
+    s_intro_link_tex = tex;
+}
+
+void intro_cutscene_set_castle_texture(const Texture* tex) {
+    s_intro_castle_tex = tex;
+}
+
+void intro_cutscene_set_hud_texture(const Texture* tex) {
+    s_intro_hud_tex = tex;
+}
+
+void intro_cutscene_set_enemies_texture(const Texture* tex) {
+    s_intro_enemies_tex = tex;
 }
 
 static inline u32 blend_color(u32 dst, u32 src) {
@@ -297,69 +322,157 @@ void intro_cutscene_render(void) {
         draw_rect_fast((W - 32) / 2, 20, 32, 28, 0xD4AF37FF);
         draw_rect_fast((W - 24) / 2, 24, 24, 20, 0xB45309FF);
 
-        // Rei Daltus
-        draw_rect_fast((int)s_intro.king_x - 6, (int)s_intro.king_y, 12, 14, 0xDC2626FF);
-        draw_rect_fast((int)s_intro.king_x - 4, (int)s_intro.king_y - 6, 8, 6, 0xFDE047FF); // Coroa
+        // Guardas Reais Flanqueando a Sala do Trono
+        if (s_intro_npcs_tex && s_intro_npcs_tex->pixels) {
+            texture_draw(s_intro_npcs_tex, 0 * 16, 8 * 16, 16, 16, 44, 44);
+            texture_draw(s_intro_npcs_tex, 0 * 16, 8 * 16, 16, 16, 180, 44);
+        }
+
+        // Rei Daltus no Trono
+        if (s_intro_npcs_tex && s_intro_npcs_tex->pixels) {
+            texture_draw(s_intro_npcs_tex, 5 * 16, 0 * 16, 16, 16, (W - 16) / 2, 26);
+        } else {
+            draw_rect_fast((int)s_intro.king_x - 6, (int)s_intro.king_y, 12, 14, 0xDC2626FF);
+            draw_rect_fast((int)s_intro.king_x - 4, (int)s_intro.king_y - 6, 8, 6, 0xFDE047FF); // Coroa
+        }
 
         // Mestre Smith (Ferreiro e avô de Link)
         if (s_intro_npcs_tex && s_intro_npcs_tex->pixels) {
-            texture_draw(s_intro_npcs_tex, 0 * 16, 1 * 16, 16, 16, (int)s_intro.smith_x - 8, (int)s_intro.smith_y - 6);
+            texture_draw(s_intro_npcs_tex, 0 * 16, 1 * 16, 16, 16, (int)s_intro.smith_x - 8, (int)s_intro.smith_y - 8);
         } else {
             draw_rect_fast((int)s_intro.smith_x - 6, (int)s_intro.smith_y, 12, 16, 0x475569FF);
             draw_rect_fast((int)s_intro.smith_x - 5, (int)s_intro.smith_y - 6, 10, 6, 0xF8FAFCFF); // Barba branca
         }
+
+        // Link em frente ao Trono (virado para cima, ouvindo a ordem do Rei)
+        if (s_intro_link_tex && s_intro_link_tex->pixels) {
+            texture_draw(s_intro_link_tex, 2 * 32, 0 * 32, 32, 32, (int)s_intro.link_x - 16, (int)s_intro.link_y - 20);
+        } else {
+            draw_rect_fast((int)s_intro.link_x - 5, (int)s_intro.link_y, 10, 14, 0x16A34AFF);
+            draw_rect_fast((int)s_intro.link_x - 4, (int)s_intro.link_y - 6, 8, 6, 0xFBBF24FF);
+        }
     } else {
-        // Pátio Externo do Castelo de Hyrule (Gramado e Muralhas de Pedra)
-        draw_rect_fast(0, 0, W, 45, 0x475569FF); // Muralha
-        draw_rect_fast(0, 45, W, H - 45, 0x15803DFF); // Gramado do pátio
-
-        // Pódio do Baú Sagrado
-        draw_rect_fast((W - 60) / 2, 40, 60, 30, 0x64748BFF);
-        draw_rect_fast((W - 56) / 2, 42, 56, 26, 0x94A3B8FF);
-
-        // O Baú Sagrado de Hyrule (Bound Chest)
-        int cx = (W - 24) / 2;
-        int cy = 48;
-        if (s_intro.chest_open_progress > 0) {
-            draw_rect_fast(cx, cy, 24, 16, 0xB45309FF);
-            draw_rect_fast(cx - 2, cy - 8, 28, 8, 0xD97706FF); // Tampa aberta
+        // Pátio Externo do Castelo de Hyrule
+        if (s_intro_castle_tex && s_intro_castle_tex->pixels) {
+            // Renderiza o cenário autêntico do pátio (512x384 centrado no pódio)
+            texture_draw(s_intro_castle_tex, 136, 80, W, H, 0, 0);
         } else {
-            draw_rect_fast(cx, cy, 24, 16, 0xB45309FF);
-            draw_rect_fast(cx - 2, cy - 2, 28, 6, 0xD97706FF);
+            draw_rect_fast(0, 0, W, 45, 0x475569FF); // Muralha
+            draw_rect_fast(0, 45, W, H - 45, 0x15803DFF); // Gramado do pátio
+            draw_rect_fast((W - 60) / 2, 40, 60, 30, 0x64748BFF);
+            draw_rect_fast((W - 56) / 2, 42, 56, 26, 0x94A3B8FF);
         }
 
-        // Picori Blade cravada ou partida
-        if (s_intro.sword_broken) {
-            // Lâmina partida em dois pedaços
-            draw_rect_fast(cx + 6, cy - 14, 3, 8, 0x38BDF8FF);
-            draw_rect_fast(cx + 14, cy - 10, 4, 3, 0x38BDF8FF);
-        } else {
-            draw_rect_fast(cx + 10, cy - 18, 3, 16, 0x38BDF8FF); // Picori Blade selando o baú
-            draw_rect_fast(cx + 7, cy - 6, 9, 3, 0xFDE047FF);
-        }
-
-        // Vaati se presente
-        if (s_intro.stage >= INTRO_STAGE_TOURNAMENT_WIN && s_intro.stage < INTRO_STAGE_KING_AUDIENCE) {
-            draw_rect_fast((int)s_intro.vaati_x - 7, (int)s_intro.vaati_y, 14, 18, 0x581C87FF); // Manto púrpura
-            draw_rect_fast((int)s_intro.vaati_x - 5, (int)s_intro.vaati_y - 6, 10, 6, 0xE0E7FFFF); // Rosto pálido
-            draw_rect_fast((int)s_intro.vaati_x - 6, (int)s_intro.vaati_y - 12, 12, 6, 0xC084FCFF); // Chapéu pontudo
-        }
-    }
-
-    // Link
-    draw_rect_fast((int)s_intro.link_x - 5, (int)s_intro.link_y, 10, 14, 0x16A34AFF); // Túnica Verde
-    draw_rect_fast((int)s_intro.link_x - 4, (int)s_intro.link_y - 6, 8, 6, 0xFBBF24FF);  // Cabelo loiro e gorro
-
-    // Princesa Zelda
-    if (s_intro.stage != INTRO_STAGE_KING_AUDIENCE) {
+        // Guardas Reais Flanqueando o Pódio Sagrado
         if (s_intro_npcs_tex && s_intro_npcs_tex->pixels) {
-            int src_x = s_intro.zelda_petrified ? (3 * 16) : (0 * 16);
-            texture_draw(s_intro_npcs_tex, src_x, 2 * 16, 16, 16, (int)s_intro.zelda_x - 8, (int)s_intro.zelda_y - 6);
+            texture_draw(s_intro_npcs_tex, 0 * 16, 8 * 16, 16, 16, 68, 50);
+            texture_draw(s_intro_npcs_tex, 0 * 16, 8 * 16, 16, 16, 156, 50);
+        }
+
+        // O Baú Sagrado e a Lâmina Picori (The Bound Chest & Picori Blade)
+        int cx = 104;
+        int cy = 46;
+        if (s_intro_bosses_tex && s_intro_bosses_tex->pixels) {
+            if (!s_intro.sword_broken) {
+                // Baú intacto selado pela Picori Blade
+                texture_draw(s_intro_bosses_tex, 128, 160, 32, 32, cx, cy);
+            } else {
+                // Baú violado com a lâmina partida e malícia escapando
+                texture_draw(s_intro_bosses_tex, 160, 160, 32, 32, cx, cy);
+            }
+        } else {
+            // Fallback procedural
+            if (s_intro.chest_open_progress > 0) {
+                draw_rect_fast(cx + 4, cy + 8, 24, 16, 0xB45309FF);
+                draw_rect_fast(cx + 2, cy, 28, 8, 0xD97706FF);
+            } else {
+                draw_rect_fast(cx + 4, cy + 8, 24, 16, 0xB45309FF);
+                draw_rect_fast(cx + 2, cy + 6, 28, 6, 0xD97706FF);
+            }
+            if (s_intro.sword_broken) {
+                draw_rect_fast(cx + 10, cy - 6, 3, 8, 0x38BDF8FF);
+                draw_rect_fast(cx + 18, cy - 2, 4, 3, 0x38BDF8FF);
+            } else {
+                draw_rect_fast(cx + 14, cy - 10, 3, 16, 0x38BDF8FF);
+                draw_rect_fast(cx + 11, cy + 2, 9, 3, 0xFDE047FF);
+            }
+        }
+
+        // Vaati (O Campeão do Torneio e Mago das Trevas)
+        if (s_intro.stage >= INTRO_STAGE_TOURNAMENT_WIN && s_intro.stage < INTRO_STAGE_KING_AUDIENCE) {
+            int vx = (int)s_intro.vaati_x - 16;
+            int vy = (int)s_intro.vaati_y - 16;
+            if (s_intro_bosses_tex && s_intro_bosses_tex->pixels) {
+                int v_src_x = 0;
+                if (s_intro.stage == INTRO_STAGE_TOURNAMENT_WIN) v_src_x = 0; // Floating idle
+                else if (s_intro.stage == INTRO_STAGE_CHEST_CEREMONY) v_src_x = 32; // Casting spell
+                else if (s_intro.stage == INTRO_STAGE_MONSTERS_RELEASED) v_src_x = 64; // Laughing
+                else if (s_intro.stage == INTRO_STAGE_ZELDA_CURSED) {
+                    v_src_x = s_intro.zelda_petrified ? 96 : 32; // Dark vortex / Spell
+                }
+                texture_draw(s_intro_bosses_tex, v_src_x, 160, 32, 32, vx, vy);
+            } else {
+                draw_rect_fast(vx + 9, vy + 7, 14, 18, 0x581C87FF);
+                draw_rect_fast(vx + 11, vy + 1, 10, 6, 0xE0E7FFFF);
+                draw_rect_fast(vx + 10, vy - 5, 12, 6, 0xC084FCFF);
+            }
+        }
+
+        // Monstros libertados na quebra do selo
+        if (s_intro.stage == INTRO_STAGE_MONSTERS_RELEASED) {
+            if (s_intro_enemies_tex && s_intro_enemies_tex->pixels) {
+                float mt = (float)s_intro.stage_timer;
+                int kframe = (s_intro.stage_timer / 6) % 2;
+                int k1_x = 112 - (int)(mt * 0.75f);
+                int k1_y = 52 - (int)(sinf(mt * 0.1f) * 14.0f + mt * 0.25f);
+                if (k1_x > 0 && k1_y > 0) {
+                    texture_draw(s_intro_enemies_tex, kframe * 16, 32, 16, 16, k1_x, k1_y);
+                }
+                int k2_x = 112 + (int)(mt * 0.85f);
+                int k2_y = 48 - (int)(cosf(mt * 0.12f) * 12.0f + mt * 0.2f);
+                if (k2_x < W - 16 && k2_y > 0) {
+                    texture_draw(s_intro_enemies_tex, kframe * 16, 32, 16, 16, k2_x, k2_y);
+                }
+                int chu_y = 54 + (int)(mt * 0.5f);
+                if (chu_y < 110) {
+                    texture_draw(s_intro_enemies_tex, 4 * 16, 16, 16, 16, 112, chu_y);
+                }
+            }
+        }
+
+        // Princesa Zelda
+        int zx = (int)s_intro.zelda_x - 8;
+        int zy = (int)s_intro.zelda_y - 12;
+        if (s_intro_npcs_tex && s_intro_npcs_tex->pixels) {
+            int z_col = 0;
+            if (s_intro.stage == INTRO_STAGE_FESTIVAL_PARADE) z_col = 0;
+            else if (s_intro.stage == INTRO_STAGE_TOURNAMENT_WIN || s_intro.stage == INTRO_STAGE_CHEST_CEREMONY) z_col = 1;
+            else if (s_intro.stage == INTRO_STAGE_MONSTERS_RELEASED) z_col = 2;
+            else if (s_intro.stage == INTRO_STAGE_ZELDA_CURSED) {
+                z_col = s_intro.zelda_petrified ? 3 : 2; // Col 3 é estátua de pedra!
+            }
+            texture_draw(s_intro_npcs_tex, z_col * 16, 2 * 16, 16, 16, zx, zy);
         } else {
             u32 zelda_color = s_intro.zelda_petrified ? 0x64748BFF : 0xEC4899FF;
             u32 zelda_face  = s_intro.zelda_petrified ? 0x94A3B8FF : 0xFBCFE8FF;
-            draw_rect_fast((int)s_intro.zelda_x - 5, (int)s_intro.zelda_y, 10, 14, zelda_color);
-            draw_rect_fast((int)s_intro.zelda_x - 4, (int)s_intro.zelda_y - 6, 8, 6, zelda_face);
+            draw_rect_fast(zx + 3, zy + 2, 10, 14, zelda_color);
+            draw_rect_fast(zx + 4, zy - 4, 8, 6, zelda_face);
+        }
+
+        // Link
+        int lx = (int)s_intro.link_x - 16;
+        int ly = (int)s_intro.link_y - 20;
+        if (s_intro_link_tex && s_intro_link_tex->pixels) {
+            if (s_intro.stage == INTRO_STAGE_ZELDA_CURSED && s_intro.zelda_petrified) {
+                // Nocauteado pela explosão da malícia de Vaati
+                texture_draw(s_intro_link_tex, 0 * 32, 9 * 32, 32, 32, lx, ly + 6);
+            } else {
+                // Link em pé
+                texture_draw(s_intro_link_tex, 0 * 32, 0 * 32, 32, 32, lx, ly);
+            }
+        } else {
+            draw_rect_fast(lx + 11, ly + 6, 10, 14, 0x16A34AFF);
+            draw_rect_fast(lx + 12, ly, 8, 6, 0xFBBF24FF);
         }
     }
 
