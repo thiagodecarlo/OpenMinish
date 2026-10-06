@@ -204,52 +204,94 @@ def generate_link_sheet(source_sheet_path):
     # Col 6..8: Up Slash (windup, strike, followthrough)
     # Col 9: Spin Charge Pose
     # -------------------------------------------------------------------------
-    # Helper to clean crop a subregion of img as RGBA
-    def clean_crop(x1, y1, x2, y2):
-        c = img.crop((x1, y1, x2, y2)).convert('RGBA')
-        orig = img.crop((x1, y1, x2, y2))
-        data = [(0, 0, 0, 0) if o == 0 else (r, g, b, 255) for (r, g, b, a), o in zip(c.getdata(), orig.getdata())]
-        c.putdata(data)
-        return c
+    # Helpers to composite authentic sword blades
+    def draw_sword_v(cell, hx, hy, length=12, facing_down=True):
+        pix = cell.load()
+        c_white = (255, 255, 255, 255)
+        c_steel = (207, 226, 243, 255)
+        c_dark  = (100, 116, 139, 255)
+        c_gold  = (245, 197, 24, 255)
+        for gx in range(hx - 3, hx + 4):
+            if 0 <= gx < 32 and 0 <= hy < 32:
+                pix[gx, hy] = c_gold
+        if 0 <= hx < 32 and 0 <= hy < 32:
+            pix[hx, hy] = (239, 68, 68, 255)
+        step = 1 if facing_down else -1
+        for i in range(1, length):
+            by = hy + i * step
+            if 0 <= by < 32:
+                if 0 <= hx - 1 < 32: pix[hx - 1, by] = c_dark
+                if 0 <= hx < 32:     pix[hx, by]     = c_white
+                if 0 <= hx + 1 < 32: pix[hx + 1, by] = c_steel
+        tip_y = hy + length * step
+        if 0 <= tip_y < 32 and 0 <= hx < 32:
+            pix[hx, tip_y] = c_white
 
-    # Canonical sword blade sprites from sheet (Y=280..315)
-    blade_h = clean_crop(10, 285, 30, 296)  # Horizontal blade
-    blade_v = clean_crop(46, 285, 59, 310)  # Vertical blade
-    blade_up = blade_v.transpose(Image.FLIP_TOP_BOTTOM)
+    def draw_sword_h(cell, hx, hy, length=12, facing_right=True):
+        pix = cell.load()
+        c_white = (255, 255, 255, 255)
+        c_steel = (207, 226, 243, 255)
+        c_dark  = (100, 116, 139, 255)
+        c_gold  = (245, 197, 24, 255)
+        for gy in range(hy - 3, hy + 4):
+            if 0 <= hx < 32 and 0 <= gy < 32:
+                pix[hx, gy] = c_gold
+        if 0 <= hx < 32 and 0 <= hy < 32:
+            pix[hx, hy] = (239, 68, 68, 255)
+        step = 1 if facing_right else -1
+        for i in range(1, length):
+            bx = hx + i * step
+            if 0 <= bx < 32:
+                if 0 <= hy - 1 < 32: pix[bx, hy - 1] = c_white
+                if 0 <= hy < 32:     pix[bx, hy]     = c_steel
+                if 0 <= hy + 1 < 32: pix[bx, hy + 1] = c_dark
+        tip_x = hx + length * step
+        if 0 <= tip_x < 32 and 0 <= hy < 32:
+            pix[tip_x, hy] = c_white
 
-    # Down Slashes: Body swings at Y=1900..1935
-    for i, cx in enumerate([20, 52, 85]):
-        cell = extract_sprite_auto(cx - 15, 1900, cx + 18, 1935, baseline_y=26)
-        if i == 1:
-            # Composite sword slashing down
-            cell.paste(blade_v, (10, 15), blade_v)
-        elif i == 2:
-            cell.paste(blade_v, (6, 17), blade_v)
-        sheet.paste(cell, (i * CELL_W, 6 * CELL_H))
+    # Down Slashes (Row 62: Y=1892..1917)
+    d0 = extract_sprite_auto(15, 1892, 38, 1917, baseline_y=26)
+    draw_sword_v(d0, 20, 12, length=9, facing_down=False)
+    sheet.paste(d0, (0 * CELL_W, 6 * CELL_H))
 
-    # Right Slashes: Body swings at Y=1935..1970
-    for i, cx in enumerate([20, 52, 85]):
-        cell = extract_sprite_auto(cx - 15, 1935, cx + 18, 1970, baseline_y=26)
-        if i == 1:
-            # Strike forward
-            cell.paste(blade_h, (15, 11), blade_h)
-        elif i == 2:
-            cell.paste(blade_h, (17, 13), blade_h)
-        sheet.paste(cell, ((3 + i) * CELL_W, 6 * CELL_H))
+    d1 = extract_sprite_auto(47, 1892, 69, 1917, baseline_y=26)
+    draw_sword_v(d1, 15, 17, length=12, facing_down=True)
+    sheet.paste(d1, (1 * CELL_W, 6 * CELL_H))
 
-    # Up Slashes: Body swings at Y=1970..2005
-    for i, cx in enumerate([20, 52, 85]):
-        cell = extract_sprite_auto(cx - 15, 1970, cx + 18, 2005, baseline_y=26)
-        if i == 1:
-            cell.paste(blade_up, (9, 0), blade_up)
-        elif i == 2:
-            cell.paste(blade_up, (14, 2), blade_up)
-        sheet.paste(cell, ((6 + i) * CELL_W, 6 * CELL_H))
+    d2 = extract_sprite_auto(78, 1892, 98, 1917, baseline_y=26)
+    draw_sword_v(d2, 13, 18, length=10, facing_down=True)
+    sheet.paste(d2, (2 * CELL_W, 6 * CELL_H))
 
-    # Spin Charge Pose: Tucked pose with sword blade gleaming
-    spin_charge = extract_sprite_auto(270, 1900, 295, 1935, baseline_y=26)
-    spin_charge.paste(blade_h.transpose(Image.FLIP_LEFT_RIGHT), (1, 14), blade_h.transpose(Image.FLIP_LEFT_RIGHT))
-    sheet.paste(spin_charge, (9 * CELL_W, 6 * CELL_H))
+    # Right Slashes (Row 63: Y=1924..1949)
+    r0 = extract_sprite_auto(11, 1924, 33, 1949, baseline_y=26)
+    draw_sword_h(r0, 13, 14, length=8, facing_right=False)
+    sheet.paste(r0, (3 * CELL_W, 6 * CELL_H))
+
+    r1 = extract_sprite_auto(42, 1924, 65, 1949, baseline_y=26)
+    draw_sword_h(r1, 19, 14, length=11, facing_right=True)
+    sheet.paste(r1, (4 * CELL_W, 6 * CELL_H))
+
+    r2 = extract_sprite_auto(79, 1924, 101, 1949, baseline_y=26)
+    draw_sword_h(r2, 18, 15, length=10, facing_right=True)
+    sheet.paste(r2, (5 * CELL_W, 6 * CELL_H))
+
+    # Up Slashes (Row 64: Y=1963..1988)
+    u0 = extract_sprite_auto(15, 1963, 38, 1988, baseline_y=26)
+    draw_sword_v(u0, 11, 17, length=9, facing_down=True)
+    sheet.paste(u0, (6 * CELL_W, 6 * CELL_H))
+
+    u1 = extract_sprite_auto(43, 1963, 65, 1988, baseline_y=26)
+    draw_sword_v(u1, 15, 12, length=11, facing_down=False)
+    sheet.paste(u1, (7 * CELL_W, 6 * CELL_H))
+
+    u2 = extract_sprite_auto(78, 1963, 97, 1988, baseline_y=26)
+    draw_sword_v(u2, 16, 11, length=10, facing_down=False)
+    sheet.paste(u2, (8 * CELL_W, 6 * CELL_H))
+
+    # Spin Charge Pose (Col 9)
+    sc = extract_sprite_auto(175, 1892, 197, 1917, baseline_y=26)
+    draw_sword_v(sc, 11, 14, length=10, facing_down=False)
+    sheet.paste(sc, (9 * CELL_W, 6 * CELL_H))
 
     # -------------------------------------------------------------------------
     # Row 7: Somersault Roll (8 frames) & Spin 360 Turns (2 frames)
