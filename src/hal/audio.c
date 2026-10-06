@@ -3105,7 +3105,6 @@ bool hal_audio_play_music(const char* wav_path, float volume, bool loop) {
     Uint32 wav_length = 0;
 
     if (!SDL_LoadWAV(wav_path, &wav_spec, &wav_buffer, &wav_length)) {
-        printf("[AUDIO] Arquivo de musica nao encontrado: %s\n", wav_path);
         return false;
     }
 
@@ -3466,17 +3465,20 @@ void hal_audio_play_bgm(BgmTrack track) {
         "picori_festival"
     };
 
-    snprintf(mod_path, sizeof(mod_path), "assets/audio/%s.wav", track_tags[track]);
-    if (hal_audio_play_music(mod_path, 0.75f, true)) {
-        s_current_bgm_track = track;
-        printf("[HAL Audio] Reproduzindo BGM autentica/personalizada: %s\n", mod_path);
-        return;
-    }
-    snprintf(mod_path, sizeof(mod_path), "../assets/audio/%s.wav", track_tags[track]);
-    if (hal_audio_play_music(mod_path, 0.75f, true)) {
-        s_current_bgm_track = track;
-        printf("[HAL Audio] Reproduzindo BGM autentica/personalizada: %s\n", mod_path);
-        return;
+    static const char* bgm_dirs[] = {
+        "assets/audio/bgm",
+        "../assets/audio/bgm",
+        "assets/audio",
+        "../assets/audio"
+    };
+
+    for (size_t d = 0; d < sizeof(bgm_dirs) / sizeof(bgm_dirs[0]); d++) {
+        snprintf(mod_path, sizeof(mod_path), "%s/%s.wav", bgm_dirs[d], track_tags[track]);
+        if (hal_audio_play_music(mod_path, 0.75f, true)) {
+            s_current_bgm_track = track;
+            printf("[HAL Audio] Reproduzindo BGM autentica GBA: %s (%s)\n", mod_path, hal_audio_get_bgm_name(track));
+            return;
+        }
     }
 
     // 2. Sintese Procedural Chiptune Autentica do GBA (4 canais emulados)
