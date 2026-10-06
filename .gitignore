@@ -63,6 +63,7 @@ assets/ui/*.bmp
 assets/audio/**
 !assets/audio/.gitkeep
 scratch/*.png
+scratch/banks/
 
 # ------------------------------------------------------------------------------
 # 4. AMBIENTES DE DESENVOLVIMENTO (IDEs E EDITORES)

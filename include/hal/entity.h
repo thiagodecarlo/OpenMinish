@@ -307,6 +307,11 @@ void entity_manager_render(const Camera* cam);
 void entity_set_texture(const Texture* tex);
 
 /*
+ * Define o atlas de sprites canônicos de todos os inimigos (enemies.bmp).
+ */
+void entity_set_enemies_texture(const Texture* tex);
+
+/*
  * Remove todas as entidades ativas da sala (usado em transição de masmorras).
  */
 void entity_clear_all(void);
