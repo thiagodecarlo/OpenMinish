@@ -105,6 +105,13 @@ typedef enum {
     TILE_PALACE_PIT,         // Abismo celeste infinito com correntes de ar (requer Roc's Cape)
     TILE_PALACE_FAN,         // Turbina eólica ancestral com hélices giratórias de bronze
     TILE_PALACE_SWITCH,      // Interruptor de piso da Four Sword
+    TILE_CASTLE_MARBLE,      // Piso nobre de mármore do pátio do Castelo
+    TILE_CASTLE_HEDGE,       // Cerca viva podada real (arbustos ornamentais)
+    TILE_CASTLE_WALL,        // Muralha de pedra do Castelo de Hyrule
+    TILE_CASTLE_BATTLEMENT,  // Ameias e parapeito da fortificação real
+    TILE_CASTLE_GATE,        // Portão dourado real com grade de ferro
+    TILE_CASTLE_FLOWER_ROYAL,// Flores reais azuis e douradas
+    TILE_CASTLE_TRIFORCE,    // Brasão real da Triforce entalhado em mármore
     TILE_COUNT
 } TileType;
 
@@ -125,6 +132,7 @@ typedef struct {
     u8*      collision_map;  // 0 = livre, 1 = barreira intransponível
     bool     is_authentic;   // true se renderiza a partir da textura autêntica da ROM
     Texture* authentic_tex;  // Textura do mapa autêntico (ex: 1008x1008 pixels)
+    char     asset_name[32]; // Nome base do asset autêntico (ex: "map_woods", "map_town")
 } Tilemap;
 
 /*
@@ -140,6 +148,7 @@ Tilemap* map_create_demo_world(void);
  * canteiros de flores e portões para o Castelo de Hyrule e Minish Woods.
  */
 Tilemap* map_create_hyrule_town(void);
+Tilemap* map_create_hyrule_town_regional(const char* region_tag);
 
 /*
  * Constrói o vilarejo secreto dos Picori: A Vila dos Minish (Minish Village)
@@ -168,6 +177,18 @@ Tilemap* map_create_north_hyrule_field(void);
  * fontes de água mineral termal, broto de feijão mágico e caverna do Deku Scrub.
  */
 Tilemap* map_create_mount_crenel_base(void);
+Tilemap* map_create_mount_crenel_base_regional(const char* region_tag);
+
+/*
+ * Carrega a textura do tileset mestre de Overworld (16x16 metatiles)
+ * correspondente à região selecionada ("usa", "eur", "jpn") ou master.
+ */
+bool map_load_tileset(const char* region_tag);
+
+/*
+ * Libera a textura do tileset mestre de Overworld.
+ */
+void map_free_tileset(void);
 
 /*
  * Carrega o mapa de Minish Woods para a região ativa (ex: "usa", "eur", "jpn").
@@ -289,6 +310,14 @@ bool map_interact_pacci(Tilemap* map, float world_x, float world_y);
  * águas escuras, troncos caídos ocos, estátuas ancestrais de olho de pedra e pedestal do Arco.
  */
 Tilemap* map_create_castor_wilds(void);
+Tilemap* map_create_castor_wilds_regional(const char* region_tag);
+
+/*
+ * Constrói o Pátio e Jardins Reais do Castelo de Hyrule (Hyrule Castle Courtyard).
+ * Dimensões: 32x24 tiles (512x384 pixels) com pisos nobres de mármore real,
+ * cercas vivas podadas, muralhas do castelo e o grande portão com o brasão da Triforce.
+ */
+Tilemap* map_create_castle_courtyard(const char* region_tag);
 
 /*
  * Retorna true se o ponto no mundo contiver lodo movediço profundo (TILE_SWAMP_MUD).
