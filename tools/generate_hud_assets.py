@@ -51,28 +51,24 @@ def save_bmp_32(filepath, img):
 
 def create_hud_atlas():
     atlas_w = 160 # 10 cols * 16
-    atlas_h = 80  # 5 rows * 16
+    atlas_h = 96  # 6 rows * 16 (includes Magic Meter & HUD Embellishments)
     img = Image.new('RGBA', (atlas_w, atlas_h), (0, 0, 0, 0))
 
     def make_cell():
         return Image.new('RGBA', (16, 16), (0, 0, 0, 0))
 
-    # Helper: draw heart in 16x16 with quarters
+    # Helper: draw heart in 16x16 with quarters and 3D embossed border
     def make_heart(fill_fraction): # 1.0, 0.75, 0.5, 0.25, 0.0
         c = make_cell()
         # GBA Minish Cap heart shape: 11x10 centered at (2, 3)
-        # Red: (220, 32, 32), Dark rim: (100, 16, 16), Empty: (30, 40, 50), Highlight: (255, 180, 180)
-        c_rim = (80, 10, 10, 255)
-        c_red = (220, 32, 32, 255)
-        c_hi  = (255, 160, 160, 255)
-        c_empty = (20, 30, 40, 220)
-        c_empty_hi = (45, 60, 75, 220)
+        c_rim_top = (140, 24, 24, 255)
+        c_rim_bot = (60, 10, 10, 255)
+        c_red     = (224, 36, 36, 255)
+        c_hi      = (255, 190, 190, 255)
+        c_spec    = (255, 255, 255, 255)
+        c_empty   = (22, 28, 38, 240)
+        c_empty_hi= (40, 52, 68, 240)
 
-        # Heart mask 11x10:
-        # y=0:  .xx. .xx.   (2..3, 6..7)
-        # y=1: xxxxx xxxxx  (1..4, 5..8)
-        # y=2: xxxxxxxxxxx  (0..9)
-        # y=3..8: tapering V
         grid = [
             "  ##   ##  ",
             " #### #### ",
@@ -89,16 +85,11 @@ def create_hud_atlas():
         for y, row in enumerate(grid):
             for x, ch in enumerate(row):
                 if ch == '#':
-                    # Determine rim or inner
                     is_rim = (y == 0 or x == 0 or x == len(row)-1 or
                               (y == 1 and x in [0, 4, 5, 9]) or
                               (y >= 5 and (x == 10-y or x == y)) or
                               y == len(grid)-1)
                     
-                    # Fill logic: fill_fraction determines how much is red
-                    # In MC, hearts empty from right to left or top to bottom.
-                    # Standard Zelda quarter: left half (x < 5), right half (x >= 5)
-                    # Quarters: 1 = full, 3/4 = right side partly empty, 1/2 = right empty, 1/4 = left bottom only
                     is_filled = False
                     if fill_fraction >= 1.0:
                         is_filled = True
@@ -112,10 +103,11 @@ def create_hud_atlas():
                         is_filled = False
 
                     if is_rim:
-                        c.putpixel((ox + x, oy + y), c_rim)
+                        rim_col = c_rim_top if (y <= 3) else c_rim_bot
+                        c.putpixel((ox + x, oy + y), rim_col)
                     else:
                         if is_filled:
-                            col = c_hi if (y == 2 and x in [2, 7]) else c_red
+                            col = c_spec if (y == 2 and x in [2, 7]) else (c_hi if (y in [1, 2] and x in [1, 2, 6, 7]) else c_red)
                             c.putpixel((ox + x, oy + y), col)
                         else:
                             col = c_empty_hi if (y == 2 and x in [2, 7]) else c_empty
@@ -125,8 +117,6 @@ def create_hud_atlas():
     # Helper: draw rupee (16x16)
     def make_rupee(main_rgb, hi_rgb, dk_rgb):
         c = make_cell()
-        # Rupee shape 8x12 centered at (4, 2)
-        # Hexagonal gemstone
         ox, oy = 4, 2
         shape = [
             "  ####  ",
@@ -156,21 +146,65 @@ def create_hud_atlas():
                         c.putpixel((px, py), (*main_rgb, 255))
         return c
 
-    # Helper: draw button badge [A] or [B] (12x12 pill)
+    # Helper: draw embossed 3D button badge [A] or [B] (12x12 circular with drop shadow)
     def make_badge(letter, bg_rgb, text_rgb):
         c = make_cell()
         d = ImageDraw.Draw(c)
-        d.rounded_rectangle([2, 2, 13, 13], radius=4, fill=(*bg_rgb, 255), outline=(255, 255, 255, 255))
-        # Draw letter
+        # Drop shadow at bottom-right
+        d.ellipse([3, 3, 14, 14], fill=(10, 14, 20, 160))
+        # Beveled circular badge
+        d.ellipse([2, 2, 13, 13], fill=(*bg_rgb, 255))
+        # 3D Highlight on top-left rim
+        hi_col = (147, 197, 253, 255) if letter == 'A' else (252, 165, 165, 255)
+        d.arc([2, 2, 13, 13], start=180, end=360, fill=hi_col, width=1)
+        # 3D Shadow on bottom-right rim
+        sh_col = (20, 45, 110, 255) if letter == 'A' else (110, 20, 20, 255)
+        d.arc([2, 2, 13, 13], start=0, end=180, fill=sh_col, width=1)
+
+        # Draw letter with shadow
+        sh_txt = (10, 15, 25, 255)
         if letter == 'A':
-            # 5x7 'A'
             coords = [(7, 4), (8, 4), (6, 5), (9, 5), (6, 6), (7, 6), (8, 6), (9, 6), (6, 7), (9, 7), (6, 8), (9, 8)]
-            for (x, y) in coords:
-                c.putpixel((x, y), (*text_rgb, 255))
+            for (x, y) in coords: c.putpixel((x + 1, y + 1), sh_txt)
+            for (x, y) in coords: c.putpixel((x, y), (*text_rgb, 255))
         else: # 'B'
             coords = [(6, 4), (7, 4), (8, 4), (6, 5), (9, 5), (6, 6), (7, 6), (8, 6), (6, 7), (9, 7), (6, 8), (7, 8), (8, 8)]
-            for (x, y) in coords:
-                c.putpixel((x, y), (*text_rgb, 255))
+            for (x, y) in coords: c.putpixel((x + 1, y + 1), sh_txt)
+            for (x, y) in coords: c.putpixel((x, y), (*text_rgb, 255))
+        return c
+
+    # Helper: draw Magic Meter pieces (0: Left Cap, 1: Full Bar, 2: Empty Bar, 3: Right Cap, 4: Vial)
+    def make_magic_meter(segment_type):
+        c = make_cell()
+        d = ImageDraw.Draw(c)
+        c_gold = (245, 197, 24, 255)
+        c_dark_gold = (160, 120, 14, 255)
+        c_magic_main = (16, 230, 120, 255)
+        c_magic_hi   = (120, 255, 190, 255)
+        c_magic_dk   = (6, 120, 60, 255)
+        c_empty_bg   = (16, 24, 20, 255)
+
+        if segment_type == 0: # Left ornamental endcap
+            d.rounded_rectangle([2, 4, 15, 11], radius=2, fill=c_gold, outline=c_dark_gold)
+            d.ellipse([4, 6, 8, 9], fill=(239, 68, 68, 255)) # Ruby jewel
+            c.putpixel((5, 7), (255, 255, 255, 255))
+        elif segment_type == 1: # Full emerald green magic bar
+            d.rectangle([0, 4, 15, 11], fill=c_magic_main)
+            d.line([0, 4, 15, 4], fill=c_gold) # Gold top rail
+            d.line([0, 11, 15, 11], fill=c_gold) # Gold bottom rail
+            d.line([0, 5, 15, 5], fill=c_magic_hi) # Specular fluid highlight
+            d.line([0, 10, 15, 10], fill=c_magic_dk) # Deep shadow
+        elif segment_type == 2: # Empty magic bar
+            d.rectangle([0, 4, 15, 11], fill=c_empty_bg)
+            d.line([0, 4, 15, 4], fill=c_gold)
+            d.line([0, 11, 15, 11], fill=c_gold)
+        elif segment_type == 3: # Right ornamental endcap
+            d.rounded_rectangle([0, 4, 13, 11], radius=2, fill=c_gold, outline=c_dark_gold)
+            c.putpixel((10, 7), (255, 255, 255, 255))
+        elif segment_type == 4: # Magic Crystal / Flask
+            d.ellipse([3, 4, 12, 13], fill=c_magic_main, outline=c_gold)
+            d.rectangle([6, 1, 9, 4], fill=(180, 130, 60, 255)) # Cork
+            c.putpixel((6, 7), (255, 255, 255, 255))
         return c
 
     # Helper: draw Smith's / White / Four Sword
@@ -535,9 +569,27 @@ def create_hud_atlas():
     # Fairy Bottle
     img.paste(make_bottle('fairy'), (9 * 16, 4 * 16))
 
+    # Row 5: Magic Meter (Barra de Magia GBA 1:1) & Extra Embellishments
+    img.paste(make_magic_meter(0), (0 * 16, 5 * 16)) # Left gold cap with ruby
+    img.paste(make_magic_meter(1), (1 * 16, 5 * 16)) # Full emerald magic bar
+    img.paste(make_magic_meter(2), (2 * 16, 5 * 16)) # Empty magic bar
+    img.paste(make_magic_meter(3), (3 * 16, 5 * 16)) # Right gold cap
+    img.paste(make_magic_meter(4), (4 * 16, 5 * 16)) # Magic vial
+    # Embossed Heart Container
+    hc = make_heart(1.0)
+    ImageDraw.Draw(hc).rectangle([0, 0, 15, 15], outline=(245, 197, 24, 255))
+    img.paste(hc, (5 * 16, 5 * 16))
+    # Golden Triforce Emblem
+    tri = make_cell()
+    ImageDraw.Draw(tri).polygon([(7, 2), (3, 9), (11, 9)], fill=(250, 204, 21, 255), outline=(180, 140, 16, 255))
+    ImageDraw.Draw(tri).polygon([(3, 9), (0, 15), (7, 15)], fill=(250, 204, 21, 255), outline=(180, 140, 16, 255))
+    ImageDraw.Draw(tri).polygon([(11, 9), (7, 15), (14, 15)], fill=(250, 204, 21, 255), outline=(180, 140, 16, 255))
+    img.paste(tri, (6 * 16, 5 * 16))
+
     # Save to canonical paths
     paths = [
         'assets/ui/hud_items.bmp',
+        'assets/regions/hud_items_master.bmp',
         'assets/regions/usa/hud_items.bmp',
         'assets/regions/eur/hud_items.bmp',
         'assets/regions/jpn/hud_items.bmp',

@@ -62,6 +62,9 @@ typedef struct {
     int  anim_frame;
     int  hearts;
     int  max_hearts;
+    int  health_quarters; // Vida autêntica GBA em quartos de coração (0..max_hearts * 4)
+    int  magic;           // Barra de magia GBA (0..100)
+    int  max_magic;       // Capacidade total de magia (100)
     int  rupees;
     int  invuln_timer;
     float knock_x;
@@ -205,6 +208,7 @@ static Tilemap* s_wind_ruins_map     = NULL;
 static Tilemap* s_armos_interior_map = NULL;
 static Tilemap* s_library_map        = NULL;
 static Tilemap* s_lake_hylia_map     = NULL;
+static Tilemap* s_castle_courtyard_map = NULL;
 static bool     s_in_town            = false;
 static bool     s_in_village         = false;
 static bool     s_in_south_field     = false;
@@ -217,6 +221,7 @@ static bool     s_in_wind_ruins      = false;
 static bool     s_in_armos_interior  = false;
 static bool     s_in_library         = false;
 static bool     s_in_lake_hylia      = false;
+static bool     s_in_castle_courtyard= false;
 static SelectedRegion s_current_region = REGION_USA;
 
 static void load_region_sheets(SelectedRegion region) {
@@ -284,9 +289,13 @@ static void load_region_sheets(SelectedRegion region) {
     intro_cutscene_set_npcs_texture(s_npcs_tex);
     boss_vaati_set_npcs_texture(s_npcs_tex);
 
-    if (s_world_map) {
-        map_set_region(s_world_map, s_region_tags[region]);
-    }
+    map_load_tileset(s_region_tags[region]);
+
+    if (s_world_map)           map_set_region(s_world_map, s_region_tags[region]);
+    if (s_town_map)            map_set_region(s_town_map, s_region_tags[region]);
+    if (s_crenel_base_map)     map_set_region(s_crenel_base_map, s_region_tags[region]);
+    if (s_castor_wilds_map)    map_set_region(s_castor_wilds_map, s_region_tags[region]);
+    if (s_castle_courtyard_map)map_set_region(s_castle_courtyard_map, s_region_tags[region]);
 
     printf("[REGIAO ATUALIZADA] -> %s (Link: %s, Inimigos: %s, NPCs: %s, Chefes: %s, Octorok: %s, HUD: %s, Mapa: %s)\n",
            s_region_names[region],
@@ -2012,6 +2021,9 @@ int main(int argc, char* argv[]) {
     s_library_map = library_map;
     Tilemap* lake_hylia_map = map_create_lake_hylia();
     s_lake_hylia_map = lake_hylia_map;
+    Tilemap* castle_courtyard_map = map_create_castle_courtyard(s_region_tags[REGION_USA]);
+    s_castle_courtyard_map = castle_courtyard_map;
+    map_load_tileset(s_region_tags[REGION_USA]);
     library_quest_init();
     lantern_init();
     dungeon_droplets_init();
@@ -2036,6 +2048,9 @@ int main(int argc, char* argv[]) {
     link.anim_frame = 0;
     link.hearts = 3;
     link.max_hearts = 3;
+    link.health_quarters = 12; // 3 recipientes completos x 4 quartos = 12
+    link.magic = 100;
+    link.max_magic = 100;
     link.rupees = 50;
     link.invuln_timer = 0;
     link.knock_x = 0.0f;
@@ -2860,10 +2875,11 @@ int main(int argc, char* argv[]) {
                               (s_in_crenel_base ? s_crenel_base_map :
                               (s_in_library ? s_library_map :
                               (s_in_lake_hylia ? s_lake_hylia_map :
+                              (s_in_castle_courtyard ? s_castle_courtyard_map :
                               (s_in_village ? s_village_map :
                               (s_in_town ? s_town_map :
                               (s_in_south_field ? s_south_field_map :
-                              (s_in_north_field ? s_north_field_map : world_map))))))))))))))))));
+                              (s_in_north_field ? s_north_field_map : world_map)))))))))))))))))));
 
         if (inventory_is_paused()) {
             if (hal_input_is_pressed(KEY_UP))    inventory_cursor_move(0, -1);
@@ -4395,10 +4411,16 @@ int main(int argc, char* argv[]) {
         // 3. Barra Superior de HUD (Status do Jogo fixo na tela)
         draw_rect(0, 0, ctx->render_width, 14, 0x0C1C0DFF);
 
-        // Corações de Vida de Zelda no canto superior esquerdo (Autênticos GBA ou Procedural)
+        // Corações de Vida de Zelda com quartos parciais e relevo 3D (Autênticos GBA ou Procedural)
+        int cur_quarters = (link.health_quarters > 0) ? link.health_quarters : (link.hearts * 4);
         if (s_hud_items_tex && s_hud_items_tex->pixels) {
             for (int h = 0; h < link.max_hearts; h++) {
-                int h_col = (h < link.hearts) ? 0 : 4;
+                int q = cur_quarters - (h * 4);
+                int h_col = 4; // Vazio por padrão
+                if (q >= 4)      h_col = 0; // Cheio (4/4)
+                else if (q == 3) h_col = 1; // 3/4
+                else if (q == 2) h_col = 2; // 2/4 (Metade)
+                else if (q == 1) h_col = 3; // 1/4
                 texture_draw(s_hud_items_tex, h_col * 16, 0, 16, 16, 2 + (h * 11), -1);
             }
         } else {
@@ -4411,19 +4433,38 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        // Indicador de Controle Conectado (Verde se gamepad 8BitDo ativo, cinza se teclado)
+        // Barra de Magia GBA 1:1 (Magic Meter) entre corações e rúpias
+        if (s_hud_items_tex && s_hud_items_tex->pixels) {
+            // Ponta esquerda dourada com rubi incrustado
+            texture_draw(s_hud_items_tex, 0 * 16, 5 * 16, 16, 16, 36, -1);
+            // Segmento 1 esmeralda ou vazio
+            int seg1_col = (link.magic >= 40) ? 1 : 2;
+            texture_draw(s_hud_items_tex, seg1_col * 16, 5 * 16, 16, 16, 44, -1);
+            // Segmento 2 esmeralda ou vazio
+            int seg2_col = (link.magic >= 80) ? 1 : 2;
+            texture_draw(s_hud_items_tex, seg2_col * 16, 5 * 16, 16, 16, 52, -1);
+            // Ponta direita dourada
+            texture_draw(s_hud_items_tex, 3 * 16, 5 * 16, 16, 16, 60, -1);
+        } else {
+            draw_rect(38, 5, 26, 4, 0x064E3BFF);
+            int m_fill = (link.magic * 24) / 100;
+            if (m_fill > 0) draw_rect(39, 6, m_fill, 2, 0x10B981FF);
+        }
+
+        // Indicador de Controle Conectado & Mini Radar Analógico no canto direito
+        int pad_hud_x = ctx->render_width - 60;
         const char* pad_name = hal_input_get_controller_name();
         u32 pad_indicator_color = pad_name ? 0x00FF66FF : 0x555555FF;
-        draw_rect(42, 4, 10, 6, pad_indicator_color); // Ícone do controle
-        hal_video_put_pixel(43, 3, pad_indicator_color);
-        hal_video_put_pixel(50, 3, pad_indicator_color);
+        draw_rect(pad_hud_x, 4, 10, 6, pad_indicator_color); // Ícone do controle
+        hal_video_put_pixel(pad_hud_x + 1, 3, pad_indicator_color);
+        hal_video_put_pixel(pad_hud_x + 8, 3, pad_indicator_color);
 
         // Mini Radar Analógico no HUD
         AnalogStick stick_hud = hal_input_get_left_stick();
-        draw_rect(56, 3, 9, 8, 0x1A2E1CFF);
-        hal_video_put_pixel(60, 7, 0x446644FF);
+        draw_rect(pad_hud_x + 13, 3, 9, 8, 0x1A2E1CFF);
+        hal_video_put_pixel(pad_hud_x + 17, 7, 0x446644FF);
         if (stick_hud.magnitude > 0.05f) {
-            int dot_x = 60 + (int)(stick_hud.x * 3.2f);
+            int dot_x = pad_hud_x + 17 + (int)(stick_hud.x * 3.2f);
             int dot_y = 7  + (int)(stick_hud.y * 2.8f);
             u32 dot_color = (stick_hud.magnitude > 0.8f) ? 0xFFDD00FF : 0x00FFCCFF;
             hal_video_put_pixel(dot_x, dot_y, dot_color);
@@ -5072,6 +5113,8 @@ int main(int argc, char* argv[]) {
     if (s_armos_interior_map)  map_destroy(s_armos_interior_map);
     if (s_library_map)         map_destroy(s_library_map);
     if (s_lake_hylia_map)      map_destroy(s_lake_hylia_map);
+    if (s_castle_courtyard_map)map_destroy(s_castle_courtyard_map);
+    map_free_tileset();
     dungeon_droplets_shutdown();
     dungeon_palace_shutdown();
     veil_clouds_shutdown();

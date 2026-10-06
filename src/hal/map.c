@@ -105,9 +105,106 @@ static inline void draw_tile_pixel(int sx, int sy, u32 color) {
 }
 
 // ----------------------------------------------------------------------------
-// RENDERIZADOR PROCEDURAL DE METATILES 16x16 (ESTILO MINISH CAP)
+// TILESET DE OVERWORLD GBA CANONICO (16x16 METATILES)
+// ----------------------------------------------------------------------------
+static Texture* s_tileset_overworld_tex = NULL;
+
+bool map_load_tileset(const char* region_tag) {
+    const char* tag = region_tag ? region_tag : "usa";
+    char path[256];
+    snprintf(path, sizeof(path), "assets/regions/%s/tileset_overworld.bmp", tag);
+
+    if (s_tileset_overworld_tex) {
+        texture_free(s_tileset_overworld_tex);
+        s_tileset_overworld_tex = NULL;
+    }
+
+    s_tileset_overworld_tex = texture_load_bmp(path);
+    if (!s_tileset_overworld_tex) {
+        s_tileset_overworld_tex = texture_load_bmp("assets/regions/tileset_overworld_master.bmp");
+    }
+    if (s_tileset_overworld_tex) {
+        printf("[MAPA] Tileset Overworld carregado com sucesso [%s] (%dx%d pixels).\n",
+               tag, s_tileset_overworld_tex->width, s_tileset_overworld_tex->height);
+        return true;
+    }
+    printf("[MAPA] Tileset Overworld nao encontrado (%s). Mantendo fallback procedural.\n", path);
+    return false;
+}
+
+void map_free_tileset(void) {
+    if (s_tileset_overworld_tex) {
+        texture_free(s_tileset_overworld_tex);
+        s_tileset_overworld_tex = NULL;
+    }
+}
+
+// ----------------------------------------------------------------------------
+// RENDERIZADOR DE METATILES 16x16 (TILESET GBA COM FALLBACK PROCEDURAL)
 // ----------------------------------------------------------------------------
 void render_metatile(int sx, int sy, TileType type) {
+    if (s_tileset_overworld_tex && s_tileset_overworld_tex->pixels) {
+        int col = -1, row = -1;
+        switch (type) {
+            case TILE_GRASS:               col = 0;  row = 0; break;
+            case TILE_DIRT_PATH:           col = 1;  row = 0; break;
+            case TILE_WATER:               col = 2;  row = 0; break;
+            case TILE_STONE_WALL:          col = 3;  row = 0; break;
+            case TILE_BUSH:                col = 4;  row = 0; break;
+            case TILE_FLOWER_RED:          col = 5;  row = 0; break;
+            case TILE_FLOWER_YELLOW:       col = 6;  row = 0; break;
+            case TILE_TREE_TOP:            col = 7;  row = 0; break;
+            case TILE_TREE_TRUNK:          col = 8;  row = 0; break;
+            case TILE_CHEST_CLOSED:        col = 9;  row = 0; break;
+            case TILE_CHEST_OPEN:          col = 10; row = 0; break;
+            case TILE_WOOD_FENCE:          col = 11; row = 0; break;
+
+            case TILE_COBBLESTONE:         col = 0;  row = 1; break;
+            case TILE_TOWN_WALL:           col = 1;  row = 1; break;
+            case TILE_ROOF_RED:            col = 2;  row = 1; break;
+            case TILE_ROOF_BLUE:           col = 3;  row = 1; break;
+            case TILE_TOWN_DOOR:           col = 4;  row = 1; break;
+            case TILE_TOWN_WINDOW:         col = 5;  row = 1; break;
+            case TILE_FOUNTAIN_EDGE:       col = 6;  row = 1; break;
+            case TILE_MARKET_STALL:        col = 7;  row = 1; break;
+            case TILE_BARREL_CRATE:        col = 8;  row = 1; break;
+
+            case TILE_CRENEL_GRAVEL:       col = 0;  row = 2; break;
+            case TILE_CRENEL_CLIFF_FACE:   col = 1;  row = 2; break;
+            case TILE_CLIMBABLE_WALL:      col = 2;  row = 2; break;
+            case TILE_MINERAL_WATER:       col = 3;  row = 2; break;
+            case TILE_CLIMBABLE_VINE:      col = 4;  row = 2; break;
+            case TILE_MAGIC_BEAN_SPROUT:   col = 4;  row = 2; break;
+            case TILE_PACCI_HOLE_NORMAL:   col = 5;  row = 2; break;
+            case TILE_PACCI_HOLE_CHARGED:  col = 6;  row = 2; break;
+            case TILE_CRENEL_ROAD_SIGN:    col = 7;  row = 2; break;
+
+            case TILE_SWAMP_MUD:           col = 0;  row = 3; break;
+            case TILE_SWAMP_WATER:         col = 1;  row = 3; break;
+            case TILE_SWAMP_GRASS:         col = 2;  row = 3; break;
+            case TILE_SWAMP_LOG:           col = 3;  row = 3; break;
+            case TILE_EYE_STATUE:          col = 4;  row = 3; break;
+            case TILE_EYE_STATUE_OPEN:     col = 5;  row = 3; break;
+            case TILE_DIRT_WALL:           col = 6;  row = 3; break;
+            case TILE_DIRT_WALL_TUNNEL:    col = 7;  row = 3; break;
+            case TILE_DIRT_MOUND:          col = 6;  row = 3; break;
+
+            case TILE_CASTLE_MARBLE:       col = 0;  row = 4; break;
+            case TILE_CASTLE_HEDGE:        col = 1;  row = 4; break;
+            case TILE_CASTLE_WALL:         col = 2;  row = 4; break;
+            case TILE_CASTLE_BATTLEMENT:   col = 3;  row = 4; break;
+            case TILE_CASTLE_GATE:         col = 4;  row = 4; break;
+            case TILE_CASTLE_FLOWER_ROYAL: col = 5;  row = 4; break;
+            case TILE_CASTLE_TRIFORCE:     col = 6;  row = 4; break;
+
+            default: break;
+        }
+        if (col >= 0 && row >= 0) {
+            texture_draw(s_tileset_overworld_tex, col * 16, row * 16, 16, 16, sx, sy);
+            return;
+        }
+    }
+
     switch (type) {
         case TILE_GRASS:
             for (int y = 0; y < TILE_SIZE; y++) {
@@ -1639,6 +1736,95 @@ void render_metatile(int sx, int sy, TileType type) {
             }
             break;
 
+        case TILE_CASTLE_MARBLE:
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0xECEEF4FF;
+                    if (x == 0 || y == 0) c = 0xC4C8D2FF;
+                    else if (x == 8 && y == 8) c = 0xDADEFAFF;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_CASTLE_HEDGE:
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x268C36FF;
+                    if (x == 0 || x == 15 || y == 0 || y == 15) c = 0x145420FF;
+                    else if (y <= 3) c = 0x52C466FF;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_CASTLE_WALL:
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0xDEE2EAFF;
+                    if (y == 0) c = 0xDAB236FF;
+                    else if (y == 7 || y == 15) c = 0xAAAEBAFF;
+                    else if ((y < 7 && x == 7) || (y > 7 && x == 12)) c = 0xAAAEBAFF;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_CASTLE_BATTLEMENT:
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x00000000;
+                    if (y >= 4) {
+                        if (x <= 6 || x >= 9) {
+                            c = 0xDEE2EAFF;
+                            if (y == 4) c = 0xDAB236FF;
+                            else if (x == 0 || x == 6 || x == 9 || x == 15) c = 0xAAAEBAFF;
+                        }
+                    }
+                    if (c != 0) draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_CASTLE_GATE:
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0xECEEF4FF;
+                    if (x == 3 || x == 7 || x == 11 || y == 6 || y == 11) {
+                        c = (y == 1) ? 0xFACC15FF : 0x2A2E34FF;
+                    }
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_CASTLE_FLOWER_ROYAL:
+            render_metatile(sx, sy, TILE_GRASS);
+            for (int y = 4; y <= 11; y++) {
+                for (int x = 4; x <= 11; x++) {
+                    float dist = sqrtf((float)((x - 7.5f)*(x - 7.5f) + (y - 7.5f)*(y - 7.5f)));
+                    if (dist < 3.8f) {
+                        u32 c = (dist < 1.8f) ? 0xF8586CFF : 0xD81C30FF;
+                        if (x == 7 && y == 7) c = 0xFFFFFFFF;
+                        draw_tile_pixel(sx + x, sy + y, c);
+                    }
+                }
+            }
+            break;
+
+        case TILE_CASTLE_TRIFORCE:
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0xECEEF4FF;
+                    if (x == 0 || y == 0) c = 0xC4C8D2FF;
+                    if (y >= 3 && y <= 8 && abs(x - 7) <= (y - 3)) c = 0xFACC15FF;
+                    if (y >= 8 && y <= 13 && abs(x - 4) <= (y - 8)) c = 0xFACC15FF;
+                    if (y >= 8 && y <= 13 && abs(x - 10) <= (y - 8)) c = 0xFACC15FF;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
         default:
             render_metatile(sx, sy, TILE_GRASS);
             break;
@@ -1752,9 +1938,9 @@ Tilemap* map_create_demo_world(void) {
 }
 
 // ----------------------------------------------------------------------------
-// CONSTRUÇÃO DA CIDADE DE HYRULE (HYRULE TOWN HUB - 576x448 PIXELS)
+// CONSTRUÇÃO PROCEDURAL DA CIDADE DE HYRULE (HYRULE TOWN HUB - 576x448 PIXELS)
 // ----------------------------------------------------------------------------
-Tilemap* map_create_hyrule_town(void) {
+static Tilemap* map_create_hyrule_town_procedural(void) {
     int w = 36;
     int h = 28;
     Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
@@ -1989,9 +2175,56 @@ Tilemap* map_create_hyrule_town(void) {
     m->overlay_layer[16 * w + 27] = TILE_FLOWER_RED;
     m->overlay_layer[18 * w + 24] = TILE_FLOWER_YELLOW;
 
-    printf("[MAPA] Cidade de Hyrule (Hyrule Town Hub) criada: %dx%d tiles (%dx%d pixels).\n",
+    printf("[MAPA] Cidade de Hyrule (Hyrule Town Hub) criada proceduralmente: %dx%d tiles (%dx%d pixels).\n",
            w, h, w * TILE_SIZE, h * TILE_SIZE);
     return m;
+}
+
+Tilemap* map_create_hyrule_town_regional(const char* region_tag) {
+    const char* tag = region_tag ? region_tag : "usa";
+    char bmp_path[256];
+    snprintf(bmp_path, sizeof(bmp_path), "assets/regions/%s/map_town.bmp", tag);
+
+    Texture* tex = texture_load_bmp(bmp_path);
+    if (!tex) {
+        tex = texture_load_bmp("assets/regions/map_town_master.bmp");
+    }
+    if (!tex) {
+        return map_create_hyrule_town_procedural();
+    }
+
+    Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
+    if (!m) {
+        texture_free(tex);
+        return map_create_hyrule_town_procedural();
+    }
+
+    m->width = tex->width / TILE_SIZE;
+    m->height = tex->height / TILE_SIZE;
+    m->ground_layer = NULL;
+    m->overlay_layer = NULL;
+    m->is_authentic = true;
+    m->authentic_tex = tex;
+    strncpy(m->asset_name, "map_town", sizeof(m->asset_name) - 1);
+    m->collision_map = (u8*)calloc((size_t)m->width * m->height, sizeof(u8));
+
+    char bin_path[256];
+    snprintf(bin_path, sizeof(bin_path), "assets/regions/%s/map_town_collision.bin", tag);
+    FILE* fc = open_binary_asset(bin_path);
+    if (!fc) {
+        fc = open_binary_asset("assets/regions/map_town_collision_master.bin");
+    }
+    if (fc) {
+        fread(m->collision_map, 1, (size_t)m->width * m->height, fc);
+        fclose(fc);
+    }
+    printf("[MAPA] Cidade de Hyrule (Hyrule Town) autentica [%s] carregada (%dx%d pixels).\n",
+           tag, tex->width, tex->height);
+    return m;
+}
+
+Tilemap* map_create_hyrule_town(void) {
+    return map_create_hyrule_town_regional("usa");
 }
 
 // ----------------------------------------------------------------------------
@@ -2240,12 +2473,16 @@ Tilemap* map_create_woods(const char* region_tag) {
     m->overlay_layer = NULL;
     m->is_authentic = true;
     m->authentic_tex = tex;
+    strncpy(m->asset_name, "map_woods", sizeof(m->asset_name) - 1);
     m->collision_map = (u8*)calloc((size_t)m->width * m->height, sizeof(u8));
 
     // Tenta carregar a matriz binaria de colisao
     char bin_path[256];
     snprintf(bin_path, sizeof(bin_path), "assets/regions/%s/map_woods_collision.bin", tag);
     FILE* fc = open_binary_asset(bin_path);
+    if (!fc) {
+        fc = open_binary_asset("assets/regions/map_woods_collision_master.bin");
+    }
     if (fc) {
         size_t read_bytes = fread(m->collision_map, 1, (size_t)m->width * m->height, fc);
         fclose(fc);
@@ -2268,16 +2505,21 @@ Tilemap* map_create_woods(const char* region_tag) {
 void map_set_region(Tilemap* map, const char* region_tag) {
     if (!map || !map->is_authentic) return;
     const char* tag = region_tag ? region_tag : "usa";
+    const char* name = (map->asset_name[0] != '\0') ? map->asset_name : "map_woods";
     char bmp_path[256];
-    snprintf(bmp_path, sizeof(bmp_path), "assets/regions/%s/map_woods.bmp", tag);
+    snprintf(bmp_path, sizeof(bmp_path), "assets/regions/%s/%s.bmp", tag, name);
 
     Texture* new_tex = texture_load_bmp(bmp_path);
+    if (!new_tex) {
+        snprintf(bmp_path, sizeof(bmp_path), "assets/regions/%s_master.bmp", name);
+        new_tex = texture_load_bmp(bmp_path);
+    }
     if (new_tex) {
         if (map->authentic_tex) {
             texture_free(map->authentic_tex);
         }
         map->authentic_tex = new_tex;
-        printf("[MAPA] Textura do mapa atualizada para regiao [%s] (%dx%d)\n", tag, new_tex->width, new_tex->height);
+        printf("[MAPA] Textura do mapa [%s] atualizada para regiao [%s] (%dx%d)\n", name, tag, new_tex->width, new_tex->height);
     }
 }
 
@@ -2859,7 +3101,7 @@ Tilemap* map_create_north_hyrule_field(void) {
     return m;
 }
 
-Tilemap* map_create_mount_crenel_base(void) {
+static Tilemap* map_create_mount_crenel_base_procedural(void) {
     int w = 32;
     int h = 24;
     Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
@@ -2974,8 +3216,55 @@ Tilemap* map_create_mount_crenel_base(void) {
     m->overlay_layer[5 * w + 18] = TILE_MINECART_UPSIDE_DOWN;
     m->collision_map[5 * w + 18] = 1; // Bloqueado até ser desvirado pelo Cajado de Pacci!
 
-    printf("[MAP] Mount Crenel Base (Sope do Monte Crenel) criado com sucesso (%dx%d tiles)!\n", w, h);
+    printf("[MAP] Mount Crenel Base (Sope do Monte Crenel) criado proceduralmente (%dx%d tiles)!\n", w, h);
     return m;
+}
+
+Tilemap* map_create_mount_crenel_base_regional(const char* region_tag) {
+    const char* tag = region_tag ? region_tag : "usa";
+    char bmp_path[256];
+    snprintf(bmp_path, sizeof(bmp_path), "assets/regions/%s/map_crenel.bmp", tag);
+
+    Texture* tex = texture_load_bmp(bmp_path);
+    if (!tex) {
+        tex = texture_load_bmp("assets/regions/map_crenel_master.bmp");
+    }
+    if (!tex) {
+        return map_create_mount_crenel_base_procedural();
+    }
+
+    Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
+    if (!m) {
+        texture_free(tex);
+        return map_create_mount_crenel_base_procedural();
+    }
+
+    m->width = tex->width / TILE_SIZE;
+    m->height = tex->height / TILE_SIZE;
+    m->ground_layer = NULL;
+    m->overlay_layer = NULL;
+    m->is_authentic = true;
+    m->authentic_tex = tex;
+    strncpy(m->asset_name, "map_crenel", sizeof(m->asset_name) - 1);
+    m->collision_map = (u8*)calloc((size_t)m->width * m->height, sizeof(u8));
+
+    char bin_path[256];
+    snprintf(bin_path, sizeof(bin_path), "assets/regions/%s/map_crenel_collision.bin", tag);
+    FILE* fc = open_binary_asset(bin_path);
+    if (!fc) {
+        fc = open_binary_asset("assets/regions/map_crenel_collision_master.bin");
+    }
+    if (fc) {
+        fread(m->collision_map, 1, (size_t)m->width * m->height, fc);
+        fclose(fc);
+    }
+    printf("[MAPA] Mount Crenel Base autentico [%s] carregado (%dx%d pixels).\n",
+           tag, tex->width, tex->height);
+    return m;
+}
+
+Tilemap* map_create_mount_crenel_base(void) {
+    return map_create_mount_crenel_base_regional("usa");
 }
 
 bool map_is_lava(const Tilemap* map, float world_x, float world_y) {
@@ -3149,7 +3438,7 @@ bool map_hit_eye_statue(Tilemap* map, float world_x, float world_y) {
     return false;
 }
 
-Tilemap* map_create_castor_wilds(void) {
+static Tilemap* map_create_castor_wilds_procedural(void) {
     int w = 36;
     int h = 28;
     Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
@@ -3270,7 +3559,185 @@ Tilemap* map_create_castor_wilds(void) {
     m->overlay_layer[17 * w + 18] = TILE_BUSH;
     m->collision_map[17 * w + 18] = 1;
 
-    printf("[MAP] Castor Wilds Swamp (Pantano de Castor Wilds) criado com sucesso (%dx%d tiles)!\n", w, h);
+    printf("[MAP] Castor Wilds Swamp (Pantano de Castor Wilds) criado proceduralmente (%dx%d tiles)!\n", w, h);
+    return m;
+}
+
+Tilemap* map_create_castor_wilds_regional(const char* region_tag) {
+    const char* tag = region_tag ? region_tag : "usa";
+    char bmp_path[256];
+    snprintf(bmp_path, sizeof(bmp_path), "assets/regions/%s/map_castor.bmp", tag);
+
+    Texture* tex = texture_load_bmp(bmp_path);
+    if (!tex) {
+        tex = texture_load_bmp("assets/regions/map_castor_master.bmp");
+    }
+    if (!tex) {
+        return map_create_castor_wilds_procedural();
+    }
+
+    Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
+    if (!m) {
+        texture_free(tex);
+        return map_create_castor_wilds_procedural();
+    }
+
+    m->width = tex->width / TILE_SIZE;   // 576 / 16 = 36
+    m->height = tex->height / TILE_SIZE; // 448 / 16 = 28
+    m->ground_layer = NULL;
+    m->overlay_layer = NULL;
+    m->is_authentic = true;
+    m->authentic_tex = tex;
+    strncpy(m->asset_name, "map_castor", sizeof(m->asset_name) - 1);
+    m->collision_map = (u8*)calloc((size_t)m->width * m->height, sizeof(u8));
+
+    char bin_path[256];
+    snprintf(bin_path, sizeof(bin_path), "assets/regions/%s/map_castor_collision.bin", tag);
+    FILE* fc = open_binary_asset(bin_path);
+    if (!fc) {
+        fc = open_binary_asset("assets/regions/map_castor_collision_master.bin");
+    }
+    if (fc) {
+        fread(m->collision_map, 1, (size_t)m->width * m->height, fc);
+        fclose(fc);
+    }
+    printf("[MAPA] Castor Wilds Swamp autentico [%s] carregado (%dx%d pixels).\n",
+           tag, tex->width, tex->height);
+    return m;
+}
+
+Tilemap* map_create_castor_wilds(void) {
+    return map_create_castor_wilds_regional("usa");
+}
+
+// ----------------------------------------------------------------------------
+// CONSTRUÇÃO DO PÁTIO DO CASTELO DE HYRULE (HYRULE CASTLE COURTYARD - 512x384)
+// ----------------------------------------------------------------------------
+static Tilemap* map_create_castle_courtyard_procedural(void) {
+    int w = 32;
+    int h = 24;
+    Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
+    if (!m) return NULL;
+
+    m->width  = w;
+    m->height = h;
+    m->is_authentic = false;
+    m->authentic_tex = NULL;
+    strncpy(m->asset_name, "map_castle_courtyard", sizeof(m->asset_name) - 1);
+    m->ground_layer  = (u8*)malloc((size_t)w * h * sizeof(u8));
+    m->overlay_layer = (u8*)malloc((size_t)w * h * sizeof(u8));
+    m->collision_map = (u8*)malloc((size_t)w * h * sizeof(u8));
+
+    // 1. Chão com mármore real
+    for (int i = 0; i < w * h; i++) {
+        m->ground_layer[i]  = TILE_CASTLE_MARBLE;
+        m->overlay_layer[i] = 0xFF;
+        m->collision_map[i] = 0;
+    }
+
+    // 2. Muralhas e ameias no norte (linhas 0 a 1)
+    for (int x = 0; x < w; x++) {
+        m->overlay_layer[0 * w + x] = TILE_CASTLE_BATTLEMENT;
+        m->collision_map[0 * w + x] = 1;
+        m->overlay_layer[1 * w + x] = TILE_CASTLE_WALL;
+        m->collision_map[1 * w + x] = 1;
+    }
+    // Portão dourado real no centro (x=14..17, y=1)
+    for (int x = 14; x <= 17; x++) {
+        m->overlay_layer[1 * w + x] = TILE_CASTLE_GATE;
+        m->collision_map[1 * w + x] = 0; // Portão aberto
+    }
+
+    // 3. Paredes laterais e sul
+    for (int y = 2; y < h; y++) {
+        m->overlay_layer[y * w + 0] = TILE_CASTLE_WALL;
+        m->collision_map[y * w + 0] = 1;
+        m->overlay_layer[y * w + (w - 1)] = TILE_CASTLE_WALL;
+        m->collision_map[y * w + (w - 1)] = 1;
+    }
+    for (int x = 0; x < w; x++) {
+        if (x < 13 || x > 18) {
+            m->overlay_layer[(h - 1) * w + x] = TILE_CASTLE_WALL;
+            m->collision_map[(h - 1) * w + x] = 1;
+        }
+    }
+
+    // 4. Jardins ornamentais com cerca viva e rosas reais
+    // Canteiro Noroeste (x=4..10, y=5..10)
+    for (int y = 5; y <= 10; y++) {
+        for (int x = 4; x <= 10; x++) {
+            if (x == 4 || x == 10 || y == 5 || y == 10) {
+                m->overlay_layer[y * w + x] = TILE_CASTLE_HEDGE;
+                m->collision_map[y * w + x] = 1;
+            } else {
+                m->ground_layer[y * w + x] = TILE_GRASS;
+                m->overlay_layer[y * w + x] = TILE_CASTLE_FLOWER_ROYAL;
+            }
+        }
+    }
+    // Canteiro Nordeste (x=21..27, y=5..10)
+    for (int y = 5; y <= 10; y++) {
+        for (int x = 21; x <= 27; x++) {
+            if (x == 21 || x == 27 || y == 5 || y == 10) {
+                m->overlay_layer[y * w + x] = TILE_CASTLE_HEDGE;
+                m->collision_map[y * w + x] = 1;
+            } else {
+                m->ground_layer[y * w + x] = TILE_GRASS;
+                m->overlay_layer[y * w + x] = TILE_CASTLE_FLOWER_ROYAL;
+            }
+        }
+    }
+
+    // 5. Brasão da Triforce em mosaico de mármore no centro (x=15..16, y=11..12)
+    m->ground_layer[11 * w + 15] = TILE_CASTLE_TRIFORCE;
+    m->ground_layer[11 * w + 16] = TILE_CASTLE_TRIFORCE;
+    m->ground_layer[12 * w + 15] = TILE_CASTLE_TRIFORCE;
+    m->ground_layer[12 * w + 16] = TILE_CASTLE_TRIFORCE;
+
+    printf("[MAP] Hyrule Castle Courtyard (Patio do Castelo) criado proceduralmente (%dx%d tiles)!\n", w, h);
+    return m;
+}
+
+Tilemap* map_create_castle_courtyard(const char* region_tag) {
+    const char* tag = region_tag ? region_tag : "usa";
+    char bmp_path[256];
+    snprintf(bmp_path, sizeof(bmp_path), "assets/regions/%s/map_castle_courtyard.bmp", tag);
+
+    Texture* tex = texture_load_bmp(bmp_path);
+    if (!tex) {
+        tex = texture_load_bmp("assets/regions/map_castle_courtyard_master.bmp");
+    }
+    if (!tex) {
+        return map_create_castle_courtyard_procedural();
+    }
+
+    Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
+    if (!m) {
+        texture_free(tex);
+        return map_create_castle_courtyard_procedural();
+    }
+
+    m->width = tex->width / TILE_SIZE;   // 512 / 16 = 32
+    m->height = tex->height / TILE_SIZE; // 384 / 16 = 24
+    m->ground_layer = NULL;
+    m->overlay_layer = NULL;
+    m->is_authentic = true;
+    m->authentic_tex = tex;
+    strncpy(m->asset_name, "map_castle_courtyard", sizeof(m->asset_name) - 1);
+    m->collision_map = (u8*)calloc((size_t)m->width * m->height, sizeof(u8));
+
+    char bin_path[256];
+    snprintf(bin_path, sizeof(bin_path), "assets/regions/%s/map_castle_courtyard_collision.bin", tag);
+    FILE* fc = open_binary_asset(bin_path);
+    if (!fc) {
+        fc = open_binary_asset("assets/regions/map_castle_courtyard_collision_master.bin");
+    }
+    if (fc) {
+        fread(m->collision_map, 1, (size_t)m->width * m->height, fc);
+        fclose(fc);
+    }
+    printf("[MAPA] Patio do Castelo (Castle Courtyard) autentico [%s] carregado (%dx%d pixels).\n",
+           tag, tex->width, tex->height);
     return m;
 }
 
