@@ -1088,51 +1088,53 @@ static void draw_link_sword_effects(const Player* p, int px, int py) {
 
     // 1. GOLPE DE ESPADA NORMAL (12 FRAMES)
     if (p->is_attacking) {
-        switch (p->dir) {
-            case DIR_DOWN:
-                draw_rect(px + 6, py + 16, 4, 10, sword_steel);
-                draw_rect(px + 4, py + 16, 8, 2, sword_gold);
-                if (p->has_white_sword) {
-                    draw_rect(px + 7, py + 17, 2, 8, sword_edge);
+        if (!s_link_tex) {
+            switch (p->dir) {
+                case DIR_DOWN:
+                    draw_rect(px + 6, py + 16, 4, 10, sword_steel);
+                    draw_rect(px + 4, py + 16, 8, 2, sword_gold);
+                    break;
+                case DIR_UP:
+                    draw_rect(px + 6, py - 8, 4, 10, sword_steel);
+                    draw_rect(px + 4, py + 0, 8, 2, sword_gold);
+                    break;
+                case DIR_LEFT:
+                    draw_rect(px - 10, py + 9, 10, 4, sword_steel);
+                    draw_rect(px + 0,  py + 7, 2, 8, sword_gold);
+                    break;
+                case DIR_RIGHT:
+                    draw_rect(px + 14, py + 9, 10, 4, sword_steel);
+                    draw_rect(px + 13, py + 7, 2, 8, sword_gold);
+                    break;
+            }
+        }
+        if (p->has_white_sword) {
+            switch (p->dir) {
+                case DIR_DOWN:
                     hal_video_put_pixel(px + 7, py + 16, sword_ruby);
                     hal_video_put_pixel(px + 8, py + 16, sword_ruby);
                     hal_video_put_pixel(px + 3, py + 22, white);
                     hal_video_put_pixel(px + 12, py + 22, cyan_glow);
-                }
-                break;
-            case DIR_UP:
-                draw_rect(px + 6, py - 8, 4, 10, sword_steel);
-                draw_rect(px + 4, py + 0, 8, 2, sword_gold);
-                if (p->has_white_sword) {
-                    draw_rect(px + 7, py - 7, 2, 8, sword_edge);
+                    break;
+                case DIR_UP:
                     hal_video_put_pixel(px + 7, py + 0, sword_ruby);
                     hal_video_put_pixel(px + 8, py + 0, sword_ruby);
                     hal_video_put_pixel(px + 3, py - 4, white);
                     hal_video_put_pixel(px + 12, py - 4, cyan_glow);
-                }
-                break;
-            case DIR_LEFT:
-                draw_rect(px - 10, py + 9, 10, 4, sword_steel);
-                draw_rect(px + 0,  py + 7, 2, 8, sword_gold);
-                if (p->has_white_sword) {
-                    draw_rect(px - 9, py + 10, 8, 2, sword_edge);
+                    break;
+                case DIR_LEFT:
                     hal_video_put_pixel(px + 0, py + 10, sword_ruby);
                     hal_video_put_pixel(px + 0, py + 11, sword_ruby);
                     hal_video_put_pixel(px - 6, py + 5, white);
                     hal_video_put_pixel(px - 6, py + 15, cyan_glow);
-                }
-                break;
-            case DIR_RIGHT:
-                draw_rect(px + 14, py + 9, 10, 4, sword_steel);
-                draw_rect(px + 13, py + 7, 2, 8, sword_gold);
-                if (p->has_white_sword) {
-                    draw_rect(px + 15, py + 10, 8, 2, sword_edge);
+                    break;
+                case DIR_RIGHT:
                     hal_video_put_pixel(px + 13, py + 10, sword_ruby);
                     hal_video_put_pixel(px + 13, py + 11, sword_ruby);
                     hal_video_put_pixel(px + 20, py + 5, white);
                     hal_video_put_pixel(px + 20, py + 15, cyan_glow);
-                }
-                break;
+                    break;
+            }
         }
     }
 
@@ -1551,7 +1553,7 @@ static void draw_link(const Player* p, const Camera* cam) {
         bool flip_h = false;
 
         // 1. Invulnerability / Hurt (Reação autêntica de dano e recuo - Row 9)
-        if (p->invuln_timer > 0) {
+        if (p->invuln_timer > 0 && (fabsf(p->knock_x) > 0.05f || fabsf(p->knock_y) > 0.05f || !p->is_moving)) {
             row = 9;
             if (p->dir == DIR_DOWN) col = 0;
             else if (p->dir == DIR_UP) col = 2;

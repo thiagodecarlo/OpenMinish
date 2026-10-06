@@ -77,12 +77,14 @@ def generate_link_sheet(source_sheet_path):
         c.putdata(new_data)
         return c
 
-    def extract_sprite_auto(x1, y1, x2, y2, baseline_y=26):
+    def extract_sprite_auto(x1, y1, x2, y2, baseline_y=26, flip=False):
         crop = img.crop((x1, y1, x2, y2))
         bbox = crop.getbbox()
         if not bbox:
             return Image.new('RGBA', (CELL_W, CELL_H), (0, 0, 0, 0))
         sprite = crop.crop(bbox)
+        if flip:
+            sprite = sprite.transpose(Image.FLIP_LEFT_RIGHT)
         sw, sh = sprite.size
         cell = Image.new('RGBA', (CELL_W, CELL_H), (0, 0, 0, 0))
         paste_x = (CELL_W - sw) // 2
@@ -262,17 +264,17 @@ def generate_link_sheet(source_sheet_path):
     draw_sword_v(d2, 13, 18, length=10, facing_down=True)
     sheet.paste(d2, (2 * CELL_W, 6 * CELL_H))
 
-    # Right Slashes (Row 63: Y=1924..1949)
-    r0 = extract_sprite_auto(11, 1924, 33, 1949, baseline_y=26)
-    draw_sword_h(r0, 13, 14, length=8, facing_right=False)
+    # Right Slashes (Row 6: Y=1924..1949 - facing RIGHT)
+    r0 = extract_sprite_auto(42, 1924, 65, 1949, baseline_y=26, flip=True)
+    draw_sword_v(r0, 24, 11, length=9, facing_down=False)
     sheet.paste(r0, (3 * CELL_W, 6 * CELL_H))
 
-    r1 = extract_sprite_auto(42, 1924, 65, 1949, baseline_y=26)
-    draw_sword_h(r1, 19, 14, length=11, facing_right=True)
+    r1 = extract_sprite_auto(79, 1924, 101, 1949, baseline_y=26, flip=True)
+    draw_sword_h(r1, 20, 14, length=11, facing_right=True)
     sheet.paste(r1, (4 * CELL_W, 6 * CELL_H))
 
-    r2 = extract_sprite_auto(79, 1924, 101, 1949, baseline_y=26)
-    draw_sword_h(r2, 18, 15, length=10, facing_right=True)
+    r2 = extract_sprite_auto(110, 1924, 133, 1949, baseline_y=26, flip=True)
+    draw_sword_h(r2, 21, 15, length=10, facing_right=True)
     sheet.paste(r2, (5 * CELL_W, 6 * CELL_H))
 
     # Up Slashes (Row 64: Y=1963..1988)
@@ -350,10 +352,10 @@ def generate_link_sheet(source_sheet_path):
     # Col 7..8: Swim Side 1, 2
     # Col 9: Dive Submerged
     # -------------------------------------------------------------------------
-    # Hurt poses from Y=2070..2105
-    sheet.paste(extract_sprite_auto(12, 2070, 36, 2105, baseline_y=26), (0 * CELL_W, 9 * CELL_H))
-    sheet.paste(extract_sprite_auto(48, 2070, 72, 2105, baseline_y=26), (1 * CELL_W, 9 * CELL_H))
-    sheet.paste(extract_sprite_auto(84, 2070, 108, 2105, baseline_y=26), (2 * CELL_W, 9 * CELL_H))
+    # Hurt poses from authentic Minish Cap reaction row (Y=186..207)
+    sheet.paste(extract_sprite_auto(14, 186, 34, 206, baseline_y=26), (0 * CELL_W, 9 * CELL_H))
+    sheet.paste(extract_sprite_auto(162, 186, 180, 206, baseline_y=26, flip=True), (1 * CELL_W, 9 * CELL_H))
+    sheet.paste(extract_sprite_auto(271, 186, 289, 205, baseline_y=26), (2 * CELL_W, 9 * CELL_H))
 
     # Electrocuted (Y=890..925)
     sheet.paste(extract_sprite_auto(36, 895, 60, 925, baseline_y=26), (3 * CELL_W, 9 * CELL_H))
