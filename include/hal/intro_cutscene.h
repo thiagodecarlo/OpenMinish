@@ -15,7 +15,10 @@
  */
 
 #include "gba/types.h"
+#include "hal/texture.h"
 #include <stdbool.h>
+
+void intro_cutscene_set_npcs_texture(const Texture* tex);
 
 typedef enum {
     INTRO_STAGE_FESTIVAL_PARADE = 0, // 1. Link e Princesa Zelda no Festival de Picori

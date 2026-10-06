@@ -189,6 +189,7 @@ static Texture* s_sheet1 = NULL;
 static Texture* s_link_tex = NULL;
 static Texture* s_octo_tex = NULL;
 static Texture* s_enemies_tex = NULL;
+static Texture* s_npcs_tex = NULL;
 static Texture* s_hud_items_tex = NULL;
 static Tilemap* s_world_map          = NULL;
 static Tilemap* s_town_map           = NULL;
@@ -223,6 +224,7 @@ static void load_region_sheets(SelectedRegion region) {
     if (s_link_tex)      { texture_free(s_link_tex);      s_link_tex = NULL; }
     if (s_octo_tex)      { texture_free(s_octo_tex);      s_octo_tex = NULL; }
     if (s_enemies_tex)   { texture_free(s_enemies_tex);   s_enemies_tex = NULL; }
+    if (s_npcs_tex)      { texture_free(s_npcs_tex);      s_npcs_tex = NULL; }
     if (s_hud_items_tex) { texture_free(s_hud_items_tex); s_hud_items_tex = NULL; }
 
     s_current_region = region;
@@ -232,12 +234,14 @@ static void load_region_sheets(SelectedRegion region) {
     char path_link[256];
     char path_octo[256];
     char path_enemies[256];
+    char path_npcs[256];
     char path_hud[256];
     snprintf(path0, sizeof(path0), "assets/regions/%s/sheet_00.bmp", s_region_tags[region]);
     snprintf(path1, sizeof(path1), "assets/regions/%s/sheet_01.bmp", s_region_tags[region]);
     snprintf(path_link, sizeof(path_link), "assets/regions/%s/link.bmp", s_region_tags[region]);
     snprintf(path_octo, sizeof(path_octo), "assets/regions/%s/octorok.bmp", s_region_tags[region]);
     snprintf(path_enemies, sizeof(path_enemies), "assets/regions/%s/enemies.bmp", s_region_tags[region]);
+    snprintf(path_npcs, sizeof(path_npcs), "assets/regions/%s/npcs.bmp", s_region_tags[region]);
     snprintf(path_hud, sizeof(path_hud), "assets/ui/hud_items.bmp");
 
     s_sheet0 = texture_load_bmp(path0);
@@ -251,6 +255,10 @@ static void load_region_sheets(SelectedRegion region) {
     if (!s_enemies_tex) {
         s_enemies_tex = texture_load_bmp("assets/regions/enemies_master.bmp");
     }
+    s_npcs_tex = texture_load_bmp(path_npcs);
+    if (!s_npcs_tex) {
+        s_npcs_tex = texture_load_bmp("assets/regions/npcs_master.bmp");
+    }
     s_hud_items_tex = texture_load_bmp(path_hud);
     if (!s_hud_items_tex) {
         char fallback_hud[256];
@@ -260,15 +268,19 @@ static void load_region_sheets(SelectedRegion region) {
 
     entity_set_texture(s_octo_tex);
     entity_set_enemies_texture(s_enemies_tex);
+    entity_set_npcs_texture(s_npcs_tex);
+    intro_cutscene_set_npcs_texture(s_npcs_tex);
+    boss_vaati_set_npcs_texture(s_npcs_tex);
 
     if (s_world_map) {
         map_set_region(s_world_map, s_region_tags[region]);
     }
 
-    printf("[REGIAO ATUALIZADA] -> %s (Link: %s, Inimigos: %s, Octorok: %s, HUD: %s, Mapa: %s)\n",
+    printf("[REGIAO ATUALIZADA] -> %s (Link: %s, Inimigos: %s, NPCs: %s, Octorok: %s, HUD: %s, Mapa: %s)\n",
            s_region_names[region],
            s_link_tex ? "Autentico GBA" : "Procedural",
            s_enemies_tex ? "Autentico GBA" : "Procedural",
+           s_npcs_tex ? "Autentico GBA" : "Procedural",
            s_octo_tex ? "Autentico GBA" : "Procedural",
            s_hud_items_tex ? "Autentico GBA" : "Procedural",
            (s_world_map && s_world_map->is_authentic) ? "Autentico Minish Woods" : "Procedural");
@@ -5028,6 +5040,7 @@ int main(int argc, char* argv[]) {
     if (s_link_tex)      texture_free(s_link_tex);
     if (s_octo_tex)      texture_free(s_octo_tex);
     if (s_enemies_tex)   texture_free(s_enemies_tex);
+    if (s_npcs_tex)      texture_free(s_npcs_tex);
     if (s_hud_items_tex) texture_free(s_hud_items_tex);
 
     entity_manager_shutdown();

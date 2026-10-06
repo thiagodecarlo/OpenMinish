@@ -49,6 +49,11 @@ typedef struct {
 } IntroContext;
 
 static IntroContext s_intro;
+static const Texture* s_intro_npcs_tex = NULL;
+
+void intro_cutscene_set_npcs_texture(const Texture* tex) {
+    s_intro_npcs_tex = tex;
+}
 
 static inline u32 blend_color(u32 dst, u32 src) {
     u32 sa = src & 0xFF;
@@ -297,8 +302,12 @@ void intro_cutscene_render(void) {
         draw_rect_fast((int)s_intro.king_x - 4, (int)s_intro.king_y - 6, 8, 6, 0xFDE047FF); // Coroa
 
         // Mestre Smith (Ferreiro e avô de Link)
-        draw_rect_fast((int)s_intro.smith_x - 6, (int)s_intro.smith_y, 12, 16, 0x475569FF);
-        draw_rect_fast((int)s_intro.smith_x - 5, (int)s_intro.smith_y - 6, 10, 6, 0xF8FAFCFF); // Barba branca
+        if (s_intro_npcs_tex && s_intro_npcs_tex->pixels) {
+            texture_draw(s_intro_npcs_tex, 0 * 16, 1 * 16, 16, 16, (int)s_intro.smith_x - 8, (int)s_intro.smith_y - 6);
+        } else {
+            draw_rect_fast((int)s_intro.smith_x - 6, (int)s_intro.smith_y, 12, 16, 0x475569FF);
+            draw_rect_fast((int)s_intro.smith_x - 5, (int)s_intro.smith_y - 6, 10, 6, 0xF8FAFCFF); // Barba branca
+        }
     } else {
         // Pátio Externo do Castelo de Hyrule (Gramado e Muralhas de Pedra)
         draw_rect_fast(0, 0, W, 45, 0x475569FF); // Muralha
@@ -343,10 +352,15 @@ void intro_cutscene_render(void) {
 
     // Princesa Zelda
     if (s_intro.stage != INTRO_STAGE_KING_AUDIENCE) {
-        u32 zelda_color = s_intro.zelda_petrified ? 0x64748BFF : 0xEC4899FF;
-        u32 zelda_face  = s_intro.zelda_petrified ? 0x94A3B8FF : 0xFBCFE8FF;
-        draw_rect_fast((int)s_intro.zelda_x - 5, (int)s_intro.zelda_y, 10, 14, zelda_color);
-        draw_rect_fast((int)s_intro.zelda_x - 4, (int)s_intro.zelda_y - 6, 8, 6, zelda_face);
+        if (s_intro_npcs_tex && s_intro_npcs_tex->pixels) {
+            int src_x = s_intro.zelda_petrified ? (3 * 16) : (0 * 16);
+            texture_draw(s_intro_npcs_tex, src_x, 2 * 16, 16, 16, (int)s_intro.zelda_x - 8, (int)s_intro.zelda_y - 6);
+        } else {
+            u32 zelda_color = s_intro.zelda_petrified ? 0x64748BFF : 0xEC4899FF;
+            u32 zelda_face  = s_intro.zelda_petrified ? 0x94A3B8FF : 0xFBCFE8FF;
+            draw_rect_fast((int)s_intro.zelda_x - 5, (int)s_intro.zelda_y, 10, 14, zelda_color);
+            draw_rect_fast((int)s_intro.zelda_x - 4, (int)s_intro.zelda_y - 6, 8, 6, zelda_face);
+        }
     }
 
     // Partículas de magia de Vaati
