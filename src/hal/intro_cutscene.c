@@ -123,22 +123,22 @@ void intro_cutscene_init(void) {
 void intro_cutscene_start(void) {
     memset(&s_intro, 0, sizeof(IntroContext));
     s_intro.active = true;
-    s_intro.stage = INTRO_STAGE_FESTIVAL_PARADE;
+    s_intro.stage = INTRO_STAGE_ROOM_WAKEUP;
     s_intro.stage_timer = 0;
     s_intro.total_timer = 0;
     s_intro.fade_alpha = 1.0f;
     s_intro.flash_alpha = 0.0f;
 
-    s_intro.link_x = 90.0f;
-    s_intro.link_y = 110.0f;
-    s_intro.zelda_x = 120.0f;
-    s_intro.zelda_y = 110.0f;
+    s_intro.link_x = 58.0f;
+    s_intro.link_y = 66.0f;
+    s_intro.zelda_x = 92.0f;
+    s_intro.zelda_y = 68.0f;
     s_intro.vaati_x = 120.0f;
     s_intro.vaati_y = -30.0f;
     s_intro.king_x = 120.0f;
     s_intro.king_y = 50.0f;
-    s_intro.smith_x = 80.0f;
-    s_intro.smith_y = 60.0f;
+    s_intro.smith_x = 152.0f;
+    s_intro.smith_y = 68.0f;
 
     for (int i = 0; i < 24; i++) {
         s_intro.sparkles[i].x = (float)(30 + (rand() % 180));
@@ -149,8 +149,8 @@ void intro_cutscene_start(void) {
         s_intro.sparkles[i].size = 2.0f;
     }
 
-    hal_audio_play_bgm(BGM_PICORI_FESTIVAL);
-    printf("[INTRO] Cutscene inicial iniciada: O Festival de Picori & Aparição de Vaati!\n");
+    hal_audio_play_bgm(BGM_HYRULE_TOWN);
+    printf("[INTRO] Cutscene inicial iniciada: O Despertar de Link & Chegada de Zelda!\n");
 }
 
 bool intro_cutscene_is_active(void) {
@@ -201,6 +201,23 @@ void intro_cutscene_update(void) {
     }
 
     switch (s_intro.stage) {
+        // --------------------------------------------------------------------
+        // 0. QUARTO DE LINK: O DESPERTAR & CHEGADA DE ZELDA E MESTRE SMITH
+        // --------------------------------------------------------------------
+        case INTRO_STAGE_ROOM_WAKEUP: {
+            if (s_intro.stage_timer >= 240 || hal_input_is_pressed(KEY_A)) {
+                s_intro.stage = INTRO_STAGE_FESTIVAL_PARADE;
+                s_intro.stage_timer = 0;
+                s_intro.link_x = 90.0f;
+                s_intro.link_y = 110.0f;
+                s_intro.zelda_x = 120.0f;
+                s_intro.zelda_y = 110.0f;
+                hal_audio_play_bgm(BGM_PICORI_FESTIVAL);
+                hal_audio_play_sound(SOUND_TEXT_ADVANCE, 0.8f, 1.0f);
+            }
+            break;
+        }
+
         // --------------------------------------------------------------------
         // 1. FESTIVAL DE PICORI (PARADE)
         // --------------------------------------------------------------------
@@ -309,8 +326,90 @@ void intro_cutscene_render(void) {
     int W = ctx->render_width;
     int H = ctx->render_height;
 
-    // 1. Cenário de Fundo (Pátio do Castelo ou Sala do Trono)
-    if (s_intro.stage == INTRO_STAGE_KING_AUDIENCE) {
+    // 1. Cenário de Fundo (Quarto de Link, Sala do Trono ou Pátio do Castelo)
+    if (s_intro.stage == INTRO_STAGE_ROOM_WAKEUP) {
+        // Quarto de Link & Casa de Mestre Smith
+        // Parede superior em madeira e pedra rústica com vigas verticais
+        draw_rect_fast(0, 0, W, 40, 0x4A2810FF);
+        for (int vx = 12; vx < W; vx += 36) {
+            draw_rect_fast(vx, 0, 4, 40, 0x2E1002FF);
+        }
+        draw_rect_fast(0, 38, W, 3, 0x2E1002FF);
+
+        // Piso de tábuas de carvalho
+        draw_rect_fast(0, 40, W, H - 40, 0x78350FFF);
+        for (int py = 48; py < H; py += 12) {
+            draw_rect_fast(0, py, W, 1, 0x451A03FF);
+        }
+
+        // Tapete verde no centro do quarto
+        draw_rect_fast(68, 52, 64, 40, 0x15803D88);
+        draw_rect_fast(66, 50, 68, 44, 0xD4AF3744);
+
+        // Janela ensolarada com raios de luz matinais
+        draw_rect_fast(170, 8, 24, 24, 0x38BDF8FF);
+        draw_rect_fast(170, 8, 24, 2, 0x1E293BFF);
+        draw_rect_fast(170, 30, 24, 2, 0x1E293BFF);
+        draw_rect_fast(181, 8, 2, 24, 0x1E293BFF);
+        draw_rect_fast(170, 19, 24, 2, 0x1E293BFF);
+        for (int i = 0; i < 18; i++) {
+            draw_rect_fast(140 - i * 3, 40 + i * 4, 35 + i * 2, 6, 0xFEF08A18);
+        }
+
+        // Cama de madeira de Link (cabeceira, lençol azul e travesseiro)
+        int bed_x = 18;
+        int bed_y = 28;
+        draw_rect_fast(bed_x, bed_y, 32, 46, 0x3D1A04FF);
+        draw_rect_fast(bed_x + 2, bed_y + 2, 28, 12, 0xF1F5F9FF);
+        draw_rect_fast(bed_x + 2, bed_y + 14, 28, 30, 0x1D4ED8FF);
+        draw_rect_fast(bed_x + 2, bed_y + 14, 28, 4, 0x60A5FAFF);
+
+        // Mesa de cabeceira com vela
+        draw_rect_fast(bed_x + 34, bed_y + 6, 12, 16, 0x5C2B09FF);
+        draw_rect_fast(bed_x + 38, bed_y + 2, 4, 5, 0xFDE047FF);
+
+        // Forja e lareira de Smith no canto direito
+        int forge_x = 196;
+        int forge_y = 24;
+        draw_rect_fast(forge_x, forge_y, 36, 44, 0x334155FF);
+        draw_rect_fast(forge_x + 4, forge_y + 16, 28, 24, 0x0F172AFF);
+        draw_rect_fast(forge_x + 8, forge_y + 24, 20, 14, 0xEA580CFF);
+        draw_rect_fast(forge_x + 12, forge_y + 28, 12, 8, 0xFBBF24FF);
+        draw_rect_fast(forge_x - 14, forge_y + 32, 10, 10, 0x475569FF);
+
+        // 1. Link (ao lado da cama)
+        if (s_intro_link_tex && s_intro_link_tex->pixels) {
+            texture_draw(s_intro_link_tex, 0 * 32, 0 * 32, 32, 32, (int)s_intro.link_x - 16, (int)s_intro.link_y - 20);
+        } else {
+            draw_rect_fast((int)s_intro.link_x - 5, (int)s_intro.link_y, 10, 14, 0x16A34AFF);
+            draw_rect_fast((int)s_intro.link_x - 4, (int)s_intro.link_y - 6, 8, 6, 0xFBBF24FF);
+        }
+
+        // 2. Princesa Zelda (convidando Link)
+        if (s_intro_npcs_tex && s_intro_npcs_tex->pixels) {
+            texture_draw(s_intro_npcs_tex, 0 * 16, 2 * 16, 16, 16, (int)s_intro.zelda_x - 8, (int)s_intro.zelda_y - 12);
+        } else {
+            draw_rect_fast((int)s_intro.zelda_x - 5, (int)s_intro.zelda_y, 10, 14, 0xEC4899FF);
+            draw_rect_fast((int)s_intro.zelda_x - 4, (int)s_intro.zelda_y - 6, 8, 6, 0xFBCFE8FF);
+        }
+
+        // 3. Mestre Smith (entregando a espada)
+        if (s_intro_npcs_tex && s_intro_npcs_tex->pixels) {
+            texture_draw(s_intro_npcs_tex, 0 * 16, 1 * 16, 16, 16, (int)s_intro.smith_x - 8, (int)s_intro.smith_y - 8);
+        } else {
+            draw_rect_fast((int)s_intro.smith_x - 6, (int)s_intro.smith_y, 12, 16, 0x475569FF);
+            draw_rect_fast((int)s_intro.smith_x - 5, (int)s_intro.smith_y - 6, 10, 6, 0xF8FAFCFF);
+        }
+
+        // 4. Espada reluzente do torneio
+        int sword_px = 120;
+        int sword_py = 58;
+        draw_rect_fast(sword_px + 2, sword_py - 4, 3, 12, 0x38BDF8FF);
+        draw_rect_fast(sword_px, sword_py + 4, 7, 3, 0xD4AF37FF);
+        if ((s_intro.stage_timer / 10) % 2 == 0) {
+            draw_rect_fast(sword_px + 1, sword_py - 6, 2, 2, 0xFDE047FF);
+        }
+    } else if (s_intro.stage == INTRO_STAGE_KING_AUDIENCE) {
         // Sala do Trono Real (Vermelho e Ouro Imperial)
         draw_rect_fast(0, 0, W, H, 0x1E1B18FF);
         // Tapete Imperial Carmesim
@@ -496,29 +595,33 @@ void intro_cutscene_render(void) {
     const char* l2 = "";
 
     switch (s_intro.stage) {
+        case INTRO_STAGE_ROOM_WAKEUP:
+            l1 = "O DESPERTAR DE LINK";
+            l2 = "Zelda vem convidar Link.\nSmith entrega a espada.";
+            break;
         case INTRO_STAGE_FESTIVAL_PARADE:
             l1 = "FESTIVAL DE PICORI DE HYRULE";
             l2 = "A Princesa Zelda convida Link\npara o festival secular.";
             break;
         case INTRO_STAGE_TOURNAMENT_WIN:
             l1 = "O TORNEIO DE ESGRIMA";
-            l2 = "O campeao misterioso surge:\no feiticeiro sombrio Vaati!";
+            l2 = "O campeao misterioso surge:\no mago sombrio Vaati!";
             break;
         case INTRO_STAGE_CHEST_CEREMONY:
             l1 = "VIOLACAO DO BAU SAGRADO!";
-            l2 = "Vaati quebra a Picori Blade e\nabre o selo do Bau Sagrado!";
+            l2 = "Vaati quebra a Picori Blade e\nrompe o Bau Sagrado!";
             break;
         case INTRO_STAGE_MONSTERS_RELEASED:
             l1 = "TREVAS LIBERTADAS NO REINO!";
-            l2 = "Monstros ancestrais fogem e\nespalham trevas por Hyrule!";
+            l2 = "Monstros ancestrais fogem,\nespalhando as trevas!";
             break;
         case INTRO_STAGE_ZELDA_CURSED:
             l1 = "A MALDICAO DE VAATI!";
-            l2 = "Vaati lanca um raio sombrio:\nZelda vira estatua de pedra!";
+            l2 = "Vaati lanca um raio sombrio:\nZelda vira pedra!";
             break;
         case INTRO_STAGE_KING_AUDIENCE:
             l1 = "AUDIENCIA COM O REI DALTUS";
-            l2 = "O Rei Daltus envia Link\nem busca do povo Minish!";
+            l2 = "O Rei Daltus envia Link\nem busca dos Minish!";
             break;
         default:
             break;
@@ -527,8 +630,19 @@ void intro_cutscene_render(void) {
     font_draw_text(box_x + 8, box_y + 4, l1, 0xFDE047FF, false);
     font_draw_text_multiline(box_x + 8, box_y + 16, box_w - 16, 11, l2, 0xE2E8F0FF, false);
 
-    // Indicador de Pular com START
-    font_draw_text(W - 100, 6, "[START] Pular", 0xCBD5E1FF, true);
+    // Indicador [▼] piscante de avanço
+    if ((s_intro.stage_timer / 15) % 2 == 0) {
+        font_draw_text(box_x + box_w - 14, box_y + box_h - 12, "\x03", 0xFDE047FF, false);
+    }
+
+    // Indicador sutil de pular com START em cápsula translúcida com borda dourada
+    int badge_w = 98;
+    int badge_h = 14;
+    int badge_x = W - 114;
+    int badge_y = 10;
+    draw_rect_fast(badge_x - 1, badge_y - 1, badge_w + 2, badge_h + 2, 0xD4AF3744); // Borda dourada sutil
+    draw_rect_fast(badge_x, badge_y, badge_w, badge_h, 0x0F172ACC);                  // Fundo escuro translúcido
+    font_draw_text(badge_x + 4, badge_y + 3, "[START] Pular", 0xFDE047FF, false);
 
     // Efeito de Flash na tela
     if (s_intro.flash_alpha > 0.0f) {

@@ -26,7 +26,8 @@ void intro_cutscene_set_hud_texture(const Texture* tex);
 void intro_cutscene_set_enemies_texture(const Texture* tex);
 
 typedef enum {
-    INTRO_STAGE_FESTIVAL_PARADE = 0, // 1. Link e Princesa Zelda no Festival de Picori
+    INTRO_STAGE_ROOM_WAKEUP = 0,     // 0. Quarto de Link: O Despertar & Chegada de Zelda e Mestre Smith
+    INTRO_STAGE_FESTIVAL_PARADE,     // 1. Link e Princesa Zelda no Festival de Picori
     INTRO_STAGE_TOURNAMENT_WIN,      // 2. O Vencedor Misterioso do Torneio de Esgrima: Vaati
     INTRO_STAGE_CHEST_CEREMONY,      // 3. Abertura do Baú Selado e quebra da Lâmina Picori
     INTRO_STAGE_MONSTERS_RELEASED,   // 4. Erupção de energia sombria e monstros sobre o reino
