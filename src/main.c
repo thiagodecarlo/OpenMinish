@@ -2822,10 +2822,18 @@ int main(int argc, char* argv[]) {
             intro_cutscene_render();
 
             if (!intro_cutscene_is_active()) {
-                // Cutscene encerrou: toca a música de Hyrule Town e ajusta câmera
-                hal_audio_play_bgm(BGM_HYRULE_TOWN);
+                // Cutscene encerrou: entra diretamente no gameplay do Vilarejo de Hyrule
+                s_in_town = true;
+                s_in_village = s_in_south_field = s_in_north_field = s_in_crenel_base = s_in_melari_mines = s_in_castor_wilds = s_in_mole_cave = s_in_wind_ruins = s_in_armos_interior = s_in_library = s_in_lake_hylia = false;
+                entity_manager_init();
+                spawn_town_entities();
+                link.x = 240.0f;
+                link.y = 160.0f;
+                link.dir = DIR_DOWN;
                 camera.x = link.x - ((float)camera.viewport_w / 2.0f);
                 camera.y = link.y - ((float)camera.viewport_h / 2.0f);
+                hal_audio_play_bgm(BGM_HYRULE_TOWN);
+                printf("[FLOW] Transicao direta da Cutscene para o Gameplay em Hyrule Town!\n");
             }
 
             hal_video_render_frame();
