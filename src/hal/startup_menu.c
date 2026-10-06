@@ -17,6 +17,7 @@
 #include "hal/input.h"
 #include "hal/font.h"
 #include "hal/save.h"
+#include "hal/prologue_story.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -204,6 +205,7 @@ void startup_menu_init(void) {
     s_menu.cursor_col = 0;
 
     sm_refresh_slots();
+    prologue_story_init();
     printf("[STARTUP] Maquina de Estados de Abertura iniciada no estado: CAPCOM_LOGO\n");
 }
 
@@ -238,6 +240,7 @@ void startup_menu_return_to_title(void) {
 }
 
 void startup_menu_shutdown(void) {
+    prologue_story_shutdown();
     s_menu.is_active = false;
     s_menu.state = STARTUP_STATE_FINISHED;
 }
@@ -310,6 +313,20 @@ void startup_menu_update(void) {
             }
 
             if (btn_a || btn_b || btn_start || s_menu.timer >= 95) {
+                s_menu.state = STARTUP_STATE_PROLOGUE_STORY;
+                s_menu.timer = 0;
+                s_menu.alpha = 1.0f;
+                prologue_story_start();
+            }
+            break;
+        }
+
+        // --------------------------------------------------------------------
+        // 2.5. PRÓLOGO NARRATIVO: A LENDA DOS PICORI (STORYBOOK CINEMATIC)
+        // --------------------------------------------------------------------
+        case STARTUP_STATE_PROLOGUE_STORY: {
+            prologue_story_update();
+            if (!prologue_story_is_active()) {
                 s_menu.state = STARTUP_STATE_TITLE_SCREEN;
                 s_menu.timer = 0;
                 s_menu.alpha = 1.0f;
@@ -342,6 +359,16 @@ void startup_menu_update(void) {
                 s_menu.timer = 0;
                 sm_refresh_slots();
                 hal_audio_play_bgm(BGM_FILE_SELECT);
+                break;
+            }
+
+            // Idle Timeout: Se inativo por ~15s (900 frames), reprisa o Prólogo
+            if (s_menu.timer >= 900) {
+                s_menu.state = STARTUP_STATE_PROLOGUE_STORY;
+                s_menu.timer = 0;
+                s_menu.alpha = 1.0f;
+                prologue_story_start();
+                break;
             }
             break;
         }
@@ -664,6 +691,14 @@ void startup_menu_render(void) {
             if (s_menu.alpha < 1.0f) {
                 sm_draw_rect_blend(0, 0, W, H, 0x000000FF, 1.0f - s_menu.alpha);
             }
+            break;
+        }
+
+        // --------------------------------------------------------------------
+        // 2.5. PRÓLOGO NARRATIVO: A LENDA DOS PICORI (STORYBOOK CINEMATIC)
+        // --------------------------------------------------------------------
+        case STARTUP_STATE_PROLOGUE_STORY: {
+            prologue_story_render();
             break;
         }
 

@@ -287,6 +287,13 @@ static void load_region_sheets(SelectedRegion region) {
     dungeon_droplets_set_bosses_texture(s_bosses_tex);
     dungeon_palace_set_bosses_texture(s_bosses_tex);
     intro_cutscene_set_npcs_texture(s_npcs_tex);
+    intro_cutscene_set_bosses_texture(s_bosses_tex);
+    intro_cutscene_set_link_texture(s_link_tex);
+    intro_cutscene_set_hud_texture(s_hud_items_tex);
+    intro_cutscene_set_enemies_texture(s_enemies_tex);
+    if (s_castle_courtyard_map) {
+        intro_cutscene_set_castle_texture(s_castle_courtyard_map->authentic_tex);
+    }
     boss_vaati_set_npcs_texture(s_npcs_tex);
 
     map_load_tileset(s_region_tags[region]);

@@ -60,6 +60,7 @@ assets/regions/*.bin
 assets/textures/*
 !assets/textures/.gitkeep
 assets/ui/*.bmp
+assets/ui/**/*.bmp
 !assets/ui/.gitkeep
 assets/audio/**
 !assets/audio/.gitkeep
