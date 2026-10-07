@@ -105,6 +105,16 @@ void dungeon_flames_init(void) {
     s_flames.door_north_entrance.is_locked = false;
     s_flames.door_north_entrance.is_open = false;
 
+    // Bloco empurrável de basalto vulcânico
+    s_flames.block.x = 6.0f * TILE_SIZE;
+    s_flames.block.y = 4.0f * TILE_SIZE;
+    s_flames.block.start_x = s_flames.block.x;
+    s_flames.block.start_y = s_flames.block.y;
+    s_flames.block.target_x = s_flames.block.x;
+    s_flames.block.target_y = s_flames.block.y;
+    s_flames.block.is_moving = false;
+    s_flames.block.push_timer = 0;
+
     // Configuração Sala 1 (Lago de Lava e Vagoneta)
     s_flames.cart.x = 7.5f * TILE_SIZE;
     s_flames.cart.y = 7.0f * TILE_SIZE;
@@ -139,6 +149,9 @@ void dungeon_flames_init(void) {
     s_flames.door_boss_locked.y = 0.0f;
     s_flames.door_boss_locked.is_locked = true;
     s_flames.door_boss_locked.is_open = false;
+    s_flames.torch_left_lit = false;
+    s_flames.torch_right_lit = false;
+    s_flames.torch_puzzle_solved = false;
 
     // Configuração Sala 5 (Arena do Chefe Gleerok)
     s_flames.door_boss_shutter.x = 7.0f * TILE_SIZE;
@@ -385,17 +398,79 @@ void dungeon_flames_update(float* link_x, float* link_y, Direction* link_dir, bo
             return;
         }
 
+        // Bloco empurrável de basalto vulcânico
+        FlamesBlock* b = &s_flames.block;
+        if (b->is_moving) {
+            float spd = 1.0f;
+            if (b->target_x > b->x) { b->x += spd; if (b->x >= b->target_x) { b->x = b->target_x; b->is_moving = false; } }
+            else if (b->target_x < b->x) { b->x -= spd; if (b->x <= b->target_x) { b->x = b->target_x; b->is_moving = false; } }
+            else if (b->target_y > b->y) { b->y += spd; if (b->y >= b->target_y) { b->y = b->target_y; b->is_moving = false; } }
+            else if (b->target_y < b->y) { b->y -= spd; if (b->y <= b->target_y) { b->y = b->target_y; b->is_moving = false; } }
+        } else if (is_moving) {
+            float bx_center = b->x + 8.0f;
+            float by_center = b->y + 8.0f;
+            float dx = (lx + 8.0f) - bx_center;
+            float dy = (ly + 12.0f) - by_center;
+            bool adjacent = false;
+            Direction push_req = *link_dir;
+
+            if (push_req == DIR_RIGHT && dx >= -18.0f && dx <= -12.0f && fabsf(dy) <= 8.0f) adjacent = true;
+            else if (push_req == DIR_LEFT && dx >= 12.0f && dx <= 18.0f && fabsf(dy) <= 8.0f) adjacent = true;
+            else if (push_req == DIR_DOWN && dy >= -18.0f && dy <= -12.0f && fabsf(dx) <= 8.0f) adjacent = true;
+            else if (push_req == DIR_UP && dy >= 12.0f && dy <= 18.0f && fabsf(dx) <= 8.0f) adjacent = true;
+
+            if (adjacent) {
+                if (b->push_dir == push_req) {
+                    b->push_timer++;
+                    if (b->push_timer >= 15) {
+                        float n_tx = b->x;
+                        float n_ty = b->y;
+                        if (push_req == DIR_RIGHT) n_tx += TILE_SIZE;
+                        if (push_req == DIR_LEFT)  n_tx -= TILE_SIZE;
+                        if (push_req == DIR_DOWN)  n_ty += TILE_SIZE;
+                        if (push_req == DIR_UP)    n_ty -= TILE_SIZE;
+
+                        int t_col = (int)(n_tx / TILE_SIZE);
+                        int t_row = (int)(n_ty / TILE_SIZE);
+                        if (t_col >= 2 && t_col <= 13 && t_row >= 2 && t_row <= 7) {
+                            b->start_x = b->x;
+                            b->start_y = b->y;
+                            b->target_x = n_tx;
+                            b->target_y = n_ty;
+                            b->is_moving = true;
+                            b->push_timer = 0;
+                            hal_audio_play_sound(SOUND_BLOCK_PUSH, 0.85f, 0.95f);
+                        }
+                    }
+                } else {
+                    b->push_dir = push_req;
+                    b->push_timer = 1;
+                }
+            } else {
+                b->push_timer = 0;
+            }
+        } else {
+            b->push_timer = 0;
+        }
+
         // Interruptor mecânico de piso em x=4, y=4
         float sw_cx = 4.0f * TILE_SIZE + 8.0f;
         float sw_cy = 4.0f * TILE_SIZE + 8.0f;
         bool link_on_sw = (fabsf(lx + 8.0f - sw_cx) <= 10.0f && fabsf(ly + 12.0f - sw_cy) <= 10.0f);
+        bool block_on_sw = (fabsf(b->x - 4.0f * TILE_SIZE) <= 4.0f && fabsf(b->y - 4.0f * TILE_SIZE) <= 4.0f);
+        bool should_be_down = (link_on_sw || block_on_sw);
 
-        if (link_on_sw && !s_flames.switch_entrance_down) {
+        if (should_be_down && !s_flames.switch_entrance_down) {
             s_flames.switch_entrance_down = true;
             s_flames.door_north_entrance.is_open = true;
             hal_audio_play_sound(SOUND_SWITCH_CLICK, 0.95f, 1.0f);
             hal_audio_play_sound(SOUND_DOOR_SHUTTER, 0.85f, 1.0f);
+            if (block_on_sw) hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.25f);
             printf("[CAVE OF FLAMES] Interruptor de ferro acionado! Grades norte levantadas!\n");
+        } else if (!should_be_down && s_flames.switch_entrance_down && !block_on_sw) {
+            s_flames.switch_entrance_down = false;
+            s_flames.door_north_entrance.is_open = false;
+            hal_audio_play_sound(SOUND_DOOR_SHUTTER, 0.85f, 0.75f);
         }
 
         // Cruzar a porta norte aberta para a Sala 1
@@ -624,6 +699,13 @@ bool dungeon_flames_interact(float x, float y, int* link_rupees, int* link_heart
         }
     }
 
+    // Quebra-cabeça de tochas da Antecâmara do Chefe (Sala 4)
+    if (s_flames.current_room == ROOM_FLAMES_BOSS_DOOR) {
+        if (dungeon_flames_light_torch(x, y)) {
+            return true;
+        }
+    }
+
     return false;
 }
 
@@ -689,9 +771,15 @@ bool dungeon_flames_is_solid(float world_x, float world_y) {
         return true;
     }
 
-    // Pilares de pedra no Vestíbulo (Sala 0)
+    // Pilares de pedra e bloco empurrável no Vestíbulo (Sala 0)
     if (s_flames.current_room == ROOM_FLAMES_ENTRANCE) {
         if ((col == 4 || col == 11) && (row == 2 || row == 3)) return true;
+
+        // Bloco empurrável de basalto vulcânico
+        if (world_x >= s_flames.block.x && world_x < s_flames.block.x + TILE_SIZE &&
+            world_y >= s_flames.block.y && world_y < s_flames.block.y + TILE_SIZE) {
+            return true;
+        }
     }
 
     return false;
@@ -700,10 +788,17 @@ bool dungeon_flames_is_solid(float world_x, float world_y) {
 // ----------------------------------------------------------------------------
 // RENDERIZAÇÃO DOS ELEMENTOS DA CAVE OF FLAMES
 // ----------------------------------------------------------------------------
-static void render_torch(int sx, int sy, int anim_tick) {
+static void render_torch(int sx, int sy, int anim_tick, bool is_lit) {
     // Pedestal de pedra
     draw_filled_rect(sx + 5, sy + 7, 6, 9, C_FLAMES_TORCH);
     draw_filled_rect(sx + 4, sy + 13, 8, 3, C_FLAMES_WALL_DARK);
+
+    if (!is_lit) {
+        // Tigela de cinzas com carvão apagado
+        draw_filled_rect(sx + 5, sy + 5, 6, 3, 0x1E293BFF);
+        draw_filled_rect(sx + 6, sy + 4, 4, 2, 0x475569FF);
+        return;
+    }
 
     // Chamas animadas
     int f1 = (anim_tick / 4) % 3;
@@ -854,10 +949,22 @@ void dungeon_flames_render(const Camera* cam) {
     }
 
     // 4. Objetos e Mecânicas Específicas por Câmara
-    // Sala 0: Tochas e Interruptor de Piso
+    // Sala 0: Tochas, Bloco de Basalto e Interruptor de Piso
     if (s_flames.current_room == ROOM_FLAMES_ENTRANCE) {
-        render_torch(ox + 4 * TILE_SIZE, oy + 2 * TILE_SIZE, s_anim_timer);
-        render_torch(ox + 11 * TILE_SIZE, oy + 2 * TILE_SIZE, s_anim_timer);
+        render_torch(ox + 4 * TILE_SIZE, oy + 2 * TILE_SIZE, s_anim_timer, true);
+        render_torch(ox + 11 * TILE_SIZE, oy + 2 * TILE_SIZE, s_anim_timer, true);
+
+        // Bloco empurrável de basalto vulcânico
+        int bk_x = ox + (int)s_flames.block.x;
+        int bk_y = oy + (int)s_flames.block.y;
+        draw_filled_rect(bk_x, bk_y, 16, 16, 0x334155FF);
+        draw_filled_rect(bk_x + 1, bk_y + 1, 14, 1, 0x64748BFF);
+        draw_filled_rect(bk_x + 1, bk_y + 1, 1, 14, 0x64748BFF);
+        draw_filled_rect(bk_x + 1, bk_y + 14, 14, 1, 0x0F172AFF);
+        draw_filled_rect(bk_x + 14, bk_y + 1, 1, 14, 0x0F172AFF);
+        draw_filled_rect(bk_x + 4, bk_y + 4, 8, 8, 0x1E293BFF);
+        draw_filled_rect(bk_x + 6, bk_y + 6, 4, 4, 0xF97316FF);
+        draw_filled_rect(bk_x + 7, bk_y + 7, 2, 2, 0xFDE047FF);
 
         // Interruptor de piso
         int sw_x = ox + 4 * TILE_SIZE;
@@ -942,8 +1049,8 @@ void dungeon_flames_render(const Camera* cam) {
             draw_rect_blend(bd_x - 8, bd_y, 48, 28, 0xEF444455);
         }
 
-        render_torch(ox + 3 * TILE_SIZE, oy + 2 * TILE_SIZE, s_anim_timer);
-        render_torch(ox + 12 * TILE_SIZE, oy + 2 * TILE_SIZE, s_anim_timer);
+        render_torch(ox + 3 * TILE_SIZE, oy + 2 * TILE_SIZE, s_anim_timer, s_flames.torch_left_lit);
+        render_torch(ox + 12 * TILE_SIZE, oy + 2 * TILE_SIZE, s_anim_timer, s_flames.torch_right_lit);
     }
 
     // Sala 5: Arena de Combate contra Gleerok
@@ -965,10 +1072,10 @@ void dungeon_flames_render(const Camera* cam) {
         }
 
         // Ilha de pedra central: tochas nos 4 cantos
-        render_torch(ox + 2 * TILE_SIZE, oy + 3 * TILE_SIZE, s_anim_timer);
-        render_torch(ox + 13 * TILE_SIZE, oy + 3 * TILE_SIZE, s_anim_timer);
-        render_torch(ox + 2 * TILE_SIZE, oy + 8 * TILE_SIZE, s_anim_timer);
-        render_torch(ox + 13 * TILE_SIZE, oy + 8 * TILE_SIZE, s_anim_timer);
+        render_torch(ox + 2 * TILE_SIZE, oy + 3 * TILE_SIZE, s_anim_timer, true);
+        render_torch(ox + 13 * TILE_SIZE, oy + 3 * TILE_SIZE, s_anim_timer, true);
+        render_torch(ox + 2 * TILE_SIZE, oy + 8 * TILE_SIZE, s_anim_timer, true);
+        render_torch(ox + 13 * TILE_SIZE, oy + 8 * TILE_SIZE, s_anim_timer, true);
 
         // Grade sul
         int gd_x = ox + 7 * TILE_SIZE;
@@ -1035,4 +1142,42 @@ bool dungeon_flames_is_boss_cleared(void) {
 
 bool dungeon_flames_has_fire_element(void) {
     return s_flames.fire_element_collected;
+}
+
+bool dungeon_flames_light_torch(float x, float y) {
+    if (!s_flames.active) return false;
+    if (s_flames.current_room != ROOM_FLAMES_BOSS_DOOR) return false;
+
+    float t1_x = 3.0f * TILE_SIZE + 8.0f;
+    float t1_y = 2.0f * TILE_SIZE + 8.0f;
+    float t2_x = 12.0f * TILE_SIZE + 8.0f;
+    float t2_y = 2.0f * TILE_SIZE + 8.0f;
+
+    bool lit_any = false;
+
+    float d1 = sqrtf((x - t1_x) * (x - t1_x) + (y - t1_y) * (y - t1_y));
+    if (d1 <= 24.0f && !s_flames.torch_left_lit) {
+        s_flames.torch_left_lit = true;
+        lit_any = true;
+        hal_audio_play_sound(SOUND_FIRE, 1.0f, 1.0f);
+        printf("[CAVE OF FLAMES] Tocha esquerda da Antecâmara acesa!\n");
+    }
+
+    float d2 = sqrtf((x - t2_x) * (x - t2_x) + (y - t2_y) * (y - t2_y));
+    if (d2 <= 24.0f && !s_flames.torch_right_lit) {
+        s_flames.torch_right_lit = true;
+        lit_any = true;
+        hal_audio_play_sound(SOUND_FIRE, 1.0f, 1.0f);
+        printf("[CAVE OF FLAMES] Tocha direita da Antecâmara acesa!\n");
+    }
+
+    if (s_flames.torch_left_lit && s_flames.torch_right_lit && !s_flames.torch_puzzle_solved) {
+        s_flames.torch_puzzle_solved = true;
+        s_flames.door_boss_locked.is_open = true;
+        hal_audio_play_sound(SOUND_PUZZLE_CHIME, 1.0f, 1.0f);
+        hal_audio_play_sound(SOUND_DOOR_SHUTTER, 0.9f, 0.8f);
+        printf("[CAVE OF FLAMES] Pira sagrada acesa! Portão do Chefe destravado pelo poder do fogo!\n");
+    }
+
+    return lit_any;
 }

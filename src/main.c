@@ -3514,6 +3514,12 @@ int main(int argc, char* argv[]) {
                         } else {
                             trigger_link_sword_attack(&link);
                         }
+                    } else if (s_in_castor_wilds) {
+                        if (map_interact_push_block(active_map, link.x, link.y, link.dir)) {
+                            // Bloco de pedra empurrado com sucesso!
+                        } else {
+                            trigger_link_sword_attack(&link);
+                        }
                     } else if (s_in_town) {
                         if (cucco_minigame_is_active()) {
                             cucco_minigame_handle_action(link.x, link.y, link.dir);
@@ -3906,6 +3912,8 @@ int main(int argc, char* argv[]) {
                         hal_audio_play_sound(SOUND_MINISH_GROW, 1.0f, 1.0f);
                         printf("[MINISH] [KEY_R] Link subiu no portal e esta CRESCENDO para tamanho Humano!\n");
                     }
+                } else if (s_in_castor_wilds && active_map && map_interact_push_block(active_map, link.x, link.y, link.dir)) {
+                    // Empurrou bloco de pedra em Castor Wilds com R
                 } else if (!link.is_minish && !link.is_rolling && !link.is_swimming && !link.is_climbing) {
                     // Rolamento somersault acrobático canônico do Minish Cap!
                     link.is_rolling = true;
@@ -4196,6 +4204,19 @@ int main(int argc, char* argv[]) {
             }
             if (!blocked_y) {
                 link.y = new_y;
+            }
+
+            // Pressionamento contínuo contra blocos empurráveis em Castor Wilds
+            static int s_push_block_timer = 0;
+            if (s_in_castor_wilds && active_map && (blocked_x || blocked_y)) {
+                s_push_block_timer++;
+                if (s_push_block_timer >= 15) {
+                    if (map_interact_push_block(active_map, link.x, link.y, link.dir)) {
+                        s_push_block_timer = 0;
+                    }
+                }
+            } else {
+                s_push_block_timer = 0;
             }
 
             if (dungeon_is_active() || dungeon_flames_is_active() || dungeon_fortress_is_active() || dungeon_droplets_is_active()) {
