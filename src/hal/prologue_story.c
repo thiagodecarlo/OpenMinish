@@ -20,28 +20,18 @@
 
 #define SCREEN_W 240
 #define SCREEN_H 160
-#define TOTAL_ACTS 6
+#define TOTAL_ACTS 7
 #define FADE_DURATION 24     // ~0.4s de transição suave a 60 FPS
 #define AUTO_READ_DELAY 180  // ~3.0s de leitura após texto completo antes de avançar
-#define MAX_MOTES 24
 
 typedef struct {
-    int         panel_index;  // 0: Trevas, 1: Descida, 2: Herói & Baú, 3: Festival
-    const char* title;
+    int         panel_index;  // 0..6: índice do vitral na folha máster de 8 vitrais
+    bool        is_side_layout; // true: vitral na esquerda, texto na direita
     const char* text;
     SoundEffect trigger_sfx;
     float       sfx_pitch;
     bool        is_dark_climax;
 } PrologueAct;
-
-typedef struct {
-    float x;
-    float y;
-    float vx;
-    float vy;
-    float phase;
-    float size;
-} LightMote;
 
 typedef struct {
     bool        active;
@@ -54,63 +44,71 @@ typedef struct {
     bool        is_fading_in;
     bool        is_fading_out;
     int         act_timer;
-    LightMote   motes[MAX_MOTES];
 } PrologueState;
 
 static PrologueState s_prologue = { 0 };
 static Texture* s_prologue_tex = NULL;
 
 static const PrologueAct s_acts[TOTAL_ACTS] = {
-    // Ato 0: As Trevas sobre Hyrule
+    // Ato 0: O Bosque Sagrado / Abertura da Lenda
     {
         .panel_index = 0,
-        .title = "A LENDA DOS PICORI: AS TREVAS",
-        .text = "Ha muito tempo, o mundo\nquase sucumbiu nas trevas.",
+        .is_side_layout = false,
+        .text = "A long, long time ago...",
         .trigger_sfx = SOUND_SECRET,
         .sfx_pitch = 0.85f,
         .is_dark_climax = false
     },
-    // Ato 1: A Descida dos Picori
+    // Ato 1: As Trevas e o Ataque dos Monstros
     {
         .panel_index = 1,
-        .title = "A DESCIDA DOS PICORI",
-        .text = "Do ceu desceram os Picori,\ncom espada e Luz Dourada.",
+        .is_side_layout = false,
+        .text = "when the world was on the verge of\nbeing swallowed by shadow...",
         .trigger_sfx = SOUND_KINSTONE_FUSION,
+        .sfx_pitch = 0.90f,
+        .is_dark_climax = false
+    },
+    // Ato 2: A Descida dos Picori com a Espada e a Luz
+    {
+        .panel_index = 2,
+        .is_side_layout = true,
+        .text = "The tiny Picori\nappeared from the\nsky, bringing the\nhero of men a sword\nand a golden light.",
+        .trigger_sfx = SOUND_SECRET,
         .sfx_pitch = 1.0f,
         .is_dark_climax = false
     },
-    // Ato 2: O Herói e a Espada Sagrada
+    // Ato 3: O Herói Baniu as Trevas com Sabedoria e Coragem
     {
-        .panel_index = 2,
-        .title = "O HEROI E A ESPADA SAGRADA",
-        .text = "Com coragem e sabedoria,\no heroi baniu as trevas.",
+        .panel_index = 3,
+        .is_side_layout = true,
+        .text = "With wisdom and\ncourage, the hero\ndrove out the\ndarkness.",
         .trigger_sfx = SOUND_SWORD_SLASH,
         .sfx_pitch = 0.95f,
         .is_dark_climax = false
     },
-    // Ato 3: O Selamento do Baú Sagrado
+    // Ato 4: A Paz Retornou e a Lâmina foi Selada no Baú
     {
-        .panel_index = 3,
-        .title = "O SELAMENTO DO BAU SAGRADO",
-        .text = "A paz voltou e o heroi selou\no mal no sagrado Bau!",
+        .panel_index = 4,
+        .is_side_layout = false,
+        .text = "When peace had been restored, the\npeople enshrined that blade with care.",
         .trigger_sfx = SOUND_SWITCH_CLICK,
         .sfx_pitch = 1.0f,
         .is_dark_climax = false
     },
-    // Ato 4: O Festival Secular e a Luz Dourada
+    // Ato 5: A Força da Luz Dourada na Princesa de Hyrule
     {
-        .panel_index = 4,
-        .title = "O FESTIVAL SECULAR DE HYRULE",
-        .text = "A Luz brilha na Princesa e\nHyrule celebra o festival.",
+        .panel_index = 5,
+        .is_side_layout = false,
+        .text = "And the force of the golden light,\nembodied in Hyrule's princess,\nshone forth upon the lands.",
         .trigger_sfx = SOUND_SECRET,
         .sfx_pitch = 1.15f,
         .is_dark_climax = false
     },
-    // Ato 5: O Clímax Sombrio - O Mago Vaati nas Sombras
+    // Ato 6: O Clímax Sombrio - O Mago Vaati Revelado
     {
-        .panel_index = 5,
-        .title = "UMA SOMBRA ESCOLHE SEU MOMENTO...",
-        .text = "Heh heh heh...\nEntao o segredo e esse...",
+        .panel_index = 6,
+        .is_side_layout = false,
+        .text = "Heh heh heh...\nSo that's what it means...",
         .trigger_sfx = SOUND_TEXT_ADVANCE,
         .sfx_pitch = 0.65f,
         .is_dark_climax = true
@@ -195,52 +193,69 @@ static void copy_chars_utf8(char* dest, int max_dest, const char* src, int count
     dest[dst_pos] = '\0';
 }
 
-static void init_motes(void) {
-    for (int i = 0; i < MAX_MOTES; i++) {
-        s_prologue.motes[i].x = (float)(rand() % 220 + 10);
-        s_prologue.motes[i].y = (float)(rand() % 120 + 15);
-        s_prologue.motes[i].vx = ((float)(rand() % 40) - 20.0f) / 100.0f;
-        s_prologue.motes[i].vy = -((float)(rand() % 35 + 15) / 100.0f);
-        s_prologue.motes[i].phase = ((float)(rand() % 628)) / 100.0f;
-        s_prologue.motes[i].size = (rand() % 2 == 0) ? 2.0f : 1.0f;
-    }
-}
+static void draw_prologue_text(const PrologueAct* act, int visible_chars, int W, int H) {
+    (void)H;
+    if (!act || !act->text || visible_chars <= 0) return;
 
-static void update_motes(void) {
-    for (int i = 0; i < MAX_MOTES; i++) {
-        LightMote* m = &s_prologue.motes[i];
-        m->y += m->vy;
-        m->phase += 0.04f;
-        m->x += m->vx + sinf(m->phase) * 0.22f;
+    // Buffer de cópia para separação por linhas sem alterar o original
+    char text_copy[256];
+    strncpy(text_copy, act->text, sizeof(text_copy) - 1);
+    text_copy[sizeof(text_copy) - 1] = '\0';
 
-        if (m->y < 12.0f) {
-            m->y = 135.0f;
-            m->x = (float)(rand() % 220 + 10);
-        } else if (m->y > 140.0f) {
-            m->y = 14.0f;
-            m->x = (float)(rand() % 220 + 10);
+    char* lines[8];
+    int line_count = 0;
+    char* cur = text_copy;
+    lines[line_count++] = cur;
+
+    while (*cur && line_count < 8) {
+        if (*cur == '\n') {
+            *cur = '\0';
+            lines[line_count++] = cur + 1;
         }
-        if (m->x < 10.0f) m->x = 230.0f;
-        if (m->x > 230.0f) m->x = 10.0f;
+        cur++;
     }
-}
 
-static void render_motes(int dest_x, int dest_y, int panel_w, int panel_h, bool is_dark) {
-    for (int i = 0; i < MAX_MOTES; i++) {
-        LightMote* m = &s_prologue.motes[i];
-        int px = dest_x + (int)m->x;
-        int py = dest_y + (int)m->y;
+    int remaining_chars = visible_chars;
 
-        if (px >= dest_x + 8 && px < dest_x + panel_w - 8 &&
-            py >= dest_y + 8 && py < dest_y + panel_h - 45) {
-            float pulse = 0.5f + 0.5f * sinf(m->phase * 2.0f);
-            u8 alpha = (u8)(pulse * 170.0f + 65.0f);
-            u32 color = is_dark ? ((0xC0 << 24) | (0x84 << 16) | (0xFC << 8) | alpha)   // Violeta malícia
-                                : ((0xFF << 24) | (0xEA << 16) | (0x70 << 8) | alpha);  // Dourado celestial
-            draw_box(px, py, (int)m->size, (int)m->size, color);
-            if (m->size > 1.5f) {
-                draw_box(px, py, 1, 1, 0xFFFFFFFF);
-            }
+    if (act->is_side_layout) {
+        // Layout lateral direito (Atos 2 e 3): Vitral na esquerda (0..119), texto à direita (x=126)
+        int start_y = (line_count <= 4) ? 42 : 36;
+        for (int i = 0; i < line_count && remaining_chars > 0; i++) {
+            int line_len = (int)strlen(lines[i]);
+            int draw_len = (remaining_chars < line_len) ? remaining_chars : line_len;
+
+            char line_buf[64];
+            strncpy(line_buf, lines[i], draw_len);
+            line_buf[draw_len] = '\0';
+
+            font_draw_text(126, start_y + i * 15, line_buf, 0xFFFFFFFF, true);
+            remaining_chars -= (line_len + 1);
+        }
+    } else {
+        // Layout inferior centralizado (Atos 0, 1, 4, 5, 6): Vitral no topo, texto abaixo
+        int base_y = 120;
+        int line_spacing = 14;
+        if (line_count == 1) {
+            base_y = 126;
+        } else if (line_count == 3) {
+            base_y = 116;
+            line_spacing = 12;
+        }
+
+        for (int i = 0; i < line_count && remaining_chars > 0; i++) {
+            int line_len = (int)strlen(lines[i]);
+            int draw_len = (remaining_chars < line_len) ? remaining_chars : line_len;
+
+            char line_buf[64];
+            strncpy(line_buf, lines[i], draw_len);
+            line_buf[draw_len] = '\0';
+
+            int full_w = font_get_text_width(lines[i]);
+            int line_x = (W - full_w) / 2;
+
+            u32 col = act->is_dark_climax ? 0xE9D5FFFF : 0xFFFFFFFF;
+            font_draw_text(line_x, base_y + i * line_spacing, line_buf, col, true);
+            remaining_chars -= (line_len + 1);
         }
     }
 }
@@ -258,8 +273,6 @@ void prologue_story_init(void) {
             s_prologue_tex = texture_load_bmp("assets/regions/usa/prologue_panels.bmp");
         }
     }
-
-    init_motes();
 
     if (s_prologue_tex) {
         printf("[PROLOGUE] Storybook Cinematic inicializado com sucesso (%dx%d).\n",
@@ -281,7 +294,6 @@ void prologue_story_start(void) {
     s_prologue.is_fading_out = false;
     s_prologue.total_chars = count_chars_utf8(s_acts[0].text);
 
-    init_motes();
     hal_audio_play_bgm(BGM_ELEMENTAL_SANCTUARY);
     hal_audio_play_sound(s_acts[0].trigger_sfx, 0.70f, s_acts[0].sfx_pitch);
 
@@ -324,7 +336,6 @@ void prologue_story_update(void) {
     if (!s_prologue.active) return;
 
     s_prologue.act_timer++;
-    update_motes();
 
     // Botão START ou B para pular direto para a tela de título
     if (hal_input_is_pressed(KEY_START) || hal_input_is_pressed(KEY_B)) {
@@ -388,8 +399,8 @@ void prologue_story_render(void) {
     int W = ctx ? ctx->render_width : SCREEN_W;
     int H = ctx ? ctx->render_height : SCREEN_H;
 
-    // Fundo preto puro / cantaria de catedral
-    draw_box(0, 0, W, H, 0x0A0807FF);
+    // 1. Fundo preto puro canônico (Zero caixas de pergaminho ou molduras douradas)
+    draw_box(0, 0, W, H, 0x000000FF);
 
     int panel_w = 240;
     int panel_h = 160;
@@ -403,62 +414,38 @@ void prologue_story_render(void) {
     int src_x = col * 240;
     int src_y = row * 160;
 
-    // Micro-pan cinematográfico (deslocamento sutil de 2 pixels)
-    int pan_y = (s_prologue.act_timer / 120) % 2;
-
-    // 1. Renderiza a tapeçaria de vitral histórico
+    // 2. Renderiza a tapeçaria de vitral histórico autêntico da ROM
     if (s_prologue_tex && s_prologue_tex->pixels) {
-        texture_draw(s_prologue_tex, src_x, src_y, panel_w, panel_h, dest_x, dest_y + pan_y);
-    } else {
-        draw_box(dest_x, dest_y, panel_w, panel_h, 0x2A2218FF);
-        draw_box(dest_x + 4, dest_y + 4, panel_w - 8, panel_h - 8, 0xD4AF3788);
+        texture_draw(s_prologue_tex, src_x, src_y, panel_w, panel_h, dest_x, dest_y);
     }
 
-    // Clímax de Vaati (Ato 5): Vinheta sombria violeta sobre o vitral
+    // Clímax de Vaati (Ato 6): Vinheta sombria violeta sobre o vitral
     if (act->is_dark_climax) {
-        draw_box(dest_x, dest_y, panel_w, panel_h, 0x3B07644D); // Sombra profunda de malícia
+        draw_box(dest_x, dest_y, panel_w, panel_h, 0x3B07644D);
     }
 
-    // 2. Partículas douradas em suspensão (Motes of Light)
-    render_motes(dest_x, dest_y, panel_w, panel_h, act->is_dark_climax);
+    // Scrim sutil para máxima legibilidade nos atos em que o vitral ocupa a área inferior
+    if (act->panel_index == 5) {
+        draw_box(0, 112, W, 46, 0x000000CC);
+    } else if (act->panel_index == 6) {
+        draw_box(0, 114, W, 44, 0x000000D4);
+    }
 
-    // 3. Caixa de Texto Narrativa estilo Pergaminho Imperial
-    int box_w = W - 20;
-    int box_h = 40;
-    int box_x = 10;
-    int box_y = H - 45;
+    // 3. Renderiza o texto autêntico canônico em branco com drop shadow preta de 1px
+    draw_prologue_text(act, s_prologue.visible_chars, W, H);
 
-    // Moldura ornamentada dourada e interior translúcido
-    draw_box(box_x - 1, box_y - 1, box_w + 2, box_h + 2, 0xD4AF37FF);
-    draw_box(box_x, box_y, box_w, box_h, 0x140E0AEE);
-    draw_box(box_x + 2, box_y + 2, box_w - 4, box_h - 4, 0x2C1D1188);
-
-    // Título em ouro luminoso
-    u32 title_color = act->is_dark_climax ? 0xC084FCFF : 0xFDE047FF;
-    font_draw_text(box_x + 8, box_y + 4, act->title, title_color, false);
-
-    // Texto typewriter com quebra de linha multilinhas
-    char display_buf[128] = { 0 };
-    copy_chars_utf8(display_buf, sizeof(display_buf), act->text, s_prologue.visible_chars);
-    font_draw_text_multiline(box_x + 8, box_y + 16, box_w - 16, 11, display_buf, 0xF8FAFCFF, false);
-
-    // Indicador [▼] piscante quando a digitação termina
+    // 4. Indicador [▼] piscante quando a digitação termina
     if (s_prologue.visible_chars >= s_prologue.total_chars) {
         if ((s_prologue.act_timer / 15) % 2 == 0) {
-            font_draw_text(box_x + box_w - 14, box_y + box_h - 12, "\x03", 0xFDE047FF, false);
+            if (act->is_side_layout) {
+                font_draw_text(224, 142, "\x03", 0xFDE047FF, false);
+            } else {
+                font_draw_text(dest_x + panel_w - 18, 142, "\x03", 0xFDE047FF, false);
+            }
         }
     }
 
-    // Indicador sutil de pular com START em cápsula translúcida com borda dourada
-    int badge_w = 98;
-    int badge_h = 14;
-    int badge_x = W - 114;
-    int badge_y = 10;
-    draw_box(badge_x - 1, badge_y - 1, badge_w + 2, badge_h + 2, 0xD4AF3744); // Borda dourada sutil
-    draw_box(badge_x, badge_y, badge_w, badge_h, 0x0F172ACC);                  // Fundo escuro translúcido
-    font_draw_text(badge_x + 4, badge_y + 3, "[START] Pular", 0xFDE047FF, false);
-
-    // 4. Efeito de Fade suave na transição
+    // 5. Efeito de Fade suave na transição
     if (s_prologue.fade_alpha > 0.0f) {
         u8 a = (u8)(s_prologue.fade_alpha * 255.0f);
         draw_box(0, 0, W, H, (0x00000000 | a));
