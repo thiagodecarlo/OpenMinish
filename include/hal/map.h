@@ -112,6 +112,7 @@ typedef enum {
     TILE_CASTLE_GATE,        // Portão dourado real com grade de ferro
     TILE_CASTLE_FLOWER_ROYAL,// Flores reais azuis e douradas
     TILE_CASTLE_TRIFORCE,    // Brasão real da Triforce entalhado em mármore
+    TILE_PUSH_BLOCK,         // Bloco maciço de pedra empurrável de masmorras e ruínas
     TILE_COUNT
 } TileType;
 
@@ -405,5 +406,12 @@ bool map_interact_lantern(Tilemap* map, float world_x, float world_y, int* out_t
  * Retorna true se a coordenada no mundo for um abismo sem fundo (TILE_FORTRESS_PIT).
  */
 bool map_is_pit(const Tilemap* map, float world_x, float world_y);
+
+/*
+ * Empurra um bloco sólido de pedra (TILE_PUSH_BLOCK) na direção do movimento de Link.
+ * Se o bloco for empurrado contra lodo movediço (TILE_SWAMP_MUD), ele afunda formando
+ * uma plataforma segura transitável de pedra. Retorna true se moveu o bloco.
+ */
+bool map_interact_push_block(Tilemap* map, float link_x, float link_y, Direction dir);
 
 #endif // HAL_MAP_H

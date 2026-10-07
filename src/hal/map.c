@@ -196,6 +196,7 @@ void render_metatile(int sx, int sy, TileType type) {
             case TILE_CASTLE_GATE:         col = 4;  row = 4; break;
             case TILE_CASTLE_FLOWER_ROYAL: col = 5;  row = 4; break;
             case TILE_CASTLE_TRIFORCE:     col = 6;  row = 4; break;
+            case TILE_PUSH_BLOCK:          col = 7;  row = 4; break;
 
             default: break;
         }
@@ -1820,6 +1821,26 @@ void render_metatile(int sx, int sy, TileType type) {
                     if (y >= 3 && y <= 8 && abs(x - 7) <= (y - 3)) c = 0xFACC15FF;
                     if (y >= 8 && y <= 13 && abs(x - 4) <= (y - 8)) c = 0xFACC15FF;
                     if (y >= 8 && y <= 13 && abs(x - 10) <= (y - 8)) c = 0xFACC15FF;
+                    draw_tile_pixel(sx + x, sy + y, c);
+                }
+            }
+            break;
+
+        case TILE_PUSH_BLOCK:
+            // Bloco maciço de pedra antiga empurrável com chanfros e gema dourada
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    u32 c = 0x64748BFF;
+                    if (x == 0 || y == 0) c = 0x94A3B8FF;
+                    else if (x == 15 || y == 15) c = 0x334155FF;
+                    else if (x == 1 || y == 1) c = 0xCBD5E1FF;
+                    else if (x == 14 || y == 14) c = 0x1E293BFF;
+                    else if ((x >= 4 && x <= 11 && (y == 4 || y == 11)) ||
+                             (y >= 4 && y <= 11 && (x == 4 || x == 11))) {
+                        c = 0x475569FF;
+                    } else if (x >= 6 && x <= 9 && y >= 6 && y <= 9) {
+                        c = 0xF59E0BFF;
+                    }
                     draw_tile_pixel(sx + x, sy + y, c);
                 }
             }
@@ -3559,6 +3580,21 @@ static Tilemap* map_create_castor_wilds_procedural(void) {
     m->overlay_layer[17 * w + 18] = TILE_BUSH;
     m->collision_map[17 * w + 18] = 1;
 
+    // 7. Quebra-cabeça de Tochas das Ruínas e Blocos de Pedra no Lodo
+    // Tochas apagadas na entrada do santuário do Arco e Flechas
+    m->overlay_layer[4 * w + 5] = TILE_TORCH_UNLIT;
+    m->collision_map[4 * w + 5] = 1;
+    m->overlay_layer[4 * w + 9] = TILE_TORCH_UNLIT;
+    m->collision_map[4 * w + 9] = 1;
+
+    // Bloco empurrável de pedra nas ruínas (x=7, y=6)
+    m->overlay_layer[6 * w + 7] = TILE_PUSH_BLOCK;
+    m->collision_map[6 * w + 7] = 1;
+
+    // Bloco empurrável no charco sudoeste (x=11, y=20)
+    m->overlay_layer[20 * w + 11] = TILE_PUSH_BLOCK;
+    m->collision_map[20 * w + 11] = 1;
+
     printf("[MAP] Castor Wilds Swamp (Pantano de Castor Wilds) criado proceduralmente (%dx%d tiles)!\n", w, h);
     return m;
 }
@@ -4291,6 +4327,66 @@ bool map_is_pit(const Tilemap* map, float world_x, float world_y) {
     int idx = ty * map->width + tx;
     if (map->ground_layer && map->ground_layer[idx] == TILE_FORTRESS_PIT) return true;
     if (map->overlay_layer && map->overlay_layer[idx] == TILE_FORTRESS_PIT) return true;
+
+    return false;
+}
+
+bool map_interact_push_block(Tilemap* map, float link_x, float link_y, Direction dir) {
+    if (!map || !map->overlay_layer) return false;
+
+    int tx = (int)((link_x + 8.0f) / TILE_SIZE);
+    int ty = (int)((link_y + 12.0f) / TILE_SIZE);
+    if (dir == DIR_RIGHT) tx += 1;
+    else if (dir == DIR_LEFT) tx -= 1;
+    else if (dir == DIR_DOWN) ty += 1;
+    else if (dir == DIR_UP) ty -= 1;
+
+    if (tx < 0 || tx >= map->width || ty < 0 || ty >= map->height) return false;
+    int idx_from = ty * map->width + tx;
+
+    if (map->overlay_layer[idx_from] != TILE_PUSH_BLOCK) return false;
+
+    int nx = tx;
+    int ny = ty;
+    if (dir == DIR_RIGHT) nx += 1;
+    else if (dir == DIR_LEFT) nx -= 1;
+    else if (dir == DIR_DOWN) ny += 1;
+    else if (dir == DIR_UP) ny -= 1;
+
+    if (nx < 0 || nx >= map->width || ny < 0 || ny >= map->height) return false;
+    int idx_to = ny * map->width + nx;
+
+    u8 to_ov = map->overlay_layer[idx_to];
+    u8 to_gr = map->ground_layer ? map->ground_layer[idx_to] : 0;
+
+    if (to_ov != 0xFF) return false;
+
+    // Se empurrado contra lodo movediço: o bloco afunda e forma uma plataforma transitável
+    if (to_gr == TILE_SWAMP_MUD) {
+        map->overlay_layer[idx_from] = 0xFF;
+        if (map->collision_map) map->collision_map[idx_from] = 0;
+
+        map->ground_layer[idx_to] = TILE_COBBLESTONE;
+        if (map->collision_map) map->collision_map[idx_to] = 0;
+
+        hal_audio_play_sound(SOUND_BLOCK_PUSH, 0.9f, 1.0f);
+        hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.25f);
+        printf("[CASTOR WILDS] Bloco afundou no lodo movedico! Criada plataforma firme em (%d, %d)!\n", nx, ny);
+        return true;
+    }
+
+    // Se empurrado contra chão sólido livre
+    if (map->collision_map && map->collision_map[idx_to] == 0) {
+        map->overlay_layer[idx_from] = 0xFF;
+        if (map->collision_map) map->collision_map[idx_from] = 0;
+
+        map->overlay_layer[idx_to] = TILE_PUSH_BLOCK;
+        if (map->collision_map) map->collision_map[idx_to] = 1;
+
+        hal_audio_play_sound(SOUND_BLOCK_PUSH, 0.85f, 1.0f);
+        printf("[MAP] Bloco de pedra empurrado para (%d, %d) com sucesso!\n", nx, ny);
+        return true;
+    }
 
     return false;
 }

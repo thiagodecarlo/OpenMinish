@@ -75,6 +75,18 @@ typedef struct {
 } FlamesDoor;
 
 typedef struct {
+    float x;
+    float y;
+    float start_x;
+    float start_y;
+    float target_x;
+    float target_y;
+    bool  is_moving;
+    int   push_timer;
+    Direction push_dir;
+} FlamesBlock;
+
+typedef struct {
     bool                active;
     DungeonFlamesRoomId current_room;
     int                 small_keys;
@@ -82,6 +94,12 @@ typedef struct {
     // Estados de quebra-cabeças
     bool                switch_entrance_down;
     bool                door_entrance_open;
+    FlamesBlock         block;
+
+    // Quebra-cabeça de Tochas da Antecâmara (Sala 4)
+    bool                torch_left_lit;
+    bool                torch_right_lit;
+    bool                torch_puzzle_solved;
 
     // Vagoneta
     Minecart            cart;
@@ -204,5 +222,10 @@ bool dungeon_flames_is_boss_cleared(void);
  * Retorna true se o Elemento Fogo já foi coletado por Link.
  */
 bool dungeon_flames_has_fire_element(void);
+
+/*
+ * Acende as tochas da masmorra se Link interagir com fogo/lanterna nas proximidades.
+ */
+bool dungeon_flames_light_torch(float x, float y);
 
 #endif // HAL_DUNGEON_FLAMES_H

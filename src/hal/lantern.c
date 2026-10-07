@@ -8,6 +8,7 @@
 #include "hal/video.h"
 #include "hal/audio.h"
 #include "hal/entity.h"
+#include "hal/dungeon_flames.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -166,21 +167,32 @@ void lantern_update(float delta_time, float link_x, float link_y, Tilemap* map) 
                 }
             }
         }
+
+        // Interação com tochas de masmorras dinâmicas (ex: Cave of Flames)
+        if (dungeon_flames_is_active()) {
+            dungeon_flames_light_torch(s_lantern.swing_x, s_lantern.swing_y);
+        }
     }
 
     // Auto-acendimento de tochas próximas se Link passar perto com a lanterna acesa
-    if (s_lantern.is_lit && map) {
-        int out_type = 0;
-        float lx = link_x + 8.0f;
-        float ly = link_y + 8.0f;
-        float offsets[4][2] = { {0, 16}, {0, -16}, {16, 0}, {-16, 0} };
-        for (int o = 0; o < 4; o++) {
-            if (map_interact_lantern(map, lx + offsets[o][0], ly + offsets[o][1], &out_type)) {
-                if (out_type == 1) {
-                    hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.2f);
-                    printf("[LANTERN] Tocha adjacente acesa pelo calor continuo da lanterna!\n");
+    if (s_lantern.is_lit) {
+        if (map) {
+            int out_type = 0;
+            float lx = link_x + 8.0f;
+            float ly = link_y + 8.0f;
+            float offsets[4][2] = { {0, 16}, {0, -16}, {16, 0}, {-16, 0} };
+            for (int o = 0; o < 4; o++) {
+                if (map_interact_lantern(map, lx + offsets[o][0], ly + offsets[o][1], &out_type)) {
+                    if (out_type == 1) {
+                        hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.2f);
+                        printf("[LANTERN] Tocha adjacente acesa pelo calor continuo da lanterna!\n");
+                    }
                 }
             }
+        }
+
+        if (dungeon_flames_is_active()) {
+            dungeon_flames_light_torch(link_x, link_y);
         }
     }
 
