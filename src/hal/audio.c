@@ -1629,6 +1629,192 @@ static void synth_generate_all_sfx(void) {
         s_precalc_sfx[SOUND_CUCCO_CALL].total_frames = num_frames;
         s_precalc_sfx[SOUND_CUCCO_CALL].is_stereo = false;
     }
+
+    // 61. SOUND_CHEST_FANFARE: Fanfarra épica clássica de grande tesouro ("Ta-na-na-naaaa!") (1850ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 1.850f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        static const struct {
+            float freq;
+            float dur;
+        } fanfare_notes[] = {
+            // Arpejo 1
+            { 196.00f, 0.060f }, { 220.00f, 0.060f }, { 246.94f, 0.060f }, { 277.18f, 0.060f },
+            // Arpejo 2
+            { 207.65f, 0.060f }, { 233.08f, 0.060f }, { 261.63f, 0.060f }, { 293.66f, 0.060f },
+            // Arpejo 3
+            { 220.00f, 0.060f }, { 246.94f, 0.060f }, { 277.18f, 0.060f }, { 311.13f, 0.060f },
+            // Arpejo 4
+            { 233.08f, 0.060f }, { 261.63f, 0.060f }, { 293.66f, 0.060f }, { 329.63f, 0.060f },
+            // Chamada solene
+            { 392.00f, 0.130f }, { 415.30f, 0.130f }, { 440.00f, 0.130f }, { 466.16f, 0.130f },
+            // Acorde Final
+            { 493.88f, 0.370f }
+        };
+        int note_count = (int)(sizeof(fanfare_notes) / sizeof(fanfare_notes[0]));
+
+        float phase1 = 0.0f;
+        float phase2 = 0.0f;
+        float phase3 = 0.0f;
+
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float total = 0.0f;
+
+            float acc_time = 0.0f;
+            int active_note = note_count - 1;
+            float note_start = 0.0f;
+            float note_dur = 0.370f;
+
+            for (int n = 0; n < note_count; n++) {
+                if (t >= acc_time && t < acc_time + fanfare_notes[n].dur) {
+                    active_note = n;
+                    note_start = acc_time;
+                    note_dur = fanfare_notes[n].dur;
+                    break;
+                }
+                acc_time += fanfare_notes[n].dur;
+            }
+
+            float note_t = t - note_start;
+            float freq = fanfare_notes[active_note].freq;
+
+            if (active_note < note_count - 1) {
+                float env = (note_t < 0.015f) ? (note_t / 0.015f) : (1.0f - (note_t / note_dur) * 0.4f);
+                phase1 += freq / (float)AUDIO_SAMPLE_RATE;
+                phase2 += (freq * 2.0f) / (float)AUDIO_SAMPLE_RATE;
+
+                float wave1 = synth_square_wave(phase1, 0.25f);
+                float wave2 = synth_square_wave(phase2, 0.50f) * 0.4f;
+                float bass = synth_triangle_wave(phase1 * 0.5f) * 0.5f;
+
+                total = (wave1 + wave2 + bass) * env * 22000.0f;
+            } else {
+                float env = expf(-2.8f * note_t);
+                float vib = 1.0f + 0.012f * sinf(2.0f * PI_F * 6.0f * note_t);
+
+                phase1 += (493.88f * vib) / (float)AUDIO_SAMPLE_RATE;
+                phase2 += (622.25f * vib) / (float)AUDIO_SAMPLE_RATE;
+                phase3 += (739.99f * vib) / (float)AUDIO_SAMPLE_RATE;
+
+                float w1 = synth_square_wave(phase1, 0.50f) * 0.45f;
+                float w2 = synth_square_wave(phase2, 0.25f) * 0.35f;
+                float w3 = synth_square_wave(phase3, 0.125f) * 0.30f;
+                float bass = synth_triangle_wave(phase1 * 0.5f) * 0.60f;
+
+                total = (w1 + w2 + w3 + bass) * env * 24000.0f;
+            }
+
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+
+        s_precalc_sfx[SOUND_CHEST_FANFARE].samples = buf;
+        s_precalc_sfx[SOUND_CHEST_FANFARE].total_frames = num_frames;
+        s_precalc_sfx[SOUND_CHEST_FANFARE].is_stereo = false;
+    }
+
+    // 62. SOUND_MINISH_FANFARE: Fanfarra mágica bucólica dos Minish (Picori Chime) (1400ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 1.400f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        static const float bell_freqs[8] = {
+            1046.50f, 1318.51f, 1567.98f, 1975.53f, 2093.00f, 2637.02f, 3135.96f, 3951.07f
+        };
+        float step_dur = 0.080f;
+        float phase_bell = 0.0f;
+        float phase_chord1 = 0.0f;
+        float phase_chord2 = 0.0f;
+
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float total = 0.0f;
+
+            if (t < step_dur * 8) {
+                int idx = (int)(t / step_dur);
+                if (idx > 7) idx = 7;
+                float note_t = t - (idx * step_dur);
+                float f = bell_freqs[idx];
+                float env = expf(-16.0f * note_t);
+                phase_bell += f / (float)AUDIO_SAMPLE_RATE;
+
+                float bell = sinf(2.0f * PI_F * phase_bell) * 0.7f +
+                             synth_triangle_wave(phase_bell * 2.0f) * 0.3f;
+                total = bell * env * 24000.0f;
+            } else {
+                float sus_t = t - (step_dur * 8);
+                float env = expf(-4.0f * sus_t);
+                float vib = 1.0f + 0.008f * sinf(2.0f * PI_F * 5.0f * sus_t);
+
+                phase_chord1 += (2093.00f * vib) / (float)AUDIO_SAMPLE_RATE;
+                phase_chord2 += (3135.96f * vib) / (float)AUDIO_SAMPLE_RATE;
+
+                float b1 = sinf(2.0f * PI_F * phase_chord1) * 0.6f;
+                float b2 = sinf(2.0f * PI_F * phase_chord2) * 0.4f;
+                total = (b1 + b2) * env * 22000.0f;
+            }
+
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+
+        s_precalc_sfx[SOUND_MINISH_FANFARE].samples = buf;
+        s_precalc_sfx[SOUND_MINISH_FANFARE].total_frames = num_frames;
+        s_precalc_sfx[SOUND_MINISH_FANFARE].is_stereo = false;
+    }
+
+    // 63. SOUND_FOOTSTEP_WATER: Som chapinhado de passos na água rasa e chafariz (85ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.085f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        float phase = 0.0f;
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = expf(-48.0f * t);
+            float freq = 240.0f - 175.0f * (t / 0.085f);
+            phase += freq / (float)AUDIO_SAMPLE_RATE;
+            float bubble = sinf(2.0f * PI_F * phase);
+            float splash = synth_noise() * 0.35f * expf(-35.0f * t);
+            float total = (bubble * 0.65f + splash) * env * 23000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_FOOTSTEP_WATER].samples = buf;
+        s_precalc_sfx[SOUND_FOOTSTEP_WATER].total_frames = num_frames;
+        s_precalc_sfx[SOUND_FOOTSTEP_WATER].is_stereo = false;
+    }
+
+    // 64. SOUND_PUZZLE_CHIME: Chime agudo clássico de enigma resolvido em masmorras (480ms)
+    {
+        int num_frames = (int)(AUDIO_SAMPLE_RATE * 0.480f);
+        s16* buf = (s16*)malloc(num_frames * sizeof(s16));
+        static const float chime_notes[4] = { 783.99f, 1046.50f, 1318.51f, 1567.98f };
+        float step_dur = 0.080f;
+        float phase = 0.0f;
+
+        for (int i = 0; i < num_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            int idx = (int)(t / step_dur);
+            if (idx > 3) idx = 3;
+            float note_t = (idx < 3) ? (t - idx * step_dur) : (t - 0.240f);
+            float env = (idx < 3) ? expf(-20.0f * note_t) : expf(-6.0f * note_t);
+            float freq = chime_notes[idx];
+            if (idx == 3) {
+                freq += sinf(2.0f * PI_F * 6.5f * note_t) * 12.0f;
+            }
+            phase += freq / (float)AUDIO_SAMPLE_RATE;
+            float total = synth_square_wave(phase, 0.25f) * env * 22000.0f;
+            if (total > 32767.0f) total = 32767.0f;
+            if (total < -32768.0f) total = -32768.0f;
+            buf[i] = (s16)total;
+        }
+        s_precalc_sfx[SOUND_PUZZLE_CHIME].samples = buf;
+        s_precalc_sfx[SOUND_PUZZLE_CHIME].total_frames = num_frames;
+        s_precalc_sfx[SOUND_PUZZLE_CHIME].is_stereo = false;
+    }
 }
 
 typedef struct {
@@ -3153,6 +3339,159 @@ bool hal_audio_play_music(const char* wav_path, float volume, bool loop) {
     return true;
 }
 
+// ----------------------------------------------------------------------------
+// SÍNTESE DA TRILHA DE CAVE OF FLAMES (MASMORRA DO MONTE CRENEL / MINAS)
+// ----------------------------------------------------------------------------
+static s16* synth_generate_cave_of_flames(u32* out_total_frames) {
+    float bpm = 104.0f;
+    float beat_sec = 60.0f / bpm;
+    int total_bars = 8;
+    float total_seconds = total_bars * 4.0f * beat_sec;
+    u32 total_frames = (u32)(total_seconds * AUDIO_SAMPLE_RATE);
+
+    float* mix_l = (float*)calloc(total_frames, sizeof(float));
+    float* mix_r = (float*)calloc(total_frames, sizeof(float));
+    if (!mix_l || !mix_r) {
+        if (mix_l) free(mix_l);
+        if (mix_r) free(mix_r);
+        return NULL;
+    }
+
+    // 1. Baixo Ominoso de Caverna (Onda triangular pesada em Dó Menor)
+    static const NoteEvent s_flames_bass[] = {
+        { 36, 1.0f }, { 39, 1.0f }, { 43, 1.0f }, { 48, 0.5f }, { 46, 0.5f },
+        { 36, 1.0f }, { 39, 1.0f }, { 43, 1.0f }, { 42, 1.0f },
+        { 41, 1.0f }, { 44, 1.0f }, { 48, 1.0f }, { 51, 1.0f },
+        { 43, 1.0f }, { 47, 1.0f }, { 50, 1.0f }, { 43, 1.0f },
+        { 36, 1.0f }, { 39, 1.0f }, { 43, 1.0f }, { 48, 0.5f }, { 46, 0.5f },
+        { 36, 1.0f }, { 39, 1.0f }, { 43, 1.0f }, { 42, 1.0f },
+        { 41, 1.0f }, { 44, 1.0f }, { 46, 1.0f }, { 48, 1.0f },
+        { 43, 1.5f }, { 47, 0.5f }, { 36, 2.0f }
+    };
+    int bass_count = (int)(sizeof(s_flames_bass) / sizeof(s_flames_bass[0]));
+
+    float cur_time = 0.0f;
+    for (int b = 0; b < bass_count; b++) {
+        float dur_sec = s_flames_bass[b].duration * beat_sec;
+        u32 start_frame = (u32)(cur_time * AUDIO_SAMPLE_RATE);
+        u32 num_frames = (u32)(dur_sec * AUDIO_SAMPLE_RATE);
+        float freq = note_to_freq(s_flames_bass[b].note);
+        float phase = 0.0f;
+
+        for (u32 i = 0; i < num_frames; i++) {
+            u32 idx = (start_frame + i) % total_frames;
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = (t < 0.03f) ? (t / 0.03f) : expf(-2.5f * t);
+
+            phase += freq / (float)AUDIO_SAMPLE_RATE;
+            float wave = synth_triangle_wave(phase) * 0.7f + synth_square_wave(phase, 0.5f) * 0.3f;
+            float sample = wave * env * 0.35f;
+
+            mix_l[idx] += sample * 0.5f;
+            mix_r[idx] += sample * 0.5f;
+        }
+        cur_time += dur_sec;
+    }
+
+    // 2. Clanking Rítmico de Picaretas / Trilhos de Mina
+    for (int bar = 0; bar < total_bars; bar++) {
+        for (int beat = 0; beat < 4; beat++) {
+            float clank_time = (bar * 4.0f + beat + 0.5f) * beat_sec;
+            u32 start_frame = (u32)(clank_time * AUDIO_SAMPLE_RATE);
+            u32 num_frames = (u32)(0.06f * AUDIO_SAMPLE_RATE);
+            float phase_metal = 0.0f;
+
+            for (u32 i = 0; i < num_frames; i++) {
+                u32 idx = (start_frame + i) % total_frames;
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-60.0f * t);
+                phase_metal += 1760.0f / (float)AUDIO_SAMPLE_RATE;
+
+                float ping = sinf(2.0f * PI_F * phase_metal) * 0.4f + synth_noise() * 0.6f;
+                float sample = ping * env * 0.16f;
+
+                if (beat % 2 == 0) {
+                    mix_l[idx] += sample * 0.7f;
+                    mix_r[idx] += sample * 0.3f;
+                } else {
+                    mix_l[idx] += sample * 0.3f;
+                    mix_r[idx] += sample * 0.7f;
+                }
+            }
+        }
+    }
+
+    // 3. Melodia Sombria / Misteriosa (Onda de pulso 12.5% duty com vibrato de caverna)
+    static const NoteEvent s_flames_lead[] = {
+        { 60, 1.5f }, { 63, 0.5f }, { 62, 1.0f }, { 58, 1.0f },
+        { 60, 2.0f }, { 66, 1.0f }, { 65, 1.0f },
+        { 65, 1.5f }, { 68, 0.5f }, { 67, 1.0f }, { 63, 1.0f },
+        { 62, 2.0f }, { 59, 2.0f },
+        { 72, 1.0f }, { 70, 1.0f }, { 68, 1.0f }, { 67, 1.0f },
+        { 66, 2.0f }, { 65, 2.0f },
+        { 63, 1.5f }, { 62, 0.5f }, { 60, 2.0f }
+    };
+    int lead_count = (int)(sizeof(s_flames_lead) / sizeof(s_flames_lead[0]));
+
+    cur_time = 0.0f;
+    for (int n = 0; n < lead_count; n++) {
+        float dur_sec = s_flames_lead[n].duration * beat_sec;
+        u32 start_frame = (u32)(cur_time * AUDIO_SAMPLE_RATE);
+        u32 num_frames = (u32)(dur_sec * AUDIO_SAMPLE_RATE);
+        float base_freq = note_to_freq(s_flames_lead[n].note);
+        float phase = 0.0f;
+
+        for (u32 i = 0; i < num_frames; i++) {
+            u32 idx = (start_frame + i) % total_frames;
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float t_note = t / dur_sec;
+
+            float att = (t < 0.03f) ? (t / 0.03f) : 1.0f;
+            float dec = 1.0f - (t_note * 0.2f);
+            if (t_note > 0.85f) dec *= (1.0f - t_note) / 0.15f;
+
+            float freq = base_freq;
+            if (t > 0.15f) {
+                freq += sinf(2.0f * PI_F * 5.0f * (t - 0.15f)) * (base_freq * 0.018f);
+            }
+
+            phase += freq / (float)AUDIO_SAMPLE_RATE;
+            float wave = synth_square_wave(phase, 0.125f);
+            float sample = wave * att * dec * 0.28f;
+
+            mix_l[idx] += sample * 0.55f;
+            mix_r[idx] += sample * 0.45f;
+
+            u32 echo_idx = (idx + (u32)(0.120f * AUDIO_SAMPLE_RATE)) % total_frames;
+            mix_r[echo_idx] += sample * 0.22f;
+        }
+        cur_time += dur_sec;
+    }
+
+    s16* out_buf = (s16*)malloc(total_frames * 2 * sizeof(s16));
+    if (!out_buf) {
+        free(mix_l);
+        free(mix_r);
+        return NULL;
+    }
+
+    for (u32 i = 0; i < total_frames; i++) {
+        float l = mix_l[i] * 32000.0f;
+        float r = mix_r[i] * 32000.0f;
+        if (l > 32767.0f) l = 32767.0f;
+        if (l < -32768.0f) l = -32768.0f;
+        if (r > 32767.0f) r = 32767.0f;
+        if (r < -32768.0f) r = -32768.0f;
+        out_buf[i * 2 + 0] = (s16)l;
+        out_buf[i * 2 + 1] = (s16)r;
+    }
+
+    free(mix_l);
+    free(mix_r);
+    *out_total_frames = total_frames;
+    return out_buf;
+}
+
 static s16* synth_generate_title_theme(u32* out_total_frames) {
     float bpm = 112.0f;
     float beat_sec = 60.0f / bpm;
@@ -3489,7 +3828,9 @@ void hal_audio_play_bgm(BgmTrack track) {
         samples = synth_generate_minish_woods(&total_frames);
     } else if (track == BGM_HYRULE_OVERWORLD || track == BGM_MT_CRENEL || track == BGM_CRENEL_STORM) {
         samples = synth_generate_hyrule_overworld(&total_frames);
-    } else if (track == BGM_DEEPWOOD_SHRINE || track == BGM_CAVE_OF_FLAMES || track == BGM_FORTRESS_OF_WINDS ||
+    } else if (track == BGM_CAVE_OF_FLAMES) {
+        samples = synth_generate_cave_of_flames(&total_frames);
+    } else if (track == BGM_DEEPWOOD_SHRINE || track == BGM_FORTRESS_OF_WINDS ||
                track == BGM_TEMPLE_OF_DROPLETS || track == BGM_PALACE_OF_WINDS || track == BGM_ROYAL_VALLEY) {
         samples = synth_generate_deepwood_shrine(&total_frames);
     } else if (track == BGM_BOSS_BATTLE || track == BGM_DARK_HYRULE_CASTLE) {

@@ -81,6 +81,10 @@ typedef enum {
     SOUND_ICE_MELT,        // Gelo derretendo sob a chama da lanterna
     SOUND_ELEMENT_CHARGE,  // Energia do elemento infundindo na lâmina
     SOUND_CUCCO_CALL,      // Cacarejo da galinha Cucco no minigame
+    SOUND_CHEST_FANFARE,   // Fanfarra clássica triunfante de grande tesouro (Ta-na-na-naaaa!)
+    SOUND_MINISH_FANFARE,  // Fanfarra mágica bucólica dos Minish (Picori chime)
+    SOUND_FOOTSTEP_WATER,  // Som chapinhado de passos na água rasa e fontes
+    SOUND_PUZZLE_CHIME,    // Chime agudo clássico de enigma resolvido em masmorras
     SOUND_COUNT
 } SoundEffect;
 

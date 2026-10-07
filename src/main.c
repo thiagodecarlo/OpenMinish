@@ -3362,6 +3362,9 @@ int main(int argc, char* argv[]) {
 
             if (link.transform_timer <= 0) {
                 link.is_transforming = false;
+                if (link.is_minish) {
+                    hal_audio_play_sound(SOUND_MINISH_FANFARE, 0.9f, 1.0f);
+                }
                 printf("[MINISH] Transformacao concluida! Novo tamanho do Link: %s\n",
                        link.is_minish ? "MINISH (8x8 px)" : "HUMANO (16x16 px)");
             }
@@ -4758,10 +4761,15 @@ int main(int argc, char* argv[]) {
                 link.anim_frame = (link.anim_frame + 1) % 10;
                 link.anim_timer = 0;
                 float pitch_mult = link.is_minish ? 1.38f : 1.0f;
+                bool on_water = !link.is_swimming && link.z <= 2.0f && s_current_active_map &&
+                                (map_is_water(s_current_active_map, link.x + 8.0f, link.y + 14.0f) ||
+                                 map_is_water(s_current_active_map, link.x + 8.0f, link.y + 18.0f) ||
+                                 (s_in_town && link.x >= 236.0f && link.x <= 324.0f && link.y >= 148.0f && link.y <= 236.0f));
+                SoundEffect step_sfx = on_water ? SOUND_FOOTSTEP_WATER : SOUND_FOOTSTEP;
                 if (link.anim_frame == 0) {
-                    hal_audio_play_sound(SOUND_FOOTSTEP, 0.45f, 0.94f * pitch_mult);
+                    hal_audio_play_sound(step_sfx, 0.45f, 0.94f * pitch_mult);
                 } else if (link.anim_frame == 5) {
-                    hal_audio_play_sound(SOUND_FOOTSTEP, 0.45f, 1.06f * pitch_mult);
+                    hal_audio_play_sound(step_sfx, 0.45f, 1.06f * pitch_mult);
                 }
             }
         } else {
