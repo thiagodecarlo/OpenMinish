@@ -71,4 +71,9 @@ void intro_cutscene_skip(void);
  */
 IntroCutsceneStage intro_cutscene_get_stage(void);
 
+/*
+ * Libera texturas e recursos alocados pela cutscene.
+ */
+void intro_cutscene_shutdown(void);
+
 #endif // HAL_INTRO_CUTSCENE_H
