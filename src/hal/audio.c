@@ -3729,6 +3729,600 @@ static s16* synth_generate_file_select(u32* out_total_frames) {
     return out_buf;
 }
 
+// ----------------------------------------------------------------------------
+// SÍNTESE DA TRILHA DE MT. CRENEL (ESCALADA ROCHOSA E TEMPESTUOSA)
+// ----------------------------------------------------------------------------
+static s16* synth_generate_mt_crenel(u32* out_total_frames) {
+    float bpm = 118.0f;
+    float beat_sec = 60.0f / bpm;
+    int total_bars = 8;
+    float total_seconds = total_bars * 4.0f * beat_sec;
+    u32 total_frames = (u32)(total_seconds * AUDIO_SAMPLE_RATE);
+
+    float* mix_l = (float*)calloc(total_frames, sizeof(float));
+    float* mix_r = (float*)calloc(total_frames, sizeof(float));
+    if (!mix_l || !mix_r) {
+        if (mix_l) free(mix_l);
+        if (mix_r) free(mix_r);
+        return NULL;
+    }
+
+    // Canal 1: Melodia de Escalada Heroica e Rústica (Pulse 50% com vibrato)
+    static const NoteEvent s_crenel_lead[] = {
+        // Bar 1-2 (Dm)
+        { 62, 1.0f }, { 65, 1.0f }, { 69, 1.5f }, { 67, 0.5f },
+        { 65, 1.0f }, { 62, 1.0f }, { 60, 1.0f }, { 62, 1.0f },
+        // Bar 3-4 (F -> C)
+        { 65, 1.5f }, { 69, 0.5f }, { 72, 1.5f }, { 70, 0.5f },
+        { 69, 2.0f }, { 67, 2.0f },
+        // Bar 5-6 (Bb -> Gm)
+        { 70, 1.0f }, { 74, 1.0f }, { 72, 1.0f }, { 70, 1.0f },
+        { 69, 1.5f }, { 67, 0.5f }, { 65, 2.0f },
+        // Bar 7-8 (A7 -> Dm)
+        { 64, 1.0f }, { 67, 1.0f }, { 69, 1.5f }, { 67, 0.5f },
+        { 62, 3.0f }, { 0,  1.0f }
+    };
+    int lead_count = (int)(sizeof(s_crenel_lead) / sizeof(s_crenel_lead[0]));
+
+    float cur_time = 0.0f;
+    for (int n = 0; n < lead_count; n++) {
+        float dur_sec = s_crenel_lead[n].duration * beat_sec;
+        u8 note = s_crenel_lead[n].note;
+        if (note > 0) {
+            u32 start_f = (u32)(cur_time * AUDIO_SAMPLE_RATE);
+            u32 len_f = (u32)(dur_sec * AUDIO_SAMPLE_RATE);
+            float base_f = note_to_freq(note);
+            float phase = 0.0f;
+            for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                float vib = 1.0f + 0.012f * sinf(2.0f * PI_F * 5.2f * t);
+                phase += (base_f * vib) / (float)AUDIO_SAMPLE_RATE;
+                float env = 1.0f;
+                if (t < 0.04f) env = t / 0.04f;
+                else if (t > dur_sec * 0.85f) env = 1.0f - (t - dur_sec * 0.85f) / (dur_sec * 0.15f);
+                float sample = synth_square_wave(phase, 0.50f) * env * 0.22f;
+                mix_l[start_f + i] += sample * 0.55f;
+                mix_r[start_f + i] += sample * 0.45f;
+            }
+        }
+        cur_time += dur_sec;
+    }
+
+    // Canal 2: Arpejos Minerais de Rocha (Pulse 25% estéreo)
+    static const u8 s_crenel_arps[8][4] = {
+        { 50, 53, 57, 62 }, // Dm
+        { 50, 53, 57, 62 },
+        { 53, 57, 60, 65 }, // F
+        { 48, 52, 55, 60 }, // C
+        { 46, 50, 53, 58 }, // Bb
+        { 43, 46, 50, 55 }, // Gm
+        { 45, 49, 52, 57 }, // A
+        { 50, 53, 57, 62 }  // Dm
+    };
+    for (int bar = 0; bar < 8; bar++) {
+        for (int step = 0; step < 16; step++) {
+            float step_time = bar * 4.0f * beat_sec + step * (beat_sec * 0.25f);
+            u32 start_f = (u32)(step_time * AUDIO_SAMPLE_RATE);
+            u32 len_f = (u32)(beat_sec * 0.22f * AUDIO_SAMPLE_RATE);
+            u8 note = s_crenel_arps[bar][step % 4] + 12;
+            float f = note_to_freq(note);
+            float phase = 0.0f;
+            for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                phase += f / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-14.0f * t);
+                float sample = synth_square_wave(phase, 0.25f) * env * 0.11f;
+                float pan = 0.5f + 0.35f * sinf(step * 0.6f);
+                mix_l[start_f + i] += sample * pan;
+                mix_r[start_f + i] += sample * (1.0f - pan);
+            }
+        }
+    }
+
+    // Canal 3: Baixo de Marcha e Escalada (Triângulo pulsante + square 50%)
+    static const u8 s_crenel_bass[8] = { 38, 38, 41, 36, 34, 31, 33, 38 }; // D, D, F, C, Bb, G, A, D
+    for (int bar = 0; bar < 8; bar++) {
+        for (int b = 0; b < 4; b++) {
+            float beat_time = bar * 4.0f * beat_sec + b * beat_sec;
+            u32 start_f = (u32)(beat_time * AUDIO_SAMPLE_RATE);
+            u32 len_f = (u32)(beat_sec * 0.85f * AUDIO_SAMPLE_RATE);
+            float f = note_to_freq(s_crenel_bass[bar]);
+            if (b == 2) f = note_to_freq(s_crenel_bass[bar] + 7); // Quinta no 3º tempo
+            float phase = 0.0f;
+            for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                phase += f / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-4.0f * t);
+                float sample = (synth_triangle_wave(phase) * 0.75f + synth_square_wave(phase, 0.5f) * 0.25f) * env * 0.28f;
+                mix_l[start_f + i] += sample * 0.5f;
+                mix_r[start_f + i] += sample * 0.5f;
+            }
+        }
+    }
+
+    // Canal 4: Percussão de Marcha (Bumbo nos tempos 1 e 3, Caixa com Ruído nos tempos 2 e 4)
+    for (int bar = 0; bar < 8; bar++) {
+        for (int b = 0; b < 4; b++) {
+            float beat_time = bar * 4.0f * beat_sec + b * beat_sec;
+            u32 start_f = (u32)(beat_time * AUDIO_SAMPLE_RATE);
+            u32 len_f = (u32)(0.12f * AUDIO_SAMPLE_RATE);
+            if (b % 2 == 0) {
+                // Kick de montanha
+                for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                    float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                    float kf = 130.0f * expf(-25.0f * t);
+                    float env = expf(-18.0f * t);
+                    float kick = sinf(2.0f * PI_F * kf * t) * env * 0.25f;
+                    mix_l[start_f + i] += kick * 0.5f;
+                    mix_r[start_f + i] += kick * 0.5f;
+                }
+            } else {
+                // Snare com cascalho
+                for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                    float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                    float env = expf(-20.0f * t);
+                    float snare = synth_noise() * env * 0.16f;
+                    mix_l[start_f + i] += snare * 0.45f;
+                    mix_r[start_f + i] += snare * 0.55f;
+                }
+            }
+        }
+    }
+
+    s16* out_buf = (s16*)malloc(total_frames * 2 * sizeof(s16));
+    if (!out_buf) {
+        free(mix_l); free(mix_r); return NULL;
+    }
+    for (u32 i = 0; i < total_frames; i++) {
+        float l = mix_l[i] * 28000.0f; float r = mix_r[i] * 28000.0f;
+        if (l > 32767.0f) l = 32767.0f; if (l < -32768.0f) l = -32768.0f;
+        if (r > 32767.0f) r = 32767.0f; if (r < -32768.0f) r = -32768.0f;
+        out_buf[i * 2 + 0] = (s16)l; out_buf[i * 2 + 1] = (s16)r;
+    }
+    free(mix_l); free(mix_r);
+    *out_total_frames = total_frames;
+    return out_buf;
+}
+
+// ----------------------------------------------------------------------------
+// SÍNTESE DA TRILHA DE CASTOR WILDS (PÂNTANO NEBULOSO E TRAIÇOEIRO)
+// ----------------------------------------------------------------------------
+static s16* synth_generate_castor_wilds(u32* out_total_frames) {
+    float bpm = 94.0f;
+    float beat_sec = 60.0f / bpm;
+    int total_bars = 8;
+    float total_seconds = total_bars * 4.0f * beat_sec;
+    u32 total_frames = (u32)(total_seconds * AUDIO_SAMPLE_RATE);
+
+    float* mix_l = (float*)calloc(total_frames, sizeof(float));
+    float* mix_r = (float*)calloc(total_frames, sizeof(float));
+    if (!mix_l || !mix_r) {
+        if (mix_l) free(mix_l);
+        if (mix_r) free(mix_r);
+        return NULL;
+    }
+
+    // Canal 1: Melodia Misteriosa do Pântano (Ocarina Noturna / Triangle + 12.5% Pulse)
+    static const NoteEvent s_swamp_lead[] = {
+        // Bar 1-2 (Bm tenebroso)
+        { 71, 2.0f }, { 74, 1.0f }, { 70, 1.0f },
+        { 69, 1.5f }, { 66, 0.5f }, { 67, 2.0f },
+        // Bar 3-4 (Em -> F#)
+        { 64, 2.0f }, { 67, 1.0f }, { 71, 1.0f },
+        { 72, 1.5f }, { 70, 0.5f }, { 66, 2.0f },
+        // Bar 5-6 (G -> Em)
+        { 67, 2.0f }, { 71, 1.0f }, { 74, 1.0f },
+        { 76, 1.5f }, { 75, 0.5f }, { 71, 2.0f },
+        // Bar 7-8 (F#7 -> Bm)
+        { 70, 1.5f }, { 69, 0.5f }, { 66, 1.0f }, { 64, 1.0f },
+        { 71, 3.0f }, { 0,  1.0f }
+    };
+    int lead_count = (int)(sizeof(s_swamp_lead) / sizeof(s_swamp_lead[0]));
+
+    float cur_time = 0.0f;
+    for (int n = 0; n < lead_count; n++) {
+        float dur_sec = s_swamp_lead[n].duration * beat_sec;
+        u8 note = s_swamp_lead[n].note;
+        if (note > 0) {
+            u32 start_f = (u32)(cur_time * AUDIO_SAMPLE_RATE);
+            u32 len_f = (u32)(dur_sec * AUDIO_SAMPLE_RATE);
+            float base_f = note_to_freq(note);
+            float phase = 0.0f;
+            for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                float vib = 1.0f + 0.015f * sinf(2.0f * PI_F * 4.2f * t);
+                phase += (base_f * vib) / (float)AUDIO_SAMPLE_RATE;
+                float env = 1.0f;
+                if (t < 0.12f) env = t / 0.12f;
+                else if (t > dur_sec * 0.80f) env = 1.0f - (t - dur_sec * 0.80f) / (dur_sec * 0.20f);
+                float sample = (synth_triangle_wave(phase) * 0.65f + synth_square_wave(phase, 0.125f) * 0.35f) * env * 0.24f;
+                mix_l[start_f + i] += sample * 0.52f;
+                mix_r[start_f + i] += sample * 0.48f;
+            }
+        }
+        cur_time += dur_sec;
+    }
+
+    // Canal 2: Neblina e Vento do Pântano (Harmonia sussurrante com onda quadrada)
+    static const u8 s_swamp_pads[8][3] = {
+        { 47, 50, 54 }, // Bm
+        { 47, 50, 54 },
+        { 40, 43, 47 }, // Em
+        { 42, 46, 49 }, // F#
+        { 43, 47, 50 }, // G
+        { 40, 43, 47 }, // Em
+        { 42, 46, 49 }, // F#7
+        { 47, 50, 54 }  // Bm
+    };
+    for (int bar = 0; bar < 8; bar++) {
+        float bar_time = bar * 4.0f * beat_sec;
+        u32 start_f = (u32)(bar_time * AUDIO_SAMPLE_RATE);
+        u32 len_f = (u32)(4.0f * beat_sec * AUDIO_SAMPLE_RATE);
+        for (int chord_note = 0; chord_note < 3; chord_note++) {
+            float f = note_to_freq(s_swamp_pads[bar][chord_note]);
+            float phase = 0.0f;
+            for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                phase += f / (float)AUDIO_SAMPLE_RATE;
+                float env = sinf((t / (4.0f * beat_sec)) * PI_F);
+                float sample = synth_square_wave(phase, 0.5f) * env * 0.06f;
+                mix_l[start_f + i] += sample * (0.4f + chord_note * 0.1f);
+                mix_r[start_f + i] += sample * (0.6f - chord_note * 0.1f);
+            }
+        }
+    }
+
+    // Canal 3: Baixo Submerso de Lama (Triângulo grave e lento)
+    static const u8 s_swamp_bass[8] = { 35, 35, 28, 30, 31, 28, 30, 35 }; // B, B, E, F#, G, E, F#, B
+    for (int bar = 0; bar < 8; bar++) {
+        for (int b = 0; b < 2; b++) {
+            float beat_time = bar * 4.0f * beat_sec + b * 2.0f * beat_sec;
+            u32 start_f = (u32)(beat_time * AUDIO_SAMPLE_RATE);
+            u32 len_f = (u32)(1.8f * beat_sec * AUDIO_SAMPLE_RATE);
+            float f = note_to_freq(s_swamp_bass[bar]);
+            float phase = 0.0f;
+            for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                phase += f / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-1.8f * t);
+                float sample = synth_triangle_wave(phase) * env * 0.32f;
+                mix_l[start_f + i] += sample * 0.5f;
+                mix_r[start_f + i] += sample * 0.5f;
+            }
+        }
+    }
+
+    // Canal 4: Efeitos Ambientais de Pântano (Bolhas de lodo e estalos de água)
+    for (int bar = 0; bar < 8; bar++) {
+        for (int b = 0; b < 4; b++) {
+            float bubble_time = bar * 4.0f * beat_sec + b * beat_sec + ((b % 2 == 1) ? 0.35f : 0.75f);
+            u32 start_f = (u32)(bubble_time * AUDIO_SAMPLE_RATE);
+            u32 len_f = (u32)(0.08f * AUDIO_SAMPLE_RATE);
+            for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                float bf = 480.0f - 300.0f * (t / 0.08f);
+                float env = expf(-35.0f * t);
+                float bubble = sinf(2.0f * PI_F * bf * t) * env * 0.15f;
+                mix_l[start_f + i] += bubble * ((b % 2 == 0) ? 0.7f : 0.3f);
+                mix_r[start_f + i] += bubble * ((b % 2 == 0) ? 0.3f : 0.7f);
+            }
+        }
+    }
+
+    s16* out_buf = (s16*)malloc(total_frames * 2 * sizeof(s16));
+    if (!out_buf) {
+        free(mix_l); free(mix_r); return NULL;
+    }
+    for (u32 i = 0; i < total_frames; i++) {
+        float l = mix_l[i] * 28000.0f; float r = mix_r[i] * 28000.0f;
+        if (l > 32767.0f) l = 32767.0f; if (l < -32768.0f) l = -32768.0f;
+        if (r > 32767.0f) r = 32767.0f; if (r < -32768.0f) r = -32768.0f;
+        out_buf[i * 2 + 0] = (s16)l; out_buf[i * 2 + 1] = (s16)r;
+    }
+    free(mix_l); free(mix_r);
+    *out_total_frames = total_frames;
+    return out_buf;
+}
+
+// ----------------------------------------------------------------------------
+// SÍNTESE DA TRILHA DE CLOUD TOPS & PALACE OF WINDS (CÉUS E VENTOS SAGRADOS)
+// ----------------------------------------------------------------------------
+static s16* synth_generate_cloud_tops(u32* out_total_frames) {
+    float bpm = 126.0f;
+    float beat_sec = 60.0f / bpm;
+    int total_bars = 8;
+    float total_seconds = total_bars * 4.0f * beat_sec;
+    u32 total_frames = (u32)(total_seconds * AUDIO_SAMPLE_RATE);
+
+    float* mix_l = (float*)calloc(total_frames, sizeof(float));
+    float* mix_r = (float*)calloc(total_frames, sizeof(float));
+    if (!mix_l || !mix_r) {
+        if (mix_l) free(mix_l);
+        if (mix_r) free(mix_r);
+        return NULL;
+    }
+
+    // Canal 1: Melodia Majestosa Celestial (Pulse 50% brilhante em Eb Maior com slapback echo)
+    static const NoteEvent s_cloud_lead[] = {
+        // Bar 1-2 (Eb)
+        { 75, 1.5f }, { 79, 0.5f }, { 82, 1.5f }, { 80, 0.5f },
+        { 79, 1.0f }, { 75, 1.0f }, { 77, 2.0f },
+        // Bar 3-4 (Ab -> Bb)
+        { 80, 1.5f }, { 84, 0.5f }, { 87, 1.5f }, { 85, 0.5f },
+        { 84, 1.5f }, { 82, 0.5f }, { 82, 2.0f },
+        // Bar 5-6 (Cm -> Gm)
+        { 84, 1.0f }, { 87, 1.0f }, { 91, 1.5f }, { 89, 0.5f },
+        { 87, 1.5f }, { 84, 0.5f }, { 82, 2.0f },
+        // Bar 7-8 (Ab -> Bb -> Eb)
+        { 80, 1.0f }, { 82, 1.0f }, { 84, 1.0f }, { 85, 1.0f },
+        { 87, 3.0f }, { 0,  1.0f }
+    };
+    int lead_count = (int)(sizeof(s_cloud_lead) / sizeof(s_cloud_lead[0]));
+
+    float cur_time = 0.0f;
+    for (int n = 0; n < lead_count; n++) {
+        float dur_sec = s_cloud_lead[n].duration * beat_sec;
+        u8 note = s_cloud_lead[n].note;
+        if (note > 0) {
+            u32 start_f = (u32)(cur_time * AUDIO_SAMPLE_RATE);
+            u32 len_f = (u32)(dur_sec * AUDIO_SAMPLE_RATE);
+            float base_f = note_to_freq(note);
+            float phase = 0.0f;
+            for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                float vib = 1.0f + 0.010f * sinf(2.0f * PI_F * 6.0f * t);
+                phase += (base_f * vib) / (float)AUDIO_SAMPLE_RATE;
+                float env = 1.0f;
+                if (t < 0.03f) env = t / 0.03f;
+                else if (t > dur_sec * 0.85f) env = 1.0f - (t - dur_sec * 0.85f) / (dur_sec * 0.15f);
+                float sample = synth_square_wave(phase, 0.50f) * env * 0.22f;
+                mix_l[start_f + i] += sample * 0.55f;
+                mix_r[start_f + i] += sample * 0.45f;
+
+                // Eco espacial das nuvens (Slapback delay)
+                u32 echo_d = (u32)(0.25f * AUDIO_SAMPLE_RATE);
+                u32 echo_idx = (start_f + i + echo_d) % total_frames;
+                mix_r[echo_idx] += sample * 0.28f;
+            }
+        }
+        cur_time += dur_sec;
+    }
+
+    // Canal 2: Arpejos Etéreos de Vento Cristalino (Pulse 12.5% em semicolcheias)
+    static const u8 s_cloud_arps[8][4] = {
+        { 63, 67, 70, 75 }, // Eb
+        { 63, 67, 70, 75 },
+        { 68, 72, 75, 80 }, // Ab
+        { 70, 74, 77, 82 }, // Bb
+        { 60, 63, 67, 72 }, // Cm
+        { 55, 58, 62, 67 }, // Gm
+        { 68, 72, 75, 80 }, // Ab
+        { 70, 74, 77, 82 }  // Bb
+    };
+    for (int bar = 0; bar < 8; bar++) {
+        for (int step = 0; step < 16; step++) {
+            float step_time = bar * 4.0f * beat_sec + step * (beat_sec * 0.25f);
+            u32 start_f = (u32)(step_time * AUDIO_SAMPLE_RATE);
+            u32 len_f = (u32)(beat_sec * 0.25f * AUDIO_SAMPLE_RATE);
+            u8 note = s_cloud_arps[bar][step % 4] + ((step >= 8) ? 12 : 0);
+            float f = note_to_freq(note);
+            float phase = 0.0f;
+            for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                phase += f / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-16.0f * t);
+                float sample = synth_square_wave(phase, 0.125f) * env * 0.12f;
+                float pan = 0.5f + 0.4f * sinf(step * 0.7f);
+                mix_l[start_f + i] += sample * pan;
+                mix_r[start_f + i] += sample * (1.0f - pan);
+            }
+        }
+    }
+
+    // Canal 3: Baixo Flutuante (Triângulo aéreo legato)
+    static const u8 s_cloud_bass[8] = { 39, 39, 44, 46, 36, 31, 44, 46 }; // Eb, Eb, Ab, Bb, C, G, Ab, Bb
+    for (int bar = 0; bar < 8; bar++) {
+        for (int b = 0; b < 2; b++) {
+            float beat_time = bar * 4.0f * beat_sec + b * 2.0f * beat_sec;
+            u32 start_f = (u32)(beat_time * AUDIO_SAMPLE_RATE);
+            u32 len_f = (u32)(1.8f * beat_sec * AUDIO_SAMPLE_RATE);
+            float f = note_to_freq(s_cloud_bass[bar]);
+            float phase = 0.0f;
+            for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                phase += f / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-2.2f * t);
+                float sample = synth_triangle_wave(phase) * env * 0.28f;
+                mix_l[start_f + i] += sample * 0.5f;
+                mix_r[start_f + i] += sample * 0.5f;
+            }
+        }
+    }
+
+    // Canal 4: Rajadas de Vento Celestial (Ruído com sweeps dinâmicos)
+    for (int bar = 0; bar < 8; bar++) {
+        float wind_time = bar * 4.0f * beat_sec;
+        u32 start_f = (u32)(wind_time * AUDIO_SAMPLE_RATE);
+        u32 len_f = (u32)(4.0f * beat_sec * AUDIO_SAMPLE_RATE);
+        for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+            float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+            float env = sinf((t / (4.0f * beat_sec)) * PI_F) * 0.08f;
+            float wind = synth_noise() * env;
+            mix_l[start_f + i] += wind * 0.45f;
+            mix_r[start_f + i] += wind * 0.55f;
+        }
+    }
+
+    s16* out_buf = (s16*)malloc(total_frames * 2 * sizeof(s16));
+    if (!out_buf) {
+        free(mix_l); free(mix_r); return NULL;
+    }
+    for (u32 i = 0; i < total_frames; i++) {
+        float l = mix_l[i] * 28000.0f; float r = mix_r[i] * 28000.0f;
+        if (l > 32767.0f) l = 32767.0f; if (l < -32768.0f) l = -32768.0f;
+        if (r > 32767.0f) r = 32767.0f; if (r < -32768.0f) r = -32768.0f;
+        out_buf[i * 2 + 0] = (s16)l; out_buf[i * 2 + 1] = (s16)r;
+    }
+    free(mix_l); free(mix_r);
+    *out_total_frames = total_frames;
+    return out_buf;
+}
+
+// ----------------------------------------------------------------------------
+// SÍNTESE DA TRILHA DE DARK HYRULE CASTLE / VAATI (CASTELO CORROMPIDO)
+// ----------------------------------------------------------------------------
+static s16* synth_generate_dark_hyrule_castle(u32* out_total_frames) {
+    float bpm = 132.0f;
+    float beat_sec = 60.0f / bpm;
+    int total_bars = 8;
+    float total_seconds = total_bars * 4.0f * beat_sec;
+    u32 total_frames = (u32)(total_seconds * AUDIO_SAMPLE_RATE);
+
+    float* mix_l = (float*)calloc(total_frames, sizeof(float));
+    float* mix_r = (float*)calloc(total_frames, sizeof(float));
+    if (!mix_l || !mix_r) {
+        if (mix_l) free(mix_l);
+        if (mix_r) free(mix_r);
+        return NULL;
+    }
+
+    // Canal 1: Órgão Barroco Gótico Opressor (Dual Pulse 50% + 25%)
+    static const NoteEvent s_castle_lead[] = {
+        // Bar 1-2 (Dm marcha sombria)
+        { 62, 1.5f }, { 65, 0.5f }, { 69, 1.0f }, { 74, 1.0f },
+        { 73, 1.5f }, { 70, 0.5f }, { 69, 2.0f },
+        // Bar 3-4 (Bb -> A7 tenso com C#)
+        { 67, 1.0f }, { 70, 1.0f }, { 74, 1.5f }, { 73, 0.5f },
+        { 69, 1.5f }, { 61, 0.5f }, { 62, 2.0f }, // C#4 -> D4
+        // Bar 5-6 (Gm -> Dm)
+        { 67, 1.5f }, { 70, 0.5f }, { 74, 1.0f }, { 77, 1.0f },
+        { 76, 1.5f }, { 73, 0.5f }, { 74, 2.0f },
+        // Bar 7-8 (Cromático Vaati e clímax)
+        { 70, 1.0f }, { 69, 1.0f }, { 68, 1.0f }, { 67, 1.0f },
+        { 69, 3.0f }, { 0,  1.0f }
+    };
+    int lead_count = (int)(sizeof(s_castle_lead) / sizeof(s_castle_lead[0]));
+
+    float cur_time = 0.0f;
+    for (int n = 0; n < lead_count; n++) {
+        float dur_sec = s_castle_lead[n].duration * beat_sec;
+        u8 note = s_castle_lead[n].note;
+        if (note > 0) {
+            u32 start_f = (u32)(cur_time * AUDIO_SAMPLE_RATE);
+            u32 len_f = (u32)(dur_sec * AUDIO_SAMPLE_RATE);
+            float base_f = note_to_freq(note);
+            float phase1 = 0.0f, phase2 = 0.0f;
+            for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                float vib = 1.0f + 0.008f * sinf(2.0f * PI_F * 6.2f * t);
+                phase1 += (base_f * vib) / (float)AUDIO_SAMPLE_RATE;
+                phase2 += (base_f * 2.0f * vib) / (float)AUDIO_SAMPLE_RATE;
+                float env = 1.0f;
+                if (t < 0.02f) env = t / 0.02f;
+                else if (t > dur_sec * 0.90f) env = 1.0f - (t - dur_sec * 0.90f) / (dur_sec * 0.10f);
+                float organ = (synth_square_wave(phase1, 0.50f) * 0.65f + synth_square_wave(phase2, 0.25f) * 0.35f) * env * 0.24f;
+                mix_l[start_f + i] += organ * 0.52f;
+                mix_r[start_f + i] += organ * 0.48f;
+            }
+        }
+        cur_time += dur_sec;
+    }
+
+    // Canal 2: Arpejos Rápidos Barrocos (Harpsichord / Pulse 25% cortante)
+    static const u8 s_castle_arps[8][4] = {
+        { 50, 53, 57, 62 }, // Dm
+        { 50, 53, 57, 62 },
+        { 46, 50, 53, 58 }, // Bb
+        { 45, 49, 52, 57 }, // A (com C#)
+        { 43, 46, 50, 55 }, // Gm
+        { 50, 53, 57, 62 }, // Dm
+        { 46, 50, 53, 58 }, // Bb
+        { 45, 49, 52, 57 }  // A
+    };
+    for (int bar = 0; bar < 8; bar++) {
+        for (int step = 0; step < 16; step++) {
+            float step_time = bar * 4.0f * beat_sec + step * (beat_sec * 0.25f);
+            u32 start_f = (u32)(step_time * AUDIO_SAMPLE_RATE);
+            u32 len_f = (u32)(beat_sec * 0.22f * AUDIO_SAMPLE_RATE);
+            u8 note = s_castle_arps[bar][step % 4] + 12;
+            float f = note_to_freq(note);
+            float phase = 0.0f;
+            for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                phase += f / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-18.0f * t);
+                float sample = synth_square_wave(phase, 0.25f) * env * 0.12f;
+                float pan = 0.5f + 0.35f * sinf(step * 0.9f);
+                mix_l[start_f + i] += sample * pan;
+                mix_r[start_f + i] += sample * (1.0f - pan);
+            }
+        }
+    }
+
+    // Canal 3: Baixo de Marcha Marcial Sinistra (Triângulo + Square 50% pesado)
+    static const u8 s_castle_bass[8] = { 38, 38, 34, 33, 31, 38, 34, 33 }; // D, D, Bb, A, G, D, Bb, A
+    for (int bar = 0; bar < 8; bar++) {
+        for (int b = 0; b < 4; b++) {
+            float beat_time = bar * 4.0f * beat_sec + b * beat_sec;
+            u32 start_f = (u32)(beat_time * AUDIO_SAMPLE_RATE);
+            u32 len_f = (u32)(beat_sec * 0.75f * AUDIO_SAMPLE_RATE);
+            float f = note_to_freq(s_castle_bass[bar]);
+            float phase = 0.0f;
+            for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                phase += f / (float)AUDIO_SAMPLE_RATE;
+                float env = expf(-4.5f * t);
+                float sample = (synth_triangle_wave(phase) * 0.65f + synth_square_wave(phase, 0.5f) * 0.35f) * env * 0.30f;
+                mix_l[start_f + i] += sample * 0.5f;
+                mix_r[start_f + i] += sample * 0.5f;
+            }
+        }
+    }
+
+    // Canal 4: Percussão Militar de Guerra (Bumbo trovejante e caixa militar pontuada)
+    for (int bar = 0; bar < 8; bar++) {
+        for (int b = 0; b < 4; b++) {
+            float beat_time = bar * 4.0f * beat_sec + b * beat_sec;
+            u32 start_f = (u32)(beat_time * AUDIO_SAMPLE_RATE);
+            u32 len_f = (u32)(0.14f * AUDIO_SAMPLE_RATE);
+            if (b == 0 || b == 2) {
+                // Bumbo trovejante com sweep de frequência grave
+                for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                    float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                    float kf = 110.0f * expf(-30.0f * t);
+                    float env = expf(-20.0f * t);
+                    float kick = sinf(2.0f * PI_F * kf * t) * env * 0.30f;
+                    mix_l[start_f + i] += kick * 0.5f;
+                    mix_r[start_f + i] += kick * 0.5f;
+                }
+            } else {
+                // Caixa militar agressiva com ruído e estalo metálico
+                for (u32 i = 0; i < len_f && (start_f + i) < total_frames; i++) {
+                    float t = (float)i / (float)AUDIO_SAMPLE_RATE;
+                    float env = expf(-22.0f * t);
+                    float snare = synth_noise() * env * 0.18f;
+                    mix_l[start_f + i] += snare * 0.45f;
+                    mix_r[start_f + i] += snare * 0.55f;
+                }
+            }
+        }
+    }
+
+    s16* out_buf = (s16*)malloc(total_frames * 2 * sizeof(s16));
+    if (!out_buf) {
+        free(mix_l); free(mix_r); return NULL;
+    }
+    for (u32 i = 0; i < total_frames; i++) {
+        float l = mix_l[i] * 28000.0f; float r = mix_r[i] * 28000.0f;
+        if (l > 32767.0f) l = 32767.0f; if (l < -32768.0f) l = -32768.0f;
+        if (r > 32767.0f) r = 32767.0f; if (r < -32768.0f) r = -32768.0f;
+        out_buf[i * 2 + 0] = (s16)l; out_buf[i * 2 + 1] = (s16)r;
+    }
+    free(mix_l); free(mix_r);
+    *out_total_frames = total_frames;
+    return out_buf;
+}
+
 const char* hal_audio_get_bgm_name(BgmTrack track) {
     switch (track) {
         case BGM_MINISH_WOODS:        return "Minish Woods (Deepwood)";
@@ -3824,16 +4418,24 @@ void hal_audio_play_bgm(BgmTrack track) {
     u32 total_frames = 0;
     s16* samples = NULL;
 
-    if (track == BGM_MINISH_WOODS || track == BGM_CASTOR_WILDS || track == BGM_WIND_RUINS || track == BGM_CLOUD_TOPS) {
+    if (track == BGM_MINISH_WOODS || track == BGM_WIND_RUINS) {
         samples = synth_generate_minish_woods(&total_frames);
-    } else if (track == BGM_HYRULE_OVERWORLD || track == BGM_MT_CRENEL || track == BGM_CRENEL_STORM) {
+    } else if (track == BGM_HYRULE_OVERWORLD) {
         samples = synth_generate_hyrule_overworld(&total_frames);
+    } else if (track == BGM_MT_CRENEL || track == BGM_CRENEL_STORM) {
+        samples = synth_generate_mt_crenel(&total_frames);
+    } else if (track == BGM_CASTOR_WILDS) {
+        samples = synth_generate_castor_wilds(&total_frames);
+    } else if (track == BGM_CLOUD_TOPS || track == BGM_PALACE_OF_WINDS) {
+        samples = synth_generate_cloud_tops(&total_frames);
+    } else if (track == BGM_DARK_HYRULE_CASTLE) {
+        samples = synth_generate_dark_hyrule_castle(&total_frames);
     } else if (track == BGM_CAVE_OF_FLAMES) {
         samples = synth_generate_cave_of_flames(&total_frames);
     } else if (track == BGM_DEEPWOOD_SHRINE || track == BGM_FORTRESS_OF_WINDS ||
-               track == BGM_TEMPLE_OF_DROPLETS || track == BGM_PALACE_OF_WINDS || track == BGM_ROYAL_VALLEY) {
+               track == BGM_TEMPLE_OF_DROPLETS || track == BGM_ROYAL_VALLEY) {
         samples = synth_generate_deepwood_shrine(&total_frames);
-    } else if (track == BGM_BOSS_BATTLE || track == BGM_DARK_HYRULE_CASTLE) {
+    } else if (track == BGM_BOSS_BATTLE) {
         samples = synth_generate_boss_battle(&total_frames);
     } else if (track == BGM_HYRULE_TOWN || track == BGM_SWIFTBLADE_DOJO || track == BGM_CUCCO_MINIGAME) {
         samples = synth_generate_hyrule_town(&total_frames);
