@@ -40,6 +40,71 @@ static float             s_right_x = 0.0f;
 static int               s_flash_alpha = 0;
 static SparkleParticle   s_particles[MAX_PARTICLES] = { 0 };
 
+static KinstoneWorldEvent s_world_events[KINSTONE_EVENT_COUNT] = {
+    {
+        KINSTONE_EVENT_CHEST_WOODS,
+        KINSTONE_GREEN,
+        "Bau Dourado nos Bosques!",
+        "Um bau reluzente brotou",
+        "na clareira de Minish Woods!",
+        "Minish Woods",
+        480.0f, 590.0f,
+        false
+    },
+    {
+        KINSTONE_EVENT_CHEST_LAKE,
+        KINSTONE_BLUE,
+        "Bau Submerso em Hylia!",
+        "As aguas do lago baixaram e",
+        "um grande bau emergiu em Lake Hylia!",
+        "Lake Hylia",
+        220.0f, 310.0f,
+        false
+    },
+    {
+        KINSTONE_EVENT_CHEST_CRENEL,
+        KINSTONE_RED,
+        "Tesouro no Monte Crenel!",
+        "Uma fenda na rocha revelou",
+        "um grande bau nas escarpas!",
+        "Mt. Crenel",
+        160.0f, 120.0f,
+        false
+    },
+    {
+        KINSTONE_EVENT_CAVE_OPENED,
+        KINSTONE_GREEN,
+        "Gruta Secreta Revelada!",
+        "Uma parede rachada desmoronou",
+        "abrindo uma passagem oculta!",
+        "Trilby Highlands",
+        340.0f, 210.0f,
+        false
+    },
+    {
+        KINSTONE_EVENT_PORTAL_ACTIVATED,
+        KINSTONE_BLUE,
+        "Portal Minish Despertado!",
+        "Um toco de arvore ancestral",
+        "acendeu com a luz dos Picori!",
+        "South Hyrule Field",
+        280.0f, 440.0f,
+        false
+    },
+    {
+        KINSTONE_EVENT_BEANSTALK_GROWN,
+        KINSTONE_RED,
+        "Trepadeira Gigante aos Ceus!",
+        "Um feijao magico brotou e cresceu",
+        "alcancando o reino das nuvens!",
+        "Veil Falls",
+        180.0f, 90.0f,
+        false
+    }
+};
+
+static int s_current_event_idx = 0;
+
 static inline u32 blend_colors(u32 dst, u32 src) {
     u32 sa = src & 0xFF;
     if (sa == 255) return src;
@@ -85,6 +150,10 @@ void kinstone_init(void) {
     s_anim_timer = 0;
     s_flash_alpha = 0;
     memset(s_particles, 0, sizeof(s_particles));
+    s_current_event_idx = 0;
+    for (int i = 0; i < KINSTONE_EVENT_COUNT; i++) {
+        s_world_events[i].is_unlocked = false;
+    }
 }
 
 KinstoneInventory* kinstone_get_inventory(void) {
@@ -190,9 +259,39 @@ void kinstone_update(void) {
             }
             s_inv.total_fusions++;
 
-            // Spawna o Baú Dourado na clareira ensolarada do santuário em Minish Woods
-            entity_spawn(ENTITY_CHEST_GOLD, 480.0f, 590.0f);
-            printf("[KINSTONE] Evento destravado: Bau dourado lendario spawnado em Minish Woods!\n");
+            // Mapeia o evento mundial canônico baseado no NPC ou nos slots pendentes
+            int triggered = -1;
+            if (s_partner_npc) {
+                if (s_partner_npc->type == ENTITY_NPC_FOREST_MINISH) triggered = KINSTONE_EVENT_CHEST_WOODS;
+                else if (s_partner_npc->type == ENTITY_NPC_VILLAGE_MINISH) triggered = KINSTONE_EVENT_CAVE_OPENED;
+                else if (s_partner_npc->type == ENTITY_NPC_TOWN_CITIZEN) triggered = KINSTONE_EVENT_PORTAL_ACTIVATED;
+                else if (s_partner_npc->type == ENTITY_NPC_MALON) triggered = KINSTONE_EVENT_CHEST_LAKE;
+                else if (s_partner_npc->type == ENTITY_NPC_BUSINESS_SCRUB) triggered = KINSTONE_EVENT_BEANSTALK_GROWN;
+                else if (s_partner_npc->type == ENTITY_NPC_MELARI || s_partner_npc->type == ENTITY_NPC_MAYOR_HAGEN) triggered = KINSTONE_EVENT_CHEST_CRENEL;
+            }
+
+            if (triggered == -1 || s_world_events[triggered].is_unlocked) {
+                for (int e = 0; e < KINSTONE_EVENT_COUNT; e++) {
+                    if (!s_world_events[e].is_unlocked && s_world_events[e].kinstone_req == (KinstoneType)s_selected_idx) {
+                        triggered = e;
+                        break;
+                    }
+                }
+            }
+
+            if (triggered == -1) {
+                for (int e = 0; e < KINSTONE_EVENT_COUNT; e++) {
+                    if (!s_world_events[e].is_unlocked) {
+                        triggered = e;
+                        break;
+                    }
+                }
+            }
+
+            if (triggered == -1) triggered = KINSTONE_EVENT_CHEST_WOODS;
+
+            s_current_event_idx = triggered;
+            kinstone_trigger_world_event((KinstoneEventType)triggered);
 
             s_ui_state = KINSTONE_UI_EVENT_POPUP;
             s_anim_timer = 0;
@@ -480,10 +579,10 @@ void kinstone_render(void) {
 
     // 7. Janela Pop-up de Notificação do Evento Mundial Destravado
     if (s_ui_state == KINSTONE_UI_EVENT_POPUP) {
-        int pw = 200;
-        int ph = 56;
+        int pw = 216;
+        int ph = 64;
         int px = (screen_w - pw) / 2;
-        int py = (screen_h - ph) / 2 + 10;
+        int py = (screen_h - ph) / 2 + 8;
 
         draw_rect_blend(px, py, pw, ph, 0x081A12F5);
         draw_rect_blend(px - 1, py - 1, pw + 2, 1, 0xD4AF37FF);
@@ -491,10 +590,60 @@ void kinstone_render(void) {
         draw_rect_blend(px - 1, py - 1, 1, ph + 2, 0xD4AF37FF);
         draw_rect_blend(px + pw, py - 1, 1, ph + 2, 0xD4AF37FF);
 
-        font_draw_text(px + 12, py + 8,  "Fusao bem-sucedida!", 0xFFE27AFF, true);
-        font_draw_text(px + 12, py + 22, "Um bau dourado apareceu", 0xF5F7FAFF, true);
-        font_draw_text(px + 12, py + 32, "na clareira dos bosques!", 0x77FF99FF, true);
+        const KinstoneWorldEvent* ev = &s_world_events[s_current_event_idx];
 
-        font_draw_text(px + 110, py + 43, "[A] Fechar", 0xFFCC00FF, true);
+        // Título do Evento em Amarelo Dourado
+        font_draw_text(px + 10, py + 7, ev->title, 0xFFE27AFF, true);
+
+        // Linhas de descrição narrativa
+        font_draw_text(px + 10, py + 20, ev->desc_line1, 0xF5F7FAFF, true);
+        font_draw_text(px + 10, py + 30, ev->desc_line2, 0xBAE6FDFF, true);
+
+        // Tag da Região afetada em Verde Esmeralda
+        char region_str[40];
+        snprintf(region_str, sizeof(region_str), "Regiao: %s", ev->region_name);
+        font_draw_text(px + 10, py + 45, region_str, 0x34D399FF, true);
+
+        font_draw_text(px + 150, py + 49, "[A] Fechar", 0xFFCC00FF, true);
     }
+}
+
+const KinstoneWorldEvent* kinstone_get_current_event(void) {
+    return &s_world_events[s_current_event_idx];
+}
+
+const KinstoneWorldEvent* kinstone_get_event(KinstoneEventType type) {
+    if (type < 0 || type >= KINSTONE_EVENT_COUNT) return NULL;
+    return &s_world_events[type];
+}
+
+bool kinstone_is_event_unlocked(KinstoneEventType type) {
+    if (type < 0 || type >= KINSTONE_EVENT_COUNT) return false;
+    return s_world_events[type].is_unlocked;
+}
+
+int kinstone_get_unlocked_events_count(void) {
+    int count = 0;
+    for (int i = 0; i < KINSTONE_EVENT_COUNT; i++) {
+        if (s_world_events[i].is_unlocked) count++;
+    }
+    return count;
+}
+
+void kinstone_trigger_world_event(KinstoneEventType event_type) {
+    if (event_type < 0 || event_type >= KINSTONE_EVENT_COUNT) return;
+    KinstoneWorldEvent* ev = &s_world_events[event_type];
+    ev->is_unlocked = true;
+
+    // Ações mundiais canônicas
+    if (ev->type == KINSTONE_EVENT_CHEST_WOODS ||
+        ev->type == KINSTONE_EVENT_CHEST_LAKE ||
+        ev->type == KINSTONE_EVENT_CHEST_CRENEL) {
+        entity_spawn(ENTITY_CHEST_GOLD, ev->target_x, ev->target_y);
+    } else if (ev->type == KINSTONE_EVENT_PORTAL_ACTIVATED) {
+        entity_spawn(ENTITY_MINISH_STUMP, ev->target_x, ev->target_y);
+    }
+
+    printf("[KINSTONE EVENTO] %s (%s) destravado nas coordenadas (%.1f, %.1f)!\n",
+           ev->title, ev->region_name, ev->target_x, ev->target_y);
 }
