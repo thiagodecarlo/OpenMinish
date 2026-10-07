@@ -773,6 +773,71 @@ void dungeon_fortress_render(const Camera* cam, bool is_minish, float link_x, fl
                     draw_filled_rect(mx + 22, my + 27, 4, 4, 0xFFFFFFFF);
                 }
             }
+
+            // HUD DE VIDA DO CHEFE MAZAAL (BARRA DE BOSS GBA CANÔNICA ANCESTRAL)
+            if (!mh->defeated && mh->core_health > 0) {
+                int vw = cam ? cam->viewport_w : 240;
+                int bar_w = 104;
+                int bar_h = 8;
+                int bar_x = (vw - bar_w) / 2;
+                int bar_y = 16;
+
+                // Moldura ornamental de bronze ancestral das ruínas e ardósia
+                u32 border_brass = (hl->stunned && hr->stunned) ? 0x38BDF8FF : 0xD97706FF;
+                u32 border_dark  = 0x451A03FF;
+                u32 gem_wind     = 0x06B6D4FF;
+
+                // Fundo com borda chanfrada 3D
+                draw_filled_rect(bar_x - 3, bar_y - 2, bar_w + 6, bar_h + 4, 0x0F172AFF);
+                draw_filled_rect(bar_x - 2, bar_y - 1, bar_w + 4, bar_h + 2, border_brass);
+                draw_filled_rect(bar_x - 1, bar_y, bar_w + 2, bar_h, border_dark);
+                draw_filled_rect(bar_x, bar_y + 1, bar_w, bar_h - 2, 0x1E293BFF);
+
+                // Gemas Minish de Vento ciano nas pontas
+                draw_filled_rect(bar_x - 6, bar_y, 4, bar_h, gem_wind);
+                hal_video_put_pixel(bar_x - 5, bar_y + 1, 0xFFFFFFFF);
+                draw_filled_rect(bar_x + bar_w + 2, bar_y, 4, bar_h, gem_wind);
+                hal_video_put_pixel(bar_x + bar_w + 3, bar_y + 1, 0xFFFFFFFF);
+
+                // 1. Sensores ópticos das Mãos Mecânicas (L & R)
+                u32 col_hl = hl->stunned ? 0xF87171FF : 0x38BDF8FF;
+                u32 col_hr = hr->stunned ? 0xF87171FF : 0x38BDF8FF;
+                draw_filled_rect(bar_x + 3, bar_y + 2, 10, 4, col_hl);
+                hal_video_put_pixel(bar_x + 4, bar_y + 3, 0xFFFFFFFF);
+                font_draw_text(bar_x + 2, bar_y + 9, hl->stunned ? "E:OFF" : "E:ON", col_hl, true);
+
+                draw_filled_rect(bar_x + bar_w - 13, bar_y + 2, 10, 4, col_hr);
+                hal_video_put_pixel(bar_x + bar_w - 12, bar_y + 3, 0xFFFFFFFF);
+                font_draw_text(bar_x + bar_w - 24, bar_y + 9, hr->stunned ? "D:OFF" : "D:ON", col_hr, true);
+
+                // 2. Segmentos do Núcleo Interno da Cabeça (3 Vidas)
+                int pip_w = 14;
+                for (int hp = 0; hp < 3; hp++) {
+                    int px = bar_x + 24 + (hp * (pip_w + 4));
+                    if (hp < mh->core_health) {
+                        draw_filled_rect(px, bar_y + 1, pip_w, 2, 0xBAE6FDFF);
+                        draw_filled_rect(px, bar_y + 3, pip_w, 2, 0x0284C7FF);
+                        draw_filled_rect(px, bar_y + 5, pip_w, 1, 0x0369A1FF);
+                        hal_video_put_pixel(px + 1, bar_y + 2, 0xFFFFFFFF);
+                    } else {
+                        draw_filled_rect(px, bar_y + 2, pip_w, 4, 0x334155FF);
+                    }
+                }
+
+                // Título e Alertas Táticos Dinâmicos
+                font_draw_text(bar_x + 10, bar_y - 9, "MAZAAL - CABECA ANCESTRAL", 0xFBBF24FF, true);
+
+                if (hl->stunned && hr->stunned) {
+                    bool blink = ((s_fort_anim_timer / 6) % 2 == 1);
+                    if (blink) {
+                        font_draw_text(bar_x - 18, bar_y + bar_h + 3, "* MAOS DESATIVADAS! ENCOLHA E ENTRE NA BOCA! *", 0x38BDF8FF, true);
+                    }
+                } else if (hl->stunned || hr->stunned) {
+                    font_draw_text(bar_x - 12, bar_y + bar_h + 3, "* UMA MAO ATORDOADA! ATINJA A OUTRA! *", 0xFDE047FF, true);
+                } else {
+                    font_draw_text(bar_x - 16, bar_y + bar_h + 3, "* ATORDOE OS OLHOS DAS MAOS COM FLECHAS! *", 0xCBD5E1FF, true);
+                }
+            }
         }
 
         // Drops após a derrota de Mazaal

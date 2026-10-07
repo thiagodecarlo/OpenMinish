@@ -4843,7 +4843,98 @@ int main(int argc, char* argv[]) {
                 camera.x = (float)(256 - camera.viewport_w) / 2.0f;
                 camera.y = 0.0f;
             }
-        } else if (dungeon_flames_is_active() || dungeon_fortress_is_active() || dungeon_droplets_is_active() || dungeon_palace_is_active() || veil_clouds_is_active() || sanctuary_is_active()) {
+        } else if (dungeon_flames_is_active()) {
+            camera.viewport_w = widescreen ? 284 : 240;
+            camera.viewport_h = 160;
+            DungeonFlamesState* fst = dungeon_flames_get_state();
+            Entity* boss = (fst && fst->current_room == ROOM_FLAMES_BOSS_ARENA) ? entity_get_boss() : NULL;
+            if (boss && boss->is_active && boss->health > 0) {
+                float target_x = ((link.x + boss->x) * 0.5f) - ((float)camera.viewport_w * 0.5f);
+                float target_y = ((link.y + boss->y) * 0.5f) - ((float)camera.viewport_h * 0.5f);
+                float max_x = 256.0f - (float)camera.viewport_w;
+                float max_y = 160.0f - (float)camera.viewport_h;
+                if (max_x < 0.0f) max_x = 0.0f;
+                if (max_y < 0.0f) max_y = 0.0f;
+                if (target_x < 0.0f) target_x = 0.0f;
+                if (target_x > max_x) target_x = max_x;
+                if (target_y < 0.0f) target_y = 0.0f;
+                if (target_y > max_y) target_y = max_y;
+                camera.x += (target_x - camera.x) * 0.12f;
+                camera.y += (target_y - camera.y) * 0.12f;
+            } else {
+                camera.x = (float)(256 - camera.viewport_w) / 2.0f;
+                camera.y = 0.0f;
+            }
+        } else if (dungeon_fortress_is_active()) {
+            camera.viewport_w = widescreen ? 284 : 240;
+            camera.viewport_h = 160;
+            DungeonFortressState* fst = dungeon_fortress_get_state();
+            if (fst && fst->current_room == ROOM_FORTRESS_BOSS_ARENA && !fst->mazaal_head.defeated) {
+                float bx = fst->mazaal_head.x;
+                float by = fst->mazaal_head.y;
+                float target_x = ((link.x + bx) * 0.5f) - ((float)camera.viewport_w * 0.5f);
+                float target_y = ((link.y + by) * 0.5f) - ((float)camera.viewport_h * 0.5f);
+                float max_x = 256.0f - (float)camera.viewport_w;
+                float max_y = 160.0f - (float)camera.viewport_h;
+                if (max_x < 0.0f) max_x = 0.0f;
+                if (max_y < 0.0f) max_y = 0.0f;
+                if (target_x < 0.0f) target_x = 0.0f;
+                if (target_x > max_x) target_x = max_x;
+                if (target_y < 0.0f) target_y = 0.0f;
+                if (target_y > max_y) target_y = max_y;
+                camera.x += (target_x - camera.x) * 0.12f;
+                camera.y += (target_y - camera.y) * 0.12f;
+            } else {
+                camera.x = (float)(256 - camera.viewport_w) / 2.0f;
+                camera.y = 0.0f;
+            }
+        } else if (dungeon_droplets_is_active()) {
+            camera.viewport_w = widescreen ? 284 : 240;
+            camera.viewport_h = 160;
+            DungeonDropletsState* dst = dungeon_droplets_get_state();
+            if (dst && dst->current_room == ROOM_DROPLETS_BOSS_ARENA && dst->boss.is_active && dst->boss.phase != OCTO_PHASE_DEFEATED) {
+                float bx = dst->boss.x;
+                float by = dst->boss.y;
+                float target_x = ((link.x + bx) * 0.5f) - ((float)camera.viewport_w * 0.5f);
+                float target_y = ((link.y + by) * 0.5f) - ((float)camera.viewport_h * 0.5f);
+                float max_x = 256.0f - (float)camera.viewport_w;
+                float max_y = 160.0f - (float)camera.viewport_h;
+                if (max_x < 0.0f) max_x = 0.0f;
+                if (max_y < 0.0f) max_y = 0.0f;
+                if (target_x < 0.0f) target_x = 0.0f;
+                if (target_x > max_x) target_x = max_x;
+                if (target_y < 0.0f) target_y = 0.0f;
+                if (target_y > max_y) target_y = max_y;
+                camera.x += (target_x - camera.x) * 0.12f;
+                camera.y += (target_y - camera.y) * 0.12f;
+            } else {
+                camera.x = (float)(256 - camera.viewport_w) / 2.0f;
+                camera.y = 0.0f;
+            }
+        } else if (dungeon_palace_is_active()) {
+            camera.viewport_w = widescreen ? 284 : 240;
+            camera.viewport_h = 160;
+            DungeonPalaceState* pst = dungeon_palace_get_state();
+            if (pst && pst->current_room == ROOM_PALACE_GYORG_ARENA && pst->boss.is_active && !pst->boss.defeated) {
+                float bx = (pst->boss.current_mount == GYORG_MOUNT_BLUE) ? pst->boss.blue_x : pst->boss.red_x;
+                float by = (pst->boss.current_mount == GYORG_MOUNT_BLUE) ? pst->boss.blue_y : pst->boss.red_y;
+                float target_x = ((link.x + bx) * 0.5f) - ((float)camera.viewport_w * 0.5f);
+                float target_y = ((link.y + by) * 0.5f) - ((float)camera.viewport_h * 0.5f);
+                float max_x = 256.0f - (float)camera.viewport_w;
+                float max_y = 160.0f - (float)camera.viewport_h;
+                if (max_x < 0.0f) max_x = 0.0f;
+                if (max_y < 0.0f) max_y = 0.0f;
+                if (target_x < 0.0f) target_x = 0.0f;
+                if (target_x > max_x) target_x = max_x;
+                if (target_y < 0.0f) target_y = 0.0f;
+                if (target_y > max_y) target_y = max_y;
+                camera.x += (target_x - camera.x) * 0.12f;
+                camera.y += (target_y - camera.y) * 0.12f;
+            } else {
+                camera.x = (float)(256 - camera.viewport_w) / 2.0f;
+                camera.y = 0.0f;
+            }
+        } else if (veil_clouds_is_active() || sanctuary_is_active()) {
             camera.viewport_w = widescreen ? 284 : 240;
             camera.viewport_h = 160;
             camera.x = (float)(256 - camera.viewport_w) / 2.0f;

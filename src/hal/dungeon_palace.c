@@ -80,6 +80,14 @@ static void draw_rect_blend(int rx, int ry, int rw, int rh, u32 color) {
     }
 }
 
+static inline void draw_filled_rect(int rx, int ry, int rw, int rh, u32 color) {
+    for (int y = 0; y < rh; y++) {
+        for (int x = 0; x < rw; x++) {
+            hal_video_put_pixel(rx + x, ry + y, color);
+        }
+    }
+}
+
 static Tilemap* create_empty_palace_room(void) {
     Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
     if (!m) return NULL;
@@ -911,6 +919,78 @@ void dungeon_palace_render(const Camera* camera, float player_x, float player_y,
                         draw_rect_blend(px - 2, py - 2, 4, 4, 0xFFFFFFFF);
                     }
                 }
+            }
+        }
+
+        // HUD DE VIDA DO CHEFE DUPLO GYORG PAIR (BARRA DE BOSS GBA CANÔNICA CELESTIAL)
+        if (b->is_active && !b->defeated) {
+            int vw = camera ? camera->viewport_w : 240;
+            int bar_w = 112;
+            int bar_h = 8;
+            int bar_x = (vw - bar_w) / 2;
+            int bar_y = 16;
+
+            // Fundo com borda ornamental chanfrada 3D
+            draw_filled_rect(bar_x - 3, bar_y - 2, bar_w + 6, bar_h + 4, 0x0F172AFF);
+            draw_filled_rect(bar_x - 2, bar_y - 1, bar_w + 4, bar_h + 2, 0x38BDF8FF);
+            draw_filled_rect(bar_x - 1, bar_y, bar_w + 2, bar_h, 0x1E3A8AFF);
+            draw_filled_rect(bar_x, bar_y + 1, bar_w, bar_h - 2, 0x0C1322FF);
+
+            // Gema da Arraia Azul (esquerda) e Gema da Arraia Vermelha (direita)
+            draw_filled_rect(bar_x - 6, bar_y, 4, bar_h, 0x2563EBFF);
+            hal_video_put_pixel(bar_x - 5, bar_y + 1, 0xFFFFFFFF);
+            draw_filled_rect(bar_x + bar_w + 2, bar_y, 4, bar_h, 0xDC2626FF);
+            hal_video_put_pixel(bar_x + bar_w + 3, bar_y + 1, 0xFFFFFFFF);
+
+            // Separador central
+            draw_filled_rect(bar_x + (bar_w / 2) - 1, bar_y + 1, 2, bar_h - 2, 0x64748BFF);
+
+            // 1. Barra da Arraia Azul (Fêmea - 8 Pips)
+            bool blue_flash = (b->blue_hit_stun > 0);
+            for (int hp = 0; hp < 8; hp++) {
+                int px = bar_x + 3 + (hp * 6);
+                if (hp < b->blue_health) {
+                    u32 c_top = blue_flash ? 0xFFFFFFFF : 0xBAE6FDFF;
+                    u32 c_mid = blue_flash ? 0x93C5FDFF : 0x2563EBFF;
+                    u32 c_bot = blue_flash ? 0x60A5FAFF : 0x1E40AFFF;
+                    draw_filled_rect(px, bar_y + 1, 5, 2, c_top);
+                    draw_filled_rect(px, bar_y + 3, 5, 2, c_mid);
+                    draw_filled_rect(px, bar_y + 5, 5, 1, c_bot);
+                    hal_video_put_pixel(px + 1, bar_y + 2, 0xFFFFFFFF);
+                } else {
+                    draw_filled_rect(px, bar_y + 2, 5, 4, 0x1E293BFF);
+                }
+            }
+
+            // 2. Barra da Arraia Vermelha (Macho - 8 Pips)
+            bool red_flash = (b->red_hit_stun > 0);
+            for (int hp = 0; hp < 8; hp++) {
+                int px = bar_x + (bar_w / 2) + 3 + (hp * 6);
+                if (hp < b->red_health) {
+                    u32 c_top = red_flash ? 0xFFFFFFFF : 0xFECACAFF;
+                    u32 c_mid = red_flash ? 0xF87171FF : 0xDC2626FF;
+                    u32 c_bot = red_flash ? 0xEF4444FF : 0x991B1BFF;
+                    draw_filled_rect(px, bar_y + 1, 5, 2, c_top);
+                    draw_filled_rect(px, bar_y + 3, 5, 2, c_mid);
+                    draw_filled_rect(px, bar_y + 5, 5, 1, c_bot);
+                    hal_video_put_pixel(px + 1, bar_y + 2, 0xFFFFFFFF);
+                } else {
+                    draw_filled_rect(px, bar_y + 2, 5, 4, 0x1E293BFF);
+                }
+            }
+
+            // Título e Alertas Táticos Dinâmicos
+            font_draw_text(bar_x + 8, bar_y - 9, "GYORG PAIR - ARRAIAS DOS CEUS", 0xFDE047FF, true);
+
+            if (b->current_mount == GYORG_MOUNT_BLUE) {
+                font_draw_text(bar_x - 16, bar_y + bar_h + 3, "* CRIE 3 CLONES E GOLPEIE OS 3 OLHOS JUNTOS! *", 0x38BDF8FF, true);
+            } else if (b->current_mount == GYORG_TRANSITION) {
+                bool blink = ((s_palace_anim_timer / 6) % 2 == 1);
+                if (blink) {
+                    font_draw_text(bar_x - 18, bar_y + bar_h + 3, "* NO AR! SALTE ENTRE AS ARRAIAS COM A CAPA! *", 0xFBBF24FF, true);
+                }
+            } else {
+                font_draw_text(bar_x - 16, bar_y + bar_h + 3, "* DESVIE DA CAUDA E ATAQUE O OLHO CENTRAL! *", 0xFCA5A5FF, true);
             }
         }
 
