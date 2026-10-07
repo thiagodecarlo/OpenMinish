@@ -137,6 +137,11 @@ DungeonDropletsRoomId dungeon_droplets_get_current_room(void);
 Tilemap* dungeon_droplets_get_current_map(void);
 
 /*
+ * Retorna o estado completo da masmorra Temple of Droplets.
+ */
+DungeonDropletsState* dungeon_droplets_get_state(void);
+
+/*
  * Atualiza lógica de física no gelo, quebra-cabeças solares, tochas, transições e o chefe Big Octorok.
  */
 void dungeon_droplets_update(float* player_x, float* player_y, Direction player_dir, bool is_moving,

@@ -75,6 +75,14 @@ static void draw_rect_blend(int rx, int ry, int rw, int rh, u32 color) {
     }
 }
 
+static inline void draw_filled_rect(int rx, int ry, int rw, int rh, u32 color) {
+    for (int y = 0; y < rh; y++) {
+        for (int x = 0; x < rw; x++) {
+            hal_video_put_pixel(rx + x, ry + y, color);
+        }
+    }
+}
+
 static Tilemap* create_empty_room(void) {
     Tilemap* m = (Tilemap*)malloc(sizeof(Tilemap));
     if (!m) return NULL;
@@ -244,6 +252,10 @@ DungeonDropletsRoomId dungeon_droplets_get_current_room(void) {
 Tilemap* dungeon_droplets_get_current_map(void) {
     if (!s_droplets.is_active) return NULL;
     return s_droplets.rooms[s_droplets.current_room];
+}
+
+DungeonDropletsState* dungeon_droplets_get_state(void) {
+    return &s_droplets;
 }
 
 bool dungeon_droplets_is_ice_tile(float world_x, float world_y) {
@@ -696,6 +708,69 @@ void dungeon_droplets_render(const Camera* camera, bool is_minish, float player_
                         }
                     }
                 }
+            }
+        }
+
+        // HUD DE VIDA DO CHEFE BIG OCTOROK (BARRA DE BOSS GBA CANÔNICA GLACIAL)
+        if (b->is_active && b->phase != OCTO_PHASE_DEFEATED && b->health > 0) {
+            int vw = camera ? camera->viewport_w : 240;
+            int bar_w = 104;
+            int bar_h = 8;
+            int bar_x = (vw - bar_w) / 2;
+            int bar_y = 16;
+
+            bool is_burning = (b->phase == OCTO_PHASE_BURNING);
+            u32 border_ice  = is_burning ? 0xF97316FF : 0x38BDF8FF;
+            u32 border_dark = is_burning ? 0x7C2D12FF : 0x0C4A6EFF;
+            u32 gem_color   = is_burning ? 0xEF4444FF : 0x0284C7FF;
+
+            // Fundo com borda ornamental chanfrada 3D
+            draw_filled_rect(bar_x - 3, bar_y - 2, bar_w + 6, bar_h + 4, 0x0F172AFF);
+            draw_filled_rect(bar_x - 2, bar_y - 1, bar_w + 4, bar_h + 2, border_ice);
+            draw_filled_rect(bar_x - 1, bar_y, bar_w + 2, bar_h, border_dark);
+            draw_filled_rect(bar_x, bar_y + 1, bar_w, bar_h - 2, 0x082F49FF);
+
+            // Gemas de safira glacial / rubi nas pontas
+            draw_filled_rect(bar_x - 6, bar_y, 4, bar_h, gem_color);
+            hal_video_put_pixel(bar_x - 5, bar_y + 1, 0xFFFFFFFF);
+            draw_filled_rect(bar_x + bar_w + 2, bar_y, 4, bar_h, gem_color);
+            hal_video_put_pixel(bar_x + bar_w + 3, bar_y + 1, 0xFFFFFFFF);
+
+            // 12 Pips de vida com transição gelo / chamas
+            int pip_w = 6;
+            for (int hp = 0; hp < 12; hp++) {
+                int px = bar_x + 3 + (hp * (pip_w + 2));
+                if (px + pip_w > bar_x + bar_w - 2) break;
+
+                if (hp < b->health) {
+                    u32 c_top = is_burning ? 0xFDE047FF : 0xBAE6FDFF;
+                    u32 c_mid = is_burning ? 0xEA580CFF : 0x0284C7FF;
+                    u32 c_bot = is_burning ? 0x991B1BFF : 0x0369A1FF;
+                    draw_filled_rect(px, bar_y + 1, pip_w, 2, c_top);
+                    draw_filled_rect(px, bar_y + 3, pip_w, 2, c_mid);
+                    draw_filled_rect(px, bar_y + 5, pip_w, 1, c_bot);
+                    hal_video_put_pixel(px + 1, bar_y + 2, 0xFFFFFFFF);
+                } else {
+                    draw_filled_rect(px, bar_y + 2, pip_w, 4, 0x1E293BFF);
+                }
+            }
+
+            // Título e Alertas Táticos Dinâmicos
+            const char* boss_title = is_burning ? "BIG OCTO (EM CHAMAS)" : "BIG OCTOROK GLACIAL";
+            font_draw_text(bar_x + 12, bar_y - 9, boss_title, is_burning ? 0xF87171FF : 0x7DD3FCFF, true);
+
+            if (b->phase == OCTO_PHASE_BURNING) {
+                bool blink = ((b->burn_timer / 6) % 2 == 1);
+                if (blink) {
+                    font_draw_text(bar_x - 16, bar_y + bar_h + 3, "* CAUDA EM CHAMAS! ATAQUE COM A ESPADA! *", 0xFCA5A5FF, true);
+                }
+            } else if (b->phase == OCTO_PHASE_STUNNED) {
+                bool blink = ((b->phase_timer / 6) % 2 == 1);
+                if (blink) {
+                    font_draw_text(bar_x - 18, bar_y + bar_h + 3, "* VULNERAVEL! QUEIME A CAUDA COM A LANTERNA! *", 0xFDE047FF, true);
+                }
+            } else {
+                font_draw_text(bar_x - 16, bar_y + bar_h + 3, "* REBATA AS ROCHAS COM O ESCUDO NO FOCINHO! *", 0xE2E8F0FF, true);
             }
         }
 

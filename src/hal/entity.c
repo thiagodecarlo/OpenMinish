@@ -5588,27 +5588,65 @@ void entity_manager_render(const Camera* cam) {
                 }
             }
 
-            // HUD DE VIDA DO CHEFE GLEEROK (BARRA DE BOSS GBA CANÔNICA)
+            // HUD DE VIDA DO CHEFE GLEEROK (BARRA DE BOSS GBA CANÔNICA VOLCÂNICA)
             if (e->action != 5 && e->health > 0) {
-                int bar_w = 92;
-                int bar_h = 7;
+                int bar_w = 96;
+                int bar_h = 8;
                 int bar_x = (cam->viewport_w - bar_w) / 2;
-                int bar_y = 18;
+                int bar_y = 16;
 
-                draw_filled_rect(bar_x - 1, bar_y - 1, bar_w + 2, bar_h + 2, 0x0B0F19FF);
-                draw_filled_rect(bar_x, bar_y, bar_w, bar_h, 0x1C1917FF);
+                // Moldura ornamental de bronze vulcânico e basalto
+                u32 border_gold = e->bossEnraged ? 0xEF4444FF : 0xD97706FF;
+                u32 border_dark = e->bossEnraged ? 0x7F1D1DFF : 0x78350FFF;
+                u32 gem_ruby    = e->bossEnraged ? 0xF87171FF : 0xEF4444FF;
 
-                int pip_w = 7;
+                // Fundo com borda ornamental chanfrada 3D
+                draw_filled_rect(bar_x - 3, bar_y - 2, bar_w + 6, bar_h + 4, 0x0F172AFF);
+                draw_filled_rect(bar_x - 2, bar_y - 1, bar_w + 4, bar_h + 2, border_gold);
+                draw_filled_rect(bar_x - 1, bar_y, bar_w + 2, bar_h, border_dark);
+                draw_filled_rect(bar_x, bar_y + 1, bar_w, bar_h - 2, 0x1C1917FF);
+
+                // Gemas de Rubi vulcânicas nas pontas esquerda e direita
+                draw_filled_rect(bar_x - 6, bar_y, 4, bar_h, gem_ruby);
+                put_pixel_safe(bar_x - 5, bar_y + 1, 0xFFFFFFFF);
+                draw_filled_rect(bar_x + bar_w + 2, bar_y, 4, bar_h, gem_ruby);
+                put_pixel_safe(bar_x + bar_w + 3, bar_y + 1, 0xFFFFFFFF);
+
+                // Segmentos de vida com chanfro e efeito de Hit Flash
+                bool hit_flash = (e->invulnerableTimer > 0 && (e->invulnerableTimer / 3) % 2 == 1);
+                int pip_w = 8;
                 for (int hp = 0; hp < e->maxHealth; hp++) {
-                    int px = bar_x + 2 + (hp * 9);
-                    u32 pip_col = (hp < e->health) ? 0xEF4444FF : 0x44403CFF;
-                    draw_filled_rect(px, bar_y + 1, pip_w, bar_h - 2, pip_col);
+                    int px = bar_x + 2 + (hp * (pip_w + 1));
+                    if (px + pip_w > bar_x + bar_w - 2) break;
+
                     if (hp < e->health) {
-                        draw_filled_rect(px + 1, bar_y + 2, pip_w - 2, 1, 0xFDE047FF);
+                        u32 c_top = hit_flash ? 0xFFFFFFFF : 0xFDE047FF; // Amarelo incandescente
+                        u32 c_mid = hit_flash ? 0xFEF08AFF : (e->bossEnraged ? 0xEF4444FF : 0xF97316FF); // Laranja fogo
+                        u32 c_bot = hit_flash ? 0xF59E0BFF : 0x991B1BFF; // Vermelho rubi profundo
+
+                        draw_filled_rect(px, bar_y + 1, pip_w, 2, c_top);
+                        draw_filled_rect(px, bar_y + 3, pip_w, 2, c_mid);
+                        draw_filled_rect(px, bar_y + 5, pip_w, 1, c_bot);
+                        put_pixel_safe(px + 1, bar_y + 2, 0xFFFFFFFF);
+                    } else {
+                        draw_filled_rect(px, bar_y + 2, pip_w, 4, 0x44403CFF); // Vazio (cinzas)
                     }
                 }
 
-                font_draw_text(bar_x + 2, bar_y - 8, "GLEEROK - DRAGAO DE FOGO", 0xF97316FF, true);
+                // Nome do Chefe e Alerta Tático Canônico
+                const char* boss_title = e->bossEnraged ? "GLEEROK (FURIOSO)" : "GLEEROK - DRAGAO DE FOGO";
+                font_draw_text(bar_x + 6, bar_y - 9, boss_title, e->bossEnraged ? 0xF87171FF : 0xF97316FF, true);
+
+                if (e->action == 3) { // Desabado / Toppled na lava
+                    bool blink = ((e->animTimer / 6) % 2 == 1);
+                    if (blink) {
+                        font_draw_text(bar_x - 18, bar_y + bar_h + 3, "* VULNERAVEL! ATAQUE A JOIA NO DORSO! *", 0x38BDF8FF, true);
+                    }
+                } else if (e->action == 4) { // Erupção e Mergulho Enraivecido
+                    font_draw_text(bar_x - 18, bar_y + bar_h + 3, "* ALERTA: CHUVA DE ROCHAS VULCANICAS! *", 0xEF4444FF, true);
+                } else {
+                    font_draw_text(bar_x - 16, bar_y + bar_h + 3, "* INVERTA A CARAPACA COM CAJADO DE PACCI! *", 0xFBBF24FF, true);
+                }
             }
         }
 
