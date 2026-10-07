@@ -385,7 +385,170 @@ static void spawn_town_entities(void) {
     printf("[TOWN] Entidades de Hyrule Town spawnadas com sucesso (Smith, Swiftblade, Hagen, Scrub, Stockwell, Chafariz, Cidadaos, Guardas)!\n");
 }
 
-static void transition_to_town(Player* link) {
+// ----------------------------------------------------------------------------
+// SISTEMA DE TRANSIÇÃO DE CENAS (IRIS CIRCULAR WIPE & FADE SUAVE)
+// ----------------------------------------------------------------------------
+typedef enum {
+    SCENE_TARGET_NONE = 0,
+    SCENE_TARGET_TOWN,
+    SCENE_TARGET_OVERWORLD,
+    SCENE_TARGET_MINISH_VILLAGE,
+    SCENE_TARGET_WOODS_FROM_VILLAGE,
+    SCENE_TARGET_SOUTH_FIELD,
+    SCENE_TARGET_NORTH_FIELD,
+    SCENE_TARGET_TOWN_FROM_SOUTH,
+    SCENE_TARGET_TOWN_FROM_NORTH,
+    SCENE_TARGET_CRENEL_BASE,
+    SCENE_TARGET_NORTH_FIELD_FROM_CRENEL,
+    SCENE_TARGET_MELARI_MINES,
+    SCENE_TARGET_CRENEL_FROM_MELARI,
+    SCENE_TARGET_CAVE_OF_FLAMES,
+    SCENE_TARGET_SANCTUARY,
+    SCENE_TARGET_CASTOR_WILDS,
+    SCENE_TARGET_SOUTH_FIELD_FROM_CASTOR,
+    SCENE_TARGET_MOLE_CAVE,
+    SCENE_TARGET_CASTOR_FROM_CAVE,
+    SCENE_TARGET_WIND_RUINS,
+    SCENE_TARGET_CASTOR_FROM_RUINS,
+    SCENE_TARGET_ARMOS_INTERIOR,
+    SCENE_TARGET_WIND_RUINS_FROM_ARMOS,
+    SCENE_TARGET_LIBRARY,
+    SCENE_TARGET_TOWN_FROM_LIBRARY,
+    SCENE_TARGET_LAKE_HYLIA,
+    SCENE_TARGET_SOUTH_FIELD_FROM_LAKE
+} SceneTarget;
+
+typedef enum {
+    SCENE_TRANS_STATE_INACTIVE = 0,
+    SCENE_TRANS_STATE_IRIS_OUT,
+    SCENE_TRANS_STATE_BLACK_HOLD,
+    SCENE_TRANS_STATE_IRIS_IN,
+    SCENE_TRANS_STATE_FADE_OUT,
+    SCENE_TRANS_STATE_FADE_IN
+} SceneTransitionState;
+
+typedef struct {
+    SceneTransitionState state;
+    SceneTarget          target;
+    int                  timer;
+    int                  duration;
+    float                focus_world_x;
+    float                focus_world_y;
+    bool                 is_fade;
+} SceneTransitionManager;
+
+static SceneTransitionManager s_scene_trans = {0};
+static Tilemap* s_current_active_map = NULL;
+
+static void draw_rect_blend(int rx, int ry, int rw, int rh, u32 color, float alpha) {
+    const HalVideoContext* ctx = hal_video_get_context();
+    if (!ctx || !ctx->framebuffer || alpha <= 0.0f) return;
+    if (alpha > 1.0f) alpha = 1.0f;
+    u8 cr = (color >> 24) & 0xFF;
+    u8 cg = (color >> 16) & 0xFF;
+    u8 cb = (color >> 8) & 0xFF;
+
+    for (int y = ry; y < ry + rh; y++) {
+        if (y < 0 || y >= ctx->render_height) continue;
+        for (int x = rx; x < rx + rw; x++) {
+            if (x < 0 || x >= ctx->render_width) continue;
+            int idx = y * ctx->render_width + x;
+            u32 bg = ctx->framebuffer[idx];
+            u8 br = (bg >> 24) & 0xFF;
+            u8 bg_g = (bg >> 16) & 0xFF;
+            u8 bb = (bg >> 8) & 0xFF;
+
+            u8 nr = (u8)(cr * alpha + br * (1.0f - alpha));
+            u8 ng = (u8)(cg * alpha + bg_g * (1.0f - alpha));
+            u8 nb = (u8)(cb * alpha + bb * (1.0f - alpha));
+            ctx->framebuffer[idx] = (nr << 24) | (ng << 16) | (nb << 8) | 0xFF;
+        }
+    }
+}
+
+// Renderiza uma sombra dinâmica oval suavizada (drop shadow de profundidade)
+static void draw_depth_shadow(int cx, int cy, int radius_x, int radius_y, float alpha) {
+    const HalVideoContext* ctx = hal_video_get_context();
+    if (!ctx || !ctx->framebuffer || alpha <= 0.0f || radius_x <= 0 || radius_y <= 0) return;
+    if (alpha > 1.0f) alpha = 1.0f;
+
+    u8 cr = 0x0B, cg = 0x13, cb = 0x22;
+
+    for (int dy = -radius_y; dy <= radius_y; dy++) {
+        int y = cy + dy;
+        if (y < 0 || y >= ctx->render_height) continue;
+        float factor = 1.0f - ((float)(dy * dy) / (float)(radius_y * radius_y));
+        if (factor < 0.0f) continue;
+        int max_dx = (int)(sqrtf(factor) * (float)radius_x);
+
+        for (int dx = -max_dx; dx <= max_dx; dx++) {
+            int x = cx + dx;
+            if (x < 0 || x >= ctx->render_width) continue;
+            int idx = y * ctx->render_width + x;
+            u32 bg = ctx->framebuffer[idx];
+            u8 br = (bg >> 24) & 0xFF;
+            u8 bg_g = (bg >> 16) & 0xFF;
+            u8 bb = (bg >> 8) & 0xFF;
+
+            u8 nr = (u8)(cr * alpha + br * (1.0f - alpha));
+            u8 ng = (u8)(cg * alpha + bg_g * (1.0f - alpha));
+            u8 nb = (u8)(cb * alpha + bb * (1.0f - alpha));
+            ctx->framebuffer[idx] = (nr << 24) | (ng << 16) | (nb << 8) | 0xFF;
+        }
+    }
+}
+
+// Renderiza o reflexo especular na água e marolas concêntricas ao redor de Link
+static void draw_link_water_reflection(const Player* p, int px, int py) {
+    const HalVideoContext* ctx = hal_video_get_context();
+    if (!ctx || !ctx->framebuffer) return;
+
+    int feet_y = py + 14;
+    int refl_h = p->is_minish ? 4 : 7;
+
+    for (int dy = 1; dy <= refl_h; dy++) {
+        int ry = feet_y + dy;
+        if (ry < 0 || ry >= ctx->render_height) continue;
+
+        float wave = sinf((float)p->anim_timer * 0.18f + (float)dy * 0.5f) * 1.5f;
+        int rx_offset = (int)wave;
+
+        float fade = 1.0f - ((float)dy / (float)(refl_h + 1));
+        float alpha = 0.32f * fade;
+        int refl_w = p->is_minish ? 6 : 12;
+        int rx_start = px + (p->is_minish ? 5 : 2) + rx_offset;
+
+        u32 water_tint = 0x38BDF8FF;
+        draw_rect_blend(rx_start, ry, refl_w, 1, water_tint, alpha);
+    }
+
+    if (p->is_moving) {
+        int ripple_phase = (p->anim_timer / 4) % 3;
+        int r_rx = 5 + ripple_phase * 2;
+        int r_ry = 2 + ripple_phase;
+        float r_alpha = 0.35f - (float)ripple_phase * 0.10f;
+        if (r_alpha > 0.0f) {
+            draw_depth_shadow(px + 8, feet_y + 1, r_rx, r_ry, r_alpha);
+        }
+    }
+}
+
+static bool scene_transition_is_active(void) {
+    return (s_scene_trans.state != SCENE_TRANS_STATE_INACTIVE);
+}
+
+static void scene_transition_request(SceneTarget target, bool is_fade, float focus_x, float focus_y) {
+    if (s_scene_trans.state != SCENE_TRANS_STATE_INACTIVE) return;
+    s_scene_trans.state = is_fade ? SCENE_TRANS_STATE_FADE_OUT : SCENE_TRANS_STATE_IRIS_OUT;
+    s_scene_trans.target = target;
+    s_scene_trans.timer = 0;
+    s_scene_trans.duration = 12; // 12 frames a 60 FPS (~200ms)
+    s_scene_trans.focus_world_x = focus_x;
+    s_scene_trans.focus_world_y = focus_y;
+    s_scene_trans.is_fade = is_fade;
+}
+
+static void transition_to_town_exec(Player* link) {
     if (dungeon_is_active()) return;
     s_in_town = true;
     s_in_village = false;
@@ -403,7 +566,7 @@ static void transition_to_town(Player* link) {
     printf("[SCENE] Entrando na Cidade de Hyrule (Hyrule Town Hub)!\n");
 }
 
-static void transition_to_overworld(Player* link, Tilemap* world_map) {
+static void transition_to_overworld_exec(Player* link, Tilemap* world_map) {
     if (dungeon_is_active()) return;
     s_in_town = false;
     s_in_village = false;
@@ -446,7 +609,7 @@ static void spawn_minish_village_entities(void) {
     printf("[MINISH VILLAGE] Entidades da Vila spawnadas (Gentari, Festari, Moradores, Toco)!\n");
 }
 
-static void transition_to_minish_village(Player* link) {
+static void transition_to_minish_village_exec(Player* link) {
     if (dungeon_is_active()) return;
     s_in_town = false;
     s_in_village = true;
@@ -464,7 +627,7 @@ static void transition_to_minish_village(Player* link) {
     printf("[SCENE] Entrando na Vila dos Minish (Picori Village)!\n");
 }
 
-static void transition_to_woods_from_village(Player* link, Tilemap* world_map) {
+static void transition_to_woods_from_village_exec(Player* link, Tilemap* world_map) {
     if (dungeon_is_active()) return;
     s_in_town = false;
     s_in_village = false;
@@ -510,7 +673,7 @@ static void spawn_north_field_entities(void) {
     printf("[NORTH FIELD] Entidades de North Hyrule Field spawnadas (Moblins, Peahat)!\n");
 }
 
-static void transition_to_south_field(Player* link) {
+static void transition_to_south_field_exec(Player* link) {
     if (dungeon_is_active()) return;
     s_in_town = false;
     s_in_village = false;
@@ -527,7 +690,7 @@ static void transition_to_south_field(Player* link) {
     printf("[SCENE] Entrando em South Hyrule Field (Planicies do Sul)!\n");
 }
 
-static void transition_to_north_field(Player* link) {
+static void transition_to_north_field_exec(Player* link) {
     if (dungeon_is_active()) return;
     s_in_town = false;
     s_in_village = false;
@@ -544,7 +707,7 @@ static void transition_to_north_field(Player* link) {
     printf("[SCENE] Entrando em North Hyrule Field (Planicies do Norte)!\n");
 }
 
-static void transition_to_town_from_south(Player* link) {
+static void transition_to_town_from_south_exec(Player* link) {
     if (dungeon_is_active()) return;
     s_in_town = true;
     s_in_village = false;
@@ -562,7 +725,7 @@ static void transition_to_town_from_south(Player* link) {
     printf("[SCENE] Retornando a Hyrule Town via Portao Sul!\n");
 }
 
-static void transition_to_town_from_north(Player* link) {
+static void transition_to_town_from_north_exec(Player* link) {
     if (dungeon_is_active()) return;
     s_in_town = true;
     s_in_village = false;
@@ -594,7 +757,7 @@ static void spawn_crenel_base_entities(void) {
     printf("[CRENEL BASE] Entidades de Mount Crenel Base spawnadas (Tektites, Spiny Beetles, Business Scrub)!\n");
 }
 
-static void transition_to_crenel_base(Player* link) {
+static void transition_to_crenel_base_exec(Player* link) {
     if (dungeon_is_active()) return;
     s_in_town = false;
     s_in_village = false;
@@ -611,7 +774,7 @@ static void transition_to_crenel_base(Player* link) {
     printf("[SCENE] Entrando em Mount Crenel Base (Base do Monte Crenel)!\n");
 }
 
-static void transition_to_north_field_from_crenel(Player* link) {
+static void transition_to_north_field_from_crenel_exec(Player* link) {
     if (dungeon_is_active()) return;
     s_in_town = false;
     s_in_village = false;
@@ -639,7 +802,7 @@ static void spawn_melari_mines_entities(void) {
     printf("[MELARI MINES] Entidades de Melari's Mines spawnadas (Mestre Melari, 3 Mountain Minish)!\n");
 }
 
-static void transition_to_melari_mines(Player* link) {
+static void transition_to_melari_mines_exec(Player* link) {
     if (dungeon_is_active()) return;
     s_in_town = false;
     s_in_village = false;
@@ -656,7 +819,7 @@ static void transition_to_melari_mines(Player* link) {
     printf("[SCENE] Entrando em Melari's Mines (Minas de Melari - Forja da White Sword)!\n");
 }
 
-static void transition_to_crenel_base_from_melari(Player* link) {
+static void transition_to_crenel_base_from_melari_exec(Player* link) {
     if (dungeon_is_active()) return;
     s_in_town = false;
     s_in_village = false;
@@ -673,7 +836,7 @@ static void transition_to_crenel_base_from_melari(Player* link) {
     printf("[SCENE] Retornando a Mount Crenel Base a partir das Minas de Melari!\n");
 }
 
-static void transition_to_cave_of_flames(Player* link) {
+static void transition_to_cave_of_flames_exec(Player* link) {
     if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active()) return;
     s_in_town = false;
     s_in_village = false;
@@ -685,7 +848,7 @@ static void transition_to_cave_of_flames(Player* link) {
     dungeon_flames_enter(&link->x, &link->y, &link->dir);
 }
 
-static void transition_to_sanctuary(Player* link) {
+static void transition_to_sanctuary_exec(Player* link) {
     if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active()) return;
     s_in_town = false;
     s_in_village = false;
@@ -708,7 +871,7 @@ static void spawn_castor_wilds_entities(void) {
     printf("[CASTOR WILDS] Entidades de Castor Wilds spawnadas (3 Ropes, Pedestal do Arco e Flechas)!\n");
 }
 
-static void transition_to_castor_wilds(Player* link) {
+static void transition_to_castor_wilds_exec(Player* link) {
     if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active()) return;
     s_in_town = false;
     s_in_village = false;
@@ -727,7 +890,7 @@ static void transition_to_castor_wilds(Player* link) {
     printf("[SCENE] Entrando no Pantano de Castor Wilds (Castor Wilds Swamp)!\n");
 }
 
-static void transition_to_south_field_from_castor(Player* link) {
+static void transition_to_south_field_from_castor_exec(Player* link) {
     if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active()) return;
     s_in_town = false;
     s_in_village = false;
@@ -761,7 +924,7 @@ static void spawn_mole_cave_entities(bool has_mole_mitts) {
     printf("[MOLE CAVE] Entidades da Mole Cave spawnadas (Mole Mitts, Keese, ChuChu, Baus de Ouro)!\n");
 }
 
-static void transition_to_mole_cave(Player* link) {
+static void transition_to_mole_cave_exec(Player* link) {
     if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active()) return;
     s_in_town = false;
     s_in_village = false;
@@ -780,7 +943,7 @@ static void transition_to_mole_cave(Player* link) {
     printf("[SCENE] Entrando na Caverna das Luvas de Toupeira (Mole Cave)!\n");
 }
 
-static void transition_to_castor_from_cave(Player* link) {
+static void transition_to_castor_from_cave_exec(Player* link) {
     if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active()) return;
     s_in_town = false;
     s_in_village = false;
@@ -830,7 +993,7 @@ static void spawn_armos_interior_entities(bool is_active) {
     printf("[ARMOS INTERIOR] Mecanismo interno do Armos spawnado (Interruptor Central)!\n");
 }
 
-static void transition_to_wind_ruins(Player* link) {
+static void transition_to_wind_ruins_exec(Player* link) {
     if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active()) return;
     s_in_town = false;
     s_in_village = false;
@@ -851,7 +1014,7 @@ static void transition_to_wind_ruins(Player* link) {
     printf("[SCENE] Entrando em Wind Ruins (Ruinas do Vento)!\n");
 }
 
-static void transition_to_castor_from_ruins(Player* link) {
+static void transition_to_castor_from_ruins_exec(Player* link) {
     if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active()) return;
     s_in_town = false;
     s_in_village = false;
@@ -872,7 +1035,7 @@ static void transition_to_castor_from_ruins(Player* link) {
     printf("[SCENE] Retornando a Castor Wilds a partir das Ruinas do Vento!\n");
 }
 
-static void transition_to_armos_interior(Player* link) {
+static void transition_to_armos_interior_exec(Player* link) {
     s_in_town = false;
     s_in_village = false;
     s_in_south_field = false;
@@ -892,7 +1055,7 @@ static void transition_to_armos_interior(Player* link) {
     printf("[SCENE] Minish Link entrando no interior do robo Armos!\n");
 }
 
-static void transition_to_wind_ruins_from_armos(Player* link) {
+static void transition_to_wind_ruins_from_armos_exec(Player* link) {
     s_in_town = false;
     s_in_village = false;
     s_in_south_field = false;
@@ -924,7 +1087,7 @@ static void spawn_library_entities(void) {
     printf("[LIBRARY] Entidades da Biblioteca Real spawnadas (Bibliotecaria, Urna Minish, Anciao Librari)!\n");
 }
 
-static void transition_to_library(Player* link) {
+static void transition_to_library_exec(Player* link) {
     s_in_town = s_in_village = s_in_south_field = s_in_north_field = false;
     s_in_crenel_base = s_in_melari_mines = s_in_castor_wilds = s_in_mole_cave = false;
     s_in_wind_ruins = s_in_armos_interior = s_in_lake_hylia = false;
@@ -938,7 +1101,7 @@ static void transition_to_library(Player* link) {
     printf("[SCENE] Entrando na Biblioteca Real da Cidade de Hyrule!\n");
 }
 
-static void transition_to_town_from_library(Player* link) {
+static void transition_to_town_from_library_exec(Player* link) {
     s_in_library = false;
     s_in_town = true;
     link->x = 240.0f; // Porta da biblioteca na praça da cidade
@@ -964,7 +1127,7 @@ static void spawn_lake_hylia_entities(void) {
     printf("[LAKE HYLIA] Entidades do Lago Hylia spawnadas (Octoroks, Tektites, Toco da Ilha, Prefeito Hagen)!\n");
 }
 
-static void transition_to_lake_hylia(Player* link) {
+static void transition_to_lake_hylia_exec(Player* link) {
     s_in_town = s_in_village = s_in_north_field = s_in_south_field = false;
     s_in_crenel_base = s_in_melari_mines = s_in_castor_wilds = s_in_mole_cave = false;
     s_in_wind_ruins = s_in_armos_interior = s_in_library = false;
@@ -978,7 +1141,7 @@ static void transition_to_lake_hylia(Player* link) {
     printf("[SCENE] Entrando no Grande Lago Hylia (Lake Hylia)!\n");
 }
 
-static void transition_to_south_field_from_lake(Player* link) {
+static void transition_to_south_field_from_lake_exec(Player* link) {
     s_in_lake_hylia = false;
     s_in_south_field = true;
     link->x = 360.0f;
@@ -988,6 +1151,276 @@ static void transition_to_south_field_from_lake(Player* link) {
     spawn_south_field_entities();
     hal_audio_play_bgm(BGM_HYRULE_OVERWORLD);
     printf("[SCENE] Retornando a South Hyrule Field vindo do Lago Hylia!\n");
+}
+
+static void execute_scene_change(SceneTarget target, Player* link, Tilemap* world_map) {
+    switch (target) {
+        case SCENE_TARGET_TOWN: transition_to_town_exec(link); break;
+        case SCENE_TARGET_OVERWORLD: transition_to_overworld_exec(link, world_map); break;
+        case SCENE_TARGET_MINISH_VILLAGE: transition_to_minish_village_exec(link); break;
+        case SCENE_TARGET_WOODS_FROM_VILLAGE: transition_to_woods_from_village_exec(link, world_map); break;
+        case SCENE_TARGET_SOUTH_FIELD: transition_to_south_field_exec(link); break;
+        case SCENE_TARGET_NORTH_FIELD: transition_to_north_field_exec(link); break;
+        case SCENE_TARGET_TOWN_FROM_SOUTH: transition_to_town_from_south_exec(link); break;
+        case SCENE_TARGET_TOWN_FROM_NORTH: transition_to_town_from_north_exec(link); break;
+        case SCENE_TARGET_CRENEL_BASE: transition_to_crenel_base_exec(link); break;
+        case SCENE_TARGET_NORTH_FIELD_FROM_CRENEL: transition_to_north_field_from_crenel_exec(link); break;
+        case SCENE_TARGET_MELARI_MINES: transition_to_melari_mines_exec(link); break;
+        case SCENE_TARGET_CRENEL_FROM_MELARI: transition_to_crenel_base_from_melari_exec(link); break;
+        case SCENE_TARGET_CAVE_OF_FLAMES: transition_to_cave_of_flames_exec(link); break;
+        case SCENE_TARGET_SANCTUARY: transition_to_sanctuary_exec(link); break;
+        case SCENE_TARGET_CASTOR_WILDS: transition_to_castor_wilds_exec(link); break;
+        case SCENE_TARGET_SOUTH_FIELD_FROM_CASTOR: transition_to_south_field_from_castor_exec(link); break;
+        case SCENE_TARGET_MOLE_CAVE: transition_to_mole_cave_exec(link); break;
+        case SCENE_TARGET_CASTOR_FROM_CAVE: transition_to_castor_from_cave_exec(link); break;
+        case SCENE_TARGET_WIND_RUINS: transition_to_wind_ruins_exec(link); break;
+        case SCENE_TARGET_CASTOR_FROM_RUINS: transition_to_castor_from_ruins_exec(link); break;
+        case SCENE_TARGET_ARMOS_INTERIOR: transition_to_armos_interior_exec(link); break;
+        case SCENE_TARGET_WIND_RUINS_FROM_ARMOS: transition_to_wind_ruins_from_armos_exec(link); break;
+        case SCENE_TARGET_LIBRARY: transition_to_library_exec(link); break;
+        case SCENE_TARGET_TOWN_FROM_LIBRARY: transition_to_town_from_library_exec(link); break;
+        case SCENE_TARGET_LAKE_HYLIA: transition_to_lake_hylia_exec(link); break;
+        case SCENE_TARGET_SOUTH_FIELD_FROM_LAKE: transition_to_south_field_from_lake_exec(link); break;
+        default: break;
+    }
+}
+
+static bool scene_transition_update(Player* link, Tilemap* world_map, Camera* cam, Tilemap* active_map) {
+    if (s_scene_trans.state == SCENE_TRANS_STATE_INACTIVE) return false;
+
+    if (link) {
+        link->is_moving = false;
+        link->is_rolling = false;
+        link->is_attacking = false;
+    }
+
+    if (s_scene_trans.state == SCENE_TRANS_STATE_IRIS_OUT || s_scene_trans.state == SCENE_TRANS_STATE_FADE_OUT) {
+        s_scene_trans.timer++;
+        if (s_scene_trans.timer >= s_scene_trans.duration) {
+            s_scene_trans.state = SCENE_TRANS_STATE_BLACK_HOLD;
+            s_scene_trans.timer = 0;
+            execute_scene_change(s_scene_trans.target, link, world_map);
+            if (link) {
+                s_scene_trans.focus_world_x = link->x + 8.0f;
+                s_scene_trans.focus_world_y = link->y + 12.0f;
+                if (cam) {
+                    const HalVideoContext* ctx = hal_video_get_context();
+                    int vw = ctx ? ctx->render_width : 240;
+                    int vh = ctx ? ctx->render_height : 160;
+                    camera_update(cam, link->x, link->y, vw, vh, active_map);
+                }
+            }
+        }
+    } else if (s_scene_trans.state == SCENE_TRANS_STATE_BLACK_HOLD) {
+        s_scene_trans.timer++;
+        if (s_scene_trans.timer >= 2) {
+            s_scene_trans.state = s_scene_trans.is_fade ? SCENE_TRANS_STATE_FADE_IN : SCENE_TRANS_STATE_IRIS_IN;
+            s_scene_trans.timer = 0;
+            if (link) {
+                s_scene_trans.focus_world_x = link->x + 8.0f;
+                s_scene_trans.focus_world_y = link->y + 12.0f;
+            }
+        }
+    } else if (s_scene_trans.state == SCENE_TRANS_STATE_IRIS_IN || s_scene_trans.state == SCENE_TRANS_STATE_FADE_IN) {
+        s_scene_trans.timer++;
+        if (s_scene_trans.timer >= s_scene_trans.duration) {
+            s_scene_trans.state = SCENE_TRANS_STATE_INACTIVE;
+            s_scene_trans.target = SCENE_TARGET_NONE;
+        }
+    }
+
+    return true;
+}
+
+static void scene_transition_render(const Camera* cam) {
+    if (s_scene_trans.state == SCENE_TRANS_STATE_INACTIVE) return;
+    const HalVideoContext* ctx = hal_video_get_context();
+    if (!ctx || !ctx->framebuffer) return;
+
+    int w = ctx->render_width;
+    int h = ctx->render_height;
+
+    if (s_scene_trans.state == SCENE_TRANS_STATE_BLACK_HOLD) {
+        for (int i = 0; i < w * h; i++) {
+            ctx->framebuffer[i] = 0x000000FF;
+        }
+        return;
+    }
+
+    if (s_scene_trans.state == SCENE_TRANS_STATE_FADE_OUT || s_scene_trans.state == SCENE_TRANS_STATE_FADE_IN) {
+        float t = (float)s_scene_trans.timer / (float)s_scene_trans.duration;
+        if (t < 0.0f) t = 0.0f;
+        if (t > 1.0f) t = 1.0f;
+        float alpha = (s_scene_trans.state == SCENE_TRANS_STATE_FADE_OUT) ? t : (1.0f - t);
+        draw_rect_blend(0, 0, w, h, 0x000000FF, alpha);
+        return;
+    }
+
+    if (s_scene_trans.state == SCENE_TRANS_STATE_IRIS_OUT || s_scene_trans.state == SCENE_TRANS_STATE_IRIS_IN) {
+        float t = (float)s_scene_trans.timer / (float)s_scene_trans.duration;
+        if (t < 0.0f) t = 0.0f;
+        if (t > 1.0f) t = 1.0f;
+
+        float max_r = 340.0f;
+        float r = (s_scene_trans.state == SCENE_TRANS_STATE_IRIS_OUT) ? (max_r * (1.0f - t)) : (max_r * t);
+        if (r < 0.0f) r = 0.0f;
+
+        int cx = 0, cy = 0;
+        if (cam) {
+            map_world_to_screen(cam, s_scene_trans.focus_world_x, s_scene_trans.focus_world_y, &cx, &cy);
+        } else {
+            cx = w / 2;
+            cy = h / 2;
+        }
+
+        if (r <= 0.5f) {
+            for (int i = 0; i < w * h; i++) {
+                ctx->framebuffer[i] = 0x000000FF;
+            }
+            return;
+        }
+
+        float r2 = r * r;
+        for (int y = 0; y < h; y++) {
+            int dy = y - cy;
+            float dy2 = (float)(dy * dy);
+            u32* row_pixels = &ctx->framebuffer[y * w];
+
+            if (dy2 >= r2) {
+                for (int x = 0; x < w; x++) {
+                    row_pixels[x] = 0x000000FF;
+                }
+            } else {
+                int dx = (int)sqrtf(r2 - dy2);
+                int left_end = cx - dx;
+                int right_start = cx + dx + 1;
+
+                if (left_end > w) left_end = w;
+                if (left_end > 0) {
+                    for (int x = 0; x < left_end; x++) {
+                        row_pixels[x] = 0x000000FF;
+                    }
+                }
+
+                if (right_start < 0) right_start = 0;
+                if (right_start < w) {
+                    for (int x = right_start; x < w; x++) {
+                        row_pixels[x] = 0x000000FF;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+// WRAPPERS PÚBLICOS DE TRANSIÇÃO (DISPARAM O IRIS WIPE AUTOMÁTICO)
+// ----------------------------------------------------------------------------
+static void transition_to_town(Player* link) {
+    if (dungeon_is_active() || scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_TOWN, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_overworld(Player* link, Tilemap* world_map) {
+    (void)world_map;
+    if (dungeon_is_active() || scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_OVERWORLD, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_minish_village(Player* link) {
+    if (dungeon_is_active() || scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_MINISH_VILLAGE, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_woods_from_village(Player* link, Tilemap* world_map) {
+    (void)world_map;
+    if (dungeon_is_active() || scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_WOODS_FROM_VILLAGE, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_south_field(Player* link) {
+    if (dungeon_is_active() || scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_SOUTH_FIELD, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_north_field(Player* link) {
+    if (dungeon_is_active() || scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_NORTH_FIELD, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_town_from_south(Player* link) {
+    if (dungeon_is_active() || scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_TOWN_FROM_SOUTH, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_town_from_north(Player* link) {
+    if (dungeon_is_active() || scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_TOWN_FROM_NORTH, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_crenel_base(Player* link) {
+    if (dungeon_is_active() || scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_CRENEL_BASE, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_north_field_from_crenel(Player* link) {
+    if (dungeon_is_active() || scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_NORTH_FIELD_FROM_CRENEL, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_melari_mines(Player* link) {
+    if (dungeon_is_active() || scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_MELARI_MINES, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_crenel_base_from_melari(Player* link) {
+    if (dungeon_is_active() || scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_CRENEL_FROM_MELARI, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_cave_of_flames(Player* link) {
+    if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active() || scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_CAVE_OF_FLAMES, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_sanctuary(Player* link) {
+    if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active() || scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_SANCTUARY, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_castor_wilds(Player* link) {
+    if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active() || scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_CASTOR_WILDS, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_south_field_from_castor(Player* link) {
+    if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active() || scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_SOUTH_FIELD_FROM_CASTOR, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_mole_cave(Player* link) {
+    if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active() || scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_MOLE_CAVE, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_castor_from_cave(Player* link) {
+    if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active() || scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_CASTOR_FROM_CAVE, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_wind_ruins(Player* link) {
+    if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active() || scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_WIND_RUINS, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_castor_from_ruins(Player* link) {
+    if (dungeon_is_active() || dungeon_flames_is_active() || sanctuary_is_active() || scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_CASTOR_FROM_RUINS, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_armos_interior(Player* link) {
+    if (scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_ARMOS_INTERIOR, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_wind_ruins_from_armos(Player* link) {
+    if (scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_WIND_RUINS_FROM_ARMOS, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_library(Player* link) {
+    if (scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_LIBRARY, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_town_from_library(Player* link) {
+    if (scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_TOWN_FROM_LIBRARY, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_lake_hylia(Player* link) {
+    if (scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_LAKE_HYLIA, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
+}
+static void transition_to_south_field_from_lake(Player* link) {
+    if (scene_transition_is_active()) return;
+    scene_transition_request(SCENE_TARGET_SOUTH_FIELD_FROM_LAKE, false, link ? link->x + 8.0f : 240.0f, link ? link->y + 12.0f : 160.0f);
 }
 
 static void handle_fast_travel_transition(int new_map_id, float new_x, float new_y, Player* link, Tilemap* world_map) {
@@ -1298,32 +1731,6 @@ static void draw_link_transformation_effects(const Player* p, int cx, int cy) {
     }
 }
 
-static void draw_rect_blend(int rx, int ry, int rw, int rh, u32 color, float alpha) {
-    const HalVideoContext* ctx = hal_video_get_context();
-    if (!ctx || !ctx->framebuffer || alpha <= 0.0f) return;
-    if (alpha > 1.0f) alpha = 1.0f;
-    u8 cr = (color >> 24) & 0xFF;
-    u8 cg = (color >> 16) & 0xFF;
-    u8 cb = (color >> 8) & 0xFF;
-
-    for (int y = ry; y < ry + rh; y++) {
-        if (y < 0 || y >= ctx->render_height) continue;
-        for (int x = rx; x < rx + rw; x++) {
-            if (x < 0 || x >= ctx->render_width) continue;
-            int idx = y * ctx->render_width + x;
-            u32 bg = ctx->framebuffer[idx];
-            u8 br = (bg >> 24) & 0xFF;
-            u8 bg_g = (bg >> 16) & 0xFF;
-            u8 bb = (bg >> 8) & 0xFF;
-
-            u8 nr = (u8)(cr * alpha + br * (1.0f - alpha));
-            u8 ng = (u8)(cg * alpha + bg_g * (1.0f - alpha));
-            u8 nb = (u8)(cb * alpha + bb * (1.0f - alpha));
-            ctx->framebuffer[idx] = (nr << 24) | (ng << 16) | (nb << 8) | 0xFF;
-        }
-    }
-}
-
 // Renderiza efeitos de água de natação e mergulho com as Nadadeiras de Zora
 static void draw_link_swimming_effects(const Player* p, int px, int py) {
     if (!p->is_swimming) return;
@@ -1501,10 +1908,29 @@ static void draw_link(const Player* p, const Camera* cam) {
     int px, py;
     map_world_to_screen(cam, p->x, p->y, &px, &py);
 
-    // Sombra dinâmica no solo durante o salto vertical e planeio com a Capa de Roc
-    if (p->z > 0.0f) {
-        rocs_cape_render_shadow(cam, p->x, p->y, p->z);
+    // Sombra dinâmica de profundidade no solo
+    if (!p->is_swimming) {
+        if (p->z > 0.0f) {
+            rocs_cape_render_shadow(cam, p->x, p->y, p->z);
+        } else {
+            if (p->is_minish) {
+                draw_depth_shadow(px + 8, py + 14, 3, 1, 0.35f);
+            } else {
+                draw_depth_shadow(px + 8, py + 14, 7, 3, 0.40f);
+            }
+        }
     }
+
+    // Reflexo aquático e marolas quando em água rasa ou chafariz
+    if (!p->is_swimming && p->z <= 2.0f && s_current_active_map) {
+        bool near_water = map_is_water(s_current_active_map, p->x + 8.0f, p->y + 14.0f) ||
+                          map_is_water(s_current_active_map, p->x + 8.0f, p->y + 18.0f) ||
+                          (s_in_town && p->x >= 236.0f && p->x <= 324.0f && p->y >= 148.0f && p->y <= 236.0f);
+        if (near_water) {
+            draw_link_water_reflection(p, px, py);
+        }
+    }
+
     int render_offset_y = (int)p->z;
     py -= render_offset_y;
 
@@ -2908,6 +3334,9 @@ int main(int argc, char* argv[]) {
                               (s_in_south_field ? s_south_field_map :
                               (s_in_north_field ? s_north_field_map : world_map)))))))))))))))))));
 
+        s_current_active_map = active_map;
+        bool in_scene_trans = scene_transition_update(&link, world_map, &camera, active_map);
+
         if (inventory_is_paused()) {
             if (hal_input_is_pressed(KEY_UP))    inventory_cursor_move(0, -1);
             if (hal_input_is_pressed(KEY_DOWN))  inventory_cursor_move(0, 1);
@@ -2916,6 +3345,11 @@ int main(int argc, char* argv[]) {
             if (hal_input_is_pressed(KEY_A))     inventory_assign_to_slot_a();
             if (hal_input_is_pressed(KEY_B))     inventory_assign_to_slot_b();
         } else {
+            if (in_scene_trans) {
+                link.is_moving = false;
+                link.is_rolling = false;
+                link.is_attacking = false;
+            }
             if (link.is_transforming) {
             link.transform_timer--;
             link.is_moving = false;
@@ -3774,6 +4208,7 @@ int main(int argc, char* argv[]) {
                 if (link.y > (active_map->height * TILE_SIZE) - 32.0f) link.y = (active_map->height * TILE_SIZE) - 32.0f;
 
                 // Transições de Mapa
+                if (!scene_transition_is_active()) {
                 if (s_in_village) {
                     // Saída sul da Vila dos Minish de volta ao Tronco Oco
                     if (link.x >= 232.0f && link.x <= 264.0f && link.y >= (active_map->height * TILE_SIZE) - 36.0f && link.dir == DIR_DOWN) {
@@ -3926,6 +4361,7 @@ int main(int argc, char* argv[]) {
                         dungeon_enter(&link.x, &link.y, &link.dir);
                     }
                 }
+                } // Fim de if (!scene_transition_is_active())
             }
 
             // Checagem de Entrada em Passagem Secreta revelada por explosão de Bomba
@@ -5147,6 +5583,9 @@ int main(int argc, char* argv[]) {
         if (inventory_is_paused()) {
             inventory_render_pause_menu(ctx->render_width, ctx->render_height, link.hearts, link.max_hearts, link.rupees);
         }
+
+        // 12. Efeito de Transição de Cena (Iris Circular Wipe / Fade In & Out)
+        scene_transition_render(&camera);
 
         // --------------------------------------------------------------------
         // 6. APRESENTAÇÃO NA TELA (SDL2 GPU)
