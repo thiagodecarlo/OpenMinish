@@ -5765,6 +5765,7 @@ int main(int argc, char* argv[]) {
     veil_clouds_shutdown();
     rocs_cape_shutdown();
     startup_menu_shutdown();
+    intro_cutscene_shutdown();
     map_destroy(world_map);
     hal_audio_shutdown();
     hal_input_shutdown();

@@ -18,10 +18,16 @@
 #include "hal/font.h"
 #include "hal/save.h"
 #include "hal/prologue_story.h"
+#include "hal/texture.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+
+static Texture* s_capcom_tex      = NULL;
+static Texture* s_nintendo_tex    = NULL;
+static Texture* s_title_bg_tex    = NULL;
+static Texture* s_file_select_tex = NULL;
 
 #define PI_F 3.14159265358979323846f
 #define MAX_NAME_CHARS 6
@@ -206,7 +212,21 @@ void startup_menu_init(void) {
 
     sm_refresh_slots();
     prologue_story_init();
-    printf("[STARTUP] Maquina de Estados de Abertura iniciada no estado: CAPCOM_LOGO\n");
+
+    if (!s_capcom_tex) {
+        s_capcom_tex = texture_load_bmp("assets/ui/startup/capcom_logo.bmp");
+    }
+    if (!s_nintendo_tex) {
+        s_nintendo_tex = texture_load_bmp("assets/ui/startup/nintendo_logo.bmp");
+    }
+    if (!s_title_bg_tex) {
+        s_title_bg_tex = texture_load_bmp("assets/ui/startup/title_screen_bg.bmp");
+    }
+    if (!s_file_select_tex) {
+        s_file_select_tex = texture_load_bmp("assets/ui/startup/file_select_bg.bmp");
+    }
+
+    printf("[STARTUP] Maquina de Estados de Abertura iniciada no estado: CAPCOM_LOGO (Assets carregados)\n");
 }
 
 bool startup_menu_is_active(void) {
@@ -240,6 +260,10 @@ void startup_menu_return_to_title(void) {
 }
 
 void startup_menu_shutdown(void) {
+    if (s_capcom_tex)      { texture_free(s_capcom_tex);      s_capcom_tex = NULL; }
+    if (s_nintendo_tex)    { texture_free(s_nintendo_tex);    s_nintendo_tex = NULL; }
+    if (s_title_bg_tex)    { texture_free(s_title_bg_tex);    s_title_bg_tex = NULL; }
+    if (s_file_select_tex) { texture_free(s_file_select_tex); s_file_select_tex = NULL; }
     prologue_story_shutdown();
     s_menu.is_active = false;
     s_menu.state = STARTUP_STATE_FINISHED;
@@ -638,24 +662,28 @@ void startup_menu_render(void) {
         // 1. TELA CAPCOM
         // --------------------------------------------------------------------
         case STARTUP_STATE_CAPCOM_LOGO: {
-            sm_draw_rect(0, 0, W, H, 0xFFFFFFFF); // Fundo branco
+            if (s_capcom_tex && s_capcom_tex->pixels) {
+                texture_draw(s_capcom_tex, 0, 0, W, H, 0, 0);
+            } else {
+                sm_draw_rect(0, 0, W, H, 0xFFFFFFFF); // Fundo branco
 
-            // Letras da CAPCOM estilizadas (Azul 0x003A8CFF e Amarelo 0xFFCC00FF)
-            const char* capcom = "C A P C O M";
-            int tw = font_get_text_width(capcom);
-            int tx = (W - tw) / 2;
-            int ty = (H / 2) - 12;
+                // Letras da CAPCOM estilizadas (Azul 0x003A8CFF e Amarelo 0xFFCC00FF)
+                const char* capcom = "C A P C O M";
+                int tw = font_get_text_width(capcom);
+                int tx = (W - tw) / 2;
+                int ty = (H / 2) - 12;
 
-            // Borda azul em torno das letras
-            font_draw_text(tx - 1, ty,     capcom, 0x003A8CFF, false);
-            font_draw_text(tx + 1, ty,     capcom, 0x003A8CFF, false);
-            font_draw_text(tx,     ty - 1, capcom, 0x003A8CFF, false);
-            font_draw_text(tx,     ty + 1, capcom, 0x003A8CFF, false);
-            font_draw_text(tx,     ty,     capcom, 0xFFCC00FF, false);
+                // Borda azul em torno das letras
+                font_draw_text(tx - 1, ty,     capcom, 0x003A8CFF, false);
+                font_draw_text(tx + 1, ty,     capcom, 0x003A8CFF, false);
+                font_draw_text(tx,     ty - 1, capcom, 0x003A8CFF, false);
+                font_draw_text(tx,     ty + 1, capcom, 0x003A8CFF, false);
+                font_draw_text(tx,     ty,     capcom, 0xFFCC00FF, false);
 
-            const char* c_copy = "(C) CAPCOM CO., LTD. 2004";
-            int cw = font_get_text_width(c_copy);
-            font_draw_text((W - cw) / 2, ty + 24, c_copy, 0x64748BFF, false);
+                const char* c_copy = "(C) CAPCOM CO., LTD. 2004";
+                int cw = font_get_text_width(c_copy);
+                font_draw_text((W - cw) / 2, ty + 24, c_copy, 0x64748BFF, false);
+            }
 
             // Cortina de fade
             if (s_menu.alpha < 1.0f) {
@@ -668,25 +696,29 @@ void startup_menu_render(void) {
         // 2. TELA NINTENDO
         // --------------------------------------------------------------------
         case STARTUP_STATE_NINTENDO_LOGO: {
-            sm_draw_rect(0, 0, W, H, 0xFFFFFFFF);
+            if (s_nintendo_tex && s_nintendo_tex->pixels) {
+                texture_draw(s_nintendo_tex, 0, 0, W, H, 0, 0);
+            } else {
+                sm_draw_rect(0, 0, W, H, 0xFFFFFFFF);
 
-            // Badge vermelha arredondada da Nintendo
-            int bw = 96;
-            int bh = 24;
-            int bx = (W - bw) / 2;
-            int by = (H - bh) / 2 - 4;
+                // Badge vermelha arredondada da Nintendo
+                int bw = 96;
+                int bh = 24;
+                int bx = (W - bw) / 2;
+                int by = (H - bh) / 2 - 4;
 
-            sm_draw_rect(bx + 4, by, bw - 8, bh, 0xE60012FF);
-            sm_draw_rect(bx, by + 4, bw, bh - 8, 0xE60012FF);
-            // Cantos
-            sm_draw_pixel(bx + 1, by + 1, 0xE60012FF);
-            sm_draw_pixel(bx + bw - 2, by + 1, 0xE60012FF);
-            sm_draw_pixel(bx + 1, by + bh - 2, 0xE60012FF);
-            sm_draw_pixel(bx + bw - 2, by + bh - 2, 0xE60012FF);
+                sm_draw_rect(bx + 4, by, bw - 8, bh, 0xE60012FF);
+                sm_draw_rect(bx, by + 4, bw, bh - 8, 0xE60012FF);
+                // Cantos
+                sm_draw_pixel(bx + 1, by + 1, 0xE60012FF);
+                sm_draw_pixel(bx + bw - 2, by + 1, 0xE60012FF);
+                sm_draw_pixel(bx + 1, by + bh - 2, 0xE60012FF);
+                sm_draw_pixel(bx + bw - 2, by + bh - 2, 0xE60012FF);
 
-            const char* nin = "Nintendo";
-            int nw = font_get_text_width(nin);
-            font_draw_text((W - nw) / 2, by + 8, nin, 0xFFFFFFFF, false);
+                const char* nin = "Nintendo";
+                int nw = font_get_text_width(nin);
+                font_draw_text((W - nw) / 2, by + 8, nin, 0xFFFFFFFF, false);
+            }
 
             if (s_menu.alpha < 1.0f) {
                 sm_draw_rect_blend(0, 0, W, H, 0x000000FF, 1.0f - s_menu.alpha);
@@ -706,96 +738,134 @@ void startup_menu_render(void) {
         // 3. TELA DE TÍTULO (THE MINISH CAP & PRESS START)
         // --------------------------------------------------------------------
         case STARTUP_STATE_TITLE_SCREEN: {
-            // Gradiente de fundo noturno real
-            for (int y = 0; y < H; y++) {
-                float t = (float)y / (float)H;
-                u8 r = (u8)(10 + t * 20);
-                u8 g = (u8)(16 + t * 25);
-                u8 b = (u8)(36 + t * 30);
-                u32 line_color = (r << 24) | (g << 16) | (b << 8) | 0xFF;
-                sm_draw_rect(0, y, W, 1, line_color);
-            }
+            if (s_title_bg_tex && s_title_bg_tex->pixels) {
+                texture_draw(s_title_bg_tex, 0, 0, W, H, 0, 0);
 
-            // Partículas de poeira mágica/luz
-            for (int i = 0; i < 20; i++) {
-                int px = (int)s_menu.motes_x[i];
-                int py = (int)s_menu.motes_y[i];
-                sm_draw_pixel(px, py, 0xFDE047CC);
-                sm_draw_pixel(px + 1, py, 0xFEF08ACC);
-            }
+                // Partículas dinâmicas flutuantes
+                for (int i = 0; i < 20; i++) {
+                    int px = (int)s_menu.motes_x[i];
+                    int py = (int)s_menu.motes_y[i];
+                    sm_draw_pixel(px, py, 0xFDE047CC);
+                    sm_draw_pixel(px + 1, py, 0xFEF08ACC);
+                }
 
-            // Pedestal de Pedra Sagrado da Four Sword
-            int px = W / 2;
-            int py = 120;
+                // Pulso de luz mística na Four Sword
+                int px = W / 2;
+                int py = 118;
+                float pulse = 0.5f + 0.5f * sinf(s_menu.timer * 0.08f);
+                int glow_r = (int)(6.0f + pulse * 4.0f);
+                for (int ang = 0; ang < 360; ang += 45) {
+                    float rad = ang * (PI_F / 180.0f);
+                    int gx = px + (int)(cosf(rad) * glow_r);
+                    int gy = py - 4 + (int)(sinf(rad) * (glow_r * 0.45f));
+                    sm_draw_pixel(gx, gy, 0xFDE047EE);
+                }
 
-            // Degraus de pedra
-            sm_draw_rect(px - 38, py + 8, 76, 8, 0x334155FF);
-            sm_draw_rect(px - 28, py + 2, 56, 7, 0x475569FF);
-            sm_draw_rect(px - 18, py - 4, 36, 7, 0x64748BFF);
+                // Prompt piscante "PRESS START"
+                if (s_menu.press_start_timer < 34) {
+                    const char* p_start = "PRESS START";
+                    int psw = font_get_text_width(p_start);
+                    int psx = (W - psw) / 2;
+                    int psy = 138;
+                    font_draw_text(psx + 1, psy + 1, p_start, 0x0F172AFF, false);
+                    font_draw_text(psx, psy, p_start, 0xFEF08AFF, true);
+                }
 
-            // A Four Sword cravada na rocha
-            // Lâmina de prata
-            sm_draw_rect(px - 1, py - 24, 3, 20, 0xF8FAFCFF);
-            sm_draw_pixel(px, py - 24, 0x38BDF8FF);
-            // Guarda dourada em cruz
-            sm_draw_rect(px - 8, py - 27, 17, 3, 0xFBBF24FF);
-            // Gema mística azul no centro da cruz
-            sm_draw_pixel(px, py - 26, 0x06B6D4FF);
-            // Empunhadura e pomo de ouro
-            sm_draw_rect(px - 1, py - 33, 3, 6, 0x15803DFF);
-            sm_draw_pixel(px, py - 34, 0xFBBF24FF);
+                // Copyright oficial
+                const char* c_foot = "(C) 2004 Nintendo / CAPCOM Co., Ltd.";
+                int cfw = font_get_text_width(c_foot);
+                font_draw_text((W - cfw) / 2, 150, c_foot, 0x94A3B8FF, false);
 
-            // Anel de luz pulsante na base da lâmina
-            float pulse = 0.5f + 0.5f * sinf(s_menu.timer * 0.08f);
-            int glow_r = (int)(6.0f + pulse * 4.0f);
-            for (int ang = 0; ang < 360; ang += 45) {
-                float rad = ang * (PI_F / 180.0f);
-                int gx = px + (int)(cosf(rad) * glow_r);
-                int gy = py - 4 + (int)(sinf(rad) * (glow_r * 0.45f));
-                sm_draw_pixel(gx, gy, 0xFDE047EE);
-            }
+                // Flash branco de acionamento
+                if (s_menu.flash_alpha > 0.0f) {
+                    sm_draw_rect_blend(0, 0, W, H, 0xFFFFFFFF, s_menu.flash_alpha);
+                }
+            } else {
+                // Gradiente de fundo noturno real
+                for (int y = 0; y < H; y++) {
+                    float t = (float)y / (float)H;
+                    u8 r = (u8)(10 + t * 20);
+                    u8 g = (u8)(16 + t * 25);
+                    u8 b = (u8)(36 + t * 30);
+                    u32 line_color = (r << 24) | (g << 16) | (b << 8) | 0xFF;
+                    sm_draw_rect(0, y, W, 1, line_color);
+                }
 
-            // Logotipo de Zelda
-            // 1. "THE LEGEND OF"
-            const char* t_legend = "THE LEGEND OF";
-            int lw = font_get_text_width(t_legend);
-            font_draw_text((W - lw) / 2, 18, t_legend, 0xFBBF24FF, true);
+                // Partículas de poeira mágica/luz
+                for (int i = 0; i < 20; i++) {
+                    int px = (int)s_menu.motes_x[i];
+                    int py = (int)s_menu.motes_y[i];
+                    sm_draw_pixel(px, py, 0xFDE047CC);
+                    sm_draw_pixel(px + 1, py, 0xFEF08ACC);
+                }
 
-            // 2. "ZELDA" Monumental
-            const char* t_zelda = "Z E L D A";
-            int zw = font_get_text_width(t_zelda);
-            int zx = (W - zw) / 2;
-            int zy = 29;
-            font_draw_text(zx - 1, zy, t_zelda, 0xFDE047FF, false);
-            font_draw_text(zx + 1, zy, t_zelda, 0xFDE047FF, false);
-            font_draw_text(zx, zy - 1, t_zelda, 0xFDE047FF, false);
-            font_draw_text(zx, zy + 1, t_zelda, 0xFDE047FF, false);
-            font_draw_text(zx, zy, t_zelda, 0xDC2626FF, true);
+                // Pedestal de Pedra Sagrado da Four Sword
+                int px = W / 2;
+                int py = 120;
 
-            // 3. Faixa verde "The Minish Cap"
-            const char* t_mc = "The Minish Cap";
-            int mcw = font_get_text_width(t_mc);
-            int mcx = (W - mcw) / 2;
-            int mcy = 44;
-            sm_draw_rect(mcx - 6, mcy - 2, mcw + 12, 12, 0x052E16EE);
-            sm_draw_rect(mcx - 5, mcy - 1, mcw + 10, 10, 0x15803DFF);
-            font_draw_text(mcx, mcy, t_mc, 0xDCFCE7FF, true);
+                // Degraus de pedra
+                sm_draw_rect(px - 38, py + 8, 76, 8, 0x334155FF);
+                sm_draw_rect(px - 28, py + 2, 56, 7, 0x475569FF);
+                sm_draw_rect(px - 18, py - 4, 36, 7, 0x64748BFF);
 
-            // Prompt piscante "PRESS START"
-            if (s_menu.press_start_timer < 34) {
-                const char* p_start = "PRESS START";
-                int psw = font_get_text_width(p_start);
-                font_draw_text((W - psw) / 2, 138, p_start, 0xFEF08AFF, true);
-            }
+                // A Four Sword cravada na rocha
+                // Lâmina de prata
+                sm_draw_rect(px - 1, py - 24, 3, 20, 0xF8FAFCFF);
+                sm_draw_pixel(px, py - 24, 0x38BDF8FF);
+                // Guarda dourada em cruz
+                sm_draw_rect(px - 8, py - 27, 17, 3, 0xFBBF24FF);
+                // Gema mística azul no centro da cruz
+                sm_draw_pixel(px, py - 26, 0x06B6D4FF);
+                // Empunhadura e pomo de ouro
+                sm_draw_rect(px - 1, py - 33, 3, 6, 0x15803DFF);
+                sm_draw_pixel(px, py - 34, 0xFBBF24FF);
 
-            // Copyright
-            const char* c_foot = "(C) 2004 Nintendo / CAPCOM Co., Ltd.";
-            int cfw = font_get_text_width(c_foot);
-            font_draw_text((W - cfw) / 2, 150, c_foot, 0x94A3B8FF, false);
+                // Anel de luz pulsante na base da lâmina
+                float pulse = 0.5f + 0.5f * sinf(s_menu.timer * 0.08f);
+                int glow_r = (int)(6.0f + pulse * 4.0f);
+                for (int ang = 0; ang < 360; ang += 45) {
+                    float rad = ang * (PI_F / 180.0f);
+                    int gx = px + (int)(cosf(rad) * glow_r);
+                    int gy = py - 4 + (int)(sinf(rad) * (glow_r * 0.45f));
+                    sm_draw_pixel(gx, gy, 0xFDE047EE);
+                }
 
-            // Flash branco de acionamento
-            if (s_menu.flash_alpha > 0.0f) {
-                sm_draw_rect_blend(0, 0, W, H, 0xFFFFFFFF, s_menu.flash_alpha);
+                // Logotipo de Zelda
+                const char* t_legend = "THE LEGEND OF";
+                int lw = font_get_text_width(t_legend);
+                font_draw_text((W - lw) / 2, 18, t_legend, 0xFBBF24FF, true);
+
+                const char* t_zelda = "Z E L D A";
+                int zw = font_get_text_width(t_zelda);
+                int zx = (W - zw) / 2;
+                int zy = 29;
+                font_draw_text(zx - 1, zy, t_zelda, 0xFDE047FF, false);
+                font_draw_text(zx + 1, zy, t_zelda, 0xFDE047FF, false);
+                font_draw_text(zx, zy - 1, t_zelda, 0xFDE047FF, false);
+                font_draw_text(zx, zy + 1, t_zelda, 0xFDE047FF, false);
+                font_draw_text(zx, zy, t_zelda, 0xDC2626FF, true);
+
+                const char* t_mc = "The Minish Cap";
+                int mcw = font_get_text_width(t_mc);
+                int mcx = (W - mcw) / 2;
+                int mcy = 44;
+                sm_draw_rect(mcx - 6, mcy - 2, mcw + 12, 12, 0x052E16EE);
+                sm_draw_rect(mcx - 5, mcy - 1, mcw + 10, 10, 0x15803DFF);
+                font_draw_text(mcx, mcy, t_mc, 0xDCFCE7FF, true);
+
+                if (s_menu.press_start_timer < 34) {
+                    const char* p_start = "PRESS START";
+                    int psw = font_get_text_width(p_start);
+                    font_draw_text((W - psw) / 2, 138, p_start, 0xFEF08AFF, true);
+                }
+
+                const char* c_foot = "(C) 2004 Nintendo / CAPCOM Co., Ltd.";
+                int cfw = font_get_text_width(c_foot);
+                font_draw_text((W - cfw) / 2, 150, c_foot, 0x94A3B8FF, false);
+
+                if (s_menu.flash_alpha > 0.0f) {
+                    sm_draw_rect_blend(0, 0, W, H, 0xFFFFFFFF, s_menu.flash_alpha);
+                }
             }
             break;
         }
@@ -806,106 +876,187 @@ void startup_menu_render(void) {
         case STARTUP_STATE_FILE_SELECT:
         case STARTUP_STATE_FILE_COPY:
         case STARTUP_STATE_FILE_ERASE: {
-            // Fundo de tapeçaria nobre azul-marinho
-            for (int y = 0; y < H; y++) {
-                u32 bg_line = (y % 4 == 0) ? 0x0F172AFF : 0x1E293BFF;
-                sm_draw_rect(0, y, W, 1, bg_line);
-            }
+            if (s_file_select_tex && s_file_select_tex->pixels) {
+                texture_draw(s_file_select_tex, 0, 0, W, H, 0, 0);
 
-            // Cabeçalho
-            const char* f_title = (s_menu.state == STARTUP_STATE_FILE_COPY)  ? "COPIAR ARQUIVO: Escolha o destino" :
-                                  ((s_menu.state == STARTUP_STATE_FILE_ERASE) ? "APAGAR ARQUIVO: Confirmar exclusao?" :
-                                                                                "SELECAO DE ARQUIVO");
-            int ftw = font_get_text_width(f_title);
-            int ftx = (W - ftw) / 2;
-            sm_draw_rect(ftx - 8, 4, ftw + 16, 14, 0x020617EE);
-            sm_draw_rect(ftx - 7, 5, ftw + 14, 12, 0xFBBF24FF);
-            sm_draw_rect(ftx - 6, 6, ftw + 12, 10, 0x0F172AFF);
-            font_draw_text(ftx, 7, f_title, 0xFDE047FF, true);
-
-            // 3 Slots de Salvamento
-            int card_w = 216;
-            int card_h = 32;
-            int card_x = (W - card_w) / 2;
-
-            for (int i = 0; i < 3; i++) {
-                int card_y = 24 + i * 36;
-                bool is_sel = (s_menu.selected_slot == i);
-                bool is_copy_src = (s_menu.state == STARTUP_STATE_FILE_COPY && s_menu.copy_source_slot == i);
-
-                u32 border_col = is_copy_src ? 0x38BDF8FF :
-                                 (is_sel ? 0xFBBF24FF : 0x475569FF);
-                u32 body_col   = is_sel ? 0x1E293BFF : 0x0F172AEE;
-
-                sm_draw_rect(card_x, card_y, card_w, card_h, border_col);
-                sm_draw_rect(card_x + 1, card_y + 1, card_w - 2, card_h - 2, body_col);
-
-                // Cursor de Coração bouncando à esquerda
-                if (is_sel) {
-                    int c_offset = (s_menu.cursor_bounce < 20) ? 0 : 2;
-                    sm_draw_heart_icon(card_x - 12 - c_offset, card_y + 12, true);
+                // Cabeçalho alternativo para Copiar ou Apagar
+                if (s_menu.state == STARTUP_STATE_FILE_COPY || s_menu.state == STARTUP_STATE_FILE_ERASE) {
+                    const char* f_title = (s_menu.state == STARTUP_STATE_FILE_COPY) ?
+                                          "COPIAR: Escolha o destino" :
+                                          "APAGAR: Confirmar exclusao?";
+                    int ftw = font_get_text_width(f_title);
+                    int ftx = (W - ftw) / 2;
+                    sm_draw_rect(ftx - 8, 4, ftw + 16, 14, 0x020617EE);
+                    sm_draw_rect(ftx - 7, 5, ftw + 14, 12, 0xFBBF24FF);
+                    sm_draw_rect(ftx - 6, 6, ftw + 12, 10, 0x0F172AFF);
+                    font_draw_text(ftx, 7, f_title, 0xFDE047FF, true);
                 }
 
-                // Número do Arquivo
-                char slot_num[8];
-                snprintf(slot_num, sizeof(slot_num), "[ %d ]", i + 1);
-                font_draw_text(card_x + 6, card_y + 4, slot_num, 0xFDE047FF, true);
+                // 3 Slots de Salvamento
+                int card_w = 216;
+                int card_h = 32;
+                int card_x = (W - card_w) / 2;
 
-                if (s_menu.slot_has_data[i]) {
-                    const SaveData* sd = &s_menu.slot_data[i];
-                    // Nome do jogador
-                    font_draw_text(card_x + 36, card_y + 4, sd->player_name, 0xFFFFFFFF, true);
+                for (int i = 0; i < 3; i++) {
+                    int card_y = 26 + i * 36;
+                    bool is_sel = (s_menu.selected_slot == i);
+                    bool is_copy_src = (s_menu.state == STARTUP_STATE_FILE_COPY && s_menu.copy_source_slot == i);
 
-                    // Corações
-                    int max_h = sd->max_hearts > 16 ? 16 : sd->max_hearts;
-                    for (int h = 0; h < max_h; h++) {
-                        int hx = card_x + 85 + (h % 8) * 8;
-                        int hy = card_y + 3 + (h / 8) * 7;
-                        sm_draw_heart_icon(hx, hy, (h < sd->hearts));
+                    // Efeito de seleção
+                    if (is_copy_src) {
+                        sm_draw_rect_blend(card_x, card_y, card_w, card_h, 0x38BDF8FF, 0.35f);
+                    } else if (is_sel) {
+                        sm_draw_rect_blend(card_x, card_y, card_w, card_h, 0xFBBF24FF, 0.22f);
                     }
 
-                    // Rupees
-                    char rup_str[16];
-                    snprintf(rup_str, sizeof(rup_str), "%d", sd->rupees);
-                    sm_draw_pixel(card_x + 155, card_y + 5, 0x22C55EFF);
-                    sm_draw_pixel(card_x + 156, card_y + 4, 0x22C55EFF);
-                    sm_draw_pixel(card_x + 156, card_y + 6, 0x22C55EFF);
-                    font_draw_text(card_x + 160, card_y + 4, rup_str, 0x86EFACFF, false);
+                    // Cursor de Coração bouncando à esquerda
+                    if (is_sel) {
+                        int c_offset = (s_menu.cursor_bounce < 20) ? 0 : 2;
+                        sm_draw_heart_icon(card_x - 10 - c_offset, card_y + 12, true);
+                    }
 
-                    // Elementos Conquistados (Gemas Earth, Fire, Water, Wind)
-                    if (sd->has_earth_element) sm_draw_rect(card_x + 195, card_y + 4, 4, 4, 0x22C55EFF);
-                    if (sd->has_fire_element)  sm_draw_rect(card_x + 201, card_y + 4, 4, 4, 0xEF4444FF);
-                    if (sd->has_water_element) sm_draw_rect(card_x + 195, card_y + 10, 4, 4, 0x38BDF8FF);
-                    if (sd->has_wind_element)  sm_draw_rect(card_x + 201, card_y + 10, 4, 4, 0x10B981FF);
-                    else if (sd->golden_kinstones_fused >= 5) sm_draw_rect(card_x + 201, card_y + 10, 4, 4, 0xFBBF24FF);
-                } else {
-                    font_draw_text(card_x + 36, card_y + 4, "- NOVO JOGO -", 0x94A3B8FF, false);
-                    for (int h = 0; h < 3; h++) {
-                        sm_draw_heart_icon(card_x + 140 + h * 8, card_y + 4, true);
+                    if (s_menu.slot_has_data[i]) {
+                        const SaveData* sd = &s_menu.slot_data[i];
+                        font_draw_text(card_x + 40, card_y + 6, sd->player_name, 0xFFFFFFFF, true);
+
+                        int max_h = sd->max_hearts > 16 ? 16 : sd->max_hearts;
+                        for (int h = 0; h < max_h; h++) {
+                            int hx = card_x + 92 + (h % 8) * 8;
+                            int hy = card_y + 5 + (h / 8) * 7;
+                            sm_draw_heart_icon(hx, hy, (h < sd->hearts));
+                        }
+
+                        char rup_str[16];
+                        snprintf(rup_str, sizeof(rup_str), "%d", sd->rupees);
+                        sm_draw_pixel(card_x + 160, card_y + 7, 0x22C55EFF);
+                        sm_draw_pixel(card_x + 161, card_y + 6, 0x22C55EFF);
+                        sm_draw_pixel(card_x + 161, card_y + 8, 0x22C55EFF);
+                        font_draw_text(card_x + 165, card_y + 6, rup_str, 0x86EFACFF, false);
+
+                        if (sd->has_earth_element) sm_draw_rect(card_x + 198, card_y + 6, 4, 4, 0x22C55EFF);
+                        if (sd->has_fire_element)  sm_draw_rect(card_x + 204, card_y + 6, 4, 4, 0xEF4444FF);
+                        if (sd->has_water_element) sm_draw_rect(card_x + 198, card_y + 12, 4, 4, 0x38BDF8FF);
+                        if (sd->has_wind_element)  sm_draw_rect(card_x + 204, card_y + 12, 4, 4, 0x10B981FF);
+                        else if (sd->golden_kinstones_fused >= 5) sm_draw_rect(card_x + 204, card_y + 12, 4, 4, 0xFBBF24FF);
+                    } else {
+                        font_draw_text(card_x + 40, card_y + 6, "- NOVO JOGO -", 0x94A3B8FF, false);
+                        for (int h = 0; h < 3; h++) {
+                            sm_draw_heart_icon(card_x + 144 + h * 8, card_y + 6, true);
+                        }
                     }
                 }
-            }
 
-            // Barra de Ações Inferior
-            if (s_menu.state == STARTUP_STATE_FILE_ERASE) {
-                // Diálogo de confirmação
-                int mw = 180;
-                int mx = (W - mw) / 2;
-                int my = 134;
-                sm_draw_rect(mx, my, mw, 20, 0x7F1D1DFF);
-                sm_draw_rect(mx + 1, my + 1, mw - 2, 18, 0x450A0AFF);
-                font_draw_text(mx + 8, my + 5, "Apagar? ", 0xFECACAFF, true);
+                // Diálogo de confirmação de exclusão
+                if (s_menu.state == STARTUP_STATE_FILE_ERASE) {
+                    int mw = 180;
+                    int mx = (W - mw) / 2;
+                    int my = 134;
+                    sm_draw_rect(mx, my, mw, 20, 0x7F1D1DFF);
+                    sm_draw_rect(mx + 1, my + 1, mw - 2, 18, 0x450A0AFF);
+                    font_draw_text(mx + 8, my + 5, "Apagar? ", 0xFECACAFF, true);
 
-                bool sel_no  = (s_menu.erase_confirm_idx == 0);
-                bool sel_yes = (s_menu.erase_confirm_idx == 1);
-                font_draw_text(mx + 70, my + 5, "[ NAO ]", sel_no ? 0xFDE047FF : 0x94A3B8FF, true);
-                font_draw_text(mx + 125, my + 5, "[ SIM ]", sel_yes ? 0xEF4444FF : 0x94A3B8FF, true);
+                    bool sel_no  = (s_menu.erase_confirm_idx == 0);
+                    bool sel_yes = (s_menu.erase_confirm_idx == 1);
+                    font_draw_text(mx + 70, my + 5, "[ NAO ]", sel_no ? 0xFDE047FF : 0x94A3B8FF, true);
+                    font_draw_text(mx + 125, my + 5, "[ SIM ]", sel_yes ? 0xEF4444FF : 0x94A3B8FF, true);
+                }
             } else {
-                const char* help = (s_menu.state == STARTUP_STATE_FILE_COPY) ?
-                    "[A] COPIAR AQUI   [B] CANCELAR" :
-                    "[A] ESCOLHER   [L] COPIAR   [R] APAGAR   [B] TITULO";
-                int hw = font_get_text_width(help);
-                font_draw_text((W - hw) / 2, 142, help, 0xE2E8F0FF, true);
+                // Fundo de tapeçaria nobre azul-marinho (Fallback)
+                for (int y = 0; y < H; y++) {
+                    u32 bg_line = (y % 4 == 0) ? 0x0F172AFF : 0x1E293BFF;
+                    sm_draw_rect(0, y, W, 1, bg_line);
+                }
+
+                // Cabeçalho
+                const char* f_title = (s_menu.state == STARTUP_STATE_FILE_COPY)  ? "COPIAR ARQUIVO: Escolha o destino" :
+                                      ((s_menu.state == STARTUP_STATE_FILE_ERASE) ? "APAGAR ARQUIVO: Confirmar exclusao?" :
+                                                                                    "SELECAO DE ARQUIVO");
+                int ftw = font_get_text_width(f_title);
+                int ftx = (W - ftw) / 2;
+                sm_draw_rect(ftx - 8, 4, ftw + 16, 14, 0x020617EE);
+                sm_draw_rect(ftx - 7, 5, ftw + 14, 12, 0xFBBF24FF);
+                sm_draw_rect(ftx - 6, 6, ftw + 12, 10, 0x0F172AFF);
+                font_draw_text(ftx, 7, f_title, 0xFDE047FF, true);
+
+                // 3 Slots de Salvamento
+                int card_w = 216;
+                int card_h = 32;
+                int card_x = (W - card_w) / 2;
+
+                for (int i = 0; i < 3; i++) {
+                    int card_y = 24 + i * 36;
+                    bool is_sel = (s_menu.selected_slot == i);
+                    bool is_copy_src = (s_menu.state == STARTUP_STATE_FILE_COPY && s_menu.copy_source_slot == i);
+
+                    u32 border_col = is_copy_src ? 0x38BDF8FF :
+                                     (is_sel ? 0xFBBF24FF : 0x475569FF);
+                    u32 body_col   = is_sel ? 0x1E293BFF : 0x0F172AEE;
+
+                    sm_draw_rect(card_x, card_y, card_w, card_h, border_col);
+                    sm_draw_rect(card_x + 1, card_y + 1, card_w - 2, card_h - 2, body_col);
+
+                    // Cursor de Coração bouncando à esquerda
+                    if (is_sel) {
+                        int c_offset = (s_menu.cursor_bounce < 20) ? 0 : 2;
+                        sm_draw_heart_icon(card_x - 12 - c_offset, card_y + 12, true);
+                    }
+
+                    // Número do Arquivo
+                    char slot_num[8];
+                    snprintf(slot_num, sizeof(slot_num), "[ %d ]", i + 1);
+                    font_draw_text(card_x + 6, card_y + 4, slot_num, 0xFDE047FF, true);
+
+                    if (s_menu.slot_has_data[i]) {
+                        const SaveData* sd = &s_menu.slot_data[i];
+                        font_draw_text(card_x + 36, card_y + 4, sd->player_name, 0xFFFFFFFF, true);
+
+                        int max_h = sd->max_hearts > 16 ? 16 : sd->max_hearts;
+                        for (int h = 0; h < max_h; h++) {
+                            int hx = card_x + 85 + (h % 8) * 8;
+                            int hy = card_y + 3 + (h / 8) * 7;
+                            sm_draw_heart_icon(hx, hy, (h < sd->hearts));
+                        }
+
+                        char rup_str[16];
+                        snprintf(rup_str, sizeof(rup_str), "%d", sd->rupees);
+                        sm_draw_pixel(card_x + 155, card_y + 5, 0x22C55EFF);
+                        sm_draw_pixel(card_x + 156, card_y + 4, 0x22C55EFF);
+                        sm_draw_pixel(card_x + 156, card_y + 6, 0x22C55EFF);
+                        font_draw_text(card_x + 160, card_y + 4, rup_str, 0x86EFACFF, false);
+
+                        if (sd->has_earth_element) sm_draw_rect(card_x + 195, card_y + 4, 4, 4, 0x22C55EFF);
+                        if (sd->has_fire_element)  sm_draw_rect(card_x + 201, card_y + 4, 4, 4, 0xEF4444FF);
+                        if (sd->has_water_element) sm_draw_rect(card_x + 195, card_y + 10, 4, 4, 0x38BDF8FF);
+                        if (sd->has_wind_element)  sm_draw_rect(card_x + 201, card_y + 10, 4, 4, 0x10B981FF);
+                        else if (sd->golden_kinstones_fused >= 5) sm_draw_rect(card_x + 201, card_y + 10, 4, 4, 0xFBBF24FF);
+                    } else {
+                        font_draw_text(card_x + 36, card_y + 4, "- NOVO JOGO -", 0x94A3B8FF, false);
+                        for (int h = 0; h < 3; h++) {
+                            sm_draw_heart_icon(card_x + 140 + h * 8, card_y + 4, true);
+                        }
+                    }
+                }
+
+                // Barra de Ações Inferior
+                if (s_menu.state == STARTUP_STATE_FILE_ERASE) {
+                    int mw = 180;
+                    int mx = (W - mw) / 2;
+                    int my = 134;
+                    sm_draw_rect(mx, my, mw, 20, 0x7F1D1DFF);
+                    sm_draw_rect(mx + 1, my + 1, mw - 2, 18, 0x450A0AFF);
+                    font_draw_text(mx + 8, my + 5, "Apagar? ", 0xFECACAFF, true);
+
+                    bool sel_no  = (s_menu.erase_confirm_idx == 0);
+                    bool sel_yes = (s_menu.erase_confirm_idx == 1);
+                    font_draw_text(mx + 70, my + 5, "[ NAO ]", sel_no ? 0xFDE047FF : 0x94A3B8FF, true);
+                    font_draw_text(mx + 125, my + 5, "[ SIM ]", sel_yes ? 0xEF4444FF : 0x94A3B8FF, true);
+                } else {
+                    const char* help = (s_menu.state == STARTUP_STATE_FILE_COPY) ?
+                        "[A] COPIAR AQUI   [B] CANCELAR" :
+                        "[A] ESCOLHER   [L] COPIAR   [R] APAGAR   [B] TITULO";
+                    int hw = font_get_text_width(help);
+                    font_draw_text((W - hw) / 2, 142, help, 0xE2E8F0FF, true);
+                }
             }
             break;
         }

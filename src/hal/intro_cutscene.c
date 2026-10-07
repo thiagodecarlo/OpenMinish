@@ -56,6 +56,14 @@ static const Texture* s_intro_castle_tex  = NULL;
 static const Texture* s_intro_hud_tex     = NULL;
 static const Texture* s_intro_enemies_tex = NULL;
 
+static Texture* s_intro_link_house_tex   = NULL;
+static Texture* s_intro_throne_room_tex  = NULL;
+static Texture* s_intro_castle_fallback  = NULL;
+static Texture* s_intro_npcs_fallback    = NULL;
+static Texture* s_intro_bosses_fallback  = NULL;
+static Texture* s_intro_link_fallback    = NULL;
+static Texture* s_intro_enemies_fallback = NULL;
+
 void intro_cutscene_set_npcs_texture(const Texture* tex) {
     s_intro_npcs_tex = tex;
 }
@@ -116,6 +124,49 @@ static void draw_rect_fast(int x, int y, int w, int h, u32 color) {
 
 void intro_cutscene_init(void) {
     memset(&s_intro, 0, sizeof(IntroContext));
+    s_intro.active = false;
+    s_intro.stage = INTRO_STAGE_FINISHED;
+
+    if (!s_intro_link_house_tex) {
+        s_intro_link_house_tex = texture_load_bmp("assets/regions/map_link_house.bmp");
+        if (!s_intro_link_house_tex) {
+            s_intro_link_house_tex = texture_load_bmp("assets/regions/usa/map_link_house.bmp");
+        }
+    }
+    if (!s_intro_throne_room_tex) {
+        s_intro_throne_room_tex = texture_load_bmp("assets/regions/map_throne_room.bmp");
+        if (!s_intro_throne_room_tex) {
+            s_intro_throne_room_tex = texture_load_bmp("assets/regions/usa/map_throne_room.bmp");
+        }
+    }
+    if (!s_intro_castle_tex && !s_intro_castle_fallback) {
+        s_intro_castle_fallback = texture_load_bmp("assets/regions/map_castle_courtyard.bmp");
+        if (!s_intro_castle_fallback) {
+            s_intro_castle_fallback = texture_load_bmp("assets/regions/usa/map_castle_courtyard.bmp");
+        }
+    }
+    if (!s_intro_npcs_tex && !s_intro_npcs_fallback) {
+        s_intro_npcs_fallback = texture_load_bmp("assets/regions/usa/npcs.bmp");
+    }
+    if (!s_intro_bosses_tex && !s_intro_bosses_fallback) {
+        s_intro_bosses_fallback = texture_load_bmp("assets/regions/usa/bosses.bmp");
+    }
+    if (!s_intro_link_tex && !s_intro_link_fallback) {
+        s_intro_link_fallback = texture_load_bmp("assets/regions/usa/link.bmp");
+    }
+    if (!s_intro_enemies_tex && !s_intro_enemies_fallback) {
+        s_intro_enemies_fallback = texture_load_bmp("assets/regions/usa/enemies.bmp");
+    }
+}
+
+void intro_cutscene_shutdown(void) {
+    if (s_intro_link_house_tex)   { texture_free(s_intro_link_house_tex);   s_intro_link_house_tex = NULL; }
+    if (s_intro_throne_room_tex)  { texture_free(s_intro_throne_room_tex);  s_intro_throne_room_tex = NULL; }
+    if (s_intro_castle_fallback)  { texture_free(s_intro_castle_fallback);  s_intro_castle_fallback = NULL; }
+    if (s_intro_npcs_fallback)    { texture_free(s_intro_npcs_fallback);    s_intro_npcs_fallback = NULL; }
+    if (s_intro_bosses_fallback)  { texture_free(s_intro_bosses_fallback);  s_intro_bosses_fallback = NULL; }
+    if (s_intro_link_fallback)    { texture_free(s_intro_link_fallback);    s_intro_link_fallback = NULL; }
+    if (s_intro_enemies_fallback) { texture_free(s_intro_enemies_fallback); s_intro_enemies_fallback = NULL; }
     s_intro.active = false;
     s_intro.stage = INTRO_STAGE_FINISHED;
 }
@@ -326,76 +377,85 @@ void intro_cutscene_render(void) {
     int W = ctx->render_width;
     int H = ctx->render_height;
 
+    const Texture* cur_npcs    = s_intro_npcs_tex    ? s_intro_npcs_tex    : s_intro_npcs_fallback;
+    const Texture* cur_bosses  = s_intro_bosses_tex  ? s_intro_bosses_tex  : s_intro_bosses_fallback;
+    const Texture* cur_link    = s_intro_link_tex    ? s_intro_link_tex    : s_intro_link_fallback;
+    const Texture* cur_castle  = s_intro_castle_tex  ? s_intro_castle_tex  : s_intro_castle_fallback;
+    const Texture* cur_enemies = s_intro_enemies_tex ? s_intro_enemies_tex : s_intro_enemies_fallback;
+
     // 1. Cenário de Fundo (Quarto de Link, Sala do Trono ou Pátio do Castelo)
     if (s_intro.stage == INTRO_STAGE_ROOM_WAKEUP) {
-        // Quarto de Link & Casa de Mestre Smith
-        // Parede superior em madeira e pedra rústica com vigas verticais
-        draw_rect_fast(0, 0, W, 40, 0x4A2810FF);
-        for (int vx = 12; vx < W; vx += 36) {
-            draw_rect_fast(vx, 0, 4, 40, 0x2E1002FF);
+        if (s_intro_link_house_tex && s_intro_link_house_tex->pixels) {
+            texture_draw(s_intro_link_house_tex, 0, 0, W, H, 0, 0);
+        } else {
+            // Quarto de Link & Casa de Mestre Smith (Fallback Procedural)
+            draw_rect_fast(0, 0, W, 40, 0x4A2810FF);
+            for (int vx = 12; vx < W; vx += 36) {
+                draw_rect_fast(vx, 0, 4, 40, 0x2E1002FF);
+            }
+            draw_rect_fast(0, 38, W, 3, 0x2E1002FF);
+
+            // Piso de tábuas de carvalho
+            draw_rect_fast(0, 40, W, H - 40, 0x78350FFF);
+            for (int py = 48; py < H; py += 12) {
+                draw_rect_fast(0, py, W, 1, 0x451A03FF);
+            }
+
+            // Tapete verde no centro do quarto
+            draw_rect_fast(68, 52, 64, 40, 0x15803D88);
+            draw_rect_fast(66, 50, 68, 44, 0xD4AF3744);
+
+            // Janela ensolarada com raios de luz matinais
+            draw_rect_fast(170, 8, 24, 24, 0x38BDF8FF);
+            draw_rect_fast(170, 8, 24, 2, 0x1E293BFF);
+            draw_rect_fast(170, 30, 24, 2, 0x1E293BFF);
+            draw_rect_fast(181, 8, 2, 24, 0x1E293BFF);
+            draw_rect_fast(170, 19, 24, 2, 0x1E293BFF);
+            for (int i = 0; i < 18; i++) {
+                draw_rect_fast(140 - i * 3, 40 + i * 4, 35 + i * 2, 6, 0xFEF08A18);
+            }
+
+            // Cama de madeira de Link (cabeceira, lençol azul e travesseiro)
+            int bed_x = 18;
+            int bed_y = 28;
+            draw_rect_fast(bed_x, bed_y, 32, 46, 0x3D1A04FF);
+            draw_rect_fast(bed_x + 2, bed_y + 2, 28, 12, 0xF1F5F9FF);
+            draw_rect_fast(bed_x + 2, bed_y + 14, 28, 30, 0x1D4ED8FF);
+            draw_rect_fast(bed_x + 2, bed_y + 14, 28, 4, 0x60A5FAFF);
+
+            // Mesa de cabeceira com vela
+            draw_rect_fast(bed_x + 34, bed_y + 6, 12, 16, 0x5C2B09FF);
+            draw_rect_fast(bed_x + 38, bed_y + 2, 4, 5, 0xFDE047FF);
+
+            // Forja e lareira de Smith no canto direito
+            int forge_x = 196;
+            int forge_y = 24;
+            draw_rect_fast(forge_x, forge_y, 36, 44, 0x334155FF);
+            draw_rect_fast(forge_x + 4, forge_y + 16, 28, 24, 0x0F172AFF);
+            draw_rect_fast(forge_x + 8, forge_y + 24, 20, 14, 0xEA580CFF);
+            draw_rect_fast(forge_x + 12, forge_y + 28, 12, 8, 0xFBBF24FF);
+            draw_rect_fast(forge_x - 14, forge_y + 32, 10, 10, 0x475569FF);
         }
-        draw_rect_fast(0, 38, W, 3, 0x2E1002FF);
-
-        // Piso de tábuas de carvalho
-        draw_rect_fast(0, 40, W, H - 40, 0x78350FFF);
-        for (int py = 48; py < H; py += 12) {
-            draw_rect_fast(0, py, W, 1, 0x451A03FF);
-        }
-
-        // Tapete verde no centro do quarto
-        draw_rect_fast(68, 52, 64, 40, 0x15803D88);
-        draw_rect_fast(66, 50, 68, 44, 0xD4AF3744);
-
-        // Janela ensolarada com raios de luz matinais
-        draw_rect_fast(170, 8, 24, 24, 0x38BDF8FF);
-        draw_rect_fast(170, 8, 24, 2, 0x1E293BFF);
-        draw_rect_fast(170, 30, 24, 2, 0x1E293BFF);
-        draw_rect_fast(181, 8, 2, 24, 0x1E293BFF);
-        draw_rect_fast(170, 19, 24, 2, 0x1E293BFF);
-        for (int i = 0; i < 18; i++) {
-            draw_rect_fast(140 - i * 3, 40 + i * 4, 35 + i * 2, 6, 0xFEF08A18);
-        }
-
-        // Cama de madeira de Link (cabeceira, lençol azul e travesseiro)
-        int bed_x = 18;
-        int bed_y = 28;
-        draw_rect_fast(bed_x, bed_y, 32, 46, 0x3D1A04FF);
-        draw_rect_fast(bed_x + 2, bed_y + 2, 28, 12, 0xF1F5F9FF);
-        draw_rect_fast(bed_x + 2, bed_y + 14, 28, 30, 0x1D4ED8FF);
-        draw_rect_fast(bed_x + 2, bed_y + 14, 28, 4, 0x60A5FAFF);
-
-        // Mesa de cabeceira com vela
-        draw_rect_fast(bed_x + 34, bed_y + 6, 12, 16, 0x5C2B09FF);
-        draw_rect_fast(bed_x + 38, bed_y + 2, 4, 5, 0xFDE047FF);
-
-        // Forja e lareira de Smith no canto direito
-        int forge_x = 196;
-        int forge_y = 24;
-        draw_rect_fast(forge_x, forge_y, 36, 44, 0x334155FF);
-        draw_rect_fast(forge_x + 4, forge_y + 16, 28, 24, 0x0F172AFF);
-        draw_rect_fast(forge_x + 8, forge_y + 24, 20, 14, 0xEA580CFF);
-        draw_rect_fast(forge_x + 12, forge_y + 28, 12, 8, 0xFBBF24FF);
-        draw_rect_fast(forge_x - 14, forge_y + 32, 10, 10, 0x475569FF);
 
         // 1. Link (ao lado da cama)
-        if (s_intro_link_tex && s_intro_link_tex->pixels) {
-            texture_draw(s_intro_link_tex, 0 * 32, 0 * 32, 32, 32, (int)s_intro.link_x - 16, (int)s_intro.link_y - 20);
+        if (cur_link && cur_link->pixels) {
+            texture_draw(cur_link, 0 * 32, 0 * 32, 32, 32, (int)s_intro.link_x - 16, (int)s_intro.link_y - 20);
         } else {
             draw_rect_fast((int)s_intro.link_x - 5, (int)s_intro.link_y, 10, 14, 0x16A34AFF);
             draw_rect_fast((int)s_intro.link_x - 4, (int)s_intro.link_y - 6, 8, 6, 0xFBBF24FF);
         }
 
         // 2. Princesa Zelda (convidando Link)
-        if (s_intro_npcs_tex && s_intro_npcs_tex->pixels) {
-            texture_draw(s_intro_npcs_tex, 0 * 16, 2 * 16, 16, 16, (int)s_intro.zelda_x - 8, (int)s_intro.zelda_y - 12);
+        if (cur_npcs && cur_npcs->pixels) {
+            texture_draw(cur_npcs, 0 * 16, 2 * 16, 16, 16, (int)s_intro.zelda_x - 8, (int)s_intro.zelda_y - 12);
         } else {
             draw_rect_fast((int)s_intro.zelda_x - 5, (int)s_intro.zelda_y, 10, 14, 0xEC4899FF);
             draw_rect_fast((int)s_intro.zelda_x - 4, (int)s_intro.zelda_y - 6, 8, 6, 0xFBCFE8FF);
         }
 
         // 3. Mestre Smith (entregando a espada)
-        if (s_intro_npcs_tex && s_intro_npcs_tex->pixels) {
-            texture_draw(s_intro_npcs_tex, 0 * 16, 1 * 16, 16, 16, (int)s_intro.smith_x - 8, (int)s_intro.smith_y - 8);
+        if (cur_npcs && cur_npcs->pixels) {
+            texture_draw(cur_npcs, 0 * 16, 1 * 16, 16, 16, (int)s_intro.smith_x - 8, (int)s_intro.smith_y - 8);
         } else {
             draw_rect_fast((int)s_intro.smith_x - 6, (int)s_intro.smith_y, 12, 16, 0x475569FF);
             draw_rect_fast((int)s_intro.smith_x - 5, (int)s_intro.smith_y - 6, 10, 6, 0xF8FAFCFF);
@@ -410,51 +470,55 @@ void intro_cutscene_render(void) {
             draw_rect_fast(sword_px + 1, sword_py - 6, 2, 2, 0xFDE047FF);
         }
     } else if (s_intro.stage == INTRO_STAGE_KING_AUDIENCE) {
-        // Sala do Trono Real (Vermelho e Ouro Imperial)
-        draw_rect_fast(0, 0, W, H, 0x1E1B18FF);
-        // Tapete Imperial Carmesim
-        draw_rect_fast((W - 80) / 2, 0, 80, H, 0x7F1D1DFF);
-        draw_rect_fast((W - 84) / 2, 0, 2, H, 0xD4AF37FF);
-        draw_rect_fast((W + 80) / 2, 0, 2, H, 0xD4AF37FF);
+        if (s_intro_throne_room_tex && s_intro_throne_room_tex->pixels) {
+            texture_draw(s_intro_throne_room_tex, 0, 0, W, H, 0, 0);
+        } else {
+            // Sala do Trono Real (Vermelho e Ouro Imperial - Fallback Procedural)
+            draw_rect_fast(0, 0, W, H, 0x1E1B18FF);
+            // Tapete Imperial Carmesim
+            draw_rect_fast((W - 80) / 2, 0, 80, H, 0x7F1D1DFF);
+            draw_rect_fast((W - 84) / 2, 0, 2, H, 0xD4AF37FF);
+            draw_rect_fast((W + 80) / 2, 0, 2, H, 0xD4AF37FF);
 
-        // Trono Dourado
-        draw_rect_fast((W - 32) / 2, 20, 32, 28, 0xD4AF37FF);
-        draw_rect_fast((W - 24) / 2, 24, 24, 20, 0xB45309FF);
+            // Trono Dourado
+            draw_rect_fast((W - 32) / 2, 20, 32, 28, 0xD4AF37FF);
+            draw_rect_fast((W - 24) / 2, 24, 24, 20, 0xB45309FF);
+        }
 
         // Guardas Reais Flanqueando a Sala do Trono
-        if (s_intro_npcs_tex && s_intro_npcs_tex->pixels) {
-            texture_draw(s_intro_npcs_tex, 0 * 16, 8 * 16, 16, 16, 44, 44);
-            texture_draw(s_intro_npcs_tex, 0 * 16, 8 * 16, 16, 16, 180, 44);
+        if (cur_npcs && cur_npcs->pixels) {
+            texture_draw(cur_npcs, 0 * 16, 8 * 16, 16, 16, 44, 44);
+            texture_draw(cur_npcs, 0 * 16, 8 * 16, 16, 16, 180, 44);
         }
 
         // Rei Daltus no Trono
-        if (s_intro_npcs_tex && s_intro_npcs_tex->pixels) {
-            texture_draw(s_intro_npcs_tex, 5 * 16, 0 * 16, 16, 16, (W - 16) / 2, 26);
+        if (cur_npcs && cur_npcs->pixels) {
+            texture_draw(cur_npcs, 5 * 16, 0 * 16, 16, 16, (W - 16) / 2, 26);
         } else {
             draw_rect_fast((int)s_intro.king_x - 6, (int)s_intro.king_y, 12, 14, 0xDC2626FF);
             draw_rect_fast((int)s_intro.king_x - 4, (int)s_intro.king_y - 6, 8, 6, 0xFDE047FF); // Coroa
         }
 
         // Mestre Smith (Ferreiro e avô de Link)
-        if (s_intro_npcs_tex && s_intro_npcs_tex->pixels) {
-            texture_draw(s_intro_npcs_tex, 0 * 16, 1 * 16, 16, 16, (int)s_intro.smith_x - 8, (int)s_intro.smith_y - 8);
+        if (cur_npcs && cur_npcs->pixels) {
+            texture_draw(cur_npcs, 0 * 16, 1 * 16, 16, 16, (int)s_intro.smith_x - 8, (int)s_intro.smith_y - 8);
         } else {
             draw_rect_fast((int)s_intro.smith_x - 6, (int)s_intro.smith_y, 12, 16, 0x475569FF);
             draw_rect_fast((int)s_intro.smith_x - 5, (int)s_intro.smith_y - 6, 10, 6, 0xF8FAFCFF); // Barba branca
         }
 
         // Link em frente ao Trono (virado para cima, ouvindo a ordem do Rei)
-        if (s_intro_link_tex && s_intro_link_tex->pixels) {
-            texture_draw(s_intro_link_tex, 2 * 32, 0 * 32, 32, 32, (int)s_intro.link_x - 16, (int)s_intro.link_y - 20);
+        if (cur_link && cur_link->pixels) {
+            texture_draw(cur_link, 2 * 32, 0 * 32, 32, 32, (int)s_intro.link_x - 16, (int)s_intro.link_y - 20);
         } else {
             draw_rect_fast((int)s_intro.link_x - 5, (int)s_intro.link_y, 10, 14, 0x16A34AFF);
             draw_rect_fast((int)s_intro.link_x - 4, (int)s_intro.link_y - 6, 8, 6, 0xFBBF24FF);
         }
     } else {
         // Pátio Externo do Castelo de Hyrule
-        if (s_intro_castle_tex && s_intro_castle_tex->pixels) {
+        if (cur_castle && cur_castle->pixels) {
             // Renderiza o cenário autêntico do pátio (512x384 centrado no pódio)
-            texture_draw(s_intro_castle_tex, 136, 80, W, H, 0, 0);
+            texture_draw(cur_castle, 136, 80, W, H, 0, 0);
         } else {
             draw_rect_fast(0, 0, W, 45, 0x475569FF); // Muralha
             draw_rect_fast(0, 45, W, H - 45, 0x15803DFF); // Gramado do pátio
@@ -463,21 +527,21 @@ void intro_cutscene_render(void) {
         }
 
         // Guardas Reais Flanqueando o Pódio Sagrado
-        if (s_intro_npcs_tex && s_intro_npcs_tex->pixels) {
-            texture_draw(s_intro_npcs_tex, 0 * 16, 8 * 16, 16, 16, 68, 50);
-            texture_draw(s_intro_npcs_tex, 0 * 16, 8 * 16, 16, 16, 156, 50);
+        if (cur_npcs && cur_npcs->pixels) {
+            texture_draw(cur_npcs, 0 * 16, 8 * 16, 16, 16, 68, 50);
+            texture_draw(cur_npcs, 0 * 16, 8 * 16, 16, 16, 156, 50);
         }
 
         // O Baú Sagrado e a Lâmina Picori (The Bound Chest & Picori Blade)
         int cx = 104;
         int cy = 46;
-        if (s_intro_bosses_tex && s_intro_bosses_tex->pixels) {
+        if (cur_bosses && cur_bosses->pixels) {
             if (!s_intro.sword_broken) {
                 // Baú intacto selado pela Picori Blade
-                texture_draw(s_intro_bosses_tex, 128, 160, 32, 32, cx, cy);
+                texture_draw(cur_bosses, 128, 160, 32, 32, cx, cy);
             } else {
                 // Baú violado com a lâmina partida e malícia escapando
-                texture_draw(s_intro_bosses_tex, 160, 160, 32, 32, cx, cy);
+                texture_draw(cur_bosses, 160, 160, 32, 32, cx, cy);
             }
         } else {
             // Fallback procedural
@@ -501,7 +565,7 @@ void intro_cutscene_render(void) {
         if (s_intro.stage >= INTRO_STAGE_TOURNAMENT_WIN && s_intro.stage < INTRO_STAGE_KING_AUDIENCE) {
             int vx = (int)s_intro.vaati_x - 16;
             int vy = (int)s_intro.vaati_y - 16;
-            if (s_intro_bosses_tex && s_intro_bosses_tex->pixels) {
+            if (cur_bosses && cur_bosses->pixels) {
                 int v_src_x = 0;
                 if (s_intro.stage == INTRO_STAGE_TOURNAMENT_WIN) v_src_x = 0; // Floating idle
                 else if (s_intro.stage == INTRO_STAGE_CHEST_CEREMONY) v_src_x = 32; // Casting spell
@@ -509,7 +573,7 @@ void intro_cutscene_render(void) {
                 else if (s_intro.stage == INTRO_STAGE_ZELDA_CURSED) {
                     v_src_x = s_intro.zelda_petrified ? 96 : 32; // Dark vortex / Spell
                 }
-                texture_draw(s_intro_bosses_tex, v_src_x, 160, 32, 32, vx, vy);
+                texture_draw(cur_bosses, v_src_x, 160, 32, 32, vx, vy);
             } else {
                 draw_rect_fast(vx + 9, vy + 7, 14, 18, 0x581C87FF);
                 draw_rect_fast(vx + 11, vy + 1, 10, 6, 0xE0E7FFFF);
@@ -519,22 +583,22 @@ void intro_cutscene_render(void) {
 
         // Monstros libertados na quebra do selo
         if (s_intro.stage == INTRO_STAGE_MONSTERS_RELEASED) {
-            if (s_intro_enemies_tex && s_intro_enemies_tex->pixels) {
+            if (cur_enemies && cur_enemies->pixels) {
                 float mt = (float)s_intro.stage_timer;
                 int kframe = (s_intro.stage_timer / 6) % 2;
                 int k1_x = 112 - (int)(mt * 0.75f);
                 int k1_y = 52 - (int)(sinf(mt * 0.1f) * 14.0f + mt * 0.25f);
                 if (k1_x > 0 && k1_y > 0) {
-                    texture_draw(s_intro_enemies_tex, kframe * 16, 32, 16, 16, k1_x, k1_y);
+                    texture_draw(cur_enemies, kframe * 16, 32, 16, 16, k1_x, k1_y);
                 }
                 int k2_x = 112 + (int)(mt * 0.85f);
                 int k2_y = 48 - (int)(cosf(mt * 0.12f) * 12.0f + mt * 0.2f);
                 if (k2_x < W - 16 && k2_y > 0) {
-                    texture_draw(s_intro_enemies_tex, kframe * 16, 32, 16, 16, k2_x, k2_y);
+                    texture_draw(cur_enemies, kframe * 16, 32, 16, 16, k2_x, k2_y);
                 }
                 int chu_y = 54 + (int)(mt * 0.5f);
                 if (chu_y < 110) {
-                    texture_draw(s_intro_enemies_tex, 4 * 16, 16, 16, 16, 112, chu_y);
+                    texture_draw(cur_enemies, 4 * 16, 16, 16, 16, 112, chu_y);
                 }
             }
         }
@@ -542,7 +606,7 @@ void intro_cutscene_render(void) {
         // Princesa Zelda
         int zx = (int)s_intro.zelda_x - 8;
         int zy = (int)s_intro.zelda_y - 12;
-        if (s_intro_npcs_tex && s_intro_npcs_tex->pixels) {
+        if (cur_npcs && cur_npcs->pixels) {
             int z_col = 0;
             if (s_intro.stage == INTRO_STAGE_FESTIVAL_PARADE) z_col = 0;
             else if (s_intro.stage == INTRO_STAGE_TOURNAMENT_WIN || s_intro.stage == INTRO_STAGE_CHEST_CEREMONY) z_col = 1;
@@ -550,7 +614,7 @@ void intro_cutscene_render(void) {
             else if (s_intro.stage == INTRO_STAGE_ZELDA_CURSED) {
                 z_col = s_intro.zelda_petrified ? 3 : 2; // Col 3 é estátua de pedra!
             }
-            texture_draw(s_intro_npcs_tex, z_col * 16, 2 * 16, 16, 16, zx, zy);
+            texture_draw(cur_npcs, z_col * 16, 2 * 16, 16, 16, zx, zy);
         } else {
             u32 zelda_color = s_intro.zelda_petrified ? 0x64748BFF : 0xEC4899FF;
             u32 zelda_face  = s_intro.zelda_petrified ? 0x94A3B8FF : 0xFBCFE8FF;
@@ -561,13 +625,13 @@ void intro_cutscene_render(void) {
         // Link
         int lx = (int)s_intro.link_x - 16;
         int ly = (int)s_intro.link_y - 20;
-        if (s_intro_link_tex && s_intro_link_tex->pixels) {
+        if (cur_link && cur_link->pixels) {
             if (s_intro.stage == INTRO_STAGE_ZELDA_CURSED && s_intro.zelda_petrified) {
                 // Nocauteado pela explosão da malícia de Vaati
-                texture_draw(s_intro_link_tex, 0 * 32, 9 * 32, 32, 32, lx, ly + 6);
+                texture_draw(cur_link, 0 * 32, 9 * 32, 32, 32, lx, ly + 6);
             } else {
                 // Link em pé
-                texture_draw(s_intro_link_tex, 0 * 32, 0 * 32, 32, 32, lx, ly);
+                texture_draw(cur_link, 0 * 32, 0 * 32, 32, 32, lx, ly);
             }
         } else {
             draw_rect_fast(lx + 11, ly + 6, 10, 14, 0x16A34AFF);
