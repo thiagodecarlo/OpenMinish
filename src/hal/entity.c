@@ -116,6 +116,89 @@ static void draw_rect_blend(int rx, int ry, int rw, int rh, u32 color) {
     }
 }
 
+// Renderiza uma sombra dinâmica oval de profundidade suavizada no solo
+static void draw_entity_depth_shadow(int cx, int cy, int rx, int ry, u8 alpha) {
+    const HalVideoContext* ctx = hal_video_get_context();
+    if (!ctx || !ctx->framebuffer || alpha == 0 || rx <= 0 || ry <= 0) return;
+    u32 shadow_color = (0x0B << 24) | (0x13 << 16) | (0x22 << 8) | alpha;
+
+    for (int dy = -ry; dy <= ry; dy++) {
+        int y = cy + dy;
+        if (y < 0 || y >= ctx->render_height) continue;
+        float factor = 1.0f - ((float)(dy * dy) / (float)(ry * ry));
+        if (factor < 0.0f) continue;
+        int max_dx = (int)(sqrtf(factor) * (float)rx);
+        u32* row = &ctx->framebuffer[y * ctx->render_width];
+        for (int dx = -max_dx; dx <= max_dx; dx++) {
+            int x = cx + dx;
+            if (x < 0 || x >= ctx->render_width) continue;
+            row[x] = blend_entity_colors(row[x], shadow_color);
+        }
+    }
+}
+
+static void entity_render_ground_shadow(const Entity* e, int sx, int sy) {
+    if (!e || !e->is_active || e->action == 5) return;
+
+    switch (e->type) {
+        case ENTITY_PROJECTILE_ROCK:
+        case ENTITY_PROJECTILE_FIREBALL:
+        case ENTITY_CHEST_GOLD:
+        case ENTITY_ITEM_HEART_CONTAINER:
+        case ENTITY_ITEM_BOW:
+        case ENTITY_ITEM_MOLE_MITTS:
+        case ENTITY_ITEM_FIRE_ELEMENT:
+        case ENTITY_TOWN_FOUNTAIN:
+        case ENTITY_MINISH_STUMP:
+        case ENTITY_ARMOS_SWITCH:
+        case ENTITY_ENEMY_SPIKE_ROLLER:
+            return;
+
+        // Entidades Minish diminutas (sombra compacta 4x2)
+        case ENTITY_NPC_GENTARI:
+        case ENTITY_NPC_FESTARI:
+        case ENTITY_NPC_VILLAGE_MINISH:
+        case ENTITY_NPC_MOUNTAIN_MINISH:
+        case ENTITY_NPC_LIBRARI:
+            draw_entity_depth_shadow(sx + 8, sy + 13, 4, 2, 75);
+            break;
+
+        // Entidades Voadoras com altura Z dinâmica (sombra projeta no solo)
+        case ENTITY_ENEMY_PEAHAT:
+        case ENTITY_ENEMY_FIRE_KEESE: {
+            float alt = e->z;
+            if (alt < 0.0f) alt = 0.0f;
+            float scale = 1.0f - (alt / 50.0f);
+            if (scale < 0.25f) scale = 0.25f;
+            int rx = (int)(6.0f * scale);
+            int ry = (int)(3.0f * scale);
+            u8 a = (u8)(90.0f * scale);
+            draw_entity_depth_shadow(sx + 8, sy + (int)alt + 13, rx, ry, a);
+            break;
+        }
+
+        // Inimigos Grandes (Moblin, Gibdo, Stalfos)
+        case ENTITY_ENEMY_MOBLIN:
+        case ENTITY_ENEMY_GIBDO:
+        case ENTITY_ENEMY_STALFOS:
+            draw_entity_depth_shadow(sx + 8, sy + 15, 9, 4, 105);
+            break;
+
+        // Chefes Maiores de Masmorra
+        case ENTITY_BOSS_BIG_CHUCHU:
+            draw_entity_depth_shadow(sx + 16, sy + 30, 18, 7, 120);
+            break;
+        case ENTITY_BOSS_GLEEROK:
+            draw_entity_depth_shadow(sx + 24, sy + 44, 24, 9, 130);
+            break;
+
+        // Demais NPCs humanos e inimigos padrão
+        default:
+            draw_entity_depth_shadow(sx + 8, sy + 14, 7, 3, 95);
+            break;
+    }
+}
+
 void entity_spawn_combat_fx(CombatFxType type, float x, float y, float z, int count) {
     if (type == COMBAT_FX_NONE || count <= 0) return;
     int spawned = 0;
@@ -3418,6 +3501,9 @@ void entity_manager_render(const Camera* cam) {
         if (sx < -20 || sx > cam->viewport_w + 20 || sy < -20 || sy > cam->viewport_h + 20) {
             continue;
         }
+
+        // Sombra dinâmica de profundidade no solo
+        entity_render_ground_shadow(e, sx, sy);
 
         // 1. OCTOROK VERMELHO
         if (e->type == ENTITY_ENEMY_OCTOROK) {
