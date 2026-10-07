@@ -6215,7 +6215,7 @@ bool entity_interact_chest(float world_x, float world_y, int* link_rupees, int* 
         if (dx * dx + dy * dy <= 24.0f * 24.0f) {
             e->action = 1; // Baú aberto!
             hal_audio_play_sound(SOUND_CHEST_OPEN, 1.0f, 1.0f);
-            hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.0f);
+            hal_audio_play_sound(SOUND_CHEST_FANFARE, 1.0f, 1.0f);
 
             // Recompensa lendária do baú de fusão: +100 Rupees e restaura a vida!
             if (link_rupees) *link_rupees += 100;
