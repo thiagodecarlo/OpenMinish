@@ -4799,7 +4799,30 @@ int main(int argc, char* argv[]) {
         if (link.rocs_banner_timer > 0) link.rocs_banner_timer--;
 
         // Atualização da Câmera Virtual Widescreen (Segue o Link ou centraliza na Masmorra / Santuário)
-        if (dungeon_is_active() || dungeon_flames_is_active() || dungeon_fortress_is_active() || dungeon_droplets_is_active() || dungeon_palace_is_active() || veil_clouds_is_active() || sanctuary_is_active()) {
+        if (dungeon_is_active()) {
+            camera.viewport_w = widescreen ? 284 : 240;
+            camera.viewport_h = 160;
+            DungeonState* dst = dungeon_get_state();
+            Entity* boss = (dst && dst->current_room == ROOM_BOSS_ARENA) ? entity_get_boss() : NULL;
+            if (boss && boss->is_active && boss->health > 0) {
+                // Câmera dinâmica de combate: enquadramento cinemático entre Link e o Chefe
+                float target_x = ((link.x + boss->x) * 0.5f) - ((float)camera.viewport_w * 0.5f);
+                float target_y = ((link.y + boss->y - boss->z * 0.40f) * 0.5f) - ((float)camera.viewport_h * 0.5f);
+                float max_x = 256.0f - (float)camera.viewport_w;
+                float max_y = 160.0f - (float)camera.viewport_h;
+                if (max_x < 0.0f) max_x = 0.0f;
+                if (max_y < 0.0f) max_y = 0.0f;
+                if (target_x < 0.0f) target_x = 0.0f;
+                if (target_x > max_x) target_x = max_x;
+                if (target_y < 0.0f) target_y = 0.0f;
+                if (target_y > max_y) target_y = max_y;
+                camera.x += (target_x - camera.x) * 0.12f;
+                camera.y += (target_y - camera.y) * 0.12f;
+            } else {
+                camera.x = (float)(256 - camera.viewport_w) / 2.0f;
+                camera.y = 0.0f;
+            }
+        } else if (dungeon_flames_is_active() || dungeon_fortress_is_active() || dungeon_droplets_is_active() || dungeon_palace_is_active() || veil_clouds_is_active() || sanctuary_is_active()) {
             camera.viewport_w = widescreen ? 284 : 240;
             camera.viewport_h = 160;
             camera.x = (float)(256 - camera.viewport_w) / 2.0f;

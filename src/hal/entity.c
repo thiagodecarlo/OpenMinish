@@ -373,6 +373,17 @@ bool entity_is_boss_alive(void) {
     return false;
 }
 
+Entity* entity_get_boss(void) {
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        if (s_entities[i].is_active &&
+            (s_entities[i].type == ENTITY_BOSS_BIG_CHUCHU || s_entities[i].type == ENTITY_BOSS_GLEEROK) &&
+            s_entities[i].health > 0) {
+            return &s_entities[i];
+        }
+    }
+    return NULL;
+}
+
 void entity_manager_init(void) {
     memset(s_entities, 0, sizeof(s_entities));
     memset(s_combat_fx, 0, sizeof(s_combat_fx));
@@ -3357,6 +3368,35 @@ bool entity_check_pacci_hit(float px, float py, float pw, float ph) {
                     return true;
                 }
             }
+            // 1c. Chefe Big Green ChuChu: O Cajado de Pacci inverte e desestabiliza a base gelatinosa!
+            else if (e->type == ENTITY_BOSS_BIG_CHUCHU) {
+                if (e->action == 1 || e->action == 2) {
+                    e->bossSuctionTimer += 30; // Grande impulso no desequilíbrio!
+                    e->bossBaseScale = 1.0f - (float)e->bossSuctionTimer / 55.0f;
+                    if (e->bossBaseScale < 0.15f) e->bossBaseScale = 0.15f;
+
+                    if (e->bossSuctionTimer >= 55) {
+                        e->action = 3; // Toppled / Vulnerável
+                        e->subAction = 0;
+                        e->bossToppleTimer = 200;
+                        e->z = 0.0f;
+                        e->vx = 0.0f;
+                        e->vy = 0.0f;
+                        entity_trigger_screen_shake(18, 5);
+                        hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.3f);
+                        hal_audio_play_sound(SOUND_BOSS_SLAM, 1.0f, 0.70f);
+                        hal_audio_play_sound(SOUND_CHUCHU_SQUISH, 1.0f, 0.60f);
+                        printf("[CANE OF PACCI] Big Green ChuChu toppled! Base invertida com sucesso pelo Cajado de Pacci!\n");
+                    } else {
+                        e->action = 2; // Entra em wobble oscilante
+                        hal_audio_play_sound(SOUND_SECRET, 0.9f, 1.5f);
+                        hal_audio_play_sound(SOUND_CHUCHU_SQUISH, 0.95f, 0.70f);
+                        entity_trigger_screen_shake(8, 2);
+                        printf("[CANE OF PACCI] Base do Big Green ChuChu desestabilizada pelo pulso gravitacional!\n");
+                    }
+                    return true;
+                }
+            }
             // 2. Inimigos normais (Octorok, Keese, ChuChu, Moblin, Peahat, Tektite):
             // Sofrem forte impacto mágico de inversão e atordoamento
             else if (e->type == ENTITY_ENEMY_OCTOROK ||
@@ -4189,31 +4229,67 @@ void entity_manager_render(const Camera* cam) {
                 }
             }
 
-            // HUD DE VIDA DO CHEFE (BARRA DE BOSS CANÔNICA GBA)
+            // HUD DE VIDA DO CHEFE (BARRA DE BOSS CANÔNICA GBA COM ORNAMENTOS)
             if (e->action != 5 && e->health > 0) {
-                int bar_w = 84;
-                int bar_h = 7;
+                int bar_w = 96;
+                int bar_h = 8;
                 int bar_x = (cam->viewport_w - bar_w) / 2;
-                int bar_y = 18;
+                int bar_y = 16;
 
-                // Fundo preto e moldura dourada
-                draw_filled_rect(bar_x - 1, bar_y - 1, bar_w + 2, bar_h + 2, 0x0B0F19FF);
-                draw_filled_rect(bar_x, bar_y, bar_w, bar_h, 0x1E293BFF);
+                // Moldura ornamental dourada com chanfros e gemas
+                u32 border_gold = e->bossEnraged ? 0xDC2626FF : 0xD97706FF;
+                u32 border_dark = e->bossEnraged ? 0x7F1D1DFF : 0x78350FFF;
+                u32 gem_color   = e->bossEnraged ? 0xEF4444FF : 0x10B981FF;
 
-                // Segmentos de vida (10 slots de HP)
-                int pip_w = 7;
+                // Fundo com borda ornamental chanfrada
+                draw_filled_rect(bar_x - 3, bar_y - 2, bar_w + 6, bar_h + 4, 0x0F172AFF);
+                draw_filled_rect(bar_x - 2, bar_y - 1, bar_w + 4, bar_h + 2, border_gold);
+                draw_filled_rect(bar_x - 1, bar_y, bar_w + 2, bar_h, border_dark);
+                draw_filled_rect(bar_x, bar_y + 1, bar_w, bar_h - 2, 0x020617FF);
+
+                // Gemas Minish ornamentais nas pontas esquerda e direita
+                draw_filled_rect(bar_x - 6, bar_y, 4, bar_h, gem_color);
+                put_pixel_safe(bar_x - 5, bar_y + 1, 0xFFFFFFFF);
+                draw_filled_rect(bar_x + bar_w + 2, bar_y, 4, bar_h, gem_color);
+                put_pixel_safe(bar_x + bar_w + 3, bar_y + 1, 0xFFFFFFFF);
+
+                // Segmentos de vida com chanfro e efeito de Hit Flash
+                bool hit_flash = (e->invulnerableTimer > 0 && (e->invulnerableTimer / 3) % 2 == 1);
+                int pip_w = 8;
                 for (int hp = 0; hp < e->maxHealth; hp++) {
-                    int px = bar_x + 2 + (hp * 8);
-                    u32 pip_col = (hp < e->health) ? (e->bossEnraged ? 0xEF4444FF : 0x22C55EFF) : 0x475569FF;
-                    draw_filled_rect(px, bar_y + 1, pip_w, bar_h - 2, pip_col);
+                    int px = bar_x + 2 + (hp * (pip_w + 1));
+                    if (px + pip_w > bar_x + bar_w - 2) break;
+
                     if (hp < e->health) {
-                        put_pixel_safe(px + 1, bar_y + 2, 0xFFFFFFFF); // Brilho no pip
+                        u32 c_top = hit_flash ? 0xFFFFFFFF : (e->bossEnraged ? 0xFCA5A5FF : 0x86EFACFF);
+                        u32 c_mid = hit_flash ? 0xFEF08AFF : (e->bossEnraged ? 0xEF4444FF : 0x22C55EFF);
+                        u32 c_bot = hit_flash ? 0xF59E0BFF : (e->bossEnraged ? 0x991B1BFF : 0x15803DFF);
+
+                        draw_filled_rect(px, bar_y + 1, pip_w, 2, c_top);
+                        draw_filled_rect(px, bar_y + 3, pip_w, 2, c_mid);
+                        draw_filled_rect(px, bar_y + 5, pip_w, 1, c_bot);
+                        put_pixel_safe(px + 1, bar_y + 2, 0xFFFFFFFF);
+                    } else {
+                        draw_filled_rect(px, bar_y + 2, pip_w, 4, 0x334155FF);
                     }
                 }
 
-                // Nome do Chefe centralizado
+                // Nome do Chefe e Alerta Tático
                 const char* boss_title = e->bossEnraged ? "BIG CHUCHU (FURIOSO)" : "BIG GREEN CHUCHU";
-                font_draw_text(bar_x + 6, bar_y - 8, boss_title, e->bossEnraged ? 0xF87171FF : 0x4ADE80FF, true);
+                font_draw_text(bar_x + 8, bar_y - 9, boss_title, e->bossEnraged ? 0xF87171FF : 0xFBBF24FF, true);
+
+                if (e->action == 3) { // Desabado / Toppled
+                    bool blink = ((e->animTimer / 6) % 2 == 1);
+                    if (blink) {
+                        font_draw_text(bar_x - 14, bar_y + bar_h + 3, "* VULNERAVEL! ATAQUE A CABECA! *", 0x38BDF8FF, true);
+                    }
+                } else if (e->action == 2) { // Sendo sugado com Gust Jar
+                    int pct = (e->bossSuctionTimer * 100) / 55;
+                    if (pct > 100) pct = 100;
+                    char buf_suc[32];
+                    snprintf(buf_suc, sizeof(buf_suc), "DESEQUILIBRIO BASE: %d%%", pct);
+                    font_draw_text(bar_x - 4, bar_y + bar_h + 3, buf_suc, 0x4ADE80FF, true);
+                }
             }
         }
 

@@ -139,6 +139,7 @@ bool entity_is_boss_alive(void);
  * Retorna se o chefe Big Green ChuChu foi derrotado.
  */
 bool entity_is_boss_defeated(void);
+Entity* entity_get_boss(void);
 
 /*
  * Retorna os deslocamentos X e Y de tremor de tela (Screen Shake) ativos no momento.
