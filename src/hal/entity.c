@@ -695,6 +695,10 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     e->action        = 1; // No arbusto espiando
                     e->animTimer     = 0;
                     e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
+                    e->hasKinstone   = true;
+                    e->kinstoneType  = 2; // KINSTONE_RED (Fragmento vermelho raro)
+                    e->kinstoneFused = false;
+                    e->bubbleBob     = 0.0f;
                     break;
 
                 case ENTITY_NPC_MELARI:
@@ -705,6 +709,10 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     e->action        = 1; // Na forja martelando a bigorna
                     e->animTimer     = 0;
                     e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
+                    e->hasKinstone   = true;
+                    e->kinstoneType  = 2; // KINSTONE_RED (Fragmento vermelho raro)
+                    e->kinstoneFused = false;
+                    e->bubbleBob     = 0.0f;
                     break;
 
                 case ENTITY_NPC_MOUNTAIN_MINISH:
@@ -792,7 +800,6 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     break;
 
                 case ENTITY_NPC_LIBRARI:
-                case ENTITY_NPC_MAYOR_HAGEN:
                 case ENTITY_NPC_SMITH:
                     e->health        = 999;
                     e->maxHealth     = 999;
@@ -801,6 +808,20 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     e->action        = 1;
                     e->animTimer     = 0;
                     e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
+                    break;
+
+                case ENTITY_NPC_MAYOR_HAGEN:
+                    e->health        = 999;
+                    e->maxHealth     = 999;
+                    e->damage        = 0;
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1;
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
+                    e->hasKinstone   = true;
+                    e->kinstoneType  = 2; // KINSTONE_RED (Fragmento vermelho raro)
+                    e->kinstoneFused = false;
+                    e->bubbleBob     = 0.0f;
                     break;
 
                 case ENTITY_ENEMY_ELECTRIC_CHUCHU:

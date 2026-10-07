@@ -89,4 +89,52 @@ void kinstone_render(void);
  */
 const char* kinstone_get_type_name(KinstoneType type);
 
+// Identificadores de Eventos Mundiais de Kinstones
+typedef enum {
+    KINSTONE_EVENT_CHEST_WOODS = 0,    // Baú Dourado na clareira de Minish Woods
+    KINSTONE_EVENT_CHEST_LAKE,         // Baú Submerso no Lago Hylia
+    KINSTONE_EVENT_CHEST_CRENEL,       // Grande Baú nas escarpas do Monte Crenel
+    KINSTONE_EVENT_CAVE_OPENED,        // Desmoronamento revelando gruta secreta em Trilby
+    KINSTONE_EVENT_PORTAL_ACTIVATED,   // Toco de árvore Minish despertando portal mágico
+    KINSTONE_EVENT_BEANSTALK_GROWN,    // Trepadeira mágica brotando até os céus
+    KINSTONE_EVENT_COUNT
+} KinstoneEventType;
+
+typedef struct {
+    KinstoneEventType type;
+    KinstoneType      kinstone_req;
+    const char*       title;
+    const char*       desc_line1;
+    const char*       desc_line2;
+    const char*       region_name;
+    float             target_x;
+    float             target_y;
+    bool              is_unlocked;
+} KinstoneWorldEvent;
+
+/*
+ * Retorna o evento de mundo atualmente em exibição na janela pop-up.
+ */
+const KinstoneWorldEvent* kinstone_get_current_event(void);
+
+/*
+ * Retorna os dados de um evento de mundo específico.
+ */
+const KinstoneWorldEvent* kinstone_get_event(KinstoneEventType type);
+
+/*
+ * Retorna se um determinado evento já foi desbloqueado no mundo.
+ */
+bool kinstone_is_event_unlocked(KinstoneEventType type);
+
+/*
+ * Retorna o número total de eventos de mundo desbloqueados.
+ */
+int kinstone_get_unlocked_events_count(void);
+
+/*
+ * Desbloqueia manualmente um evento de mundo (para saves/testes).
+ */
+void kinstone_trigger_world_event(KinstoneEventType event_type);
+
 #endif // HAL_KINSTONE_H
