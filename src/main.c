@@ -3577,13 +3577,23 @@ int main(int argc, char* argv[]) {
                              active_map, &link.hearts);
         } else if (link.is_jumping || link.z > 0.0f) {
             link.z += link.vz;
-            link.vz -= 0.22f; // Gravidade
+            if (link.is_carrying_cucco && link.vz < -0.55f) {
+                link.vz = -0.55f; // Cucco glide suave!
+                if (rand() % 8 == 0) {
+                    cucco_minigame_spawn_feathers(link.x + 8.0f, link.y, 0xFFFFFFFF, 1);
+                }
+            } else {
+                link.vz -= 0.22f; // Gravidade normal
+            }
             if (link.z <= 0.0f) {
                 link.z = 0.0f;
                 link.vz = 0.0f;
                 link.is_jumping = false;
                 hal_audio_play_sound(SOUND_ROLL, 0.70f, 1.2f); // Aterrissagem
-                printf("[CANE OF PACCI] Link aterrissou em seguranca apos o super-salto!\n");
+                if (link.is_carrying_cucco) {
+                    cucco_minigame_spawn_feathers(link.x + 8.0f, link.y, 0xFFFFFFFF, 3);
+                }
+                printf("[PHYSICS] Link aterrissou em seguranca!\n");
             }
         }
 

@@ -86,6 +86,18 @@ typedef enum {
     CUCCO_GAME_REWARD
 } CuccoGameMode;
 
+#define MAX_FEATHER_PARTICLES 24
+
+typedef struct {
+    bool  active;
+    float x;
+    float y;
+    float vx;
+    float vy;
+    int   life;
+    u32   color;
+} CuccoFeather;
+
 typedef struct {
     bool          is_active;
     CuccoGameMode mode;
@@ -98,10 +110,12 @@ typedef struct {
     int           carrying_index;         // -1 se nenhuma galinha estiver sendo carregada
     int           state_timer;
     int           banner_timer;
+    int           anju_cheer_timer;
     bool          has_heart_piece_awarded;
     int           reward_rupees;
     int           reward_shells;
     CuccoEntity   cuccos[MAX_CUCCOS];
+    CuccoFeather  feathers[MAX_FEATHER_PARTICLES];
 } CuccoMinigame;
 
 // Inicialização e Ciclo de Vida
@@ -110,6 +124,7 @@ void cucco_minigame_start_level(int level);
 void cucco_minigame_stop(void);
 bool cucco_minigame_is_active(void);
 bool cucco_minigame_is_carrying(void);
+void cucco_minigame_spawn_feathers(float x, float y, u32 color, int count);
 
 // Lógica e Entrada
 void cucco_minigame_handle_action(float link_x, float link_y, int link_dir);

@@ -65,16 +65,50 @@ static void draw_filled_rect(int x, int y, int w, int h, u32 color) {
     }
 }
 
-static const char* s_fig_names[TOTAL_FIGURINES] = {
-    "001: Link (O Heroi)", "002: Ezlo (Gorro Picori)", "003: Princesa Zelda", "004: Rei Daltus",
-    "005: Mestre Smith", "006: Swiftblade", "007: Grayblade", "008: Grimblade",
-    "009: Waveblade", "010: Coveiro Dampe", "011: Rei Gustaf", "012: Anciao Librari",
-    "013: Minish da Floresta", "014: Minish da Cidade", "015: Mountain Minish", "016: Octorok Vermelho",
-    "017: Morcego Keese", "018: Green ChuChu", "019: Spiny Beetle", "020: Guarda Moblin",
-    "021: Darknut (Cavaleiro)", "022: Big Green ChuChu", "023: Gleerok (Lava)", "024: Mazaal (Fortaleza)",
-    "025: Big Octorok (Gelo)", "026: Gyorg Pair (Ceu)", "027: Feiticeiro Vaati", "028: Vaati Transfigured",
-    "029: Vaati's Wrath", "030: Mestre Carlov", "031: Malon da Fazenda", "032: Talon da Fazenda",
-    "033: Epona (Ponei)", "034: Stockwell (Lojista)", "035: Anju das Galinhas", "036: Vovozinha Minish"
+typedef struct {
+    const char* name;
+    const char* desc1;
+    const char* desc2;
+    FigurineCategory cat;
+} FigDesc;
+
+static const FigDesc s_canon_figs[36] = {
+    { "001: Link (O Heroi)",       "Jovem aprendiz de ferreiro que empunha", "a lendaria White Sword e salva Hyrule.", FIG_CAT_HERO },
+    { "002: Ezlo (Gorro Picori)",  "Antigo sabio dos Minish transformado",   "em gorro falante pela maldicao de Vaati.", FIG_CAT_HERO },
+    { "003: Princesa Zelda",       "Bondosa princesa que carrega o misterioso", "Poder da Luz sagrado dos Minish.", FIG_CAT_HERO },
+    { "004: Rei Daltus",           "Soberano de Hyrule e zelador das velhas", "tradicoes do Festival dos Picori.", FIG_CAT_HERO },
+    { "005: Mestre Smith",         "Avo de Link e o mais renomado ferreiro", "de laminas de todo o reino de Hyrule.", FIG_CAT_TOWN },
+    { "006: Swiftblade",           "Mestre espadachim de Hyrule Town que",   "ensina o lendario Spin Attack a Link.", FIG_CAT_TOWN },
+    { "007: Grayblade",            "Mestre solitario de Mt. Crenel capaz",   "de ensinar o poderoso Roll Attack.", FIG_CAT_TOWN },
+    { "008: Grimblade",            "Mestre oculto nos jardins do castelo que", "revela os segredos do Sword Beam.", FIG_CAT_TOWN },
+    { "009: Waveblade",            "Mestre do Lago Hylia que aprimora o",    "temivel Peril Beam quando a vida mingua.", FIG_CAT_TOWN },
+    { "010: Coveiro Dampe",        "Guardiao sombrio do cemiterio real que", "cuida dos mausoleus dos nobres ancestrais.", FIG_CAT_TOWN },
+    { "011: Rei Gustaf",           "Antigo monarca de Hyrule sepultado no",  "vale das criptas reais de outrora.", FIG_CAT_HERO },
+    { "012: Anciao Librari",       "Sabio arquivista Minish que habita o",   "topo da biblioteca de Hyrule Town.", FIG_CAT_MINISH },
+    { "013: Minish da Floresta",   "Pequenino habitante de Deepwood Shrine", "que adora nozes e sementes silvestres.", FIG_CAT_MINISH },
+    { "014: Minish da Cidade",     "Artesao engenhoso que ajuda os humanos", "fazendo sapatos e assando paes a noite.", FIG_CAT_MINISH },
+    { "015: Mountain Minish",      "Ferreiro corajoso que forja minerais e", "laminas nas minas de Mt. Crenel.", FIG_CAT_MINISH },
+    { "016: Octorok Vermelho",     "Criatura tentacular que cospe pedregulhos", "polidos em qualquer viajante incauto.", FIG_CAT_ENEMY },
+    { "017: Morcego Keese",        "Voador cavernoso que se esconde em tetos", "e ataca em mergulhos rasantes rapidos.", FIG_CAT_ENEMY },
+    { "018: Green ChuChu",         "Gosma gelatinosa verde que surge do chao", "ao menor sinal de vibracao no solo.", FIG_CAT_ENEMY },
+    { "019: Spiny Beetle",         "Inseto casca-dura que se disfarca de",   "arbusto verdejante nos descampados.", FIG_CAT_ENEMY },
+    { "020: Guarda Moblin",        "Guerreiro suino que patrulha passagens", "armado com longas lancas afiadas.", FIG_CAT_ENEMY },
+    { "021: Darknut (Cavaleiro)",  "Guardiao de armadura pesada com escudo", "e espada capaz de desferir cortes brutais.", FIG_CAT_ENEMY },
+    { "022: Big Green ChuChu",     "Guardiao colossal de Deepwood Shrine",   "derrotado com o poder do Gust Jar.", FIG_CAT_BOSS },
+    { "023: Gleerok (Lava)",       "Dragao de fogo milenar adormecido na",   "cratera de lava da Cave of Flames.", FIG_CAT_BOSS },
+    { "024: Mazaal (Fortaleza)",   "Colosso mecanico da Fortaleza dos Ventos", "com punhos voadores e olhos opticos.", FIG_CAT_BOSS },
+    { "025: Big Octorok (Gelo)",   "Polvo gigante congelado no Templo das",  "Gotas que dispara rajadas glaciais.", FIG_CAT_BOSS },
+    { "026: Gyorg Pair (Ceu)",     "Mantarrayas aladas gigantescas que",     "sulcam as nuvens do Palacio dos Ventos.", FIG_CAT_BOSS },
+    { "027: Feiticeiro Vaati",     "Antigo aprendiz de Ezlo corrompido pela", "ambicao e sede insaciavel de poder.", FIG_CAT_BOSS },
+    { "028: Vaati Transfigured",   "Forma monstruosa esferica com quatro",   "olhos orbitais e garras de trevas.", FIG_CAT_BOSS },
+    { "029: Vaati's Wrath",        "Encarnacao final do senhor do caos com", "bracos colossais e raios demoniacos.", FIG_CAT_BOSS },
+    { "030: Mestre Carlov",        "O genial criador desta propria maquina", "que esculpe miniaturas com sua alma!", FIG_CAT_TOWN },
+    { "031: Malon da Fazenda",     "Garota gentil do Lon Lon Ranch que vende", "leite fresco e cuida dos poneis.", FIG_CAT_TOWN },
+    { "032: Talon da Fazenda",     "Pai dorminhoco de Malon que frequentemente", "perde as chaves da porteira do rancho.", FIG_CAT_TOWN },
+    { "033: Epona (Ponei)",        "A fiel e graciosa potranca do rancho",   "que adora cenouras e passeios campestres.", FIG_CAT_TOWN },
+    { "034: Stockwell (Lojista)",  "Comerciante astuto de Hyrule Town que",  "vende a cobicada carteira e bolsas.", FIG_CAT_TOWN },
+    { "035: Anju das Galinhas",    "Criadora atenciosa da praca do vilarejo", "que premia quem resgatar seus Cuccos!", FIG_CAT_TOWN },
+    { "036: Vovozinha Minish",     "Acolhedora matriarca que prepara chas",  "revigorantes sob o assoalho das casas.", FIG_CAT_MINISH }
 };
 
 void figurine_gallery_init(void) {
@@ -89,14 +123,18 @@ void figurine_gallery_init(void) {
     for (int i = 0; i < TOTAL_FIGURINES; i++) {
         s_gallery.figurines[i].id = i + 1;
         if (i < 36) {
-            s_gallery.figurines[i].name = s_fig_names[i];
+            s_gallery.figurines[i].name = s_canon_figs[i].name;
+            s_gallery.figurines[i].desc_line1 = s_canon_figs[i].desc1;
+            s_gallery.figurines[i].desc_line2 = s_canon_figs[i].desc2;
+            s_gallery.figurines[i].category = s_canon_figs[i].cat;
         } else {
             static char s_gen_names[100][32];
             snprintf(s_gen_names[i - 36], 32, "%03d: Trofeu de Hyrule %d", i + 1, i + 1);
             s_gallery.figurines[i].name = s_gen_names[i - 36];
+            s_gallery.figurines[i].desc_line1 = "Miniatura esculpida com maestria pelo";
+            s_gallery.figurines[i].desc_line2 = "lendario artesao Carlov em sua arvore!";
+            s_gallery.figurines[i].category = (i % 5);
         }
-        s_gallery.figurines[i].desc_line1 = "Miniatura esculpida com maestria pelo";
-        s_gallery.figurines[i].desc_line2 = "lendario artesao Carlov em sua arvore!";
         s_gallery.figurines[i].primary_color = (i % 2 == 0) ? 0x22C55EFF : 0x38BDF8FF;
         s_gallery.figurines[i].accent_color = 0xF59E0BFF;
         s_gallery.figurines[i].unlocked = false;
@@ -277,6 +315,166 @@ void figurine_gallery_update(void) {
     if (s_gallery.medal_banner_timer > 0) s_gallery.medal_banner_timer--;
 }
 
+static inline void put_pixel_safe(int x, int y, u32 color) {
+    if (x >= 0 && x < SCREEN_W && y >= 0 && y < SCREEN_H) {
+        u32 cur = hal_video_get_pixel(x, y);
+        hal_video_put_pixel(x, y, blend_colors(cur, color));
+    }
+}
+
+static void draw_mysterious_shell_icon(int x, int y) {
+    draw_filled_rect(x + 2, y,     5, 2, 0x38BDF8FF);
+    draw_filled_rect(x + 1, y + 2, 7, 2, 0x7DD3FCFF);
+    draw_filled_rect(x,     y + 4, 9, 3, 0xBAE6FDFF);
+    draw_filled_rect(x + 1, y + 7, 7, 2, 0x0284C7FF);
+    draw_filled_rect(x + 3, y + 9, 3, 1, 0x0369A1FF);
+    put_pixel_safe(x + 3, y + 3, 0x0284C7FF);
+    put_pixel_safe(x + 4, y + 4, 0x0284C7FF);
+    put_pixel_safe(x + 5, y + 3, 0x0369A1FF);
+    put_pixel_safe(x + 3, y + 5, 0xFFFFFFFF);
+}
+
+static void render_figurine_trophy(int px, int py, int fig_id, float rot_angle, bool is_silhouette) {
+    // 1. Cone de iluminação mística (Spotlight do teto)
+    for (int y = 20; y < py; y += 4) {
+        int w = 24 + ((y - 20) * 36) / (py - 20);
+        draw_filled_rect(px - w / 2, y, w, 4, 0x38BDF80C);
+    }
+
+    // 2. Pedestal de Mármore e Ouro
+    draw_filled_rect(px - 32, py + 19, 64, 5, 0x05100788); // Sombra de contato
+    draw_filled_rect(px - 30, py + 15, 60, 4, C_GACHA_GOLD); // Anel inferior dourado
+    draw_filled_rect(px - 26, py + 3,  52, 12, C_PEDESTAL_STONE); // Coluna mármore
+    draw_filled_rect(px - 24, py + 5,  48, 2,  0x94A3B8FF); // Destaque mármore
+    draw_filled_rect(px - 28, py,      56, 4,  C_PEDESTAL_DARK); // Tampo superior
+    draw_filled_rect(px - 26, py,      52, 1,  0xCBD5E1FF);
+
+    // Efeito de rotação 3D sutil (offset horizontal e inclinação)
+    int rox = (int)(sinf(rot_angle) * 7.0f);
+    int ty = py - 34;
+
+    if (is_silhouette) {
+        // Silhueta misteriosa negra com contorno sutil
+        draw_filled_rect(px - 12 + rox, ty, 24, 32, 0x1E1B18FF);
+        draw_filled_rect(px - 10 + rox, ty - 2, 20, 2, 0x44403CFF);
+        draw_filled_rect(px - 12 + rox, ty, 2, 32, 0x44403CFF);
+        font_draw_text(px - 4 + rox, ty + 10, "?", 0xF59E0BFF, true);
+        return;
+    }
+
+    // 3. Estatuetas Específicas / Canônicas
+    if (fig_id == 0) {
+        // --- LINK (O HERÓI) ---
+        draw_filled_rect(px - 5 + rox, ty - 6, 10, 6, 0x16A34AFF);
+        draw_filled_rect(px + 1 + rox, ty - 9, 6, 4, 0x15803DFF);
+        draw_filled_rect(px - 4 + rox, ty, 8, 7, 0xFED7AAFF);
+        draw_filled_rect(px - 4 + rox, ty, 8, 2, 0xFACC15FF);
+        put_pixel_safe(px - 2 + rox, ty + 2, 0x0284C7FF);
+        put_pixel_safe(px + 1 + rox, ty + 2, 0x0284C7FF);
+        draw_filled_rect(px - 6 + rox, ty + 7, 12, 14, 0x16A34AFF);
+        draw_filled_rect(px - 6 + rox, ty + 13, 12, 2, 0xF8FAFCFF);
+        put_pixel_safe(px - 1 + rox, ty + 13, 0xF59E0BFF);
+        draw_filled_rect(px - 4 + rox, ty + 21, 3, 9, 0x78350FFF);
+        draw_filled_rect(px + 1 + rox, ty + 21, 3, 9, 0x78350FFF);
+        draw_filled_rect(px - 11 + rox, ty + 8, 5, 11, 0x2563EBFF);
+        draw_filled_rect(px - 10 + rox, ty + 11, 3, 5, 0xEF4444FF);
+        draw_filled_rect(px + 7 + rox, ty - 4, 2, 14, 0xCBD5E1FF);
+        put_pixel_safe(px + 7 + rox, ty - 5, 0xFFFFFFFF);
+        draw_filled_rect(px + 6 + rox, ty + 10, 4, 2, 0xF59E0BFF);
+    } else if (fig_id == 1) {
+        // --- EZLO (GORRO PICORI) ---
+        draw_filled_rect(px - 12, ty + 24, 24, 4, 0x78350FFF);
+        draw_filled_rect(px - 8 + rox, ty + 6, 16, 16, 0x059669FF);
+        draw_filled_rect(px - 9 + rox, ty + 8, 3, 10, 0x047857FF);
+        draw_filled_rect(px - 7 + rox, ty - 2, 14, 10, 0x059669FF);
+        draw_filled_rect(px - 3 + rox, ty - 7, 6, 5, 0xDC2626FF);
+        draw_filled_rect(px - 6 + rox, ty, 5, 5, 0xFFFFFFFF);
+        draw_filled_rect(px + 1 + rox, ty, 5, 5, 0xFFFFFFFF);
+        put_pixel_safe(px - 4 + rox, ty + 2, 0x18181BFF);
+        put_pixel_safe(px + 3 + rox, ty + 2, 0x18181BFF);
+        draw_filled_rect(px - 2 + rox, ty + 5, 5, 4, 0xEA580CFF);
+        draw_filled_rect(px - 1 + rox, ty + 8, 3, 3, 0xD97706FF);
+    } else if (fig_id == 2) {
+        // --- PRINCESA ZELDA ---
+        draw_filled_rect(px - 5 + rox, ty - 7, 10, 2, 0xF59E0BFF);
+        put_pixel_safe(px + rox, ty - 8, 0x38BDF8FF);
+        draw_filled_rect(px - 6 + rox, ty - 5, 12, 18, 0xFDE047FF);
+        draw_filled_rect(px - 4 + rox, ty - 4, 8, 7, 0xFED7AAFF);
+        put_pixel_safe(px - 2 + rox, ty - 1, 0x1D4ED8FF);
+        put_pixel_safe(px + 1 + rox, ty - 1, 0x1D4ED8FF);
+        draw_filled_rect(px - 7 + rox, ty + 4, 14, 24, 0xF472B6FF);
+        draw_filled_rect(px - 3 + rox, ty + 6, 6, 22, 0xFFFFFFFF);
+        draw_filled_rect(px - 2 + rox, ty + 12, 4, 3, 0xF59E0BFF);
+    } else if (fig_id == 3) {
+        // --- REI DALTUS ---
+        draw_filled_rect(px - 6 + rox, ty - 7, 12, 3, 0xF59E0BFF);
+        put_pixel_safe(px - 5 + rox, ty - 9, 0xF59E0BFF);
+        put_pixel_safe(px + rox,     ty - 9, 0xF59E0BFF);
+        put_pixel_safe(px + 4 + rox, ty - 9, 0xF59E0BFF);
+        draw_filled_rect(px - 5 + rox, ty - 4, 10, 6, 0xFED7AAFF);
+        draw_filled_rect(px - 6 + rox, ty + 2, 12, 8, 0xF1F5F9FF);
+        draw_filled_rect(px - 8 + rox, ty + 6, 16, 22, 0xDC2626FF);
+        draw_filled_rect(px - 8 + rox, ty + 6, 16, 3, 0xFFFFFFFF);
+        draw_filled_rect(px + 8 + rox, ty + 2, 2, 22, 0xF59E0BFF);
+    } else if (fig_id == 15) {
+        // --- OCTOROK VERMELHO ---
+        draw_filled_rect(px - 8 + rox, ty + 6, 16, 14, 0xEF4444FF);
+        draw_filled_rect(px - 6 + rox, ty + 4, 12, 4, 0xF87171FF);
+        draw_filled_rect(px - 4 + rox, ty + 12, 8, 7, 0xFACC15FF);
+        draw_filled_rect(px - 2 + rox, ty + 14, 4, 3, 0x78350FFF);
+        put_pixel_safe(px - 5 + rox, ty + 9, 0x18181BFF);
+        put_pixel_safe(px + 4 + rox, ty + 9, 0x18181BFF);
+    } else if (fig_id == 17) {
+        // --- GREEN CHUCHU ---
+        draw_filled_rect(px - 7 + rox, ty + 8, 14, 16, 0x22C55EFF);
+        draw_filled_rect(px - 5 + rox, ty + 6, 10, 4, 0x4ADE80FF);
+        draw_filled_rect(px - 3 + rox, ty + 6, 4, 2, 0xFFFFFFFF);
+        draw_filled_rect(px - 5 + rox, ty + 12, 3, 3, 0xFFFFFFFF);
+        draw_filled_rect(px + 2 + rox, ty + 12, 3, 3, 0xFFFFFFFF);
+        put_pixel_safe(px - 4 + rox, ty + 13, 0x18181BFF);
+        put_pixel_safe(px + 3 + rox, ty + 13, 0x18181BFF);
+    } else if (fig_id == 21) {
+        // --- BIG GREEN CHUCHU (CHEFE) ---
+        draw_filled_rect(px - 14 + rox, ty - 2, 28, 28, 0x16A34AFF);
+        draw_filled_rect(px - 11 + rox, ty - 4, 22, 6, 0x22C55EFF);
+        draw_filled_rect(px - 6 + rox, ty + 6, 12, 12, 0x84CC16FF);
+        draw_filled_rect(px - 6 + rox, ty - 10, 12, 4, 0xF59E0BFF);
+        put_pixel_safe(px - 5 + rox, ty - 12, 0xF59E0BFF);
+        put_pixel_safe(px + rox,     ty - 12, 0xF59E0BFF);
+        put_pixel_safe(px + 4 + rox, ty - 12, 0xF59E0BFF);
+    } else if (fig_id == 22) {
+        // --- GLEEROK (DRAGÃO DE FOGO) ---
+        draw_filled_rect(px - 12 + rox, ty + 2, 24, 20, 0xB91C1CFF);
+        draw_filled_rect(px - 14 + rox, ty + 16, 28, 8, 0xF97316FF);
+        draw_filled_rect(px - 11 + rox, ty - 6, 4, 8, 0x94A3B8FF);
+        draw_filled_rect(px + 7 + rox,  ty - 6, 4, 8, 0x94A3B8FF);
+        draw_filled_rect(px - 6 + rox, ty + 8, 4, 3, 0xFDE047FF);
+        draw_filled_rect(px + 2 + rox, ty + 8, 4, 3, 0xFDE047FF);
+        put_pixel_safe(px - 4 + rox, ty + 9, 0xDC2626FF);
+        put_pixel_safe(px + 3 + rox, ty + 9, 0xDC2626FF);
+    } else if (fig_id == 26) {
+        // --- FEITICEIRO VAATI ---
+        draw_filled_rect(px - 7 + rox, ty - 8, 14, 8, 0x8B5CF6FF);
+        draw_filled_rect(px - 1 + rox, ty - 13, 3, 5, 0x7C3AEDFF);
+        put_pixel_safe(px + rox, ty - 6, 0xEF4444FF);
+        draw_filled_rect(px - 5 + rox, ty, 10, 6, 0xE9D5FFFF);
+        draw_filled_rect(px - 2 + rox, ty + 2, 4, 3, 0xDC2626FF);
+        put_pixel_safe(px + rox, ty + 3, 0xFDE047FF);
+        draw_filled_rect(px - 9 + rox, ty + 6, 18, 22, 0x3B0764FF);
+        draw_filled_rect(px - 9 + rox, ty + 24, 18, 4, 0x991B1BFF);
+    } else {
+        // --- CATEGORIAS GENÉRICAS ESTILIZADAS ---
+        FigurineEntry* f = &s_gallery.figurines[fig_id];
+        u32 c_main = f->primary_color;
+        u32 c_acc  = f->accent_color;
+
+        draw_filled_rect(px - 8 + rox, ty + 2, 16, 24, c_main);
+        draw_filled_rect(px - 6 + rox, ty - 4, 12, 8, c_acc);
+        draw_filled_rect(px - 3 + rox, ty, 6, 3, 0xFFFFFFFF);
+        draw_filled_rect(px - 10 + rox, ty + 20, 20, 2, C_GACHA_GOLD);
+    }
+}
+
 void figurine_gallery_render(void) {
     if (!s_gallery.is_active) return;
 
@@ -291,9 +489,11 @@ void figurine_gallery_render(void) {
     draw_filled_rect(0, 19, SCREEN_W, 1, C_GACHA_GOLD);
     font_draw_text(10, 5, "GALERIA DO CARLOV - GACHA", 0xFDE047FF, true);
 
+    // Ícone de concha misteriosa no topo
+    draw_mysterious_shell_icon(152, 4);
     char shells_txt[32];
     snprintf(shells_txt, sizeof(shells_txt), "CONCHAS: %d", s_gallery.shells_owned);
-    font_draw_text(170, 5, shells_txt, 0x38BDF8FF, true);
+    font_draw_text(166, 5, shells_txt, 0x38BDF8FF, true);
 
     // ==========================================
     // MODO GACHA
@@ -328,6 +528,14 @@ void figurine_gallery_render(void) {
         // Calha de saída de cápsula
         draw_filled_rect(mx - 10, my + 30, 20, 12, 0x18181BFF);
 
+        // Se estiver dispensando, anima cápsula rolando na calha
+        if (s_gallery.mode == GALLERY_MODE_DISPENSING) {
+            int drop_y = my + 10 + (60 - s_gallery.dispense_timer) / 2;
+            if (drop_y > my + 32) drop_y = my + 32;
+            draw_filled_rect(mx - 5, drop_y, 10, 5, C_CAPSULE_TOP);
+            draw_filled_rect(mx - 5, drop_y + 5, 10, 5, C_CAPSULE_BOT);
+        }
+
         // Painel de Apostas & Probabilidades (Direita)
         int px = 135;
         int py = 35;
@@ -336,9 +544,11 @@ void figurine_gallery_render(void) {
 
         font_draw_text(px + 8, py + 8, "APOSTA DE CONCHAS", 0xFDE047FF, true);
 
+        // Ícone da concha no painel de aposta
+        draw_mysterious_shell_icon(px + 8, py + 25);
         char bet_txt[32];
-        snprintf(bet_txt, sizeof(bet_txt), "CONCHAS: [ %d ]", s_gallery.shells_bet);
-        font_draw_text(px + 8, py + 26, bet_txt, 0xFFFFFFFF, true);
+        snprintf(bet_txt, sizeof(bet_txt), "[ %02d ]", s_gallery.shells_bet);
+        font_draw_text(px + 22, py + 26, bet_txt, 0xFFFFFFFF, true);
 
         char chance_txt[32];
         snprintf(chance_txt, sizeof(chance_txt), "CHANCE: %.1f%%", s_gallery.win_chance_percent);
@@ -351,7 +561,7 @@ void figurine_gallery_render(void) {
 
         // Instruções no rodapé
         draw_filled_rect(0, SCREEN_H - 18, SCREEN_W, 18, 0x0C0A09EE);
-        font_draw_text(10, SCREEN_H - 14, "[A] GIRAR | [CIMA/BAIXO] CONCHAS | [START] GALERIA", 0xA8A29EFF, false);
+        font_draw_text(6, SCREEN_H - 14, "[A] GIRAR | [+/-10] ESQ/DIR | [+/-1] CIMA/BAIXO | [START] GALERIA", 0xA8A29EFF, false);
     }
 
     // ==========================================
@@ -361,31 +571,40 @@ void figurine_gallery_render(void) {
         int fig_idx = s_gallery.current_won_id;
         FigurineEntry* fig = &s_gallery.figurines[fig_idx];
 
-        // Pedestal Iluminado
-        int px = 70;
-        int py = 105;
-        draw_filled_rect(px - 30, py, 60, 16, C_PEDESTAL_STONE);
-        draw_filled_rect(px - 34, py + 12, 68, 6, C_PEDESTAL_DARK);
+        // Pedestal e Estatueta 3D Renderizada
+        render_figurine_trophy(68, 115, fig_idx, s_gallery.trophy_rot_angle, false);
 
-        // Troféu 3D Rotativo
-        int rot_off = (int)(sinf(s_gallery.trophy_rot_angle) * 8.0f);
-        draw_filled_rect(px - 10 + rot_off, py - 35, 20, 32, fig->primary_color);
-        draw_filled_rect(px - 6 + rot_off, py - 32, 12, 10, fig->accent_color);
-        draw_filled_rect(px - 14 + rot_off, py - 38, 28, 6, C_GACHA_GOLD); // Brilho de troféu
+        // Brilho de estrelas orbitais se for nova estatueta
+        if (!s_gallery.is_duplicate) {
+            for (int s = 0; s < 4; s++) {
+                float a = s_gallery.trophy_rot_angle * 1.5f + (float)s * 1.57f;
+                int sx = 68 + (int)(cosf(a) * 22.0f);
+                int sy = 90 + (int)(sinf(a) * 16.0f);
+                put_pixel_safe(sx, sy, 0xFDE047FF);
+                put_pixel_safe(sx + 1, sy, 0xFFFFFFFF);
+            }
+        }
 
         // Painel de Lore e Nome
-        int lx = 120;
-        int ly = 32;
-        draw_filled_rect(lx, ly, 126, 100, 0x292524FF);
+        int lx = 118;
+        int ly = 30;
+        draw_filled_rect(lx, ly, 130, 105, 0x292524FF);
 
         const char* status = s_gallery.is_duplicate ? "[REPETIDA]" : "[NOVA ESTATUETA!]";
         u32 st_col = s_gallery.is_duplicate ? 0x94A3B8FF : 0x4ADE80FF;
-        font_draw_text(lx + 8, ly + 8, status, st_col, true);
-        font_draw_text(lx + 8, ly + 24, fig->name, 0xFDE047FF, true);
-        font_draw_text(lx + 8, ly + 46, fig->desc_line1, 0xE7E5E4FF, false);
-        font_draw_text(lx + 8, ly + 60, fig->desc_line2, 0xE7E5E4FF, false);
+        font_draw_text(lx + 8, ly + 6, status, st_col, true);
+        font_draw_text(lx + 8, ly + 22, fig->name, 0xFDE047FF, true);
 
-        font_draw_text(lx + 8, ly + 80, "[A] CONTINUAR", 0x38BDF8FF, true);
+        // Categoria da estatueta
+        const char* cat_names[5] = { "HEROI", "VILAREJO", "MINISH", "INIMIGO", "CHEFE" };
+        char cat_buf[32];
+        snprintf(cat_buf, sizeof(cat_buf), "CAT: [%s]", cat_names[fig->category % 5]);
+        font_draw_text(lx + 8, ly + 38, cat_buf, 0x38BDF8FF, true);
+
+        font_draw_text(lx + 8, ly + 54, fig->desc_line1, 0xE7E5E4FF, false);
+        font_draw_text(lx + 8, ly + 68, fig->desc_line2, 0xE7E5E4FF, false);
+
+        font_draw_text(lx + 8, ly + 88, "[A] CONTINUAR", 0x38BDF8FF, true);
     }
 
     // ==========================================
@@ -395,33 +614,25 @@ void figurine_gallery_render(void) {
         int fig_idx = s_gallery.selected_id;
         FigurineEntry* fig = &s_gallery.figurines[fig_idx];
 
-        // Pedestal de exibição no centro
-        int px = 70;
-        int py = 105;
-        draw_filled_rect(px - 30, py, 60, 16, C_PEDESTAL_STONE);
-        draw_filled_rect(px - 34, py + 12, 68, 6, C_PEDESTAL_DARK);
+        // Pedestal e Estatueta 3D Renderizada
+        render_figurine_trophy(68, 115, fig_idx, s_gallery.trophy_rot_angle, !fig->unlocked);
+
+        // Painel de Detalhes
+        int lx = 118;
+        int ly = 30;
+        draw_filled_rect(lx, ly, 130, 105, 0x292524FF);
 
         if (fig->unlocked) {
-            int rot_off = (int)(sinf(s_gallery.trophy_rot_angle) * 8.0f);
-            draw_filled_rect(px - 10 + rot_off, py - 35, 20, 32, fig->primary_color);
-            draw_filled_rect(px - 6 + rot_off, py - 32, 12, 10, fig->accent_color);
-            draw_filled_rect(px - 14 + rot_off, py - 38, 28, 6, C_GACHA_GOLD);
-        } else {
-            // Silhueta misteriosa com ponto de interrogação
-            draw_filled_rect(px - 10, py - 35, 20, 32, 0x292524FF);
-            font_draw_text(px - 4, py - 26, "?", 0x78716CFF, true);
-        }
+            font_draw_text(lx + 8, ly + 6, fig->name, 0xFDE047FF, true);
 
-        // Descrição
-        int lx = 120;
-        int ly = 32;
-        draw_filled_rect(lx, ly, 126, 100, 0x292524FF);
+            const char* cat_names[5] = { "HEROI", "VILAREJO", "MINISH", "INIMIGO", "CHEFE" };
+            char cat_buf[32];
+            snprintf(cat_buf, sizeof(cat_buf), "CAT: [%s]", cat_names[fig->category % 5]);
+            font_draw_text(lx + 8, ly + 22, cat_buf, 0x38BDF8FF, true);
 
-        if (fig->unlocked) {
-            font_draw_text(lx + 8, ly + 8, fig->name, 0xFDE047FF, true);
-            font_draw_text(lx + 8, ly + 30, fig->desc_line1, 0xE7E5E4FF, false);
-            font_draw_text(lx + 8, ly + 46, fig->desc_line2, 0xE7E5E4FF, false);
-            font_draw_text(lx + 8, ly + 76, "STATUS: COLETADA", 0x4ADE80FF, true);
+            font_draw_text(lx + 8, ly + 40, fig->desc_line1, 0xE7E5E4FF, false);
+            font_draw_text(lx + 8, ly + 54, fig->desc_line2, 0xE7E5E4FF, false);
+            font_draw_text(lx + 8, ly + 84, "STATUS: COLETADA", 0x4ADE80FF, true);
         } else {
             font_draw_text(lx + 8, ly + 8, "??? (BLOQUEADA)", 0x94A3B8FF, true);
             font_draw_text(lx + 8, ly + 36, "Aposte conchas misteriosas", 0x78716CFF, false);
