@@ -90,7 +90,7 @@ static const PrologueAct s_acts[TOTAL_ACTS] = {
     },
     // Ato 3: O Selamento do Baú Sagrado
     {
-        .panel_index = 2,
+        .panel_index = 3,
         .title = "O SELAMENTO DO BAU SAGRADO",
         .text = "A paz voltou e o heroi selou\no mal no sagrado Bau!",
         .trigger_sfx = SOUND_SWITCH_CLICK,
@@ -99,7 +99,7 @@ static const PrologueAct s_acts[TOTAL_ACTS] = {
     },
     // Ato 4: O Festival Secular e a Luz Dourada
     {
-        .panel_index = 3,
+        .panel_index = 4,
         .title = "O FESTIVAL SECULAR DE HYRULE",
         .text = "A Luz brilha na Princesa e\nHyrule celebra o festival.",
         .trigger_sfx = SOUND_SECRET,
@@ -108,7 +108,7 @@ static const PrologueAct s_acts[TOTAL_ACTS] = {
     },
     // Ato 5: O Clímax Sombrio - O Mago Vaati nas Sombras
     {
-        .panel_index = 3,
+        .panel_index = 5,
         .title = "UMA SOMBRA ESCOLHE SEU MOMENTO...",
         .text = "Heh heh heh...\nEntao o segredo e esse...",
         .trigger_sfx = SOUND_TEXT_ADVANCE,
