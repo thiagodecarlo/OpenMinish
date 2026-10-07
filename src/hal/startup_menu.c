@@ -905,7 +905,7 @@ void startup_menu_render(void) {
                     if (is_copy_src) {
                         sm_draw_rect_blend(banner_x, banner_y, banner_w, banner_h, 0x38BDF8FF, 0.35f);
                     } else if (is_sel) {
-                        sm_draw_rect_blend(banner_x, banner_y, banner_w, banner_h, 0xFBBF24FF, 0.22f);
+                        sm_draw_rect_blend(banner_x + 6, banner_y + 1, banner_w - 7, banner_h - 2, 0x84CC16FF, 0.45f);
                     }
 
                     // Cursor de Coração bouncando à esquerda da fita
@@ -918,7 +918,7 @@ void startup_menu_render(void) {
                         const SaveData* sd = &s_menu.slot_data[i];
                         font_draw_text(banner_x + 16, banner_y + 8, sd->player_name, 0xFFFFFFFF, true);
                     } else {
-                        font_draw_text(banner_x + 16, banner_y + 8, "NOVO", 0xE2E8F0FF, false);
+                        font_draw_text(banner_x + 16, banner_y + 8, "NEW", 0xFFFFFFFF, true);
                     }
                 }
 
