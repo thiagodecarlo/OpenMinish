@@ -749,15 +749,15 @@ void startup_menu_render(void) {
                     sm_draw_pixel(px + 1, py, 0xFEF08ACC);
                 }
 
-                // Pulso de luz mística na Four Sword
-                int px = W / 2;
-                int py = 118;
+                // Pulso de luz mística na rubi da Four Sword
+                int px = 79;
+                int py = 122;
                 float pulse = 0.5f + 0.5f * sinf(s_menu.timer * 0.08f);
-                int glow_r = (int)(6.0f + pulse * 4.0f);
+                int glow_r = (int)(4.0f + pulse * 3.0f);
                 for (int ang = 0; ang < 360; ang += 45) {
                     float rad = ang * (PI_F / 180.0f);
                     int gx = px + (int)(cosf(rad) * glow_r);
-                    int gy = py - 4 + (int)(sinf(rad) * (glow_r * 0.45f));
+                    int gy = py + (int)(sinf(rad) * (glow_r * 0.45f));
                     sm_draw_pixel(gx, gy, 0xFDE047EE);
                 }
 
@@ -766,7 +766,7 @@ void startup_menu_render(void) {
                     const char* p_start = "PRESS START";
                     int psw = font_get_text_width(p_start);
                     int psx = (W - psw) / 2;
-                    int psy = 138;
+                    int psy = 128;
                     font_draw_text(psx + 1, psy + 1, p_start, 0x0F172AFF, false);
                     font_draw_text(psx, psy, p_start, 0xFEF08AFF, true);
                 }
@@ -774,7 +774,7 @@ void startup_menu_render(void) {
                 // Copyright oficial
                 const char* c_foot = "(C) 2004 Nintendo / CAPCOM Co., Ltd.";
                 int cfw = font_get_text_width(c_foot);
-                font_draw_text((W - cfw) / 2, 150, c_foot, 0x94A3B8FF, false);
+                font_draw_text((W - cfw) / 2, 144, c_foot, 0x94A3B8FF, false);
 
                 // Flash branco de acionamento
                 if (s_menu.flash_alpha > 0.0f) {
@@ -892,57 +892,65 @@ void startup_menu_render(void) {
                     font_draw_text(ftx, 7, f_title, 0xFDE047FF, true);
                 }
 
-                // 3 Slots de Salvamento
-                int card_w = 216;
-                int card_h = 32;
-                int card_x = (W - card_w) / 2;
-
+                // 3 Slots de Salvamento no layout canônico GBA (Banners na esquerda)
                 for (int i = 0; i < 3; i++) {
-                    int card_y = 26 + i * 36;
+                    int banner_x = 24;
+                    int banner_y = 28 + i * 30;
+                    int banner_w = 72;
+                    int banner_h = 24;
                     bool is_sel = (s_menu.selected_slot == i);
                     bool is_copy_src = (s_menu.state == STARTUP_STATE_FILE_COPY && s_menu.copy_source_slot == i);
 
-                    // Efeito de seleção
+                    // Efeito de seleção sobre a fita/banner
                     if (is_copy_src) {
-                        sm_draw_rect_blend(card_x, card_y, card_w, card_h, 0x38BDF8FF, 0.35f);
+                        sm_draw_rect_blend(banner_x, banner_y, banner_w, banner_h, 0x38BDF8FF, 0.35f);
                     } else if (is_sel) {
-                        sm_draw_rect_blend(card_x, card_y, card_w, card_h, 0xFBBF24FF, 0.22f);
+                        sm_draw_rect_blend(banner_x, banner_y, banner_w, banner_h, 0xFBBF24FF, 0.22f);
                     }
 
-                    // Cursor de Coração bouncando à esquerda
+                    // Cursor de Coração bouncando à esquerda da fita
                     if (is_sel) {
                         int c_offset = (s_menu.cursor_bounce < 20) ? 0 : 2;
-                        sm_draw_heart_icon(card_x - 10 - c_offset, card_y + 12, true);
+                        sm_draw_heart_icon(banner_x - 10 - c_offset, banner_y + 8, true);
                     }
 
                     if (s_menu.slot_has_data[i]) {
                         const SaveData* sd = &s_menu.slot_data[i];
-                        font_draw_text(card_x + 40, card_y + 6, sd->player_name, 0xFFFFFFFF, true);
-
-                        int max_h = sd->max_hearts > 16 ? 16 : sd->max_hearts;
-                        for (int h = 0; h < max_h; h++) {
-                            int hx = card_x + 92 + (h % 8) * 8;
-                            int hy = card_y + 5 + (h / 8) * 7;
-                            sm_draw_heart_icon(hx, hy, (h < sd->hearts));
-                        }
-
-                        char rup_str[16];
-                        snprintf(rup_str, sizeof(rup_str), "%d", sd->rupees);
-                        sm_draw_pixel(card_x + 160, card_y + 7, 0x22C55EFF);
-                        sm_draw_pixel(card_x + 161, card_y + 6, 0x22C55EFF);
-                        sm_draw_pixel(card_x + 161, card_y + 8, 0x22C55EFF);
-                        font_draw_text(card_x + 165, card_y + 6, rup_str, 0x86EFACFF, false);
-
-                        if (sd->has_earth_element) sm_draw_rect(card_x + 198, card_y + 6, 4, 4, 0x22C55EFF);
-                        if (sd->has_fire_element)  sm_draw_rect(card_x + 204, card_y + 6, 4, 4, 0xEF4444FF);
-                        if (sd->has_water_element) sm_draw_rect(card_x + 198, card_y + 12, 4, 4, 0x38BDF8FF);
-                        if (sd->has_wind_element)  sm_draw_rect(card_x + 204, card_y + 12, 4, 4, 0x10B981FF);
-                        else if (sd->golden_kinstones_fused >= 5) sm_draw_rect(card_x + 204, card_y + 12, 4, 4, 0xFBBF24FF);
+                        font_draw_text(banner_x + 16, banner_y + 8, sd->player_name, 0xFFFFFFFF, true);
                     } else {
-                        font_draw_text(card_x + 40, card_y + 6, "- NOVO JOGO -", 0x94A3B8FF, false);
-                        for (int h = 0; h < 3; h++) {
-                            sm_draw_heart_icon(card_x + 144 + h * 8, card_y + 6, true);
-                        }
+                        font_draw_text(banner_x + 16, banner_y + 8, "NOVO", 0xE2E8F0FF, false);
+                    }
+                }
+
+                // Detalhes do Slot Selecionado no Cartão à Direita (x=108, y=36)
+                int card_sel = s_menu.selected_slot;
+                if (s_menu.slot_has_data[card_sel]) {
+                    const SaveData* sd = &s_menu.slot_data[card_sel];
+                    // Corações na área inferior do cartão (y=78)
+                    int max_h = sd->max_hearts > 16 ? 16 : sd->max_hearts;
+                    for (int h = 0; h < max_h; h++) {
+                        int hx = 118 + (h % 8) * 8;
+                        int hy = 78 + (h / 8) * 7;
+                        sm_draw_heart_icon(hx, hy, (h < sd->hearts));
+                    }
+
+                    // Rupees
+                    char rup_str[16];
+                    snprintf(rup_str, sizeof(rup_str), "%d", sd->rupees);
+                    sm_draw_pixel(118, 96, 0x22C55EFF);
+                    sm_draw_pixel(119, 95, 0x22C55EFF);
+                    sm_draw_pixel(119, 97, 0x22C55EFF);
+                    font_draw_text(123, 94, rup_str, 0x86EFACFF, false);
+
+                    // Elementos
+                    if (sd->has_earth_element) sm_draw_rect(178, 94, 4, 4, 0x22C55EFF);
+                    if (sd->has_fire_element)  sm_draw_rect(184, 94, 4, 4, 0xEF4444FF);
+                    if (sd->has_water_element) sm_draw_rect(190, 94, 4, 4, 0x38BDF8FF);
+                    if (sd->has_wind_element)  sm_draw_rect(196, 94, 4, 4, 0x10B981FF);
+                } else {
+                    // Para novo jogo, exibe 3 corações iniciais
+                    for (int h = 0; h < 3; h++) {
+                        sm_draw_heart_icon(118 + h * 8, 78, true);
                     }
                 }
 
