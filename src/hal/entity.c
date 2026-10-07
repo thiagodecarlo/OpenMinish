@@ -32,6 +32,21 @@ static int   s_screen_shake_timer = 0;
 static int   s_screen_shake_magnitude = 0;
 static bool  s_boss_defeated = false;
 
+#define MAX_COMBAT_PARTICLES 48
+
+typedef struct {
+    bool         is_active;
+    CombatFxType type;
+    float        x, y, z;
+    float        vx, vy, vz;
+    int          life;
+    int          max_life;
+    float        size;
+    u32          color;
+} CombatParticle;
+
+static CombatParticle s_combat_fx[MAX_COMBAT_PARTICLES] = { 0 };
+
 static inline bool entity_is_solid(const Tilemap* map, float wx, float wy) {
     if (dungeon_is_active()) {
         return dungeon_is_solid(wx, wy);
@@ -101,6 +116,147 @@ static void draw_rect_blend(int rx, int ry, int rw, int rh, u32 color) {
     }
 }
 
+void entity_spawn_combat_fx(CombatFxType type, float x, float y, float z, int count) {
+    if (type == COMBAT_FX_NONE || count <= 0) return;
+    int spawned = 0;
+    for (int i = 0; i < MAX_COMBAT_PARTICLES && spawned < count; i++) {
+        if (!s_combat_fx[i].is_active) {
+            CombatParticle* p = &s_combat_fx[i];
+            p->is_active = true;
+            p->type = type;
+            p->x = x;
+            p->y = y;
+            p->z = z;
+            spawned++;
+
+            if (type == COMBAT_FX_SLASH_SPARK) {
+                float angle = ((float)(rand() % 360)) * (3.14159f / 180.0f);
+                float spd = 1.8f + (float)(rand() % 15) * 0.15f;
+                p->vx = cosf(angle) * spd;
+                p->vy = sinf(angle) * spd;
+                p->vz = 0.5f + (float)(rand() % 10) * 0.1f;
+                p->life = 10 + (rand() % 6);
+                p->max_life = p->life;
+                p->size = 2.0f;
+                u32 spark_cols[] = { 0xFFFFFFFF, 0xFDE047FF, 0xF97316FF, 0xFEF08AFF };
+                p->color = spark_cols[rand() % 4];
+            } else if (type == COMBAT_FX_ELECTRIC_SPARK) {
+                float angle = ((float)(rand() % 360)) * (3.14159f / 180.0f);
+                float spd = 1.2f + (float)(rand() % 20) * 0.1f;
+                p->vx = cosf(angle) * spd;
+                p->vy = sinf(angle) * spd;
+                p->vz = (float)((rand() % 20) - 10) * 0.1f;
+                p->life = 8 + (rand() % 8);
+                p->max_life = p->life;
+                p->size = 2.0f;
+                p->color = (rand() % 2 == 0) ? 0x67E8F9FF : 0xFACC15FF;
+            } else if (type == COMBAT_FX_FIRE_EMBER) {
+                p->vx = (float)((rand() % 20) - 10) * 0.04f;
+                p->vy = (float)((rand() % 20) - 10) * 0.04f;
+                p->vz = 0.8f + (float)(rand() % 10) * 0.08f;
+                p->life = 14 + (rand() % 10);
+                p->max_life = p->life;
+                p->size = 2.0f;
+                u32 ember_cols[] = { 0xEF4444FF, 0xF97316FF, 0xFDE047FF };
+                p->color = ember_cols[rand() % 3];
+            } else if (type == COMBAT_FX_SMOKE_PUFF) {
+                float angle = ((float)(rand() % 360)) * (3.14159f / 180.0f);
+                float spd = 0.6f + (float)(rand() % 10) * 0.08f;
+                p->vx = cosf(angle) * spd;
+                p->vy = sinf(angle) * spd;
+                p->vz = 0.2f;
+                p->life = 18 + (rand() % 8);
+                p->max_life = p->life;
+                p->size = 3.0f + (float)(rand() % 3);
+                p->color = 0xF1F5F9CC;
+            } else if (type == COMBAT_FX_BONE_FRAGMENT) {
+                float angle = ((float)(rand() % 360)) * (3.14159f / 180.0f);
+                float spd = 1.4f + (float)(rand() % 15) * 0.1f;
+                p->vx = cosf(angle) * spd;
+                p->vy = sinf(angle) * spd;
+                p->vz = 2.0f + (float)(rand() % 15) * 0.1f;
+                p->life = 20 + (rand() % 10);
+                p->max_life = p->life;
+                p->size = 2.0f;
+                p->color = 0xF8FAFCFF;
+            }
+        }
+    }
+}
+
+void entity_update_combat_fx(void) {
+    for (int i = 0; i < MAX_COMBAT_PARTICLES; i++) {
+        CombatParticle* p = &s_combat_fx[i];
+        if (!p->is_active) continue;
+
+        p->x += p->vx;
+        p->y += p->vy;
+        p->z += p->vz;
+
+        if (p->type == COMBAT_FX_SLASH_SPARK) {
+            p->vx *= 0.88f;
+            p->vy *= 0.88f;
+            p->vz -= 0.08f;
+        } else if (p->type == COMBAT_FX_ELECTRIC_SPARK) {
+            p->vx += (float)((rand() % 7) - 3) * 0.15f;
+            p->vy += (float)((rand() % 7) - 3) * 0.15f;
+        } else if (p->type == COMBAT_FX_FIRE_EMBER) {
+            p->vx += (float)((rand() % 5) - 2) * 0.02f;
+            p->vz += 0.03f;
+        } else if (p->type == COMBAT_FX_SMOKE_PUFF) {
+            p->vx *= 0.92f;
+            p->vy *= 0.92f;
+            p->size += 0.18f;
+        } else if (p->type == COMBAT_FX_BONE_FRAGMENT) {
+            p->vz -= 0.22f;
+            if (p->z < 0.0f) {
+                p->z = 0.0f;
+                p->vz = -p->vz * 0.4f;
+                p->vx *= 0.7f;
+                p->vy *= 0.7f;
+            }
+        }
+
+        p->life--;
+        if (p->life <= 0) {
+            p->is_active = false;
+        }
+    }
+}
+
+void entity_render_combat_fx(const Camera* camera) {
+    if (!camera) return;
+    for (int i = 0; i < MAX_COMBAT_PARTICLES; i++) {
+        CombatParticle* p = &s_combat_fx[i];
+        if (!p->is_active) continue;
+
+        int sx = (int)(p->x - camera->x);
+        int sy = (int)(p->y - camera->y - p->z);
+
+        if (sx < -8 || sx > camera->viewport_w + 8 ||
+            sy < -8 || sy > camera->viewport_h + 8) continue;
+
+        int sz = (int)p->size;
+        if (sz < 1) sz = 1;
+
+        if (p->type == COMBAT_FX_SLASH_SPARK || p->type == COMBAT_FX_ELECTRIC_SPARK) {
+            draw_filled_rect(sx, sy, sz, sz, p->color);
+            put_pixel_safe(sx + 1, sy, 0xFFFFFFFF);
+        } else if (p->type == COMBAT_FX_FIRE_EMBER) {
+            draw_filled_rect(sx, sy, sz, sz, p->color);
+        } else if (p->type == COMBAT_FX_SMOKE_PUFF) {
+            u32 c = p->color;
+            if (p->life < 8) {
+                c = (c & 0xFFFFFF00) | ((p->life * 25) & 0xFF);
+            }
+            draw_filled_rect(sx - sz/2, sy - sz/2, sz, sz, c);
+        } else if (p->type == COMBAT_FX_BONE_FRAGMENT) {
+            draw_filled_rect(sx, sy, 2, 2, p->color);
+            put_pixel_safe(sx, sy + 1, 0xCBD5E1FF);
+        }
+    }
+}
+
 void entity_trigger_screen_shake(int duration_frames, int magnitude) {
     s_screen_shake_timer = duration_frames;
     s_screen_shake_magnitude = magnitude;
@@ -136,10 +292,11 @@ bool entity_is_boss_alive(void) {
 
 void entity_manager_init(void) {
     memset(s_entities, 0, sizeof(s_entities));
+    memset(s_combat_fx, 0, sizeof(s_combat_fx));
     s_screen_shake_timer = 0;
     s_screen_shake_magnitude = 0;
     s_boss_defeated = false;
-    printf("[HAL Entity] Gerenciador de entidades inicializado (Pool: %d slots).\n", MAX_ENTITIES);
+    printf("[HAL Entity] Gerenciador de entidades inicializado (Pool: %d slots, FX: %d slots).\n", MAX_ENTITIES, MAX_COMBAT_PARTICLES);
 }
 
 int entity_count_active_enemies(void) {
@@ -155,6 +312,9 @@ int entity_count_active_enemies(void) {
             s_entities[i].type == ENTITY_ENEMY_TEKTITE ||
             s_entities[i].type == ENTITY_ENEMY_SPINY_BEETLE ||
             s_entities[i].type == ENTITY_ENEMY_ROPE ||
+            s_entities[i].type == ENTITY_ENEMY_ELECTRIC_CHUCHU ||
+            s_entities[i].type == ENTITY_ENEMY_GIBDO ||
+            s_entities[i].type == ENTITY_ENEMY_STALFOS ||
             (s_entities[i].type == ENTITY_BOSS_BIG_CHUCHU && s_entities[i].health > 0) ||
             (s_entities[i].type == ENTITY_BOSS_GLEEROK && s_entities[i].health > 0)) {
             count++;
@@ -165,6 +325,7 @@ int entity_count_active_enemies(void) {
 
 void entity_clear_all(void) {
     memset(s_entities, 0, sizeof(s_entities));
+    memset(s_combat_fx, 0, sizeof(s_combat_fx));
 }
 
 Entity* entity_spawn(EntityType type, float world_x, float world_y) {
@@ -548,6 +709,53 @@ Entity* entity_spawn(EntityType type, float world_x, float world_y) {
                     e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
                     break;
 
+                case ENTITY_ENEMY_ELECTRIC_CHUCHU:
+                    e->health        = 3;
+                    e->maxHealth     = 3;
+                    e->damage        = 2; // Choque por contato / condução
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1; // 1 = Normal/wobble, 2 = Eletrificado
+                    e->z             = 0.0f;
+                    e->aiTimer       = 80 + (rand() % 60);
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -7.0f, -7.0f, 14.0f, 14.0f };
+                    break;
+
+                case ENTITY_ENEMY_SPIKE_ROLLER:
+                    e->health        = 999; // Trap Hazard Indestrutível de calabouço
+                    e->maxHealth     = 999;
+                    e->damage        = 2; // Dano severo com espinhos giratórios
+                    e->dir           = DIR_RIGHT;
+                    e->action        = 0; // 0 = Direita, 1 = Esquerda
+                    e->aiTimer       = 120; // Período de oscilação do trilho
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -12.0f, -6.0f, 24.0f, 12.0f };
+                    break;
+
+                case ENTITY_ENEMY_GIBDO:
+                    e->health        = 6; // Múmia resistente envolta em ataduras
+                    e->maxHealth     = 6;
+                    e->damage        = 3; // Toque amaldiçoado pesado (1.5 corações)
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1; // Perseguição lenta
+                    e->aiTimer       = 30;
+                    e->animTimer     = 0;
+                    e->hitbox        = (Hitbox){ -8.0f, -8.0f, 16.0f, 16.0f };
+                    break;
+
+                case ENTITY_ENEMY_STALFOS:
+                    e->health        = 4; // Esqueleto guerreiro saltador
+                    e->maxHealth     = 4;
+                    e->damage        = 2; // 1 coração
+                    e->dir           = DIR_DOWN;
+                    e->action        = 1; // 1 = Espreita, 2 = Salto evasivo, 3 = Salto de ataque
+                    e->aiTimer       = 60 + (rand() % 40);
+                    e->animTimer     = 0;
+                    e->z             = 0.0f;
+                    e->vz            = 0.0f;
+                    e->hitbox        = (Hitbox){ -7.0f, -7.0f, 14.0f, 14.0f };
+                    break;
+
                 default:
                     break;
             }
@@ -562,6 +770,8 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
                            int* link_invuln_timer, float* link_knock_x, float* link_knock_y) {
     s_last_link_x = link_x;
     s_last_link_y = link_y;
+
+    entity_update_combat_fx();
 
     for (int i = 0; i < MAX_ENTITIES; i++) {
         Entity* e = &s_entities[i];
@@ -821,6 +1031,10 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
                 if (e->knockbackTimer <= 0) {
                     if (e->health <= 0) {
                         e->is_active = false;
+                        entity_spawn_combat_fx(COMBAT_FX_SMOKE_PUFF, e->x + 8.0f, e->y + 6.0f, e->z, 4);
+                        if (e->type == ENTITY_ENEMY_FIRE_KEESE) {
+                            entity_spawn_combat_fx(COMBAT_FX_FIRE_EMBER, e->x + 8.0f, e->y + 6.0f, e->z, 4);
+                        }
                         if ((rand() % 100) < 65) {
                             EntityType drop = ((rand() % 2) == 0) ? ENTITY_ITEM_RUPEE : ENTITY_ITEM_HEART;
                             entity_spawn(drop, e->x, e->y);
@@ -831,6 +1045,11 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
                     e->aiTimer = 60;
                 }
                 continue;
+            }
+
+            // Partículas de brasas incandescentes contínuas do Fire Keese
+            if (e->type == ENTITY_ENEMY_FIRE_KEESE && (e->animTimer % 4 == 0)) {
+                entity_spawn_combat_fx(COMBAT_FX_FIRE_EMBER, e->x + 8.0f, e->y + 4.0f, e->z, 1);
             }
 
             // Oscilação vertical senoidal de altitude no voo (bobbing)
@@ -2008,7 +2227,332 @@ void entity_manager_update(const Tilemap* map, float link_x, float link_y,
             }
         }
 
-        // 22. ITEM: ARCO E FLECHAS (RELÍQUIA ANCESTRAL DE CASTOR WILDS)
+        // --------------------------------------------------------------------
+        // 22. INIMIGO: ELECTRIC CHUCHU (GOSMA ELETRICA DOURADA)
+        // --------------------------------------------------------------------
+        else if (e->type == ENTITY_ENEMY_ELECTRIC_CHUCHU) {
+            e->animTimer++;
+            if (e->invulnerableTimer > 0) e->invulnerableTimer--;
+
+            // Ação 4: Recuo por golpe (Knockback)
+            if (e->action == 4) {
+                float next_x = e->x + e->knockbackVx;
+                float next_y = e->y + e->knockbackVy;
+                if (!entity_is_solid(map, next_x + 8.0f, next_y + 8.0f)) {
+                    e->x = next_x;
+                    e->y = next_y;
+                }
+                e->knockbackVx *= 0.88f;
+                e->knockbackVy *= 0.88f;
+                e->knockbackTimer--;
+                if (e->knockbackTimer <= 0) {
+                    if (e->health <= 0) {
+                        e->is_active = false;
+                        entity_spawn_combat_fx(COMBAT_FX_SMOKE_PUFF, e->x + 8.0f, e->y + 8.0f, 0.0f, 5);
+                        entity_spawn_combat_fx(COMBAT_FX_ELECTRIC_SPARK, e->x + 8.0f, e->y + 8.0f, 0.0f, 4);
+                        if ((rand() % 100) < 60) {
+                            entity_spawn((rand() % 2 == 0) ? ENTITY_ITEM_RUPEE : ENTITY_ITEM_HEART, e->x, e->y);
+                        }
+                        continue;
+                    }
+                    e->action = 1;
+                    e->aiTimer = 60;
+                }
+                continue;
+            }
+
+            // Alternância periódica entre estado normal (1) e eletrificado (2)
+            e->aiTimer--;
+            if (e->aiTimer <= 0) {
+                if (e->action == 1) {
+                    e->action = 2; // Entra em modo ELETRICIDADE!
+                    e->aiTimer = 75; // 75 frames eletrificado
+                    hal_audio_play_sound(SOUND_SWITCH_CLICK, 0.8f, 1.8f);
+                } else {
+                    e->action = 1; // Volta ao estado vulnerável
+                    e->aiTimer = 110 + (rand() % 60);
+                }
+            }
+
+            // Se eletrificado, emite faíscas crepitantes contínuas
+            if (e->action == 2 && (e->animTimer % 4 == 0)) {
+                entity_spawn_combat_fx(COMBAT_FX_ELECTRIC_SPARK, e->x + 8.0f, e->y + 6.0f, 0.0f, 1);
+            }
+
+            // Movimento lento em direção a Link
+            float ldx = link_x - e->x;
+            float ldy = link_y - e->y;
+            float dist = sqrtf(ldx * ldx + ldy * ldy);
+            if (dist > 16.0f && dist < 120.0f) {
+                float spd = (e->action == 2) ? 0.35f : 0.5f;
+                float nx = e->x + (ldx / dist) * spd;
+                float ny = e->y + (ldy / dist) * spd;
+                if (!entity_is_solid(map, nx + 8.0f, ny + 8.0f)) {
+                    e->x = nx;
+                    e->y = ny;
+                }
+            }
+
+            // Colisão com Link (Choque com condução se action == 2)
+            if (*link_invuln_timer <= 0) {
+                float ex1 = e->x - 6.0f, ey1 = e->y - 6.0f;
+                float ex2 = e->x + 14.0f, ey2 = e->y + 14.0f;
+                float lx1 = link_x + 2.0f, ly1 = link_y + 4.0f;
+                float lx2 = link_x + 14.0f, ly2 = link_y + 16.0f;
+                if (ex1 < lx2 && ex2 > lx1 && ey1 < ly2 && ey2 > ly1) {
+                    int dmg = (e->action == 2) ? 2 : 1;
+                    if (*link_hearts > 0) {
+                        *link_hearts -= dmg;
+                        if (*link_hearts < 0) *link_hearts = 0;
+                    }
+                    *link_invuln_timer = (e->action == 2) ? 50 : 36;
+                    if (e->action == 2) {
+                        entity_trigger_screen_shake(8, 2);
+                        entity_spawn_combat_fx(COMBAT_FX_ELECTRIC_SPARK, link_x + 8.0f, link_y + 8.0f, 0.0f, 6);
+                        hal_audio_play_sound(SOUND_SWITCH_CLICK, 1.0f, 1.9f);
+                    }
+                    hal_audio_play_sound(SOUND_HEART_BEEP, 1.0f, 1.0f);
+                    if (dist > 0.1f) {
+                        *link_knock_x = (ldx / dist) * 4.0f;
+                        *link_knock_y = (ldy / dist) * 4.0f;
+                    } else {
+                        *link_knock_y = 4.0f;
+                    }
+                }
+            }
+        }
+
+        // --------------------------------------------------------------------
+        // 23. INIMIGO: SPIKE ROLLER (TRAP HAZARD INDESTRUTIVEL DE CALABOUCO)
+        // --------------------------------------------------------------------
+        else if (e->type == ENTITY_ENEMY_SPIKE_ROLLER) {
+            e->animTimer++;
+            float roll_spd = (e->action == 0) ? 1.2f : -1.2f;
+            float next_x = e->x + roll_spd;
+
+            // Inversão em extremidades ou colisão com paredes sólidas
+            e->aiTimer--;
+            if (e->aiTimer <= 0 || entity_is_solid(map, next_x + (e->action == 0 ? 14.0f : -14.0f), e->y)) {
+                e->action = (e->action == 0) ? 1 : 0;
+                e->aiTimer = 110 + (rand() % 40);
+                hal_audio_play_sound(SOUND_SWITCH_CLICK, 0.6f, 0.7f);
+            } else {
+                e->x = next_x;
+            }
+
+            // Colisão severa com Link (empurrão e dano)
+            if (*link_invuln_timer <= 0) {
+                float rx1 = e->x - 12.0f, ry1 = e->y - 6.0f;
+                float rx2 = e->x + 12.0f, ry2 = e->y + 6.0f;
+                float lx1 = link_x + 2.0f, ly1 = link_y + 4.0f;
+                float lx2 = link_x + 14.0f, ly2 = link_y + 16.0f;
+                if (rx1 < lx2 && rx2 > lx1 && ry1 < ly2 && ry2 > ly1) {
+                    if (*link_hearts > 0) {
+                        *link_hearts -= e->damage;
+                        if (*link_hearts < 0) *link_hearts = 0;
+                    }
+                    *link_invuln_timer = 45;
+                    entity_trigger_screen_shake(8, 3);
+                    entity_spawn_combat_fx(COMBAT_FX_SLASH_SPARK, link_x + 8.0f, link_y + 8.0f, 0.0f, 5);
+                    hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 0.8f);
+                    *link_knock_x = (e->action == 0) ? 5.5f : -5.5f;
+                    *link_knock_y = 2.0f;
+                }
+            }
+        }
+
+        // --------------------------------------------------------------------
+        // 24. INIMIGO: GIBDO (MUMIA ANCESTRAL RESISTENTE DE CALABOUCO)
+        // --------------------------------------------------------------------
+        else if (e->type == ENTITY_ENEMY_GIBDO) {
+            e->animTimer++;
+            if (e->invulnerableTimer > 0) e->invulnerableTimer--;
+
+            // Ação 4: Recuo amortecido (Múmia pesada recua menos)
+            if (e->action == 4) {
+                float next_x = e->x + e->knockbackVx * 0.6f;
+                float next_y = e->y + e->knockbackVy * 0.6f;
+                if (!entity_is_solid(map, next_x + 8.0f, next_y + 8.0f)) {
+                    e->x = next_x;
+                    e->y = next_y;
+                }
+                e->knockbackVx *= 0.82f;
+                e->knockbackVy *= 0.82f;
+                e->knockbackTimer--;
+                if (e->knockbackTimer <= 0) {
+                    if (e->health <= 0) {
+                        e->is_active = false;
+                        entity_spawn_combat_fx(COMBAT_FX_SMOKE_PUFF, e->x, e->y, 0.0f, 6);
+                        entity_spawn_combat_fx(COMBAT_FX_BONE_FRAGMENT, e->x, e->y, 0.0f, 4);
+                        if ((rand() % 100) < 70) {
+                            entity_spawn(ENTITY_ITEM_HEART, e->x, e->y);
+                        }
+                        continue;
+                    }
+                    e->action = 1;
+                }
+                continue;
+            }
+
+            // Perseguição lenta constante a Link
+            float ldx = link_x - e->x;
+            float ldy = link_y - e->y;
+            float dist = sqrtf(ldx * ldx + ldy * ldy);
+            if (dist > 12.0f && dist < 140.0f) {
+                float spd = 0.45f;
+                float nx = e->x + (ldx / dist) * spd;
+                float ny = e->y + (ldy / dist) * spd;
+                if (!entity_is_solid(map, nx + 8.0f, ny + 8.0f)) {
+                    e->x = nx;
+                    e->y = ny;
+                }
+                if (fabsf(ldx) > fabsf(ldy)) {
+                    e->dir = (ldx > 0.0f) ? DIR_RIGHT : DIR_LEFT;
+                } else {
+                    e->dir = (ldy > 0.0f) ? DIR_DOWN : DIR_UP;
+                }
+            }
+
+            // Colisão / Toque amaldiçoado pesado
+            if (*link_invuln_timer <= 0) {
+                float gx1 = e->x - 7.0f, gy1 = e->y - 12.0f;
+                float gx2 = e->x + 7.0f, gy2 = e->y + 6.0f;
+                float lx1 = link_x + 2.0f, ly1 = link_y + 4.0f;
+                float lx2 = link_x + 14.0f, ly2 = link_y + 16.0f;
+                if (gx1 < lx2 && gx2 > lx1 && gy1 < ly2 && gy2 > ly1) {
+                    if (*link_hearts > 0) {
+                        *link_hearts -= e->damage;
+                        if (*link_hearts < 0) *link_hearts = 0;
+                    }
+                    *link_invuln_timer = 45;
+                    hal_audio_play_sound(SOUND_HEART_BEEP, 1.0f, 0.85f);
+                    if (dist > 0.1f) {
+                        *link_knock_x = (ldx / dist) * 3.8f;
+                        *link_knock_y = (ldy / dist) * 3.8f;
+                    } else {
+                        *link_knock_y = 3.8f;
+                    }
+                }
+            }
+        }
+
+        // --------------------------------------------------------------------
+        // 25. INIMIGO: STALFOS (GUERREIRO ESQUELETO ACROBATICO)
+        // --------------------------------------------------------------------
+        else if (e->type == ENTITY_ENEMY_STALFOS) {
+            e->animTimer++;
+            if (e->invulnerableTimer > 0) e->invulnerableTimer--;
+
+            // Ação 4: Recuo por dano
+            if (e->action == 4) {
+                float next_x = e->x + e->knockbackVx;
+                float next_y = e->y + e->knockbackVy;
+                if (!entity_is_solid(map, next_x + 8.0f, next_y + 8.0f)) {
+                    e->x = next_x;
+                    e->y = next_y;
+                }
+                e->knockbackVx *= 0.88f;
+                e->knockbackVy *= 0.88f;
+                e->knockbackTimer--;
+                if (e->knockbackTimer <= 0) {
+                    if (e->health <= 0) {
+                        e->is_active = false;
+                        entity_spawn_combat_fx(COMBAT_FX_SMOKE_PUFF, e->x, e->y, 0.0f, 5);
+                        entity_spawn_combat_fx(COMBAT_FX_BONE_FRAGMENT, e->x, e->y, 0.0f, 6);
+                        hal_audio_play_sound(SOUND_SWITCH_CLICK, 1.0f, 0.7f);
+                        if ((rand() % 100) < 65) {
+                            entity_spawn(ENTITY_ITEM_RUPEE, e->x, e->y);
+                        }
+                        continue;
+                    }
+                    e->action = 1;
+                    e->aiTimer = 40;
+                }
+                continue;
+            }
+
+            // Ação 2: Salto Evasivo no ar (Backflip)
+            if (e->action == 2) {
+                e->z += e->vz;
+                e->vz -= 0.26f; // Gravidade
+                e->x += e->vx;
+                e->y += e->vy;
+                if (e->z <= 0.0f) {
+                    e->z = 0.0f;
+                    e->action = 3; // Pousou: prepara investida de contragolpe!
+                    e->aiTimer = 22;
+                    e->vx = 0.0f;
+                    e->vy = 0.0f;
+                }
+            }
+            // Ação 3: Lunge / Salto de Ataque na direção do Link
+            else if (e->action == 3) {
+                e->aiTimer--;
+                float ldx = link_x - e->x;
+                float ldy = link_y - e->y;
+                float dist = sqrtf(ldx * ldx + ldy * ldy);
+                if (dist > 1.0f) {
+                    float spd = 2.2f;
+                    float nx = e->x + (ldx / dist) * spd;
+                    float ny = e->y + (ldy / dist) * spd;
+                    if (!entity_is_solid(map, nx + 8.0f, ny + 8.0f)) {
+                        e->x = nx;
+                        e->y = ny;
+                    }
+                }
+                if (e->aiTimer <= 0) {
+                    e->action = 1; // Retorna à postura de combate
+                    e->aiTimer = 60 + (rand() % 30);
+                }
+            }
+            // Ação 1: Espreita e combate tático
+            else {
+                float ldx = link_x - e->x;
+                float ldy = link_y - e->y;
+                float dist = sqrtf(ldx * ldx + ldy * ldy);
+                if (dist > 20.0f && dist < 120.0f) {
+                    float spd = 0.65f;
+                    float nx = e->x + (ldx / dist) * spd;
+                    float ny = e->y + (ldy / dist) * spd;
+                    if (!entity_is_solid(map, nx + 8.0f, ny + 8.0f)) {
+                        e->x = nx;
+                        e->y = ny;
+                    }
+                }
+                if (fabsf(ldx) > fabsf(ldy)) {
+                    e->dir = (ldx > 0.0f) ? DIR_RIGHT : DIR_LEFT;
+                } else {
+                    e->dir = (ldy > 0.0f) ? DIR_DOWN : DIR_UP;
+                }
+            }
+
+            // Colisão com Link
+            if (*link_invuln_timer <= 0) {
+                float sx1 = e->x - 6.0f, sy1 = e->y - 12.0f;
+                float sx2 = e->x + 6.0f, sy2 = e->y + 6.0f;
+                float lx1 = link_x + 2.0f, ly1 = link_y + 4.0f;
+                float lx2 = link_x + 14.0f, ly2 = link_y + 16.0f;
+                if (sx1 < lx2 && sx2 > lx1 && sy1 < ly2 && sy2 > ly1) {
+                    if (*link_hearts > 0) {
+                        *link_hearts -= e->damage;
+                        if (*link_hearts < 0) *link_hearts = 0;
+                    }
+                    *link_invuln_timer = 40;
+                    hal_audio_play_sound(SOUND_HEART_BEEP, 1.0f, 1.0f);
+                    float ldx = link_x - e->x;
+                    float ldy = link_y - e->y;
+                    float dist = sqrtf(ldx * ldx + ldy * ldy);
+                    if (dist > 0.1f) {
+                        *link_knock_x = (ldx / dist) * 4.0f;
+                        *link_knock_y = (ldy / dist) * 4.0f;
+                    } else {
+                        *link_knock_y = 4.0f;
+                    }
+                }
+            }
+        }
+
+        // 26. ITEM: ARCO E FLECHAS (RELÍQUIA ANCESTRAL DE CASTOR WILDS)
         else if (e->type == ENTITY_ITEM_BOW) {
             e->animTimer++;
             float dx = link_x - e->x;
@@ -2131,7 +2675,7 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
             }
         }
 
-        // Golpeando Inimigo (Octorok, Keese, Fire Keese, ChuChu, Moblin, Peahat, Tektite ou Spiny Beetle)
+        // Golpeando Inimigo (Octorok, Keese, Fire Keese, ChuChu, Moblin, Peahat, Tektite, Spiny Beetle, Rope, Electric ChuChu, Gibdo, Stalfos)
         if ((e->type == ENTITY_ENEMY_OCTOROK ||
              e->type == ENTITY_ENEMY_KEESE ||
              e->type == ENTITY_ENEMY_FIRE_KEESE ||
@@ -2140,6 +2684,9 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
              e->type == ENTITY_ENEMY_TEKTITE ||
              e->type == ENTITY_ENEMY_SPINY_BEETLE ||
              e->type == ENTITY_ENEMY_ROPE ||
+             e->type == ENTITY_ENEMY_ELECTRIC_CHUCHU ||
+             e->type == ENTITY_ENEMY_GIBDO ||
+             e->type == ENTITY_ENEMY_STALFOS ||
              (e->type == ENTITY_ENEMY_CHUCHU && e->action > 0)) &&
             e->invulnerableTimer <= 0) {
 
@@ -2154,6 +2701,31 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
             float oy2 = oy1 + e->hitbox.height;
 
             if (sx1 < ox2 && sx2 > ox1 && sy1 < oy2 && sy2 > oy1) {
+                // Faíscas brilhantes de corte
+                entity_spawn_combat_fx(COMBAT_FX_SLASH_SPARK, (sx1 + sx2) * 0.5f, (sy1 + sy2) * 0.5f, 0.0f, 6);
+
+                // Choque por condução no Electric ChuChu se eletrificado
+                if (e->type == ENTITY_ENEMY_ELECTRIC_CHUCHU && e->action == 2) {
+                    entity_spawn_combat_fx(COMBAT_FX_ELECTRIC_SPARK, (sx1 + sx2) * 0.5f, (sy1 + sy2) * 0.5f, 0.0f, 6);
+                    hal_audio_play_sound(SOUND_SWITCH_CLICK, 1.0f, 1.9f);
+                    entity_trigger_screen_shake(6, 2);
+                    hit_something = true;
+                    continue; // Choque conduzido para a espada!
+                }
+
+                // Evasão acrobática do Stalfos
+                if (e->type == ENTITY_ENEMY_STALFOS && e->action == 1 && ((rand() % 100) < 50)) {
+                    e->action = 2; // Salto evasivo
+                    e->vz = 3.5f;
+                    float evade_spd = 2.0f;
+                    if (slash_dir == DIR_DOWN)  e->vy = evade_spd;
+                    if (slash_dir == DIR_UP)    e->vy = -evade_spd;
+                    if (slash_dir == DIR_LEFT)  e->vx = -evade_spd;
+                    if (slash_dir == DIR_RIGHT) e->vx = evade_spd;
+                    hal_audio_play_sound(SOUND_SWITCH_CLICK, 0.9f, 1.3f);
+                    continue;
+                }
+
                 if (e->type == ENTITY_ENEMY_SPINY_BEETLE && e->action == 3) {
                     e->health = 0; // Golpe na barriga macia exposta: derrota instantânea em 1 golpe!
                     hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.4f);
@@ -2162,9 +2734,9 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
                 }
                 e->invulnerableTimer = 18; // Pisca de dano
                 e->action = 4; // Knockback
-                e->knockbackTimer = (e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_FIRE_KEESE) ? 14 : ((e->type == ENTITY_ENEMY_MOBLIN) ? 12 : 10);
+                e->knockbackTimer = (e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_FIRE_KEESE) ? 14 : ((e->type == ENTITY_ENEMY_MOBLIN || e->type == ENTITY_ENEMY_GIBDO) ? 12 : 10);
 
-                float force = (e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_FIRE_KEESE) ? 4.2f : ((e->type == ENTITY_ENEMY_MOBLIN) ? 2.8f : 3.0f);
+                float force = (e->type == ENTITY_ENEMY_KEESE || e->type == ENTITY_ENEMY_FIRE_KEESE) ? 4.2f : ((e->type == ENTITY_ENEMY_MOBLIN || e->type == ENTITY_ENEMY_GIBDO) ? 2.2f : 3.0f);
                 e->knockbackVx = 0.0f;
                 e->knockbackVy = 0.0f;
                 if (slash_dir == DIR_DOWN)  e->knockbackVy = force;
@@ -2172,8 +2744,24 @@ bool entity_check_sword_hit(float slash_x, float slash_y, float slash_w, float s
                 if (slash_dir == DIR_LEFT)  e->knockbackVx = -force;
                 if (slash_dir == DIR_RIGHT) e->knockbackVx = force;
 
-                float hit_pitch = (e->type == ENTITY_ENEMY_CHUCHU) ? 1.45f : 1.20f;
+                if (e->type == ENTITY_ENEMY_STALFOS) {
+                    entity_spawn_combat_fx(COMBAT_FX_BONE_FRAGMENT, e->x, e->y, 0.0f, 3);
+                }
+
+                float hit_pitch = (e->type == ENTITY_ENEMY_CHUCHU || e->type == ENTITY_ENEMY_ELECTRIC_CHUCHU) ? 1.45f : 1.20f;
                 hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, hit_pitch);
+                hit_something = true;
+            }
+        }
+        // Golpe no Spike Roller (Ricocheteia na carapaça de espinhos)
+        else if (e->type == ENTITY_ENEMY_SPIKE_ROLLER) {
+            float ox1 = e->x + e->hitbox.offset_x;
+            float oy1 = e->y + e->hitbox.offset_y;
+            float ox2 = ox1 + e->hitbox.width;
+            float oy2 = oy1 + e->hitbox.height;
+            if (sx1 < ox2 && sx2 > ox1 && sy1 < oy2 && sy2 > oy1) {
+                entity_spawn_combat_fx(COMBAT_FX_SLASH_SPARK, (sx1 + sx2) * 0.5f, (sy1 + sy2) * 0.5f, 0.0f, 8);
+                hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, 1.8f);
                 hit_something = true;
             }
         }
@@ -2275,7 +2863,7 @@ int entity_check_spin_attack_hit(float center_x, float center_y, float radius, i
         Entity* e = &s_entities[i];
         if (!e->is_active) continue;
 
-        // Inimigos: Octorok, Keese, Fire Keese, ChuChu, Moblin, Peahat, Tektite, Spiny Beetle
+        // Inimigos: Octorok, Keese, Fire Keese, ChuChu, Moblin, Peahat, Tektite, Spiny Beetle, Rope, Electric ChuChu, Gibdo, Stalfos
         if ((e->type == ENTITY_ENEMY_OCTOROK ||
              e->type == ENTITY_ENEMY_KEESE ||
              e->type == ENTITY_ENEMY_FIRE_KEESE ||
@@ -2284,6 +2872,9 @@ int entity_check_spin_attack_hit(float center_x, float center_y, float radius, i
              e->type == ENTITY_ENEMY_TEKTITE ||
              e->type == ENTITY_ENEMY_SPINY_BEETLE ||
              e->type == ENTITY_ENEMY_ROPE ||
+             e->type == ENTITY_ENEMY_ELECTRIC_CHUCHU ||
+             e->type == ENTITY_ENEMY_GIBDO ||
+             e->type == ENTITY_ENEMY_STALFOS ||
              (e->type == ENTITY_ENEMY_CHUCHU && e->action > 0)) &&
             e->invulnerableTimer <= 0) {
 
@@ -2298,6 +2889,7 @@ int entity_check_spin_attack_hit(float center_x, float center_y, float radius, i
             float max_reach = radius + (e->hitbox.width * 0.5f);
 
             if (dist <= max_reach) {
+                entity_spawn_combat_fx(COMBAT_FX_SLASH_SPARK, ex, ey, 0.0f, 6);
                 if (e->type == ENTITY_ENEMY_SPINY_BEETLE && e->action == 3) {
                     e->health = 0;
                     hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.4f);
@@ -2318,7 +2910,11 @@ int entity_check_spin_attack_hit(float center_x, float center_y, float radius, i
                     e->knockbackVy = 0.0f;
                 }
 
-                float hit_pitch = (e->type == ENTITY_ENEMY_CHUCHU) ? 1.55f : 1.30f;
+                if (e->type == ENTITY_ENEMY_STALFOS) {
+                    entity_spawn_combat_fx(COMBAT_FX_BONE_FRAGMENT, ex, ey, 0.0f, 4);
+                }
+
+                float hit_pitch = (e->type == ENTITY_ENEMY_CHUCHU || e->type == ENTITY_ENEMY_ELECTRIC_CHUCHU) ? 1.55f : 1.30f;
                 hal_audio_play_sound(SOUND_SWORD_HIT, 1.0f, hit_pitch);
                 hit_count++;
             }
@@ -2413,7 +3009,7 @@ int entity_check_bomb_explosion(float center_x, float center_y, float radius, in
         Entity* e = &s_entities[i];
         if (!e->is_active) continue;
 
-        // Inimigos padrão: Octorok, Keese, Fire Keese, ChuChu, Moblin, Peahat, Tektite, Spiny Beetle
+        // Inimigos padrão: Octorok, Keese, Fire Keese, ChuChu, Moblin, Peahat, Tektite, Spiny Beetle, Rope, Electric ChuChu, Gibdo, Stalfos
         if ((e->type == ENTITY_ENEMY_OCTOROK ||
              e->type == ENTITY_ENEMY_KEESE ||
              e->type == ENTITY_ENEMY_FIRE_KEESE ||
@@ -2422,7 +3018,10 @@ int entity_check_bomb_explosion(float center_x, float center_y, float radius, in
              e->type == ENTITY_ENEMY_PEAHAT ||
              e->type == ENTITY_ENEMY_TEKTITE ||
              e->type == ENTITY_ENEMY_SPINY_BEETLE ||
-             e->type == ENTITY_ENEMY_ROPE) &&
+             e->type == ENTITY_ENEMY_ROPE ||
+             e->type == ENTITY_ENEMY_ELECTRIC_CHUCHU ||
+             e->type == ENTITY_ENEMY_GIBDO ||
+             e->type == ENTITY_ENEMY_STALFOS) &&
             e->invulnerableTimer <= 0) {
 
             float ex = e->x + e->hitbox.offset_x + (e->hitbox.width * 0.5f);
@@ -2452,6 +3051,10 @@ int entity_check_bomb_explosion(float center_x, float center_y, float radius, in
 
                 if (e->health <= 0) {
                     e->is_active = false;
+                    entity_spawn_combat_fx(COMBAT_FX_SMOKE_PUFF, ex, ey, 0.0f, 6);
+                    if (e->type == ENTITY_ENEMY_STALFOS || e->type == ENTITY_ENEMY_GIBDO) {
+                        entity_spawn_combat_fx(COMBAT_FX_BONE_FRAGMENT, ex, ey, 0.0f, 5);
+                    }
                     int r = rand() % 100;
                     if (r < 40) {
                         entity_spawn(ENTITY_ITEM_RUPEE, ex, ey);
@@ -2567,6 +3170,9 @@ bool entity_check_subweapon_hit(float px, float py, float pw, float ph, int dama
                   e->type == ENTITY_ENEMY_TEKTITE ||
                   e->type == ENTITY_ENEMY_SPINY_BEETLE ||
                   e->type == ENTITY_ENEMY_ROPE ||
+                  e->type == ENTITY_ENEMY_ELECTRIC_CHUCHU ||
+                  e->type == ENTITY_ENEMY_GIBDO ||
+                  e->type == ENTITY_ENEMY_STALFOS ||
                   (e->type == ENTITY_ENEMY_CHUCHU && e->action > 0)) &&
                  e->invulnerableTimer <= 0) {
 
@@ -2579,6 +3185,7 @@ bool entity_check_subweapon_hit(float px, float py, float pw, float ph, int dama
             float ey2 = ey1 + e->hitbox.height;
 
             if (px1 < ex2 && px2 > ex1 && py1 < ey2 && py2 > ey1) {
+                entity_spawn_combat_fx(COMBAT_FX_SLASH_SPARK, (ex1 + ex2) * 0.5f, (ey1 + ey2) * 0.5f, 0.0f, 4);
                 e->health -= damage;
                 e->invulnerableTimer = 20;
                 e->action = 4; // Knockback / Stun
@@ -4935,7 +5542,152 @@ void entity_manager_render(const Camera* cam) {
             }
         }
 
-        // 29. ITEM: ARCO E FLECHAS (PEDESTAL EM CASTOR WILDS)
+        // 29. INIMIGO: ELECTRIC CHUCHU (GOSMA ELETRICA DOURADA)
+        else if (e->type == ENTITY_ENEMY_ELECTRIC_CHUCHU) {
+            if (e->invulnerableTimer > 0 && ((e->invulnerableTimer / 3) % 2 == 0)) {
+                continue;
+            }
+            draw_filled_rect(sx + 2, sy + 11, 12, 3, 0x05100766); // Sombra
+
+            bool is_sparking = (e->action == 2);
+            u32 c_body     = is_sparking ? 0xFEF08AFF : 0xFACC15FF;
+            u32 c_body_dk  = is_sparking ? 0xF59E0BFF : 0xD97706FF;
+            u32 c_spark    = 0x67E8F9FF;
+            u32 c_eye      = is_sparking ? 0xFFFFFFFF : 0x18181BFF;
+
+            int squash = (e->animTimer / 6) % 3;
+            int h = (squash == 1) ? 10 : 12;
+            int w = (squash == 1) ? 14 : 12;
+            int ox = (16 - w) / 2;
+            int oy = 14 - h;
+
+            draw_filled_rect(sx + ox, sy + oy, w, h, c_body);
+            draw_filled_rect(sx + ox + 1, sy + oy + 1, w - 2, 2, 0xFFFFFFFF);
+            draw_filled_rect(sx + ox + 2, sy + oy + h - 2, w - 4, 2, c_body_dk);
+
+            put_pixel_safe(sx + ox + 3, sy + oy + 4, c_eye);
+            put_pixel_safe(sx + ox + 8, sy + oy + 4, c_eye);
+
+            if (is_sparking) {
+                int flicker = (e->animTimer % 3);
+                if (flicker == 0) {
+                    put_pixel_safe(sx + ox - 2, sy + oy + 2, c_spark);
+                    put_pixel_safe(sx + ox + w + 1, sy + oy + 5, c_spark);
+                } else if (flicker == 1) {
+                    put_pixel_safe(sx + ox + 4, sy + oy - 2, c_spark);
+                    put_pixel_safe(sx + ox - 1, sy + oy + 8, c_spark);
+                } else {
+                    put_pixel_safe(sx + ox + w, sy + oy + 2, c_spark);
+                    put_pixel_safe(sx + ox + 2, sy + oy + h, c_spark);
+                }
+            }
+        }
+
+        // 30. INIMIGO: SPIKE ROLLER (ROLO DE ESPINHOS INDESTRUTIVEL)
+        else if (e->type == ENTITY_ENEMY_SPIKE_ROLLER) {
+            draw_filled_rect(sx - 12, sy + 6, 24, 4, 0x05100788);
+
+            u32 c_roller    = 0x475569FF;
+            u32 c_roller_hi = 0x94A3B8FF;
+            u32 c_roller_dk = 0x1E293BFF;
+            u32 c_spike     = 0xE2E8F0FF;
+            u32 c_spike_dk  = 0x64748BFF;
+
+            draw_filled_rect(sx - 11, sy - 4, 22, 9, c_roller);
+            draw_filled_rect(sx - 10, sy - 4, 20, 2, c_roller_hi);
+            draw_filled_rect(sx - 10, sy + 3, 20, 2, c_roller_dk);
+
+            int rot = (e->animTimer / 3) % 4;
+            int offsets[4] = { -8, -2, 4, 10 };
+            for (int s = 0; s < 4; s++) {
+                int spk_x = sx + offsets[(s + rot) % 4];
+                draw_filled_rect(spk_x - 1, sy - 7, 2, 3, c_spike);
+                put_pixel_safe(spk_x, sy - 8, 0xFFFFFFFF);
+                draw_filled_rect(spk_x - 1, sy + 5, 2, 3, c_spike_dk);
+            }
+        }
+
+        // 31. INIMIGO: GIBDO (MUMIA DE CALABOUCO ENFAIXADA)
+        else if (e->type == ENTITY_ENEMY_GIBDO) {
+            if (e->invulnerableTimer > 0 && ((e->invulnerableTimer / 3) % 2 == 0)) {
+                continue;
+            }
+            draw_filled_rect(sx - 6, sy + 8, 12, 3, 0x05100766);
+
+            u32 c_cloth    = 0xD4D4D8FF;
+            u32 c_cloth_dk = 0x71717AFF;
+            u32 c_cloth_hi = 0xF4F4F5FF;
+            u32 c_eye      = 0xEF4444FF;
+
+            int walk_bob = ((e->animTimer / 8) % 2 == 1) ? 1 : 0;
+            int gy = sy - walk_bob;
+
+            draw_filled_rect(sx - 5, gy - 12, 10, 8, c_cloth);
+            draw_filled_rect(sx - 4, gy - 13, 8, 2, c_cloth_hi);
+            draw_filled_rect(sx - 5, gy - 9, 10, 1, c_cloth_dk);
+            draw_filled_rect(sx - 5, gy - 6, 10, 1, c_cloth_dk);
+
+            put_pixel_safe(sx - 2, gy - 8, c_eye);
+            put_pixel_safe(sx + 2, gy - 8, c_eye);
+
+            draw_filled_rect(sx - 6, gy - 4, 12, 8, c_cloth);
+            draw_filled_rect(sx - 6, gy - 1, 12, 1, c_cloth_dk);
+            draw_filled_rect(sx - 6, gy + 2, 12, 1, c_cloth_dk);
+
+            draw_filled_rect(sx - 4, gy + 4, 3, 4 + walk_bob, c_cloth_dk);
+            draw_filled_rect(sx + 1, gy + 4, 3, 4 + (1 - walk_bob), c_cloth_dk);
+
+            int sway = (e->animTimer % 8 < 4) ? 1 : -1;
+            put_pixel_safe(sx - 7, gy - 2 + sway, c_cloth);
+            put_pixel_safe(sx + 6, gy + 1 - sway, c_cloth);
+        }
+
+        // 32. INIMIGO: STALFOS (ESQUELETO GUERREIRO SALTADOR)
+        else if (e->type == ENTITY_ENEMY_STALFOS) {
+            if (e->invulnerableTimer > 0 && ((e->invulnerableTimer / 3) % 2 == 0)) {
+                continue;
+            }
+            draw_filled_rect(sx - 6, sy + 8, 12, 3, 0x05100766);
+
+            int sty = sy - (int)e->z;
+
+            u32 c_bone    = 0xF8FAFCFF;
+            u32 c_bone_dk = 0x94A3B8FF;
+            u32 c_socket  = 0x0F172AFF;
+            u32 c_glint   = 0xEF4444FF;
+            u32 c_steel   = 0xCBD5E1FF;
+            u32 c_hilt    = 0xB45309FF;
+
+            draw_filled_rect(sx - 5, sty - 12, 10, 7, c_bone);
+            draw_filled_rect(sx - 4, sty - 13, 8, 2, c_bone);
+            draw_filled_rect(sx - 3, sty - 9, 2, 2, c_socket);
+            draw_filled_rect(sx + 1, sty - 9, 2, 2, c_socket);
+            put_pixel_safe(sx - 2, sty - 9, c_glint);
+            put_pixel_safe(sx + 2, sty - 9, c_glint);
+            draw_filled_rect(sx - 3, sty - 5, 6, 2, c_bone_dk);
+            put_pixel_safe(sx - 2, sty - 4, c_bone);
+            put_pixel_safe(sx,     sty - 4, c_bone);
+            put_pixel_safe(sx + 2, sty - 4, c_bone);
+
+            draw_filled_rect(sx - 1, sty - 3, 2, 6, c_bone_dk);
+            draw_filled_rect(sx - 4, sty - 2, 8, 1, c_bone);
+            draw_filled_rect(sx - 3, sty,     6, 1, c_bone);
+
+            draw_filled_rect(sx + 5, sty - 7, 2, 9, c_steel);
+            put_pixel_safe(sx + 5, sty - 8, 0xFFFFFFFF);
+            draw_filled_rect(sx + 4, sty + 2, 4, 1, c_hilt);
+
+            if (e->z > 1.0f) {
+                draw_filled_rect(sx - 4, sty + 3, 2, 3, c_bone);
+                draw_filled_rect(sx + 2, sty + 3, 2, 3, c_bone);
+            } else {
+                int step = ((e->animTimer / 6) % 2 == 1) ? 1 : 0;
+                draw_filled_rect(sx - 4, sty + 3, 2, 4 + step, c_bone);
+                draw_filled_rect(sx + 2, sty + 3, 2, 5 - step, c_bone);
+            }
+        }
+
+        // 33. ITEM: ARCO E FLECHAS (PEDESTAL EM CASTOR WILDS)
         else if (e->type == ENTITY_ITEM_BOW) {
             int bob = (int)(sinf((float)e->animTimer * 0.12f) * 2.5f);
             int by = sy + bob;
@@ -5194,6 +5946,8 @@ void entity_manager_render(const Camera* cam) {
             }
         }
     }
+
+    entity_render_combat_fx(cam);
 }
 
 Entity* entity_find_nearby_npc(float world_x, float world_y, float max_dist) {

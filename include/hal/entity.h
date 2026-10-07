@@ -58,7 +58,11 @@ typedef enum {
     ENTITY_ARMOS_SWITCH,      // Interruptor do circuito interno do Armos (acionável por Minish Link)
     ENTITY_NPC_LIBRARI,       // Ancião e Guardião da Biblioteca Real (Elder Librari)
     ENTITY_NPC_MAYOR_HAGEN,   // Prefeito Hagen (Cidade de Hyrule / Cabana de Lake Hylia)
-    ENTITY_NPC_SMITH          // Mestre Ferreiro Smith (Avô de Link / Ferraria de Hyrule)
+    ENTITY_NPC_SMITH,         // Mestre Ferreiro Smith (Avô de Link / Ferraria de Hyrule)
+    ENTITY_ENEMY_ELECTRIC_CHUCHU, // ChuChu Eletrificado amarelo pulsante (choque por condução)
+    ENTITY_ENEMY_SPIKE_ROLLER,    // Rolo de espinhos oscilante (Trap Hazard indestrutível de calabouço)
+    ENTITY_ENEMY_GIBDO,           // Múmia de calabouço com bandagens (alta resistência, queima com fogo)
+    ENTITY_ENEMY_STALFOS          // Esqueleto guerreiro saltador acrobático (salto evasivo e contragolpe)
 } EntityType;
 
 // Caixa delimitadora de colisão e dano (Hitbox / Hurtbox)
@@ -333,6 +337,22 @@ void entity_clear_all(void);
 Entity* entity_find_nearby_librari(float world_x, float world_y, float max_dist);
 Entity* entity_find_nearby_mayor_hagen(float world_x, float world_y, float max_dist);
 Entity* entity_find_nearby_smith(float world_x, float world_y, float max_dist);
+
+/*
+ * Subsistema de Efeitos Visuais de Combate (Combat FX Particles)
+ */
+typedef enum {
+    COMBAT_FX_NONE = 0,
+    COMBAT_FX_SLASH_SPARK,    // Faíscas amarelas/brancas cortantes de impacto da espada
+    COMBAT_FX_ELECTRIC_SPARK, // Arcos elétricos azuis/amarelos crepitantes (Electric ChuChu)
+    COMBAT_FX_FIRE_EMBER,     // Brasas ardentes ascendentes (Fire Keese / Queima de Gibdo)
+    COMBAT_FX_SMOKE_PUFF,     // Nuvens de fumaça de derrota / explosão de monstros
+    COMBAT_FX_BONE_FRAGMENT   // Fragmentos de ossos saltantes (Stalfos / Gibdo)
+} CombatFxType;
+
+void entity_spawn_combat_fx(CombatFxType type, float x, float y, float z, int count);
+void entity_update_combat_fx(void);
+void entity_render_combat_fx(const Camera* camera);
 
 /*
  * Finaliza o subsistema de entidades.
