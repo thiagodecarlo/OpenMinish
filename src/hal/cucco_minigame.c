@@ -72,6 +72,31 @@ static void draw_filled_rect(int x, int y, int w, int h, u32 color) {
     }
 }
 
+static inline void put_pixel_safe(int x, int y, u32 color) {
+    if (x >= 0 && x < SCREEN_W && y >= 0 && y < SCREEN_H) {
+        u32 cur = hal_video_get_pixel(x, y);
+        hal_video_put_pixel(x, y, blend_colors(cur, color));
+    }
+}
+
+void cucco_minigame_spawn_feathers(float x, float y, u32 color, int count) {
+    for (int k = 0; k < count; k++) {
+        for (int f = 0; f < MAX_FEATHER_PARTICLES; f++) {
+            CuccoFeather* p = &s_game.feathers[f];
+            if (!p->active) {
+                p->active = true;
+                p->x = x + (float)((rand() % 14) - 7);
+                p->y = y + (float)((rand() % 10) - 5);
+                p->vx = (float)((rand() % 24) - 12) * 0.08f;
+                p->vy = -(float)(rand() % 14) * 0.12f;
+                p->life = 30 + rand() % 20;
+                p->color = color;
+                break;
+            }
+        }
+    }
+}
+
 // Configurações canônicas de cada um dos 10 níveis
 typedef struct {
     int cuccos_count;
@@ -119,6 +144,7 @@ void cucco_minigame_init(void) {
     s_game.highest_cleared_level = 0;
     s_game.carrying_index = -1;
     s_game.has_heart_piece_awarded = false;
+    s_game.anju_cheer_timer = 0;
 }
 
 void cucco_minigame_start_level(int level) {
@@ -226,6 +252,7 @@ void cucco_minigame_handle_action(float link_x, float link_y, int link_dir) {
 
         s_game.carrying_index = -1;
         hal_audio_play_sound(SOUND_SWORD_SLASH, 1.2f, 1.4f);
+        cucco_minigame_spawn_feathers(c->x, c->y, (c->type == CUCCO_TYPE_GOLDEN) ? 0xFDE047FF : ((c->type == CUCCO_TYPE_CHICK) ? 0xFEF08AFF : 0xFFFFFFFF), 4);
         return;
     }
 
@@ -255,6 +282,7 @@ void cucco_minigame_handle_action(float link_x, float link_y, int link_dir) {
         c->vy = 0.0f;
         c->z = 16.0f;
         hal_audio_play_sound(SOUND_CUCCO_CALL, 1.0f, (c->type == CUCCO_TYPE_CHICK) ? 1.4f : 1.0f);
+        cucco_minigame_spawn_feathers(c->x, c->y, (c->type == CUCCO_TYPE_GOLDEN) ? 0xFDE047FF : ((c->type == CUCCO_TYPE_CHICK) ? 0xFEF08AFF : 0xFFFFFFFF), 3);
     }
 }
 
@@ -296,7 +324,9 @@ void cucco_minigame_update(float* link_x, float* link_y, int link_dir, bool* lin
                 s_game.secured_cuccos++;
                 s_game.carrying_index = -1;
                 *link_carrying = false;
+                s_game.anju_cheer_timer = 50;
                 hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.4f);
+                cucco_minigame_spawn_feathers(c->x, c->y, (c->type == CUCCO_TYPE_GOLDEN) ? 0xFDE047FF : 0xFFFFFFFF, 6);
 
                 if (s_game.secured_cuccos >= s_game.total_cuccos) {
                     s_game.mode = CUCCO_GAME_SUCCESS;
@@ -334,7 +364,9 @@ void cucco_minigame_update(float* link_x, float* link_y, int link_dir, bool* lin
                     if (is_inside_pen(c->x, c->y)) {
                         c->state = CUCCO_STATE_PEN_SECURED;
                         s_game.secured_cuccos++;
+                        s_game.anju_cheer_timer = 50;
                         hal_audio_play_sound(SOUND_SECRET, 1.0f, 1.4f);
+                        cucco_minigame_spawn_feathers(c->x, c->y, (c->type == CUCCO_TYPE_GOLDEN) ? 0xFDE047FF : 0xFFFFFFFF, 6);
 
                         if (s_game.secured_cuccos >= s_game.total_cuccos) {
                             s_game.mode = CUCCO_GAME_SUCCESS;
@@ -406,6 +438,19 @@ void cucco_minigame_update(float* link_x, float* link_y, int link_dir, bool* lin
                 }
             }
         }
+
+        // Atualiza partículas de penas flutuantes
+        for (int f = 0; f < MAX_FEATHER_PARTICLES; f++) {
+            CuccoFeather* p = &s_game.feathers[f];
+            if (!p->active) continue;
+            p->x += p->vx;
+            p->y += p->vy;
+            p->vy += 0.04f;
+            p->vx *= 0.96f;
+            p->life--;
+            if (p->life <= 0) p->active = false;
+        }
+        if (s_game.anju_cheer_timer > 0) s_game.anju_cheer_timer--;
     } else if (s_game.mode == CUCCO_GAME_SUCCESS) {
         s_game.state_timer--;
         if (s_game.state_timer == 120) {
@@ -471,10 +516,24 @@ void cucco_minigame_render(const Camera* camera, float link_x, float link_y, int
     // Anju, a criadora de galinhas (NPC estilizada na entrada do cercado)
     int anju_sx = (int)PEN_X1 - 12 - cam_x;
     int anju_sy = (int)(PEN_Y1 + PEN_Y2) / 2 - cam_y;
+    int anju_hop = (s_game.anju_cheer_timer > 0 && (s_game.anju_cheer_timer / 6) % 2 == 1) ? 2 : 0;
+    anju_sy -= anju_hop;
+
     draw_filled_rect(anju_sx - 4, anju_sy - 14, 8, 7, 0xF9A8D4FF); // Cabelo castanho/fita
     draw_filled_rect(anju_sx - 3, anju_sy - 10, 6, 6, 0xFED7AAFF); // Rosto
     draw_filled_rect(anju_sx - 5, anju_sy - 4, 10, 10, 0x3B82F6FF); // Vestido azul
     draw_filled_rect(anju_sx - 4, anju_sy - 2, 8, 6, 0xFFFFFFFF);  // Avental branco
+
+    if (s_game.anju_cheer_timer > 0) {
+        // Balão de coração sobre a cabeça de Anju
+        int hx = anju_sx;
+        int hy = anju_sy - 20;
+        draw_filled_rect(hx - 4, hy - 4, 8, 8, 0xFFFFFFEE);
+        draw_filled_rect(hx - 3, hy - 3, 6, 6, 0xEF4444FF);
+        put_pixel_safe(hx - 2, hy - 4, 0xEF4444FF);
+        put_pixel_safe(hx + 2, hy - 4, 0xEF4444FF);
+        put_pixel_safe(hx, hy + 3, 0xEF4444FF);
+    }
 
     // 2. Desenha cada um dos Cuccos
     for (int i = 0; i < s_game.total_cuccos; i++) {
@@ -528,6 +587,18 @@ void cucco_minigame_render(const Camera* camera, float link_x, float link_y, int
             int wing_offset = c->is_flapping ? -2 : 0;
             draw_filled_rect(sx - 7, sy - 5 + wing_offset, 3, 5, C_CUCCO_WING_SHADOW);
             draw_filled_rect(sx + 4, sy - 5 + wing_offset, 3, 5, C_CUCCO_WING_SHADOW);
+        }
+    }
+
+    // 3. Renderiza penas flutuantes
+    for (int f = 0; f < MAX_FEATHER_PARTICLES; f++) {
+        CuccoFeather* p = &s_game.feathers[f];
+        if (!p->active) continue;
+        int fx = (int)p->x - cam_x;
+        int fy = (int)p->y - cam_y;
+        if (fx >= 0 && fx < SCREEN_W && fy >= 0 && fy < SCREEN_H) {
+            put_pixel_safe(fx, fy, p->color);
+            put_pixel_safe(fx + 1, fy, 0xFFFFFFFF);
         }
     }
 }
