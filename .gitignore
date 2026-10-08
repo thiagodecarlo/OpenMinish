@@ -24,6 +24,8 @@ build/
 Build/
 bin/
 out/
+dist/
+.xmake/
 cmake-build-*/
 CMakeFiles/
 CMakeCache.txt
