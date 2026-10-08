@@ -2,108 +2,71 @@ cmake_minimum_required(VERSION 3.16)
 
 # ==============================================================================
 # PROJETO: OpenMinish - The Legend of Zelda: The Minish Cap Native PC Port
-# Build System Universal: Windows (MSVC/GCC), macOS (Clang), Linux (GCC)
+# Decompilação Autêntica C11 (zeldaret/tmc + Project Picori)
 # ==============================================================================
 
-project(OpenMinish VERSION 0.99.0 LANGUAGES C)
+project(OpenMinish VERSION 1.0.0 LANGUAGES C CXX)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-
-# Inclui o módulo FetchContent do CMake para baixar dependências automaticamente
-include(FetchContent)
-
-# ------------------------------------------------------------------------------
-# 1. Configuração e Download Automático da SDL3 via GitHub Releases
-# ------------------------------------------------------------------------------
-message(STATUS "Configurando a biblioteca multiplataforma SDL3...")
-
-set(SDL_INSTALL OFF CACHE BOOL "" FORCE)
-set(SDL_TESTS OFF CACHE BOOL "" FORCE)
-set(SDL_UNIX_CONSOLE_BUILD ON CACHE BOOL "" FORCE)
-
-FetchContent_Declare(
-    SDL3
-    URL https://github.com/libsdl-org/SDL/releases/download/release-3.2.8/SDL3-3.2.8.zip
-)
-
-FetchContent_MakeAvailable(SDL3)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ------------------------------------------------------------------------------
-# 2. Configuração do Nosso Executável Nativo (zelda_port)
+# 1. Alvo Principal: Native OpenMinish PC Port via Xmake / build.py
 # ------------------------------------------------------------------------------
-add_executable(zelda_port
-    src/main.c
-    src/hal/video.c
-    src/hal/texture.c
-    src/hal/input.c
-    src/hal/audio.c
-    src/hal/map.c
-    src/hal/entity.c
-    src/hal/font.c
-    src/hal/dialogue.c
-    src/hal/subweapon.c
-    src/hal/kinstone.c
-    src/hal/dungeon.c
-    src/hal/dungeon_flames.c
-    src/hal/dungeon_fortress.c
-    src/hal/dungeon_droplets.c
-    src/hal/fast_travel.c
-    src/hal/inventory.c
-    src/hal/library.c
-    src/hal/lantern.c
-    src/hal/save.c
-    src/hal/sanctuary.c
-    src/hal/veil_clouds.c
-    src/hal/rocs_cape.c
-    src/hal/startup_menu.c
-    src/hal/dungeon_palace.c
-    src/hal/royal_valley.c
-    src/hal/dungeon_dark_castle.c
-    src/hal/boss_vaati.c
-    src/hal/figurine_gallery.c
-    src/hal/cucco_minigame.c
-    src/hal/sword_dojo.c
-    src/hal/intro_cutscene.c
-    src/hal/prologue_story.c
-)
+# A compilação completa do port autêntico de The Minish Cap (621 arquivos C do jogo
+# + backend Vulkan/OpenGL SDL3 + VirtuaAPU DirectSound) é gerenciada pelo pipeline:
+#
+#   python build.py --usa --slim
+#   OU
+#   xmake build tmc_pc
+# ------------------------------------------------------------------------------
 
-# Adiciona nossas pastas de cabeçalhos (.h) para que o C encontre #include "gba/types.h"
-target_include_directories(zelda_port PRIVATE
-    include
-)
+find_program(XMAKE_EXE xmake HINTS "C:/Program Files/xmake")
+find_package(Python3 COMPONENTS Interpreter)
 
-# Vincula as bibliotecas da SDL3 ao nosso executável
-target_link_libraries(zelda_port PRIVATE
-    SDL3::SDL3
-)
-
-if(UNIX)
-    target_link_libraries(zelda_port PRIVATE m)
-endif()
-
-# No Windows, copia automaticamente a SDL3.dll para a mesma pasta do zelda_port.exe
-if(WIN32)
-    add_custom_command(TARGET zelda_port POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:SDL3::SDL3>
-        $<TARGET_FILE_DIR:zelda_port>
+if(XMAKE_EXE)
+    message(STATUS "Xmake detectado: ${XMAKE_EXE}")
+    add_custom_target(tmc_pc ALL
+        COMMAND ${XMAKE_EXE} build -y tmc_pc
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Compilando OpenMinish nativo (621 arquivos C autênticos) com Xmake..."
     )
+    add_custom_target(openminish DEPENDS tmc_pc)
+elseif(Python3_FOUND)
+    message(STATUS "Python 3 detectado: ${Python3_EXECUTABLE}")
+    add_custom_target(tmc_pc ALL
+        COMMAND ${Python3_EXECUTABLE} build.py --usa --slim
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Compilando OpenMinish via build.py..."
+    )
+    add_custom_target(openminish DEPENDS tmc_pc)
+else()
+    message(WARNING "Xmake ou Python 3 não encontrados no PATH. Instale o Xmake para compilar o projeto autêntico.")
 endif()
 
 # ------------------------------------------------------------------------------
-# 3. Ferramenta de Extração de Assets Ahead-of-Time (asset_extractor)
+# 2. Mock Engine Legado (Preservado para Fins Históricos em legacy/mock_engine)
 # ------------------------------------------------------------------------------
-# Este utilitário processa a ROM uma única vez para gerar os arquivos nativos,
-# tornando a ROM totalmente desnecessária durante o gameplay.
-add_executable(asset_extractor
-    tools/extractor/main.c
-    tools/extractor/lz77.c
-    tools/extractor/gfx.c
-    tools/extractor/text.c
-)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/legacy/mock_engine/src/main.c")
+    include(FetchContent)
+    FetchContent_Declare(
+        SDL3
+        URL https://github.com/libsdl-org/SDL/releases/download/release-3.2.8/SDL3-3.2.8.zip
+    )
+    FetchContent_MakeAvailable(SDL3)
 
-target_include_directories(asset_extractor PRIVATE
-    include
-    tools/extractor
-)
+    file(GLOB LEGACY_HAL_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/legacy/mock_engine/src/hal/*.c")
+    if(LEGACY_HAL_SOURCES)
+        add_executable(legacy_mock_port EXCLUDE_FROM_ALL
+            legacy/mock_engine/src/main.c
+            ${LEGACY_HAL_SOURCES}
+        )
+        target_include_directories(legacy_mock_port PRIVATE
+            include
+            legacy/mock_engine/include
+        )
+        target_link_libraries(legacy_mock_port PRIVATE SDL3::SDL3)
+    endif()
+endif()
